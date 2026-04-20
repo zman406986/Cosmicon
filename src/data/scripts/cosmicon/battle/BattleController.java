@@ -1,5 +1,6 @@
 package data.scripts.cosmicon.battle;
 
+import data.scripts.cosmicon.ai.DiceProbabilityCalculator;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
 
@@ -92,4 +93,8 @@ public class BattleController {
         turnProcessor.advanceToAttackPhase();
     }
 
+    public void cleanup() {
+        state.cleanup();
+        DiceProbabilityCalculator.clearCache();
     }
+}

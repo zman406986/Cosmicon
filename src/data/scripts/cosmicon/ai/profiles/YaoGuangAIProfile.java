@@ -1,13 +1,12 @@
 package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
-import data.scripts.cosmicon.ai.CharacterAIProfile;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.character.YaoGuangPassiveProcessor;
 import data.scripts.cosmicon.util.PassiveEvaluator;
 import java.util.List;
 
-public class YaoGuangAIProfile implements CharacterAIProfile {
+public class YaoGuangAIProfile extends AbstractCharacterAIProfile {
 
     private static final int ATTACK_THRESHOLD = 18;
     private static final int THORNS_DAMAGE_PER_REROLL = 2;
@@ -25,23 +24,13 @@ public class YaoGuangAIProfile implements CharacterAIProfile {
     }
 
     @Override
-    public boolean prefersHighValues(boolean isAttacking) {
-        return true;
-    }
-
-    @Override
     public int getTargetThreshold(boolean isAttacking) {
         return isAttacking ? ATTACK_THRESHOLD : 10;
     }
 
     @Override
-    public boolean shouldOptimizeForPassive(boolean isAttacking) {
-        return isAttacking;
-    }
-
-    @Override
-    public boolean isAttackPassive() {
-        return true;
+    public float getRiskTolerance() {
+        return 0.6f;
     }
 
     @Override
@@ -68,11 +57,6 @@ public class YaoGuangAIProfile implements CharacterAIProfile {
             return PRISMATIC_USE_VALUE;
         }
         return 0f;
-    }
-
-    @Override
-    public float getRiskTolerance() {
-        return 0.6f;
     }
 
     public float evaluateRerollWithThornsCost(int currentRerollsUsed, float improvement, int currentAttackSum) {
@@ -106,5 +90,10 @@ public class YaoGuangAIProfile implements CharacterAIProfile {
         }
         
         return true;
+    }
+
+    @Override
+    protected float calculatePassiveBonus(List<Integer> selectedValues) {
+        return 0f;
     }
 }

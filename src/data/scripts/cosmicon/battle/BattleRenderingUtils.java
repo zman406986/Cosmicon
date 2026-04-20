@@ -11,6 +11,9 @@ import org.lwjgl.opengl.GL11;
 import com.fs.starfarer.api.graphics.SpriteAPI;
 import com.fs.starfarer.api.util.Misc;
 
+import data.scripts.cosmicon.util.ColorHelper;
+import data.scripts.cosmicon.util.GLStateUtil;
+
 public final class BattleRenderingUtils {
     private BattleRenderingUtils() {}
 
@@ -57,9 +60,7 @@ public final class BattleRenderingUtils {
 
     public static void renderBattleBackground(float x, float y, float w, float h, 
             float transitionProgress, float alphaMult, boolean showRoles) {
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GLStateUtil.resetBlendState();
 
         Misc.renderQuad(x, y, w, h, COLOR_BG_DARK, alphaMult);
 
@@ -98,15 +99,13 @@ public final class BattleRenderingUtils {
         float halfH = h / 2f;
         float iconSize = halfH * ROLE_ICON_SIZE_RATIO;
 
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GLStateUtil.enableTexturingWithBlend();
 
         SpriteAPI atkIcon = CosmiconSprites.getAtkIcon();
         SpriteAPI defIcon = CosmiconSprites.getDefIcon();
 
         if (atkIcon == null || defIcon == null) {
-            GL11.glDisable(GL11.GL_TEXTURE_2D);
+            GLStateUtil.disableTexturing();
             return;
         }
 
@@ -128,22 +127,18 @@ public final class BattleRenderingUtils {
         topIcon.setAlphaMult(alphaMult * topIconAlpha);
         topIcon.render(topIconX, topIconY);
 
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GLStateUtil.disableTexturing();
     }
 
     public static void renderCardPlaceholder(float x, float y, float w, float h, Color color, float alphaMult) {
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GLStateUtil.resetBlendState();
 
         float portraitY = y + h - 80f - 50f;
         Misc.renderQuad(x + 15, portraitY, w - 30, 80, color.darker(), alphaMult * 0.5f);
     }
 
     public static void renderCharacterCard(float x, float y, CharacterCard card, float alphaMult) {
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GLStateUtil.enableTexturingWithBlend();
 
         SpriteAPI portrait = CosmiconSprites.getPortrait(card.getId());
         if (portrait != null) {
@@ -153,9 +148,9 @@ public final class BattleRenderingUtils {
             portrait.setAlphaMult(alphaMult);
             portrait.render(portraitX, portraitY);
         } else {
-            GL11.glDisable(GL11.GL_TEXTURE_2D);
+            GLStateUtil.disableTexturing();
             Misc.renderQuad(x, y, CARD_WIDTH, CARD_HEIGHT, COLOR_CARD_BG, alphaMult * 0.7f);
-            GL11.glEnable(GL11.GL_TEXTURE_2D);
+            GLStateUtil.enableTexturing();
         }
 
         SpriteAPI frame = CosmiconSprites.getFrame();
@@ -167,32 +162,31 @@ public final class BattleRenderingUtils {
 
         renderDicePoolIcons(x, y, card.getDicePool(), alphaMult);
 
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GLStateUtil.disableTexturing();
 
         SpriteAPI atkIcon = CosmiconSprites.getAtkIcon();
         if (atkIcon != null) {
-            GL11.glEnable(GL11.GL_TEXTURE_2D);
+            GLStateUtil.enableTexturing();
             atkIcon.setSize(ATK_DEF_ICON_SIZE, ATK_DEF_ICON_SIZE);
             atkIcon.setAlphaMult(alphaMult);
             float atkX = x + ATK_LEFT_MARGIN;
             float atkY = y + ATK_DEF_BOTTOM_MARGIN;
             atkIcon.render(atkX, atkY);
-            GL11.glDisable(GL11.GL_TEXTURE_2D);
+            GLStateUtil.disableTexturing();
         }
 
         SpriteAPI defIcon = CosmiconSprites.getDefIcon();
         if (defIcon != null) {
-            GL11.glEnable(GL11.GL_TEXTURE_2D);
+            GLStateUtil.enableTexturing();
             defIcon.setSize(ATK_DEF_ICON_SIZE, ATK_DEF_ICON_SIZE);
             defIcon.setAlphaMult(alphaMult);
             float defX = x + CARD_WIDTH - DEF_RIGHT_MARGIN - ATK_DEF_ICON_SIZE;
             float defY = y + ATK_DEF_BOTTOM_MARGIN;
             defIcon.render(defX, defY);
-            GL11.glDisable(GL11.GL_TEXTURE_2D);
+            GLStateUtil.disableTexturing();
         }
 
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glColor4f(1f, 1f, 1f, 1f);
+        GLStateUtil.resetColor();
     }
 
     public static void renderDicePoolIcons(float cardX, float cardY, List<DiceType> pool, float alphaMult) {
@@ -201,8 +195,7 @@ public final class BattleRenderingUtils {
             counts.merge(d, 1, Integer::sum);
         }
 
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL11.GL_BLEND);
+        GLStateUtil.enableTexturingWithBlend();
 
         float startX = cardX + CARD_WIDTH - DICE_POOL_RIGHT_MARGIN - DICE_ICON_SIZE;
         float startY = cardY + CARD_HEIGHT - DICE_POOL_TOP_MARGIN - DICE_ICON_SIZE;
@@ -225,13 +218,11 @@ public final class BattleRenderingUtils {
             }
         }
 
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GLStateUtil.disableTexturing();
     }
 
     public static void renderPassiveBox(float x, float y, float w, float h, float alphaMult) {
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GLStateUtil.resetBlendState();
 
         Misc.renderQuad(x + 3, y - 3, w, h, COLOR_SHADOW, alphaMult * 0.3f);
 
@@ -242,17 +233,10 @@ public final class BattleRenderingUtils {
 
     private static void renderRoundedBorder(float x, float y, float w, float h, float alphaMult) {
         float radius = 8f;
-        Color color = COLOR_PASSIVE_BORDER;
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GLStateUtil.resetBlendState();
 
-        float r = color.getRed() / 255f;
-        float g = color.getGreen() / 255f;
-        float b = color.getBlue() / 255f;
-        float a = (color.getAlpha() / 255f) * alphaMult;
-
-        GL11.glColor4f(r, g, b, a);
+        float[] c = ColorHelper.toGLComponents(COLOR_PASSIVE_BORDER, alphaMult);
+        GL11.glColor4f(c[0], c[1], c[2], c[3]);
         GL11.glLineWidth(2f);
 
         GL11.glBegin(GL11.GL_LINE_LOOP);
@@ -281,15 +265,13 @@ public final class BattleRenderingUtils {
         }
 
         GL11.glEnd();
-        GL11.glColor4f(1f, 1f, 1f, 1f);
+        GLStateUtil.resetColor();
     }
 
     public static void renderDiceZone(float x, float y, float w, float h, float alphaMult) {
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GLStateUtil.resetBlendState();
 
-        Misc.renderQuad(x, y, w, h, new Color(55, 60, 80, 180), alphaMult);
+        Misc.renderQuad(x, y, w, h, ColorHelper.DICE_ZONE_BG, alphaMult);
 
         float dashLen = 10f;
         float gapLen = 5f;
@@ -302,7 +284,7 @@ public final class BattleRenderingUtils {
         renderDashedLine(x + w, y + h, x, y + h, dashLen, gapLen);
         renderDashedLine(x, y + h, x, y, dashLen, gapLen);
 
-        GL11.glColor4f(1f, 1f, 1f, 1f);
+        GLStateUtil.resetColor();
     }
 
     private static void renderDashedLine(float x1, float y1, float x2, float y2, float dashLen, float gapLen) {

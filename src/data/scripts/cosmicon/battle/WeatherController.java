@@ -114,7 +114,7 @@ public class WeatherController {
         List<Integer> values = isPlayer ? state.getPlayerDiceValues() : state.getOpponentDiceValues();
         List<Boolean> selected = isPlayer ? state.getPlayerDiceSelected() : state.getOpponentDiceSelected();
         int sum = calculateSelectedSum(values, selected);
-        boolean isAttacker = state.isPlayerAttacker() == isPlayer;
+        boolean isAttacker = state.isAttacker(isPlayer);
         
         switch (weather) {
             case SOLAR_ECLIPSE -> {
@@ -307,10 +307,7 @@ public class WeatherController {
     public boolean shouldApplyFineSnowEffect(BattleState state, boolean isPlayer) {
         WeatherType weather = getCurrentWeather();
         if (weather != WeatherType.FINE_SNOW) return false;
-        if (isPlayer && state.isPlayerAttacker() && state.getRerollsUsedThisTurn() == 0) {
-            return true;
-        }
-        if (!isPlayer && !state.isPlayerAttacker() && state.getRerollsUsedThisTurn() == 0) {
+        if (state.isAttacker(isPlayer) && state.getRerollsUsedThisTurn() == 0) {
             return true;
         }
         return false;

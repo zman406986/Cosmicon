@@ -33,8 +33,8 @@ public class BattleDialogDelegate implements com.fs.starfarer.api.campaign.Custo
 
     @Override
     public void init(CustomPanelAPI panel, DialogCallbacks callbacks) {
-        battleController.initRandomBattle();
         battlePanel.init(panel, callbacks);
+        battleController.initRandomBattle();
     }
 
     @Override
@@ -48,6 +48,9 @@ public class BattleDialogDelegate implements com.fs.starfarer.api.campaign.Custo
 
     @Override
     public void reportDismissed(int option) {
+        battlePanel.cleanup();
+        battleController.cleanup();
+        
         if (memoryMap != null) {
             com.fs.starfarer.api.impl.campaign.rulecmd.FireBest.fire(null, dialog, memoryMap, COMPLETION_STR);
         }

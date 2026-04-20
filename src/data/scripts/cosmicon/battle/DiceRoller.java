@@ -1,13 +1,12 @@
 package data.scripts.cosmicon.battle;
 
 import data.scripts.cosmicon.character.YaoGuangPassiveProcessor;
+import data.scripts.cosmicon.util.CosmiconRandom;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public class DiceRoller {
     
-    private static final Random random = new Random();
     private final WeatherController weatherController;
     
     public DiceRoller(WeatherController weatherController) {
@@ -21,7 +20,7 @@ public class DiceRoller {
     
     private void rollForParticipant(BattleState state, boolean forPlayer) {
         CharacterCard card = state.getCard(forPlayer);
-        boolean isAttacker = (forPlayer && state.isPlayerAttacker()) || (!forPlayer && !state.isPlayerAttacker());
+        boolean isAttacker = state.isAttacker(forPlayer);
         
         List<DiceType> types = card.getDicePool();
         List<Integer> values = new ArrayList<>();
@@ -35,7 +34,7 @@ public class DiceRoller {
             int maxRoll = type.getMaxFace();
             if (preventMax) maxRoll = Math.max(1, maxRoll - 1);
             
-            int value = random.nextInt(maxRoll - minRoll + 1) + minRoll;
+            int value = CosmiconRandom.nextInt(maxRoll - minRoll + 1) + minRoll;
             values.add(value);
             selected.add(false);
         }
@@ -53,7 +52,7 @@ public class DiceRoller {
         List<DiceType> types = state.getDiceTypes(forPlayer);
         List<Integer> rerolledIndices = new ArrayList<>();
         
-        boolean isAttacker = (forPlayer && state.isPlayerAttacker()) || (!forPlayer && !state.isPlayerAttacker());
+        boolean isAttacker = state.isAttacker(forPlayer);
         boolean preventMinimum = weatherController != null && weatherController.shouldPreventMinimumRoll();
         boolean preventMax = weatherController != null && weatherController.shouldPreventMaxRoll(!isAttacker);
         
@@ -64,7 +63,7 @@ public class DiceRoller {
                 int maxRoll = type.getMaxFace();
                 if (preventMax) maxRoll = Math.max(1, maxRoll - 1);
                 
-                int value = random.nextInt(maxRoll - minRoll + 1) + minRoll;
+                int value = CosmiconRandom.nextInt(maxRoll - minRoll + 1) + minRoll;
                 values.set(i, value);
                 rerolledIndices.add(i);
             }

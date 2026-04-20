@@ -33,6 +33,8 @@ public class BattleState {
 
     private CharacterCard playerCard;
     private CharacterCard opponentCard;
+    private DicePoolCounts playerDicePoolCounts;
+    private DicePoolCounts opponentDicePoolCounts;
 
     private int playerHp;
     private int opponentHp;
@@ -114,6 +116,8 @@ public class BattleState {
     public void initRandomBattle() {
         playerCard = CharacterRegistry.getRandomCharacter();
         opponentCard = CharacterRegistry.getRandomOpponent();
+        playerDicePoolCounts = DicePoolCounts.fromPool(playerCard.getDicePool());
+        opponentDicePoolCounts = DicePoolCounts.fromPool(opponentCard.getDicePool());
         resetBattleState(playerCard.getMaxHp(), opponentCard.getMaxHp());
         effectManager = new EffectManager();
         prismaticManager = new PrismaticManager(effectManager);
@@ -126,6 +130,8 @@ public class BattleState {
     public void init(CharacterCard playerCard, CharacterCard opponentCard) {
         this.playerCard = playerCard;
         this.opponentCard = opponentCard;
+        this.playerDicePoolCounts = DicePoolCounts.fromPool(playerCard.getDicePool());
+        this.opponentDicePoolCounts = DicePoolCounts.fromPool(opponentCard.getDicePool());
         resetBattleState(playerCard.getMaxHp(), opponentCard.getMaxHp());
         playerCumulativeAtkDef = 0;
         opponentCumulativeAtkDef = 0;
@@ -231,6 +237,14 @@ public class BattleState {
         return flags;
     }
 
+    public DicePoolCounts getPlayerDicePoolCounts() {
+        return playerDicePoolCounts;
+    }
+
+    public DicePoolCounts getOpponentDicePoolCounts() {
+        return opponentDicePoolCounts;
+    }
+
     public CharacterCard getPlayerCard() {
         return playerCard;
     }
@@ -277,6 +291,14 @@ public class BattleState {
 
     public boolean isPlayerAttacker() {
         return playerIsAttacker;
+    }
+
+    public boolean isAttacker(boolean forPlayer) {
+        return (forPlayer && playerIsAttacker) || (!forPlayer && !playerIsAttacker);
+    }
+
+    public boolean isDefender(boolean forPlayer) {
+        return !isAttacker(forPlayer);
     }
 
     public Phase getCurrentPhase() {
@@ -561,8 +583,8 @@ public class BattleState {
         if (currentPhase != Phase.SELECTING_ATTACK && currentPhase != Phase.SELECTING_DEFENSE) return;
         if (getPlayerPrismaticUses() <= 0) return;
 
-        boolean playerShouldSelect = (playerIsAttacker && currentPhase == Phase.SELECTING_ATTACK) ||
-                                      (!playerIsAttacker && currentPhase == Phase.SELECTING_DEFENSE);
+        boolean playerShouldSelect = (isAttacker(true) && currentPhase == Phase.SELECTING_ATTACK) ||
+                                      (isDefender(true) && currentPhase == Phase.SELECTING_DEFENSE);
         if (!playerShouldSelect) return;
 
         if (prismaticManager != null) prismaticManager.toggleMode(true);
@@ -799,5 +821,39 @@ public class BattleState {
             ? (playerIsAttacker ? attackValue : defenseValue)
             : (playerIsAttacker ? defenseValue : attackValue);
         addCumulativeAtkDef(forPlayer, value);
+    }
+    
+    public void cleanup() {
+        listeners.clear();
+        
+        if (effectManager != null) {
+            effectManager.clearTemporaryEffects();
+            effectManager.resetTurnState();
+        }
+        
+        if (prismaticManager != null) {
+            prismaticManager.clearState();
+        }
+        
+        playerDiceTypes = null;
+        playerDiceValues = null;
+        playerDiceSelected = null;
+        opponentDiceTypes = null;
+        opponentDiceValues = null;
+        opponentDiceSelected = null;
+        
+        diceRoller = null;
+        weatherController = null;
+        
+        playerFaceSelectionHistory.clear();
+        opponentFaceSelectionHistory.clear();
+        playerCumulativeAtkDef = 0;
+        opponentCumulativeAtkDef = 0;
+        playerCyreneThresholdMet = false;
+        opponentCyreneThresholdMet = false;
+        playerTotalDamageTaken = 0;
+        opponentTotalDamageTaken = 0;
+        playerPrismaticTriggerCount = 0;
+        opponentPrismaticTriggerCount = 0;
     }
 }

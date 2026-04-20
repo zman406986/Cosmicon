@@ -1,13 +1,10 @@
 package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
-import data.scripts.cosmicon.ai.CharacterAIProfile;
-import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.util.PassiveEvaluator;
-import data.scripts.cosmicon.util.PassiveEvaluator.PassiveResult;
 import java.util.List;
 
-public class KafkaAIProfile implements CharacterAIProfile {
+public class KafkaAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     public String getCharacterId() {
@@ -20,34 +17,13 @@ public class KafkaAIProfile implements CharacterAIProfile {
     }
 
     @Override
-    public boolean prefersHighValues(boolean isAttacking) {
-        return true;
-    }
-
-    @Override
-    public boolean shouldOptimizeForPassive(boolean isAttacking) {
-        return isAttacking;
-    }
-
-    @Override
-    public boolean isAttackPassive() {
-        return true;
-    }
-
-    @Override
-    public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
-        if (!isAttacking || selectedValues == null || selectedValues.isEmpty()) {
-            return PassiveEvaluation.notTriggered();
-        }
-        
-        PassiveResult result = PassiveEvaluator.evaluateForCharacter("kafka", selectedValues, isAttacking);
+    protected String getPassiveDescription(List<Integer> selectedValues) {
         int distinct = PassiveEvaluator.countDistinctValues(selectedValues);
-        return PassiveEvaluator.toPassiveEvaluation(result, Strings.format("character.kafka.passive_desc", distinct));
+        return Strings.format("character.kafka.passive_desc", distinct);
     }
 
     @Override
-    public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
-        if (!isAttacking) return 0f;
+    protected float calculatePassiveBonus(List<Integer> selectedValues) {
         return PassiveEvaluator.countDistinctValues(selectedValues);
     }
 }

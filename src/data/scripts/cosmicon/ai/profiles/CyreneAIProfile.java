@@ -1,12 +1,11 @@
 package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
-import data.scripts.cosmicon.ai.CharacterAIProfile;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.util.PassiveEvaluator;
 import java.util.List;
 
-public class CyreneAIProfile implements CharacterAIProfile {
+public class CyreneAIProfile extends AbstractCharacterAIProfile {
 
     private static final int CUMULATIVE_THRESHOLD = 24;
 
@@ -18,11 +17,6 @@ public class CyreneAIProfile implements CharacterAIProfile {
     @Override
     public String getCharacterName() {
         return Strings.get("character.cyrene.name");
-    }
-
-    @Override
-    public boolean prefersHighValues(boolean isAttacking) {
-        return true;
     }
 
     @Override
@@ -88,5 +82,12 @@ public class CyreneAIProfile implements CharacterAIProfile {
 
     public int getCumulativeThreshold() {
         return CUMULATIVE_THRESHOLD;
+    }
+
+    @Override
+    protected float calculatePassiveBonus(List<Integer> selectedValues) {
+        if (selectedValues == null || selectedValues.isEmpty()) return 0f;
+        int sum = PassiveEvaluator.sumOfValues(selectedValues);
+        return calculateCumulativeBonus(sum);
     }
 }

@@ -20,7 +20,7 @@ public class AIEngine {
         
         if (diceValues == null || diceTypes == null || card == null) return;
         
-        boolean isAttacking = (forPlayer && state.isPlayerAttacker()) || (!forPlayer && !state.isPlayerAttacker());
+        boolean isAttacking = state.isAttacker(forPlayer);
         int rerolls = state.getRemainingRerolls(forPlayer);
         
         AIDecision decision = CosmiconAICore.makeDecision(
@@ -49,7 +49,7 @@ public class AIEngine {
         
         if (diceValues == null || diceTypes == null || card == null || rerollsAvailable <= 0) return;
         
-        boolean isAttacking = (forPlayer && state.isPlayerAttacker()) || (!forPlayer && !state.isPlayerAttacker());
+        boolean isAttacking = state.isAttacker(forPlayer);
         
         Set<Integer> rerollIndices = CosmiconAICore.recommendRerolls(
             diceValues, diceTypes, requiredCount, rerollsAvailable,

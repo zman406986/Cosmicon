@@ -494,7 +494,7 @@ public void skipRerollPhase() {
             }
         }
         
-        boolean isAttacking = (forPlayer == state.isPlayerAttacker());
+        boolean isAttacking = state.isAttacker(forPlayer);
         
         int currentHp = forPlayer ? state.getPlayerHp() : state.getOpponentHp();
         int maxHp = forPlayer ? 

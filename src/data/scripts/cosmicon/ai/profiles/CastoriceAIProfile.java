@@ -1,11 +1,10 @@
 package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
-import data.scripts.cosmicon.ai.CharacterAIProfile;
 import data.scripts.cosmicon.battle.DiceType;
 import java.util.List;
 
-public class CastoriceAIProfile implements CharacterAIProfile {
+public class CastoriceAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     public String getCharacterId() {
@@ -15,11 +14,6 @@ public class CastoriceAIProfile implements CharacterAIProfile {
     @Override
     public String getCharacterName() {
         return Strings.get("character.castorice.name");
-    }
-
-    @Override
-    public boolean prefersHighValues(boolean isAttacking) {
-        return true;
     }
 
     @Override
@@ -58,4 +52,8 @@ public class CastoriceAIProfile implements CharacterAIProfile {
         return 10f;
     }
 
+    @Override
+    protected float calculatePassiveBonus(List<Integer> selectedValues) {
+        return 0f;
     }
+}

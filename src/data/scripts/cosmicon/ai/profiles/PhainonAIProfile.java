@@ -1,13 +1,12 @@
 package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
-import data.scripts.cosmicon.ai.CharacterAIProfile;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.util.PassiveEvaluator;
 import data.scripts.cosmicon.util.PassiveEvaluator.PassiveResult;
 import java.util.List;
 
-public class PhainonAIProfile implements CharacterAIProfile {
+public class PhainonAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     public String getCharacterId() {
@@ -17,11 +16,6 @@ public class PhainonAIProfile implements CharacterAIProfile {
     @Override
     public String getCharacterName() {
         return Strings.get("character.phainon.name");
-    }
-
-    @Override
-    public boolean prefersHighValues(boolean isAttacking) {
-        return true;
     }
 
     @Override
@@ -49,5 +43,10 @@ public class PhainonAIProfile implements CharacterAIProfile {
     public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
         if (isAttacking) return 0f;
         return PassiveEvaluator.allSame(selectedValues) ? 50f : 0f;
+    }
+
+    @Override
+    protected float calculatePassiveBonus(List<Integer> selectedValues) {
+        return 0f;
     }
 }

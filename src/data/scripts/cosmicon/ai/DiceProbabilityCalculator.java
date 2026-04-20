@@ -3,15 +3,61 @@ package data.scripts.cosmicon.ai;
 import data.scripts.cosmicon.battle.DiceType;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public final class DiceProbabilityCalculator {
 
     private DiceProbabilityCalculator() {}
 
-    private static final Map<String, float[]> SUM_PMF_CACHE = new HashMap<>();
+    private static final int MAX_CACHE_SIZE = 64;
     private static final int MAX_CACHE_KEY_LENGTH = 8;
+
+    private static final Map<DiceCacheKey, float[]> SUM_PMF_CACHE = new LinkedHashMap<DiceCacheKey, float[]>(16, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<DiceCacheKey, float[]> eldest) {
+            return size() > MAX_CACHE_SIZE;
+        }
+    };
+
+    private static final class DiceCacheKey {
+        private final int selectCount;
+        private final int[] maxFaces;
+        private final int cachedHashCode;
+
+        DiceCacheKey(int selectCount, int[] maxFaces) {
+            this.selectCount = selectCount;
+            this.maxFaces = maxFaces;
+            this.cachedHashCode = computeHashCode();
+        }
+
+        private int computeHashCode() {
+            int h = Objects.hash(selectCount);
+            for (int face : maxFaces) {
+                h = 31 * h + face;
+            }
+            return h;
+        }
+
+        @Override
+        public int hashCode() {
+            return cachedHashCode;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (!(obj instanceof DiceCacheKey other)) return false;
+            if (selectCount != other.selectCount) return false;
+            if (maxFaces.length != other.maxFaces.length) return false;
+            for (int i = 0; i < maxFaces.length; i++) {
+                if (maxFaces[i] != other.maxFaces[i]) return false;
+            }
+            return true;
+        }
+    }
 
     public static float expectedValue(DiceType type) {
         return switch (type) {
@@ -63,9 +109,10 @@ public final class DiceProbabilityCalculator {
             selectCount = diceTypes.size();
         }
 
-        String cacheKey = buildCacheKey(diceTypes, selectCount);
-        if (SUM_PMF_CACHE.containsKey(cacheKey)) {
-            return SUM_PMF_CACHE.get(cacheKey);
+        DiceCacheKey cacheKey = buildCacheKey(diceTypes, selectCount);
+        float[] cached = SUM_PMF_CACHE.get(cacheKey);
+        if (cached != null) {
+            return cached;
         }
 
         List<float[]> dicePMFs = new ArrayList<>();
@@ -193,13 +240,12 @@ public final class DiceProbabilityCalculator {
         return pairs;
     }
 
-    private static String buildCacheKey(List<DiceType> diceTypes, int selectCount) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(selectCount).append(":");
-        for (DiceType type : diceTypes) {
-            sb.append(type.getMaxFace()).append(",");
+    private static DiceCacheKey buildCacheKey(List<DiceType> diceTypes, int selectCount) {
+        int[] maxFaces = new int[diceTypes.size()];
+        for (int i = 0; i < diceTypes.size(); i++) {
+            maxFaces[i] = diceTypes.get(i).getMaxFace();
         }
-        return sb.toString();
+        return new DiceCacheKey(selectCount, maxFaces);
     }
 
     public static void clearCache() {

@@ -1,11 +1,10 @@
 package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
-import data.scripts.cosmicon.ai.CharacterAIProfile;
 import data.scripts.cosmicon.battle.DiceType;
 import java.util.List;
 
-public class TheHertaAIProfile implements CharacterAIProfile {
+public class TheHertaAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     public String getCharacterId() {
@@ -15,11 +14,6 @@ public class TheHertaAIProfile implements CharacterAIProfile {
     @Override
     public String getCharacterName() {
         return Strings.get("character.the_herta.name");
-    }
-
-    @Override
-    public boolean prefersHighValues(boolean isAttacking) {
-        return true;
     }
     
     @Override
@@ -40,12 +34,7 @@ public class TheHertaAIProfile implements CharacterAIProfile {
     }
 
     @Override
-    public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
-        return PassiveEvaluation.notTriggered();
-    }
-
-    @Override
-    public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
+    protected float calculatePassiveBonus(List<Integer> selectedValues) {
         return 0f;
     }
 }

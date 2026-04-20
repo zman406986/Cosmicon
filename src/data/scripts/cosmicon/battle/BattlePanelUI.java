@@ -28,7 +28,9 @@ import data.scripts.cosmicon.battle.BattleState.BattleEventListener;
 import data.scripts.cosmicon.battle.BattleState.Phase;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
+import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.CoordHelper;
+import data.scripts.cosmicon.util.GLStateUtil;
 
 public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionListenerDelegate, BattleEventListener {
 
@@ -106,6 +108,16 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
             battleState.addListener(this);
         }
     }
+    
+    public void cleanup() {
+        if (battleState != null) {
+            battleState.removeListener(this);
+        }
+        diceHitboxes.clear();
+        diceRollManager = null;
+        battleState = null;
+        battleController = null;
+    }
 
     
 
@@ -157,15 +169,15 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         prismTp.setActionListenerDelegate(this);
         panel.addUIElement(prismTp).inTL(playerCardX - 60f, playerCardY + 40f);
 
-        Color prismBase = new Color(255, 215, 0);
-        Color prismBg = new Color(80, 60, 30);
-        Color prismBright = new Color(255, 255, 150);
+        Color prismBase = ColorHelper.PRISMATIC_GOLD;
+        Color prismBg = ColorHelper.PRISMATIC_BG_DARK;
+        Color prismBright = ColorHelper.PRISMATIC_BRIGHT;
         prismaticButton = prismTp.addAreaCheckbox("", ACTION_PRISMATIC, 
             prismBase, prismBg, prismBright, 40f, 40f, 0f);
         prismaticButton.setQuickMode(true);
 
         prismaticUsesLabel = settings.createLabel("2", Fonts.DEFAULT_SMALL);
-        prismaticUsesLabel.setColor(new Color(255, 215, 0));
+        prismaticUsesLabel.setColor(ColorHelper.PRISMATIC_GOLD);
         prismaticUsesLabel.setAlignment(Alignment.MID);
         panel.addComponent((UIComponentAPI) prismaticUsesLabel)
             .setSize(40, 20)
@@ -192,7 +204,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
 
     private void createLabels() {
         phaseLabel = settings.createLabel("", Fonts.INSIGNIA_LARGE);
-        phaseLabel.setColor(new Color(255, 220, 100));
+        phaseLabel.setColor(ColorHelper.PHASE_LABEL);
         phaseLabel.setAlignment(Alignment.MID);
         panel.addComponent((UIComponentAPI) phaseLabel)
             .setSize(400, 30)
@@ -206,7 +218,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
             .inTL(BattleRenderingUtils.PANEL_WIDTH / 2f - 200, 60);
 
         playerNameLabel = settings.createLabel(Strings.get("battle.player"), Fonts.DEFAULT_SMALL);
-        playerNameLabel.setColor(new Color(100, 150, 255));
+        playerNameLabel.setColor(ColorHelper.PLAYER_NAME);
         playerNameLabel.setAlignment(Alignment.MID);
         panel.addComponent((UIComponentAPI) playerNameLabel)
             .setSize(BattleRenderingUtils.CARD_WIDTH, 20)
@@ -222,7 +234,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
                   BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN + 5);
 
         opponentNameLabel = settings.createLabel(Strings.get("battle.opponent"), Fonts.DEFAULT_SMALL);
-        opponentNameLabel.setColor(new Color(255, 100, 100));
+        opponentNameLabel.setColor(ColorHelper.OPPONENT_NAME);
         opponentNameLabel.setAlignment(Alignment.MID);
         panel.addComponent((UIComponentAPI) opponentNameLabel)
             .setSize(BattleRenderingUtils.CARD_WIDTH, 20)
@@ -238,7 +250,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
                   BattleRenderingUtils.MARGIN + 5);
 
         resultLabel = settings.createLabel("", Fonts.INSIGNIA_LARGE);
-        resultLabel.setColor(new Color(255, 215, 0));
+        resultLabel.setColor(ColorHelper.PRISMATIC_GOLD);
         resultLabel.setAlignment(Alignment.MID);
         panel.addComponent((UIComponentAPI) resultLabel)
             .setSize(400, 40)
@@ -246,7 +258,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         resultLabel.setOpacity(0f);
 
         playerAtkLabel = settings.createLabel("3", Fonts.DEFAULT_SMALL);
-        playerAtkLabel.setColor(new Color(255, 100, 80));
+        playerAtkLabel.setColor(ColorHelper.ATTACK_VALUE);
         playerAtkLabel.setAlignment(Alignment.MID);
         float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
         float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
@@ -256,7 +268,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
                   playerCardY + BattleRenderingUtils.CARD_HEIGHT - 22f);
 
         playerDefLabel = settings.createLabel("2", Fonts.DEFAULT_SMALL);
-        playerDefLabel.setColor(new Color(80, 150, 255));
+        playerDefLabel.setColor(ColorHelper.DEFENSE_VALUE);
         playerDefLabel.setAlignment(Alignment.MID);
         panel.addComponent((UIComponentAPI) playerDefLabel)
             .setSize(30, 20)
@@ -266,7 +278,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         float opponentCardX = BattleRenderingUtils.MARGIN;
         float opponentCardY = BattleRenderingUtils.MARGIN;
         opponentAtkLabel = settings.createLabel("3", Fonts.DEFAULT_SMALL);
-        opponentAtkLabel.setColor(new Color(255, 100, 80));
+        opponentAtkLabel.setColor(ColorHelper.ATTACK_VALUE);
         opponentAtkLabel.setAlignment(Alignment.MID);
         panel.addComponent((UIComponentAPI) opponentAtkLabel)
             .setSize(30, 20)
@@ -274,7 +286,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
                   opponentCardY + BattleRenderingUtils.CARD_HEIGHT - 22f);
 
         opponentDefLabel = settings.createLabel("2", Fonts.DEFAULT_SMALL);
-        opponentDefLabel.setColor(new Color(80, 150, 255));
+        opponentDefLabel.setColor(ColorHelper.DEFENSE_VALUE);
         opponentDefLabel.setAlignment(Alignment.MID);
         panel.addComponent((UIComponentAPI) opponentDefLabel)
             .setSize(30, 20)
@@ -329,30 +341,21 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         }
 
         // Update dice pool count labels from CharacterCard's base dice pool
-        List<DiceType> playerPool = playerCard != null ? playerCard.getDicePool() : null;
-        List<DiceType> opponentPool = opponentCard != null ? opponentCard.getDicePool() : null;
+        DicePoolCounts playerCounts = battleState.getPlayerDicePoolCounts();
+        DicePoolCounts opponentCounts = battleState.getOpponentDicePoolCounts();
 
-        playerPrismaticLabel.setText(String.valueOf(countDiceOfType(playerPool, DiceType.PRISMATIC_D12)));
-        playerOrangeLabel.setText(String.valueOf(countDiceOfType(playerPool, DiceType.ORANGE_D8)));
-        playerPurpleLabel.setText(String.valueOf(countDiceOfType(playerPool, DiceType.PURPLE_D6)));
-        playerBlueLabel.setText(String.valueOf(countDiceOfType(playerPool, DiceType.BLUE_D4)));
+        playerPrismaticLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.PRISMATIC_D12) : 0));
+        playerOrangeLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.ORANGE_D8) : 0));
+        playerPurpleLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.PURPLE_D6) : 0));
+        playerBlueLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.BLUE_D4) : 0));
 
-        opponentPrismaticLabel.setText(String.valueOf(countDiceOfType(opponentPool, DiceType.PRISMATIC_D12)));
-        opponentOrangeLabel.setText(String.valueOf(countDiceOfType(opponentPool, DiceType.ORANGE_D8)));
-        opponentPurpleLabel.setText(String.valueOf(countDiceOfType(opponentPool, DiceType.PURPLE_D6)));
-        opponentBlueLabel.setText(String.valueOf(countDiceOfType(opponentPool, DiceType.BLUE_D4)));
+        opponentPrismaticLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.PRISMATIC_D12) : 0));
+        opponentOrangeLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.ORANGE_D8) : 0));
+        opponentPurpleLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.PURPLE_D6) : 0));
+        opponentBlueLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.BLUE_D4) : 0));
 
         updatePhaseLabel();
         updatePrismaticButton();
-    }
-
-    private int countDiceOfType(List<DiceType> pool, DiceType type) {
-        if (pool == null) return 0;
-        int count = 0;
-        for (DiceType d : pool) {
-            if (d == type) count++;
-        }
-        return count;
     }
 
     private void updatePhaseLabel() {
@@ -444,19 +447,19 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         int uses = battleState.getPlayerPrismaticUses();
         prismaticUsesLabel.setText(String.valueOf(uses));
 
-        boolean playerShouldSelect = (battleState.isPlayerAttacker() && 
+boolean playerShouldSelect = (battleState.isAttacker(true) && 
             battleState.getCurrentPhase() == Phase.SELECTING_ATTACK) ||
-            (!battleState.isPlayerAttacker() && 
+            (battleState.isDefender(true) && 
             battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE);
 
         prismaticButton.setEnabled(uses > 0 && playerShouldSelect);
 
         if (battleState.isPlayerPrismaticModeActive()) {
-            prismaticUsesLabel.setColor(new Color(255, 100, 100));
+            prismaticUsesLabel.setColor(ColorHelper.OPPONENT_NAME);
         } else if (uses > 0) {
-            prismaticUsesLabel.setColor(new Color(255, 215, 0));
+            prismaticUsesLabel.setColor(ColorHelper.PRISMATIC_GOLD);
         } else {
-            prismaticUsesLabel.setColor(new Color(128, 128, 128));
+            prismaticUsesLabel.setColor(ColorHelper.PRISMATIC_DISABLED);
         }
     }
 
@@ -643,12 +646,12 @@ private void handleMouseInput() {
                 return;
             }
 
-            boolean playerShouldSelect = (battleState.isPlayerAttacker() && 
+boolean playerShouldSelect = (battleState.isAttacker(true) &&
                                            battleState.getCurrentPhase() == Phase.SELECTING_ATTACK) ||
-                                          (!battleState.isPlayerAttacker() && 
+                                          (battleState.isDefender(true) &&
                                            battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE);
 
-            boolean inRerollPhase = battleState.getCurrentPhase() == Phase.REROLL_PHASE && battleState.isPlayerAttacker();
+            boolean inRerollPhase = battleState.getCurrentPhase() == Phase.REROLL_PHASE && battleState.isAttacker(true);
 
             if (!playerShouldSelect && !inRerollPhase) {
                 lastMouseButtonState = currentButton;
@@ -706,9 +709,7 @@ private void handleMouseInput() {
         float w = pos.getWidth();
         float h = pos.getHeight();
 
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GLStateUtil.resetBlendState();
 
         BattleRenderingUtils.renderBattleBackground(x, y, w, h, 
             roleTransitionProgress, alphaMult, battleState != null);
@@ -721,7 +722,7 @@ private void handleMouseInput() {
 
         renderDiceSelectionHighlights(alphaMult);
 
-        GL11.glColor4f(1f, 1f, 1f, 1f);
+        GLStateUtil.resetColor();
     }
 
     private void renderPlayerCard(float panelX, float panelY, float alphaMult) {
@@ -739,7 +740,7 @@ private void handleMouseInput() {
             BattleRenderingUtils.renderPassiveBox(passiveX, passiveY, 
                 BattleRenderingUtils.CARD_WIDTH + 40, 60, alphaMult);
         } else {
-            Color playerCardColor = new Color(100, 120, 180);
+            Color playerCardColor = ColorHelper.PLAYER_CARD_PLACEHOLDER;
             BattleRenderingUtils.renderCardPlaceholder(cardX, cardY, BattleRenderingUtils.CARD_WIDTH, 
                 BattleRenderingUtils.CARD_HEIGHT, playerCardColor, alphaMult);
         }
@@ -759,7 +760,7 @@ private void handleMouseInput() {
             BattleRenderingUtils.renderPassiveBox(passiveX, passiveY, 
                 BattleRenderingUtils.CARD_WIDTH + 40, 60, alphaMult);
         } else {
-            Color opponentCardColor = new Color(180, 100, 120);
+            Color opponentCardColor = ColorHelper.OPPONENT_CARD_PLACEHOLDER;
             BattleRenderingUtils.renderCardPlaceholder(cardX, cardY, BattleRenderingUtils.CARD_WIDTH, 
                 BattleRenderingUtils.CARD_HEIGHT, opponentCardColor, alphaMult);
         }
@@ -783,17 +784,10 @@ private void handleMouseInput() {
         List<Boolean> selected = battleState.getPlayerDiceSelected();
         if (selected == null) return;
 
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GLStateUtil.resetBlendState();
 
-        Color highlightColor = new Color(100, 255, 100, 150);
-        float r = highlightColor.getRed() / 255f;
-        float g = highlightColor.getGreen() / 255f;
-        float b = highlightColor.getBlue() / 255f;
-        float a = (highlightColor.getAlpha() / 255f) * alphaMult;
-
-        GL11.glColor4f(r, g, b, a);
+        float[] c = ColorHelper.toGLComponents(ColorHelper.SELECTION_HIGHLIGHT, alphaMult);
+        GL11.glColor4f(c[0], c[1], c[2], c[3]);
         GL11.glLineWidth(3f);
 
         for (int i = 0; i < Math.min(selected.size(), diceHitboxes.size()); i++) {
@@ -813,6 +807,6 @@ private void handleMouseInput() {
             }
         }
 
-        GL11.glColor4f(1f, 1f, 1f, 1f);
+        GLStateUtil.resetColor();
     }
 }

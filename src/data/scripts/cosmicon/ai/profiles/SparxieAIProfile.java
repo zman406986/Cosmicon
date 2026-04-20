@@ -1,13 +1,12 @@
 package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
-import data.scripts.cosmicon.ai.CharacterAIProfile;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.util.PassiveEvaluator;
 import data.scripts.cosmicon.util.PassiveEvaluator.PassiveResult;
 import java.util.List;
 
-public class SparxieAIProfile implements CharacterAIProfile {
+public class SparxieAIProfile extends AbstractCharacterAIProfile {
 
     private static final float HACK_BONUS_VALUE = 5f;
 
@@ -19,11 +18,6 @@ public class SparxieAIProfile implements CharacterAIProfile {
     @Override
     public String getCharacterName() {
         return Strings.get("character.sparxie.name");
-    }
-
-    @Override
-    public boolean prefersHighValues(boolean isAttacking) {
-        return true;
     }
 
     @Override
@@ -39,6 +33,16 @@ public class SparxieAIProfile implements CharacterAIProfile {
     @Override
     public int getTargetThreshold(boolean isAttacking) {
         return isAttacking ? 15 : 10;
+    }
+
+    @Override
+    public boolean isDefensePassive() {
+        return true;
+    }
+
+    @Override
+    public boolean isAttackPassive() {
+        return true;
     }
 
     @Override
@@ -64,12 +68,8 @@ public class SparxieAIProfile implements CharacterAIProfile {
     }
 
     @Override
-    public boolean isDefensePassive() {
-        return true;
-    }
-
-    @Override
-    public boolean isAttackPassive() {
-        return true;
+    protected float calculatePassiveBonus(List<Integer> selectedValues) {
+        if (selectedValues == null || selectedValues.isEmpty()) return 0f;
+        return PassiveEvaluator.hasIdenticalNumbers(selectedValues) ? HACK_BONUS_VALUE : 0f;
     }
 }

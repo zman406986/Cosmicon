@@ -1,7 +1,6 @@
 package data.scripts.cosmicon.battle;
 
 import java.awt.Color;
-import java.util.Random;
 
 import org.lwjgl.opengl.GL11;
 
@@ -14,7 +13,10 @@ import com.fs.starfarer.api.ui.LabelAPI;
 import com.fs.starfarer.api.ui.PositionAPI;
 import com.fs.starfarer.api.ui.UIComponentAPI;
 
+import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.CoordHelper;
+import data.scripts.cosmicon.util.CosmiconRandom;
+import data.scripts.cosmicon.util.GLStateUtil;
 
 public class DiceAnimator {
 
@@ -33,7 +35,6 @@ public class DiceAnimator {
     private static final float SCALE_BOUNCE = 0.08f;
 
     private static final SettingsAPI settings = Global.getSettings();
-    private static final Random random = new Random();
 
     private DiceType type;
     private int finalValue;
@@ -117,7 +118,7 @@ public class DiceAnimator {
             faces[i] = i + 1;
         }
         for (int i = faces.length - 1; i > 0; i--) {
-            int j = random.nextInt(i + 1);
+            int j = CosmiconRandom.nextInt(i + 1);
             int tmp = faces[i];
             faces[i] = faces[j];
             faces[j] = tmp;
@@ -143,17 +144,17 @@ public class DiceAnimator {
 
         if (elapsed < ROLL_DURATION) {
             currentValue = shuffledFaces[cycleIndex++ % shuffledFaces.length];
-            jitterX = (random.nextFloat() * 2f - 1f) * JITTER_RANGE;
-            jitterY = (random.nextFloat() * 2f - 1f) * JITTER_RANGE;
+            jitterX = (CosmiconRandom.nextFloat() * 2f - 1f) * JITTER_RANGE;
+            jitterY = (CosmiconRandom.nextFloat() * 2f - 1f) * JITTER_RANGE;
         } else if (elapsed < ROLL_DURATION + SETTLE_DURATION) {
             float settleProgress = (elapsed - ROLL_DURATION) / SETTLE_DURATION;
             currentValue = shuffledFaces[cycleIndex++ % shuffledFaces.length];
             float jitterMult = 0.5f * (1f - settleProgress);
             jitterX *= jitterMult;
             jitterY *= jitterMult;
-            if (random.nextFloat() < 0.3f) {
-                jitterX = (random.nextFloat() * 2f - 1f) * JITTER_RANGE * jitterMult;
-                jitterY = (random.nextFloat() * 2f - 1f) * JITTER_RANGE * jitterMult;
+            if (CosmiconRandom.nextFloat() < 0.3f) {
+                jitterX = (CosmiconRandom.nextFloat() * 2f - 1f) * JITTER_RANGE * jitterMult;
+                jitterY = (CosmiconRandom.nextFloat() * 2f - 1f) * JITTER_RANGE * jitterMult;
             }
         } else if (elapsed < TOTAL_DURATION) {
             currentValue = finalValue;
@@ -184,9 +185,7 @@ public class DiceAnimator {
     public void render(float panelX, float panelY, float panelHeight, float alphaMult) {
         if (elapsed < 0f) return;
 
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GLStateUtil.resetBlendState();
 
         float renderSize = DICE_SIZE * scale;
         float centerX = panelX + x + jitterX + DICE_SIZE / 2f;
@@ -199,19 +198,15 @@ public class DiceAnimator {
 
         renderDiceShape(centerX, centerY, renderSize, bodyColor, alphaMult);
 
-        Color borderColor = new Color(255, 255, 255, 200);
+        Color borderColor = ColorHelper.DICE_BORDER;
         renderDiceBorder(centerX, centerY, renderSize, borderColor, alphaMult);
 
         GL11.glColor4f(1f, 1f, 1f, 1f);
     }
 
     private void renderDiceShape(float cx, float cy, float size, Color color, float alphaMult) {
-        float r = color.getRed() / 255f;
-        float g = color.getGreen() / 255f;
-        float b = color.getBlue() / 255f;
-        float a = (color.getAlpha() / 255f) * alphaMult;
-
-        GL11.glColor4f(r, g, b, a);
+        float[] c = ColorHelper.toGLComponents(color, alphaMult);
+        GL11.glColor4f(c[0], c[1], c[2], c[3]);
 
         int vertices = type.getVertices();
         float radius = size / 2f;
@@ -228,12 +223,8 @@ public class DiceAnimator {
     }
 
     private void renderDiceBorder(float cx, float cy, float size, Color color, float alphaMult) {
-        float r = color.getRed() / 255f;
-        float g = color.getGreen() / 255f;
-        float b = color.getBlue() / 255f;
-        float a = (color.getAlpha() / 255f) * alphaMult;
-
-        GL11.glColor4f(r, g, b, a);
+        float[] c = ColorHelper.toGLComponents(color, alphaMult);
+        GL11.glColor4f(c[0], c[1], c[2], c[3]);
         GL11.glLineWidth(2f);
 
         int vertices = type.getVertices();
