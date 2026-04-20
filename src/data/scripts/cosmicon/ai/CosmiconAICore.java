@@ -1,6 +1,7 @@
 package data.scripts.cosmicon.ai;
 
-import data.scripts.cosmicon.ai.profiles.*;
+import data.scripts.cosmicon.ai.profiles.CharacterProfileRegistry;
+import data.scripts.cosmicon.ai.profiles.DefaultCharacterAIProfile;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.Strings;
 import java.util.*;
@@ -13,14 +14,6 @@ public final class CosmiconAICore {
 
     public static CharacterAIProfile getProfile(String characterId) {
         return CharacterProfileRegistry.get(characterId);
-    }
-
-    public static PrismaticDiceProfile getPrismaticDiceProfile(String diceId) {
-        return PrismaticDiceRegistry.get(diceId);
-    }
-
-    public static boolean hasPrismaticDiceProfile(String diceId) {
-        return PrismaticDiceRegistry.has(diceId);
     }
 
     public static AIDecision makeDecision(

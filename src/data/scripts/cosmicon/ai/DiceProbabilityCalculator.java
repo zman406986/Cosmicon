@@ -69,15 +69,6 @@ public final class DiceProbabilityCalculator {
         };
     }
 
-    public static float expectedValue(int[] customFaces) {
-        if (customFaces == null || customFaces.length == 0) return 0f;
-        float sum = 0f;
-        for (int face : customFaces) {
-            sum += face;
-        }
-        return sum / customFaces.length;
-    }
-
     public static float[] getSingleDicePMF(DiceType type) {
         int maxFace = type.getMaxFace();
         float[] pmf = new float[maxFace + 1];
@@ -213,19 +204,6 @@ public final class DiceProbabilityCalculator {
 
     public static void clearCache() {
         SUM_PMF_CACHE.clear();
-    }
-
-    public static int getMaxPossibleSum(List<DiceType> diceTypes, int selectCount) {
-        int maxSum = 0;
-        List<Integer> maxFaces = new ArrayList<>();
-        for (DiceType type : diceTypes) {
-            maxFaces.add(type.getMaxFace());
-        }
-        maxFaces.sort(java.util.Collections.reverseOrder());
-        for (int i = 0; i < Math.min(selectCount, maxFaces.size()); i++) {
-            maxSum += maxFaces.get(i);
-        }
-        return maxSum;
     }
 
     public static int countPairs(List<Integer> values) {

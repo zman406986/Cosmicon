@@ -33,8 +33,4 @@ public final class ColorHelper {
             (color.getAlpha() / 255f) * alphaMult
         };
     }
-
-    public static float[] toGLComponents(Color color) {
-        return toGLComponents(color, 1.0f);
-    }
 }

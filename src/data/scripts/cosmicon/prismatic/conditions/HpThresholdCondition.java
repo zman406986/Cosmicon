@@ -17,10 +17,6 @@ public class HpThresholdCondition implements AvailabilityCondition {
         return new HpThresholdCondition(threshold, true);
     }
     
-    public static HpThresholdCondition atOrAbove(int threshold) {
-        return new HpThresholdCondition(threshold, false);
-    }
-    
     @Override
     public boolean isAvailable(ConditionContext context) {
         if (lessOrEqual) {

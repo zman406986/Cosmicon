@@ -9,8 +9,6 @@ import java.util.List;
 public class YaoGuangAIProfile extends AbstractCharacterAIProfile {
 
     private static final int ATTACK_THRESHOLD = 18;
-    private static final int THORNS_DAMAGE_PER_REROLL = 2;
-    private static final int FREE_REROLLS = 2;
     private static final float PRISMATIC_USE_VALUE = 8f;
 
     @Override
@@ -59,33 +57,9 @@ public class YaoGuangAIProfile extends AbstractCharacterAIProfile {
         return 0f;
     }
 
-    public float evaluateRerollWithThornsCost(int currentRerollsUsed, float improvement, int currentAttackSum) {
-        int newRerollsUsed = currentRerollsUsed + 1;
-        int thornsCost = PassiveEventSystem.getThornsCostForRerollYaoGuang(currentRerollsUsed);
-        
-        float thornsPenalty = thornsCost * 1.5f;
-        
-        float cleansingBonus = 0f;
-        if (currentAttackSum + improvement >= ATTACK_THRESHOLD && currentAttackSum < ATTACK_THRESHOLD) {
-            cleansingBonus = calculateThornsCleansingValue(newRerollsUsed);
-        }
-        
-        return improvement - thornsPenalty + cleansingBonus;
-    }
-
     private float calculateThornsCleansingValue(int totalRerollsUsed) {
         int totalThorns = PassiveEventSystem.getTotalThornsAfterRerollsYaoGuang(totalRerollsUsed);
         return totalThorns * 1.2f;
-    }
-
-    public boolean shouldContinueRerolling(int currentSum, int rerollsRemaining, int rerollsUsedThisTurn) {
-        if (currentSum >= ATTACK_THRESHOLD) return false;
-        if (rerollsRemaining <= 0) return false;
-        
-        int potentialThorns = PassiveEventSystem.getTotalThornsAfterRerollsYaoGuang(rerollsUsedThisTurn + 1);
-        int currentThorns = PassiveEventSystem.getTotalThornsAfterRerollsYaoGuang(rerollsUsedThisTurn);
-
-        return potentialThorns <= currentThorns || potentialThorns < 6;
     }
 
     @Override

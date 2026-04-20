@@ -313,8 +313,6 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             }
         }
         
-        state.setLastDamageDealt(damage);
-        
         if (result.thornsDamage() > 0) {
             state.applyDamageTo(playerIsAttacker, result.thornsDamage());
         }
@@ -411,20 +409,21 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         state.notifyBattleEnd(winner);
     }
     
-    public boolean confirmPlayerSelection() {
+    public void confirmPlayerSelection() {
         if (state.getCurrentPhase() == BattleState.Phase.REROLL_PHASE) {
-            return executePlayerReroll();
+            executePlayerReroll();
+            return;
         }
         
         if (state.getCurrentPhase() != BattleState.Phase.SELECTING_ATTACK && 
-            state.getCurrentPhase() != BattleState.Phase.SELECTING_DEFENSE) return false;
+            state.getCurrentPhase() != BattleState.Phase.SELECTING_DEFENSE) return;
         
         int requiredCount = state.getRequiredDiceCount(true);
         int selectedCount = state.countSelectedDice(true);
         
-        if (selectedCount != requiredCount) return false;
+        if (selectedCount != requiredCount) return;
         
-        if (!state.canConfirmPrismaticSelection(true)) return false;
+        if (!state.canConfirmPrismaticSelection(true)) return;
         
         state.recordSelectedFaces(true);
         
@@ -448,12 +447,10 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             state.notifyPhaseChange(BattleState.Phase.RESOLVING);
             resolveDamage();
         }
-        
-        return true;
     }
     
-    private boolean executePlayerReroll() {
-        if (diceRoller == null) return false;
+    private void executePlayerReroll() {
+        if (diceRoller == null) return;
         
         diceRoller.rerollSelected(state, true);
         StatusEffectProcessor.BattleContext playerContext = createBattleContext(true);
@@ -464,7 +461,6 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         if (!state.isPlayerAttacker() && state.getRemainingRerolls(false) > 0) {
             executeOpponentReroll();
         }
-        return true;
     }
     
 public void skipRerollPhase() {
@@ -482,10 +478,6 @@ public void skipRerollPhase() {
 
     private StatusEffectProcessor.BattleContext createBattleContext(boolean forPlayer) {
         return state.createBattleContext(forPlayer);
-    }
-    
-    private List<Boolean> getPrismaticFlagsForDice(boolean forPlayer) {
-        return state.getPrismaticFlagsForDice(forPlayer);
     }
     
     private void processPassiveEffects(boolean forPlayer) {

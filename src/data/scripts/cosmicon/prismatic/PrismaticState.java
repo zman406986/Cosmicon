@@ -59,8 +59,6 @@ public class PrismaticState {
         }
     }
     
-    public Set<Integer> getSelectedIndices() { return selectedIndices; }
-    
     public List<PrismaticDiceInstance> getSelectedDice() {
         List<PrismaticDiceInstance> selected = new ArrayList<>();
         for (PrismaticDiceInstance prismaticDiceInstance : rolledDice)

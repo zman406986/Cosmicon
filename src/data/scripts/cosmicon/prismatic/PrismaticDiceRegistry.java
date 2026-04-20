@@ -1,6 +1,5 @@
 package data.scripts.cosmicon.prismatic;
 
-import data.scripts.cosmicon.battle.BattleState.TurnType;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.prismatic.conditions.*;
 import java.util.HashMap;

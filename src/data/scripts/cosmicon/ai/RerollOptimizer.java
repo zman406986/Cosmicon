@@ -2,7 +2,6 @@ package data.scripts.cosmicon.ai;
 
 import data.scripts.cosmicon.battle.DiceType;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;

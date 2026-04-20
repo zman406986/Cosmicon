@@ -52,10 +52,6 @@ public class PassiveEvaluator {
             this.healAmount = heal;
         }
 
-        public void setInstantDamageToOpponent(int damage) {
-            this.instantDamageToOpponent = damage;
-        }
-
         public void setToughnessTrigger(int damage, int remove) {
             this.triggerToughnessInstantDamage = true;
             this.instantDamageToOpponent = damage;
@@ -129,10 +125,6 @@ public class PassiveEvaluator {
 
         public void setInstantDamageToAttacker(int damage) {
             this.instantDamageToAttacker = damage;
-        }
-
-        public void addGrantedEffect(StatusEffect effect, int layers) {
-            grantedEffects.add(new GrantedEffect(effect, layers));
         }
 
         public void setDescription(String desc) {
@@ -271,15 +263,15 @@ public class PassiveEvaluator {
             case "acheron" -> evaluateAcheron(result, diceValues, isAttacking);
             case "kafka" -> evaluateKafka(result, diceValues, isAttacking);
             case "robin" -> evaluateRobin(result, diceValues, isAttacking);
-            case "march_7th" -> evaluateMarch7th(result, diceValues, isAttacking);
+            case "march_7th" -> evaluateMarch7th(result, diceValues);
             case "hyacine" -> evaluateHyacine(result, diceValues, isAttacking);
             case "dan_heng_pt" -> evaluateDanHengPT(result, diceValues, isAttacking);
             case "phainon" -> evaluatePhainon(result, diceValues, isAttacking);
-            case "the_herta" -> evaluateTheHerta(result, diceValues, isAttacking);
-            case "sparxie" -> evaluateSparxie(result, diceValues, isAttacking);
-            case "cyrene" -> evaluateCyrene(result, diceValues, isAttacking);
+            case "the_herta" -> {}
+            case "sparxie" -> evaluateSparxie(result, diceValues);
+            case "cyrene" -> {}
             case "castorice" -> {}
-            case "yao_guang" -> evaluateYaoGuang(result, diceValues, isAttacking);
+            case "yao_guang" -> {}
         }
 
         return result;
@@ -329,7 +321,7 @@ public class PassiveEvaluator {
         }
     }
 
-    private static void evaluateMarch7th(PassiveResult result, List<Integer> values, boolean isAttacking) {
+    private static void evaluateMarch7th(PassiveResult result, List<Integer> values) {
         if (values == null || values.isEmpty()) return;
         int pairs = countPairs(values);
         if (pairs > 0) {
@@ -366,24 +358,12 @@ public class PassiveEvaluator {
             }
         }
     }
-    
-    private static void evaluateTheHerta(PassiveResult result, List<Integer> values, boolean isAttacking) {
-        // End-of-turn passive only, handled in evaluateEndOfTurnPassive
-    }
-    
-    private static void evaluateSparxie(PassiveResult result, List<Integer> values, boolean isAttacking) {
+
+    private static void evaluateSparxie(PassiveResult result, List<Integer> values) {
         if (values == null || values.isEmpty()) return;
         if (hasIdenticalNumbers(values)) {
             result.addGrantedEffect(StatusEffect.HACK, 1);
         }
-    }
-    
-    private static void evaluateCyrene(PassiveResult result, List<Integer> values, boolean isAttacking) {
-        // Cumulative-based passive, handled in evaluateCyreneProgress
-    }
-    
-    private static void evaluateYaoGuang(PassiveResult result, List<Integer> values, boolean isAttacking) {
-        // Complex passive logic handled by separate processor
     }
     
     public static class EndOfTurnPassiveResult {
@@ -403,10 +383,6 @@ public class PassiveEvaluator {
         
         public void setGrantArise(boolean grant) {
             this.grantArise = grant;
-        }
-        
-        public void setAtkLevelBoost(int boost) {
-            this.atkLevelBoost = boost;
         }
         
         public int getPrismaticUseBonus() {
@@ -454,34 +430,6 @@ public class PassiveEvaluator {
         return !thresholdAlreadyMet && cumulativeTotal > 24;
     }
 
-    public static CyreneProgressResult evaluateCyreneProgress(int cumulativeTotal, int currentTurnValue) {
-        CyreneProgressResult result = new CyreneProgressResult();
-        int newTotal = cumulativeTotal + currentTurnValue;
-        result.setNewCumulativeTotal(newTotal);
-        result.setThresholdMet(newTotal > 24);
-        if (result.isThresholdMet()) {
-            result.setAtkLevelBoost(2);
-            result.setGrantArise(true);
-        }
-        return result;
-    }
-
-    public static class CyreneProgressResult {
-        private int newCumulativeTotal;
-        private boolean thresholdMet;
-        private int atkLevelBoost;
-        private boolean grantArise;
-
-        public int getNewCumulativeTotal() { return newCumulativeTotal; }
-        public void setNewCumulativeTotal(int value) { this.newCumulativeTotal = value; }
-        public boolean isThresholdMet() { return thresholdMet; }
-        public void setThresholdMet(boolean met) { this.thresholdMet = met; }
-        public int getAtkLevelBoost() { return atkLevelBoost; }
-        public void setAtkLevelBoost(int boost) { this.atkLevelBoost = boost; }
-        public boolean shouldGrantArise() { return grantArise; }
-        public void setGrantArise(boolean grant) { this.grantArise = grant; }
-    }
-
     public static PassiveEvaluation toPassiveEvaluation(PassiveResult result, String description) {
         if (!result.hasEffects()) {
             return PassiveEvaluation.notTriggered();
@@ -496,8 +444,8 @@ public class PassiveEvaluator {
     public static PostDamageResult evaluatePostDamageForCharacter(String characterId, int damageTaken) {
         PostDamageResult result = new PostDamageResult();
         
-        switch (characterId) {
-            case "castorice" -> evaluateCastoricePostDamage(result, damageTaken);
+        if ("castorice".equals(characterId)) {
+            evaluateCastoricePostDamage(result, damageTaken);
         }
         
         return result;

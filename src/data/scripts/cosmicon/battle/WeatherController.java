@@ -16,24 +16,12 @@ public class WeatherController {
         this.schedule = new WeatherManager();
     }
     
-    public WeatherController(boolean isStoryBattle, String storyBattleId) {
-        this.schedule = new WeatherManager(isStoryBattle, storyBattleId);
-    }
-    
     public WeatherType getCurrentWeather() {
         return schedule.getCurrentWeather();
     }
     
     public void advanceTurn() {
         schedule.advanceTurn();
-    }
-    
-    public int getCurrentTurn() {
-        return schedule.getCurrentTurn();
-    }
-    
-    public boolean isWeatherChangeTurn() {
-        return schedule.isWeatherChangeTurn();
     }
     
     public void applyStartOfBattle(BattleState state) {
@@ -236,7 +224,7 @@ public class WeatherController {
                 if (state.isPlayerAttacker()) {
                     List<Integer> values = state.getPlayerDiceValues();
                     List<Boolean> selected = state.getPlayerDiceSelected();
-                    boolean allSixes = checkAllSpecificValue(values, selected, 6);
+                    boolean allSixes = checkAllSixes(values, selected);
                     int selectedCount = countSelected(selected);
                     if (allSixes && selectedCount > 0) {
                         int temp = state.getPlayerHp();
@@ -349,9 +337,9 @@ public class WeatherController {
         return false;
     }
     
-    private boolean checkAllSpecificValue(List<Integer> values, List<Boolean> selected, int targetValue) {
+    private boolean checkAllSixes(List<Integer> values, List<Boolean> selected) {
         for (int i = 0; i < values.size(); i++) {
-            if (selected.get(i) && values.get(i) != targetValue) {
+            if (selected.get(i) && values.get(i) != 6) {
                 return false;
             }
         }

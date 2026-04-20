@@ -1,6 +1,7 @@
 package data.scripts.cosmicon.battle;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,8 +72,6 @@ public class BattleState {
 
     private int attackValue;
     private int defenseValue;
-    private int lastDamageDealt;
-
     private String winner;
 
     private final List<BattleEventListener> listeners;
@@ -82,9 +81,7 @@ public class BattleState {
         void onDiceRerolled(boolean isPlayer, List<Integer> newValues, List<Integer> rerolledIndices);
         void onBattleEnd(String winner);
         void onDamageResolved(int damage, int playerHp, int opponentHp);
-        void onDiceSelected(boolean isPlayer, int index, boolean selected);
         void onPrismaticDiceRolled(boolean isPlayer, List<PrismaticDiceInstance> dice);
-        void onPrismaticDiceSelected(boolean isPlayer, int index, boolean selected);
         void onMustSelectDiceMarked(boolean isPlayer, List<PrismaticDiceInstance> mustSelect);
         void onDiceRolled(boolean isPlayer, List<DiceType> types, List<Integer> values);
         void onWeatherChange(WeatherType newWeather);
@@ -318,10 +315,6 @@ public class BattleState {
         return defenseValue;
     }
 
-    public int getLastDamageDealt() {
-        return lastDamageDealt;
-    }
-
     public String getWinner() {
         return winner;
     }
@@ -383,19 +376,6 @@ public class BattleState {
         List<Boolean> selected = new ArrayList<>();
         for (PrismaticDiceInstance d : dice) selected.add(d.isSelected());
         return selected;
-    }
-    
-    public List<Boolean> getPlayerPrismaticDiceSelected() {
-        return getPrismaticDiceSelected(true);
-    }
-    
-    public List<Boolean> getOpponentPrismaticDiceSelected() {
-        return getPrismaticDiceSelected(false);
-    }
-    
-    public boolean selectPrismaticDice(int index, boolean isPlayer) {
-        if (prismaticManager == null) return false;
-        return prismaticManager.selectPrismaticDice(isPlayer, index);
     }
     
     public boolean canConfirmPrismaticSelection(boolean isPlayer) {
@@ -616,10 +596,6 @@ public class BattleState {
         this.defenseValue = value;
     }
     
-    public void setLastDamageDealt(int damage) {
-        this.lastDamageDealt = damage;
-    }
-    
     public void incrementTurnNumber() {
         this.turnNumber++;
     }
@@ -631,9 +607,7 @@ public class BattleState {
     public void clearDiceSelection(boolean forPlayer) {
         List<Boolean> selected = getDiceSelected(forPlayer);
         if (selected != null) {
-            for (int i = 0; i < selected.size(); i++) {
-                selected.set(i, false);
-            }
+            Collections.fill(selected, false);
         }
     }
     
@@ -692,12 +666,6 @@ public class BattleState {
     public void notifyPrismaticDiceRolled(boolean isPlayer, List<PrismaticDiceInstance> dice) {
         for (BattleEventListener l : listeners) {
             l.onPrismaticDiceRolled(isPlayer, dice);
-        }
-    }
-    
-    public void notifyPrismaticDiceSelected(boolean isPlayer, int index, boolean selected) {
-        for (BattleEventListener l : listeners) {
-            l.onPrismaticDiceSelected(isPlayer, index, selected);
         }
     }
     

@@ -1,7 +1,6 @@
 package data.scripts.cosmicon.battle;
 
 import data.scripts.cosmicon.ai.DiceProbabilityCalculator;
-import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
 
 public class BattleController {
@@ -34,6 +33,10 @@ public class BattleController {
         CharacterCard playerCard = CharacterRegistry.getRandomCharacter();
         CharacterCard opponentCard = CharacterRegistry.getRandomOpponent();
         
+        if (playerCard == null || opponentCard == null) {
+            throw new IllegalStateException("Failed to load character cards");
+        }
+        
         state.init(playerCard, opponentCard);
         
         turnProcessor.startBattle();
@@ -63,17 +66,8 @@ public class BattleController {
         state.togglePlayerPrismaticMode();
     }
 
-    public void onSelectPrismaticType(PrismaticDiceType type, boolean trueVersion) {
-        state.setPlayerSelectedPrismaticType(type, trueVersion);
-        state.rollPrismaticDice(true);
-    }
-
     public BattleState getState() {
         return state;
-    }
-
-    public BattleState.Phase getCurrentPhase() {
-        return state.getCurrentPhase();
     }
 
     public void advanceAiSelection(float amount) {

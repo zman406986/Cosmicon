@@ -30,10 +30,5 @@ public interface AvailabilityCondition {
         {
                 return faceSelectionHistory.getOrDefault(faceValue, 0);
             }
-
-        public float getHpPercentage()
-        {
-                return maxHp > 0 ? (float) currentHp / maxHp : 1f;
-            }
         }
 }

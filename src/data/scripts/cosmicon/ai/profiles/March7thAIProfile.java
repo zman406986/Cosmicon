@@ -69,19 +69,6 @@ public class March7thAIProfile extends AbstractCharacterAIProfile {
         return PassiveEvaluator.countPairs(selectedValues) * INSTANT_DAMAGE_PER_PAIR;
     }
 
-    public int calculateTotalDamageOutput(int baseAttackDamage, List<Integer> selectedValues) {
-        int pairs = PassiveEvaluator.countPairs(selectedValues);
-        return baseAttackDamage + pairs * INSTANT_DAMAGE_PER_PAIR;
-    }
-
-    public float estimatePairPotential(List<Integer> allDiceValues, int requiredSelectCount) {
-        if (allDiceValues == null || allDiceValues.isEmpty() || requiredSelectCount < 2) {
-            return 0f;
-        }
-
-        return Math.min(PassiveEvaluator.countPairs(allDiceValues), requiredSelectCount / 2);
-    }
-
     @Override
     protected float calculatePassiveBonus(List<Integer> selectedValues) {
         if (selectedValues == null || selectedValues.isEmpty()) return 0f;

@@ -81,17 +81,6 @@ public final class PassiveEventSystem {
         return result.getInstantDamageToAttacker();
     }
 
-    public static int processInstantDamageEffects(BattleState state, boolean forPlayer) {
-        var effects = forPlayer ? state.getPlayerEffects() : state.getOpponentEffects();
-        int instantDamageLayers = effects.getLayers(StatusEffect.INSTANT_DAMAGE);
-        
-        if (instantDamageLayers <= 0) return 0;
-
-        effects.removeEffect(StatusEffect.INSTANT_DAMAGE);
-
-        return instantDamageLayers;
-    }
-
     public static void onEndOfTurn(BattleState state, boolean forPlayer) {
         String characterId = getCharacterId(state, forPlayer);
         if (characterId == null) return;
@@ -130,20 +119,6 @@ public final class PassiveEventSystem {
         }
     }
 
-    public static int getThornsCostForReroll(BattleState state, boolean forPlayer, int currentRerollsUsed) {
-        String characterId = getCharacterId(state, forPlayer);
-        if (!"yao_guang".equals(characterId)) return 0;
-        if (currentRerollsUsed <= YAO_GUANG_FREE_REROLL_THRESHOLD) return 0;
-        return YAO_GUANG_THORNS_PER_EXTRA_REROLL;
-    }
-
-    public static int getTotalThornsAfterRerolls(BattleState state, boolean forPlayer, int totalRerollsUsed) {
-        String characterId = getCharacterId(state, forPlayer);
-        if (!"yao_guang".equals(characterId)) return 0;
-        if (totalRerollsUsed <= YAO_GUANG_FREE_REROLL_THRESHOLD) return 0;
-        return (totalRerollsUsed - YAO_GUANG_FREE_REROLL_THRESHOLD) * YAO_GUANG_THORNS_PER_EXTRA_REROLL;
-    }
-
     public static int getThornsCostForRerollYaoGuang(int currentRerollsUsed) {
         if (currentRerollsUsed <= YAO_GUANG_FREE_REROLL_THRESHOLD) return 0;
         return YAO_GUANG_THORNS_PER_EXTRA_REROLL;
@@ -152,12 +127,6 @@ public final class PassiveEventSystem {
     public static int getTotalThornsAfterRerollsYaoGuang(int totalRerollsUsed) {
         if (totalRerollsUsed <= YAO_GUANG_FREE_REROLL_THRESHOLD) return 0;
         return (totalRerollsUsed - YAO_GUANG_FREE_REROLL_THRESHOLD) * YAO_GUANG_THORNS_PER_EXTRA_REROLL;
-    }
-
-    public static boolean wouldCleanseThorns(BattleState state, boolean forPlayer, int attackValue) {
-        String characterId = getCharacterId(state, forPlayer);
-        if (!"yao_guang".equals(characterId)) return false;
-        return attackValue >= YAO_GUANG_ATTACK_THRESHOLD;
     }
 
     private static String getCharacterId(BattleState state, boolean forPlayer) {

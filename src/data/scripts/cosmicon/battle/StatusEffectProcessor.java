@@ -29,7 +29,7 @@ public class StatusEffectProcessor {
         DESTINED,
         VENOM,
         INSTANT_DAMAGE,
-TACTICS,
+        TACTICS,
         YAO_GUANG_REROLLS,
         REFLECT
     }
@@ -47,7 +47,6 @@ TACTICS,
 
     private final Map<StatusEffect, Integer> effects;
     private final Map<StatusEffect, Integer> durations;
-    private final List<StatusEffect> clearedEffects;
     private boolean unyieldingActive;
     private boolean comboTriggered;
     private int lastStandHpReduction;
@@ -57,7 +56,6 @@ TACTICS,
     public StatusEffectProcessor() {
         this.effects = new EnumMap<>(StatusEffect.class);
         this.durations = new EnumMap<>(StatusEffect.class);
-        this.clearedEffects = new ArrayList<>();
         this.unyieldingActive = false;
         this.comboTriggered = false;
         this.lastStandHpReduction = 0;
@@ -102,14 +100,8 @@ TACTICS,
         return durations.getOrDefault(effect, PERMANENT_DURATION);
     }
 
-    public boolean isPermanent(StatusEffect effect) {
-        return !durations.containsKey(effect);
-    }
-
     public void clearTemporaryEffects() {
-        clearedEffects.clear();
         if (hasEffect(StatusEffect.THORNS)) {
-            clearedEffects.add(StatusEffect.THORNS);
             effects.remove(StatusEffect.THORNS);
             durations.remove(StatusEffect.THORNS);
         }
@@ -119,22 +111,21 @@ TACTICS,
         int totalDamage = 0;
 
         switch (phase) {
-            case START_OF_TURN -> totalDamage += processStartOfTurn(context);
+            case START_OF_TURN -> totalDamage += processStartOfTurn();
             case BEFORE_ROLL -> processBeforeRoll(turnType, context);
             case AFTER_ROLL -> processAfterRoll(turnType, context);
-            case BEFORE_SELECT -> processBeforeSelect(turnType, context);
-            case AFTER_SELECT -> processAfterSelect(turnType, context);
+            case AFTER_SELECT -> processAfterSelect(context);
             case BEFORE_RESOLUTION -> totalDamage += processBeforeResolution(context);
             case AFTER_RESOLUTION -> processAfterResolution(turnType, context);
-            case END_OF_TURN -> totalDamage += processEndOfTurn(context);
+            case END_OF_TURN -> totalDamage += processEndOfTurn();
+            case BEFORE_SELECT -> {}
         }
 
         return totalDamage;
     }
 
-    private int processStartOfTurn(BattleContext context) {
-        int damage = 0;
-        return damage;
+    private int processStartOfTurn() {
+        return 0;
     }
 
     private void processBeforeRoll(TurnType turnType, BattleContext context) {
@@ -170,10 +161,7 @@ TACTICS,
         }
     }
 
-    private void processBeforeSelect(TurnType turnType, BattleContext context) {
-    }
-
-    private void processAfterSelect(TurnType turnType, BattleContext context) {
+    private void processAfterSelect(BattleContext context) {
         if (hasEffect(StatusEffect.LEVEL_UP)) {
             int layers = getLayers(StatusEffect.LEVEL_UP);
             context.applyLevelUp(layers);
@@ -192,7 +180,6 @@ TACTICS,
         if (hasEffect(StatusEffect.THORNS)) {
             int thornsDamage = getLayers(StatusEffect.THORNS);
             damage += thornsDamage;
-            clearedEffects.add(StatusEffect.THORNS);
             effects.remove(StatusEffect.THORNS);
             durations.remove(StatusEffect.THORNS);
         }
@@ -225,7 +212,7 @@ TACTICS,
         }
     }
 
-    private int processEndOfTurn(BattleContext context) {
+    private int processEndOfTurn() {
         int damage = 0;
 
         if (hasEffect(StatusEffect.POISON)) {
@@ -260,7 +247,7 @@ TACTICS,
         }
     }
 
-    public int calculateAttackBonus(TurnType turnType, int baseAttackValue) {
+    public int calculateAttackBonus(TurnType turnType) {
         int bonus = 0;
 
         if (turnType == TurnType.ATTACK) {
@@ -278,7 +265,7 @@ TACTICS,
         return bonus;
     }
 
-    public int calculateDefenseBonus(TurnType turnType, int baseDefenseValue) {
+    public int calculateDefenseBonus(TurnType turnType) {
         int bonus = 0;
 
         if (turnType == TurnType.DEFENSE) {
@@ -306,24 +293,8 @@ TACTICS,
         return hasEffect(StatusEffect.PERFORATION);
     }
 
-    public boolean shouldIgnoreForcefield() {
-        return hasEffect(StatusEffect.PERFORATION);
-    }
-
     public boolean isForcefieldActive() {
         return hasEffect(StatusEffect.FORCEFIELD);
-    }
-
-    public boolean isUnyieldingActive() {
-        return hasEffect(StatusEffect.UNYIELDING) || unyieldingActive;
-    }
-
-    public boolean hasCombo() {
-        return hasEffect(StatusEffect.COMBO) || comboTriggered;
-    }
-
-    public boolean hasCounter() {
-        return hasEffect(StatusEffect.COUNTER);
     }
 
     public int calculateCounterDamage(int attackValue, int defenseValue) {
@@ -338,16 +309,6 @@ TACTICS,
         unyieldingActive = false;
     }
 
-    public void copyFrom(StatusEffectProcessor other) {
-        effects.clear();
-        effects.putAll(other.effects);
-        durations.clear();
-        durations.putAll(other.durations);
-        unyieldingActive = other.unyieldingActive;
-        comboTriggered = other.comboTriggered;
-        lastStandHpReduction = other.lastStandHpReduction;
-    }
-
     public static class BattleContext {
         private int currentHp;
         private final int maxHp;
@@ -355,9 +316,6 @@ TACTICS,
         private final List<Integer> diceValues;
         private final List<Boolean> diceSelected;
         private final List<Boolean> diceIsPrismatic;
-        private int attackValue;
-        private int defenseValue;
-        private int selectedCount;
         private int instantDamageToOpponent;
 
         public BattleContext(int hp, int maxHp) {
@@ -367,9 +325,6 @@ TACTICS,
             this.diceValues = new ArrayList<>();
             this.diceSelected = new ArrayList<>();
             this.diceIsPrismatic = new ArrayList<>();
-            this.attackValue = 0;
-            this.defenseValue = 0;
-            this.selectedCount = 0;
             this.instantDamageToOpponent = 0;
         }
 
@@ -381,13 +336,6 @@ TACTICS,
             diceSelected.clear();
             for (int i = 0; i < values.size(); i++) {
                 diceSelected.add(false);
-            }
-        }
-
-        public void selectDice(int index) {
-            if (index >= 0 && index < diceSelected.size()) {
-                diceSelected.set(index, true);
-                selectedCount++;
             }
         }
 
@@ -417,26 +365,6 @@ TACTICS,
 
         public List<Integer> getDiceValues() {
             return diceValues;
-        }
-
-        public List<Boolean> getDiceSelected() {
-            return diceSelected;
-        }
-
-        public int getAttackValue() {
-            return attackValue;
-        }
-
-        public void setAttackValue(int value) {
-            this.attackValue = value;
-        }
-
-        public int getDefenseValue() {
-            return defenseValue;
-        }
-
-        public void setDefenseValue(int value) {
-            this.defenseValue = value;
         }
 
         public void applyHack() {
@@ -506,7 +434,6 @@ TACTICS,
             for (int i = 0; i < diceValues.size(); i++) {
                 diceSelected.set(i, true);
             }
-            selectedCount = diceValues.size();
         }
 
         public void addInstantDamageToOpponent(int damage) {

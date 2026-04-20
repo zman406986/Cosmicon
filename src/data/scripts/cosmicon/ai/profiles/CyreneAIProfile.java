@@ -65,25 +65,6 @@ public class CyreneAIProfile extends AbstractCharacterAIProfile {
         return bonus;
     }
 
-    public float evaluateThresholdProgress(int cumulativeTotal, int projectedTurnValue) {
-        int projectedTotal = cumulativeTotal + projectedTurnValue;
-        
-        if (projectedTotal > CUMULATIVE_THRESHOLD) {
-            return 50f;
-        }
-        
-        int remaining = CUMULATIVE_THRESHOLD - cumulativeTotal;
-        if (remaining > 0 && remaining <= projectedTurnValue) {
-            return 30f;
-        }
-        
-        return 0f;
-    }
-
-    public int getCumulativeThreshold() {
-        return CUMULATIVE_THRESHOLD;
-    }
-
     @Override
     protected float calculatePassiveBonus(List<Integer> selectedValues) {
         if (selectedValues == null || selectedValues.isEmpty()) return 0f;

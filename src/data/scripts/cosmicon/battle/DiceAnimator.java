@@ -193,7 +193,7 @@ public class DiceAnimator {
 
         Color bodyColor = type.getBodyColor();
         if (elapsed >= ROLL_DURATION + SETTLE_DURATION && !complete) {
-            bodyColor = brightenColor(bodyColor, 1.3f);
+            bodyColor = brightenColor(bodyColor);
         }
 
         renderDiceShape(centerX, centerY, renderSize, bodyColor, alphaMult);
@@ -249,10 +249,10 @@ public class DiceAnimator {
         };
     }
 
-    private Color brightenColor(Color color, float factor) {
-        int r = Math.min(255, (int) (color.getRed() * factor));
-        int g = Math.min(255, (int) (color.getGreen() * factor));
-        int b = Math.min(255, (int) (color.getBlue() * factor));
+    private Color brightenColor(Color color) {
+        int r = Math.min(255, (int) (color.getRed() * 1.3f));
+        int g = Math.min(255, (int) (color.getGreen() * 1.3f));
+        int b = Math.min(255, (int) (color.getBlue() * 1.3f));
         return new Color(r, g, b, color.getAlpha());
     }
 

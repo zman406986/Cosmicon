@@ -534,15 +534,7 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
     }
 
     @Override
-    public void onDiceSelected(boolean isPlayer, int index, boolean selected) {
-    }
-
-    @Override
     public void onPrismaticDiceRolled(boolean isPlayer, List<PrismaticDiceInstance> dice) {
-    }
-
-    @Override
-    public void onPrismaticDiceSelected(boolean isPlayer, int index, boolean selected) {
     }
 
     @Override
@@ -697,20 +689,8 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
 
         for (int i = 0; i < count; i++) {
             float x = startX + i * DICE_SPACING;
-            float y = startY;
-            diceHitboxes.add(new float[]{x, y, DICE_SIZE + DICE_CLICK_PADDING * 2, DICE_SIZE + DICE_CLICK_PADDING * 2});
+            diceHitboxes.add(new float[]{x, startY, DICE_SIZE + DICE_CLICK_PADDING * 2, DICE_SIZE + DICE_CLICK_PADDING * 2});
         }
-    }
-
-    private void startDiceAnimation(List<DiceType> types, List<Integer> values, boolean isPlayer) {
-        if (types == null || values == null) return;
-
-        float centerY = diceZoneCenterY;
-        if (!isPlayer) {
-            centerY -= 80f;
-        }
-
-        diceRollManager.startRoll(types, values, diceZoneCenterX, centerY);
     }
 
     @Override

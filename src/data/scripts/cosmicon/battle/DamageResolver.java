@@ -17,8 +17,8 @@ public class DamageResolver {
         int attackValue = state.getAttackValue();
         int defenseValue = state.getDefenseValue();
         
-        int modifiedAttack = attackValue + attackerEffects.calculateAttackBonus(TurnType.ATTACK, attackValue);
-        int modifiedDefense = defenseValue + defenderEffects.calculateDefenseBonus(TurnType.DEFENSE, defenseValue);
+        int modifiedAttack = attackValue + attackerEffects.calculateAttackBonus(TurnType.ATTACK);
+        int modifiedDefense = defenseValue + defenderEffects.calculateDefenseBonus(TurnType.DEFENSE);
         
         int attackerPrismaticValue = state.getPrismaticDiceTotalValue(state.isPlayerAttacker());
         int defenderPrismaticValue = state.getPrismaticDiceTotalValue(!state.isPlayerAttacker());
@@ -34,7 +34,6 @@ public class DamageResolver {
         if (defenderEffects.isForcefieldActive() && damage > 0) {
             int forcefieldLayers = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.FORCEFIELD);
             damage = Math.max(1, damage - forcefieldLayers);
-            damage = Math.max(0, damage);
         }
         
         int thornsDamage = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.THORNS);
