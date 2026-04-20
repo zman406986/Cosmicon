@@ -296,23 +296,23 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         float diceX = playerCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DICE_POOL_RIGHT_MARGIN - BattleRenderingUtils.DICE_ICON_SIZE / 2f - 11f;
         float diceStartY = playerCardY + BattleRenderingUtils.DICE_POOL_TOP_MARGIN + 3f;
 
-        playerPrismaticLabel = createCountLabel(settings, diceX, diceStartY);
-        playerOrangeLabel = createCountLabel(settings, diceX, diceStartY + 26);
-        playerPurpleLabel = createCountLabel(settings, diceX, diceStartY + 52);
-        playerBlueLabel = createCountLabel(settings, diceX, diceStartY + 78);
+        playerPrismaticLabel = createCountLabel(diceX, diceStartY);
+        playerOrangeLabel = createCountLabel(diceX, diceStartY + 26);
+        playerPurpleLabel = createCountLabel(diceX, diceStartY + 52);
+        playerBlueLabel = createCountLabel(diceX, diceStartY + 78);
 
         // Opponent dice count labels (centered on dice icons at top-right of card)
         diceX = opponentCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DICE_POOL_RIGHT_MARGIN - BattleRenderingUtils.DICE_ICON_SIZE / 2f - 11f;
         diceStartY = opponentCardY + BattleRenderingUtils.DICE_POOL_TOP_MARGIN + 3f;
 
-        opponentPrismaticLabel = createCountLabel(settings, diceX, diceStartY);
-        opponentOrangeLabel = createCountLabel(settings, diceX, diceStartY + 26);
-        opponentPurpleLabel = createCountLabel(settings, diceX, diceStartY + 52);
-        opponentBlueLabel = createCountLabel(settings, diceX, diceStartY + 78);
+        opponentPrismaticLabel = createCountLabel(diceX, diceStartY);
+        opponentOrangeLabel = createCountLabel(diceX, diceStartY + 26);
+        opponentPurpleLabel = createCountLabel(diceX, diceStartY + 52);
+        opponentBlueLabel = createCountLabel(diceX, diceStartY + 78);
     }
 
-    private LabelAPI createCountLabel(SettingsAPI settings, float x, float y) {
-        LabelAPI label = settings.createLabel("0", Fonts.DEFAULT_SMALL);
+    private LabelAPI createCountLabel(float x, float y) {
+        LabelAPI label = Global.getSettings().createLabel("0", Fonts.DEFAULT_SMALL);
         label.setColor(Color.WHITE);
         label.setAlignment(Alignment.MID);
         panel.addComponent((UIComponentAPI) label).setSize(22, 16).inTL(x, y);

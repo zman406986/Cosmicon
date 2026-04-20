@@ -35,7 +35,7 @@ public final class RerollOptimizer {
             return Set.of();
         }
 
-        List<RerollCandidate> candidates = new ArrayList<>();
+        List<RerollCandidate> candidates;
         int maxReroll = Math.min(rerollsAvailable, currentValues.size());
 
         if (maxReroll <= 3 && currentValues.size() <= 7) {
@@ -240,58 +240,6 @@ public final class RerollOptimizer {
             }
         }
         return sum;
-    }
-
-    public static float probabilityToReachTargetAfterReroll(
-            List<Integer> currentValues,
-            List<DiceType> diceTypes,
-            Set<Integer> rerollIndices,
-            int requiredCount,
-            int targetSum) {
-        
-        List<float[]> pmfs = new ArrayList<>();
-        List<Integer> fixedValues = new ArrayList<>();
-        
-        for (int i = 0; i < currentValues.size(); i++) {
-            if (rerollIndices.contains(i)) {
-                pmfs.add(DiceProbabilityCalculator.getSingleDicePMF(diceTypes.get(i)));
-            } else {
-                fixedValues.add(currentValues.get(i));
-            }
-        }
-
-        int fixedSum = 0;
-        for (int v : fixedValues) fixedSum += v;
-        
-        int rerollCount = rerollIndices.size();
-        int selectFromReroll = requiredCount - (currentValues.size() - rerollCount);
-        selectFromReroll = Math.max(0, Math.min(selectFromReroll, rerollCount));
-
-        if (pmfs.isEmpty()) {
-            return fixedSum >= targetSum ? 1f : 0f;
-        }
-
-        float[] combinedPMF = computeRerollSumPMF(pmfs, selectFromReroll);
-        
-        float probability = 0f;
-        int neededFromReroll = targetSum - fixedSum;
-        for (int s = Math.max(0, neededFromReroll); s < combinedPMF.length; s++) {
-            probability += combinedPMF[s];
-        }
-
-        return probability;
-    }
-
-    private static float[] computeRerollSumPMF(List<float[]> pmfs, int selectCount) {
-        if (pmfs.isEmpty() || selectCount <= 0) return new float[0];
-        return DiceProbabilityCalculator.getSumPMFWithCustomDice(
-            pmfs.stream().map(pmf -> {
-                int[] faces = new int[pmf.length - 1];
-                for (int i = 1; i < pmf.length; i++) {
-                    if (pmf[i] > 0) faces[i - 1] = i;
-                }
-                return faces;
-            }).toList(), selectCount);
     }
 
     private record RerollCandidate(Set<Integer> rerollIndices, float expectedImprovement) {}

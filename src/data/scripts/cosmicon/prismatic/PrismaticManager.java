@@ -45,14 +45,6 @@ public class PrismaticManager {
             .collect(Collectors.toList());
     }
     
-    public boolean canUsePrismaticDice(PrismaticDiceType type, boolean forPlayer, BattleState state) {
-        PrismaticState ps = getState(forPlayer);
-        if (ps.getUsesByType(type) <= 0) return false;
-        
-        ConditionContext context = createConditionContext(state, forPlayer);
-        return type.isAvailable(context);
-    }
-    
     public void rollPrismaticDice(boolean forPlayer, PrismaticDiceType type, boolean trueVersion) {
         PrismaticState ps = getState(forPlayer);
         ps.setSelectedType(type);
@@ -62,11 +54,6 @@ public class PrismaticManager {
         ps.addRolledDice(instance);
         
         processor.checkDestinedDice(instance);
-    }
-    
-    public boolean selectPrismaticDice(boolean forPlayer, int index) {
-        PrismaticState ps = getState(forPlayer);
-        return ps.selectDice(index);
     }
     
     public void applyQueuedEffects(BattleState state) {
@@ -98,10 +85,6 @@ public class PrismaticManager {
     
     public int getUses(boolean forPlayer) {
         return getState(forPlayer).getUses();
-    }
-    
-    public int getUsesByType(PrismaticDiceType type, boolean forPlayer) {
-        return getState(forPlayer).getUsesByType(type);
     }
     
     public List<PrismaticDiceInstance> getRolledDice(boolean forPlayer) {
@@ -143,10 +126,6 @@ public class PrismaticManager {
             return baseValue * 2;
         }
         return baseValue;
-    }
-    
-    public boolean isDoubleValueActive(boolean forPlayer) {
-        return getState(forPlayer).isDoubleValueActive();
     }
     
     public void setDoubleValueActive(boolean forPlayer, boolean active) {

@@ -38,8 +38,7 @@ public class YaoGuangAIProfile extends AbstractCharacterAIProfile {
         
         int sum = PassiveEvaluator.sumOfValues(selectedValues);
         if (sum >= ATTACK_THRESHOLD) {
-            float bonusValue = PRISMATIC_USE_VALUE;
-            return PassiveEvaluation.triggered(bonusValue, Strings.get("character.yao_guang.passive_desc"));
+            return PassiveEvaluation.triggered(PRISMATIC_USE_VALUE, Strings.get("character.yao_guang.passive_desc"));
         }
         
         return PassiveEvaluation.notTriggered();

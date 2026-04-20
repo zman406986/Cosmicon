@@ -114,11 +114,6 @@ public final class PassiveEventSystem {
         }
     }
 
-    public static int getTotalThornsAfterRerollsYaoGuang(int totalRerollsUsed) {
-        if (totalRerollsUsed <= YAO_GUANG_FREE_REROLL_THRESHOLD) return 0;
-        return (totalRerollsUsed - YAO_GUANG_FREE_REROLL_THRESHOLD) * YAO_GUANG_THORNS_PER_EXTRA_REROLL;
-    }
-
     private static String getCharacterId(BattleState state, boolean forPlayer) {
         CharacterCard card = state.getCard(forPlayer);
         return card != null ? card.getId() : null;

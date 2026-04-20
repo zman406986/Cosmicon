@@ -339,40 +339,7 @@ public class BattleState {
     
     
     
-    public void setPlayerSelectedPrismaticType(PrismaticDiceType type, boolean useTrueVersion) {
-        if (prismaticManager != null) prismaticManager.setSelectedType(true, type, useTrueVersion);
-    }
-    
-    
-    
-    
-    
-    public void rollPrismaticDice(boolean isPlayer) {
-        if (prismaticManager == null) return;
-        
-        prismaticManager.clearRolledDice();
-        
-        PrismaticDiceType type = isPlayer ? prismaticManager.getSelectedType(true) : null;
-        boolean useTrue = isPlayer && prismaticManager.isUseTrueVersion(true);
-        
-        if (type == null && isPlayer) return;
-        if (!isPlayer) return;
-        
-        prismaticManager.rollPrismaticDice(isPlayer, type, useTrue);
-        
-        notifyPrismaticDiceRolled(isPlayer, prismaticManager.getRolledDice(isPlayer));
-        
-        List<PrismaticDiceInstance> mustSelect = prismaticManager.getMustSelectDice(isPlayer);
-        if (!mustSelect.isEmpty()) {
-            notifyMustSelectDiceMarked(isPlayer, mustSelect);
-        }
-    }
-    
-    
-    
-    
-    
-    public boolean canConfirmPrismaticSelection(boolean isPlayer) {
+public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         if (prismaticManager == null) return true;
         return prismaticManager.canConfirmPrismaticSelection(isPlayer);
     }

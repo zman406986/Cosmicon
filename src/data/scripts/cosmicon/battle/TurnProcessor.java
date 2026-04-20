@@ -190,7 +190,7 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         boolean isAttackPhase = state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK;
         boolean aiIsAttacker = !state.isPlayerAttacker();
         
-        if ((isAttackPhase && aiIsAttacker) || (!isAttackPhase && !aiIsAttacker)) {
+        if (isAttackPhase == aiIsAttacker) {
             aiEngine.executeSelection(state, false);
         } else {
             aiEngine.executeSelection(state, true);

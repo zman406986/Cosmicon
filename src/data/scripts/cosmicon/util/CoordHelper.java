@@ -13,10 +13,6 @@ public final class CoordHelper {
         return panelGlY + panelHeight - uiY;
     }
     
-    public static float glToUiY(float panelGlY, float panelHeight, float glY) {
-        return panelGlY + panelHeight - glY;
-    }
-    
     public static float uiTopLeftToGlSpriteY(float panelGlY, float panelHeight,
             float uiTopLeftY, float spriteHeight) {
         float uiBottomY = uiTopLeftY + spriteHeight;

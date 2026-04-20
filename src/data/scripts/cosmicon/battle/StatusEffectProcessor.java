@@ -47,8 +47,6 @@ public class StatusEffectProcessor {
 
     private final Map<StatusEffect, Integer> effects;
     private final Map<StatusEffect, Integer> durations;
-    private boolean unyieldingActive;
-    private boolean comboTriggered;
     private int lastStandHpReduction;
 
     public static final int PERMANENT_DURATION = Integer.MAX_VALUE;
@@ -56,8 +54,6 @@ public class StatusEffectProcessor {
     public StatusEffectProcessor() {
         this.effects = new EnumMap<>(StatusEffect.class);
         this.durations = new EnumMap<>(StatusEffect.class);
-        this.unyieldingActive = false;
-        this.comboTriggered = false;
         this.lastStandHpReduction = 0;
     }
 
@@ -204,11 +200,6 @@ public class StatusEffectProcessor {
 
         if (hasEffect(StatusEffect.UNYIELDING) && context.getCurrentHp() <= 0) {
             context.setCurrentHp(1);
-            unyieldingActive = true;
-        }
-
-        if (hasEffect(StatusEffect.COMBO) && turnType == TurnType.ATTACK) {
-            comboTriggered = true;
         }
     }
 
@@ -343,10 +334,6 @@ public class StatusEffectProcessor {
 
         public void setCurrentHp(int hp) {
             this.currentHp = Math.max(0, Math.min(hp, maxHp));
-        }
-
-        public int getMaxHp() {
-            return maxHp;
         }
 
         public int getRerollCount() {

@@ -172,17 +172,6 @@ public final class DiceProbabilityCalculator {
         return dp[n][k];
     }
 
-    public static float probabilitySumAtLeast(List<DiceType> diceTypes, int selectCount, int target) {
-        float[] pmf = getSumPMF(diceTypes, selectCount);
-        if (pmf.length == 0) return 0f;
-
-        float cumulative = 0f;
-        for (int s = target; s < pmf.length; s++) {
-            cumulative += pmf[s];
-        }
-        return cumulative;
-    }
-
     public static float expectedSum(List<DiceType> diceTypes, int selectCount) {
         float[] pmf = getSumPMF(diceTypes, selectCount);
         if (pmf.length == 0) return 0f;

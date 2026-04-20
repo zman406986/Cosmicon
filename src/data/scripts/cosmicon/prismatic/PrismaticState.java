@@ -2,16 +2,13 @@ package data.scripts.cosmicon.prismatic;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class PrismaticState {
     private int uses;
     private final Map<PrismaticDiceType, Integer> usesByType;
     private final List<PrismaticDiceInstance> rolledDice;
-    private final Set<Integer> selectedIndices;
     private boolean modeActive;
     private PrismaticDiceType selectedType;
     private boolean useTrueVersion;
@@ -23,7 +20,6 @@ public class PrismaticState {
         this.uses = 2;
         this.usesByType = new HashMap<>();
         this.rolledDice = new ArrayList<>();
-        this.selectedIndices = new HashSet<>();
         this.modeActive = false;
         this.selectedType = null;
         this.useTrueVersion = false;
@@ -77,14 +73,7 @@ public class PrismaticState {
         if (index < 0 || index >= rolledDice.size()) return false;
         
         PrismaticDiceInstance dice = rolledDice.get(index);
-        boolean newState = !dice.isSelected();
-        dice.setSelected(newState);
-        
-        if (newState) {
-            selectedIndices.add(index);
-        } else {
-            selectedIndices.remove(index);
-        }
+        dice.setSelected(!dice.isSelected());
         
         return true;
     }
@@ -115,7 +104,6 @@ public class PrismaticState {
     
     public void clearRolledDice() {
         rolledDice.clear();
-        selectedIndices.clear();
         mustSelectDice.clear();
     }
     

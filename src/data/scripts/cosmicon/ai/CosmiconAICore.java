@@ -61,25 +61,5 @@ public final class CosmiconAICore {
         public List<Integer> getSelectedIndicesList() {
             return selection.getSelectedIndicesList();
         }
-
-        public int getSelectedSum() {
-            return selection.sumValue;
-        }
-
-        public boolean isPassiveTriggered() {
-            return selection.passiveTriggered;
-        }
-
-        public float getPassiveBonus() {
-            return selection.passiveBonus;
-        }
-
-        public boolean shouldReroll() {
-            return !rerollIndices.isEmpty();
-        }
-
-        public int getRerollCount() {
-            return rerollIndices.size();
-        }
     }
 }
