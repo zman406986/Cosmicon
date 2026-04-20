@@ -574,7 +574,7 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
 
         if (diceAnimating) {
             rollAnimationDelay -= amount;
-            if (rollAnimationDelay <= 0f && diceAnimating) {
+            if (rollAnimationDelay <= 0f) {
                 diceAnimating = false;
                 List<DiceType> types = battleState.getPlayerDiceTypes();
                 List<Integer> values = battleState.getPlayerDiceValues();
@@ -665,7 +665,7 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
             int mouseX = Mouse.getX();
             int mouseY = Mouse.getY();
             float[] uiPos = CoordHelper.mouseToPanelUi(mouseX, mouseY,
-                panelX, panelY, BattleRenderingUtils.PANEL_WIDTH, BattleRenderingUtils.PANEL_HEIGHT);
+                panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT);
             float panelUiX = uiPos[0];
             float panelUiY = uiPos[1];
 

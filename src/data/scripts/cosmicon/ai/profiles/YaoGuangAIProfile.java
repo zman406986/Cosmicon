@@ -2,7 +2,6 @@ package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.DiceType;
-import data.scripts.cosmicon.character.PassiveEventSystem;
 import data.scripts.cosmicon.util.PassiveEvaluator;
 import java.util.List;
 
@@ -39,7 +38,7 @@ public class YaoGuangAIProfile extends AbstractCharacterAIProfile {
         
         int sum = PassiveEvaluator.sumOfValues(selectedValues);
         if (sum >= ATTACK_THRESHOLD) {
-            float bonusValue = PRISMATIC_USE_VALUE + calculateThornsCleansingValue(0);
+            float bonusValue = PRISMATIC_USE_VALUE;
             return PassiveEvaluation.triggered(bonusValue, Strings.get("character.yao_guang.passive_desc"));
         }
         
@@ -55,11 +54,6 @@ public class YaoGuangAIProfile extends AbstractCharacterAIProfile {
             return PRISMATIC_USE_VALUE;
         }
         return 0f;
-    }
-
-    private float calculateThornsCleansingValue(int totalRerollsUsed) {
-        int totalThorns = PassiveEventSystem.getTotalThornsAfterRerollsYaoGuang(totalRerollsUsed);
-        return totalThorns * 1.2f;
     }
 
     @Override

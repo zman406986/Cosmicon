@@ -7,8 +7,6 @@ import java.util.List;
 
 public class CyreneAIProfile extends AbstractCharacterAIProfile {
 
-    private static final int CUMULATIVE_THRESHOLD = 24;
-
     @Override
     public String getCharacterId() {
         return "cyrene";

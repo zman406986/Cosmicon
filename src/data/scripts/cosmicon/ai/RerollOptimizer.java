@@ -294,29 +294,6 @@ public final class RerollOptimizer {
             }).toList(), selectCount);
     }
 
-    public static Set<Integer> rerollLowestNonSelected(
-            List<Integer> currentValues,
-            Set<Integer> selectedIndices,
-            int rerollsAvailable) {
-        
-        Set<Integer> toReroll = new HashSet<>();
-        List<Integer> nonSelectedIndices = new ArrayList<>();
-        
-        for (int i = 0; i < currentValues.size(); i++) {
-            if (!selectedIndices.contains(i)) {
-                nonSelectedIndices.add(i);
-            }
-        }
-
-        nonSelectedIndices.sort(Comparator.comparingInt(currentValues::get));
-
-        for (int i = 0; i < Math.min(rerollsAvailable, nonSelectedIndices.size()); i++) {
-            toReroll.add(nonSelectedIndices.get(i));
-        }
-
-        return toReroll;
-    }
-
     private record RerollCandidate(Set<Integer> rerollIndices, float expectedImprovement) {}
 
     private record RerolledDieValue(int index, int value, boolean isRerolled) {}

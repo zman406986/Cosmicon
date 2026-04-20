@@ -305,8 +305,6 @@ public class StatusEffectProcessor {
     }
 
     public void resetTurnState() {
-        comboTriggered = false;
-        unyieldingActive = false;
     }
 
     public static class BattleContext {

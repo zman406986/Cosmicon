@@ -106,7 +106,6 @@ public class PrismaticState {
     
     public void clear() {
         rolledDice.clear();
-        selectedIndices.clear();
         mustSelectDice.clear();
         selectedType = null;
         useTrueVersion = false;

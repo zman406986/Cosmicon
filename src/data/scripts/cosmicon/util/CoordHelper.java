@@ -1,7 +1,5 @@
 package data.scripts.cosmicon.util;
 
-import com.fs.starfarer.api.ui.PositionAPI;
-
 /**
  * Coordinate conversions for Starsector UI panels.
  * UI: Y=0 at TOP, increases DOWN (labels, buttons, inTL positioning)
@@ -15,34 +13,14 @@ public final class CoordHelper {
         return panelGlY + panelHeight - uiY;
     }
     
-    public static float uiToGlY(PositionAPI pos, float uiY) {
-        return uiToGlY(pos.getY(), pos.getHeight(), uiY);
-    }
-    
     public static float glToUiY(float panelGlY, float panelHeight, float glY) {
         return panelGlY + panelHeight - glY;
     }
     
-    public static float glToUiY(PositionAPI pos, float glY) {
-        return glToUiY(pos.getY(), pos.getHeight(), glY);
-    }
-    
-    public static float uiTopLeftToGlCenterY(float panelGlY, float panelHeight,
-            float uiTopLeftY, float elementHeight) {
-        float uiCenterY = uiTopLeftY + elementHeight / 2f;
-        return uiToGlY(panelGlY, panelHeight, uiCenterY);
-    }
-    
-    // Sprites use BOTTOM-LEFT anchor; this converts UI TOP-LEFT to sprite render Y
     public static float uiTopLeftToGlSpriteY(float panelGlY, float panelHeight,
             float uiTopLeftY, float spriteHeight) {
         float uiBottomY = uiTopLeftY + spriteHeight;
         return uiToGlY(panelGlY, panelHeight, uiBottomY);
-    }
-    
-    public static float uiTopLeftToGlSpriteY(PositionAPI pos,
-            float uiTopLeftY, float spriteHeight) {
-        return uiTopLeftToGlSpriteY(pos.getY(), pos.getHeight(), uiTopLeftY, spriteHeight);
     }
     
     /**
@@ -51,7 +29,7 @@ public final class CoordHelper {
      * UI coordinates have Y=0 at top, increasing downward.
      */
     public static float[] mouseToPanelUi(int mouseX, int mouseY,
-            float panelX, float panelY, float panelWidth, float panelHeight) {
+            float panelX, float panelY, float panelHeight) {
         float uiX = mouseX - panelX;
         float uiY = panelHeight - (mouseY - panelY);
         return new float[] { uiX, uiY };

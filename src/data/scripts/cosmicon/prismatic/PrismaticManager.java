@@ -61,7 +61,7 @@ public class PrismaticManager {
         PrismaticDiceInstance instance = PrismaticDiceInstance.roll(type, trueVersion, CosmiconRandom.getRandom());
         ps.addRolledDice(instance);
         
-        processor.checkDestinedDice(instance, forPlayer);
+        processor.checkDestinedDice(instance);
     }
     
     public boolean selectPrismaticDice(boolean forPlayer, int index) {
@@ -106,10 +106,6 @@ public class PrismaticManager {
     
     public List<PrismaticDiceInstance> getRolledDice(boolean forPlayer) {
         return getState(forPlayer).getRolledDice();
-    }
-    
-    public List<PrismaticDiceInstance> getSelectedDice(boolean forPlayer) {
-        return getState(forPlayer).getSelectedDice();
     }
     
     public List<PrismaticDiceInstance> getMustSelectDice(boolean forPlayer) {

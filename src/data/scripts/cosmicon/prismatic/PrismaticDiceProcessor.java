@@ -44,7 +44,7 @@ public class PrismaticDiceProcessor {
         }
     }
     
-    public void checkDestinedDice(PrismaticDiceInstance dice, boolean forPlayer) {
+    public void checkDestinedDice(PrismaticDiceInstance dice) {
         PrismaticEffect effect = dice.getEffect();
         if (effect.isGrantStatus() && effect.getGrantedEffect() == StatusEffect.DESTINED) {
             dice.setMustSelect(true);

@@ -54,10 +54,6 @@ public final class BattleRenderingUtils {
     public static final float ROLE_ICON_OPACITY = 0.25f;
     public static final float ROLE_ICON_SIZE_RATIO = 0.6f;
 
-    public static void renderBattleBackground(float x, float y, float w, float h, float alphaMult) {
-        renderBattleBackground(x, y, w, h, 0f, alphaMult, false);
-    }
-
     public static void renderBattleBackground(float x, float y, float w, float h, 
             float transitionProgress, float alphaMult, boolean showRoles) {
         GLStateUtil.resetBlendState();

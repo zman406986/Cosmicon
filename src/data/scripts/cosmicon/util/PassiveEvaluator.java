@@ -90,9 +90,9 @@ public class PassiveEvaluator {
             return triggerToughnessInstantDamage;
         }
 
-        public boolean hasEffects() {
-            return attackBonus > 0 || defenseBonus > 0 || perforation || !grantedEffects.isEmpty() 
-                || healAmount > 0 || instantDamageToOpponent > 0;
+        public boolean isEmpty() {
+            return attackBonus == 0 && defenseBonus == 0 && !perforation && grantedEffects.isEmpty() 
+                && healAmount == 0 && instantDamageToOpponent == 0;
         }
     }
 
@@ -104,14 +104,12 @@ public class PassiveEvaluator {
         private int atkLevelIncrease;
         private int defLevelIncrease;
         private int instantDamageToAttacker;
-        private final List<GrantedEffect> grantedEffects;
         private String description;
 
         public PostDamageResult() {
             this.atkLevelIncrease = 0;
             this.defLevelIncrease = 0;
             this.instantDamageToAttacker = 0;
-            this.grantedEffects = new ArrayList<>();
             this.description = "";
         }
 
@@ -143,16 +141,12 @@ public class PassiveEvaluator {
             return instantDamageToAttacker;
         }
 
-        public List<GrantedEffect> getGrantedEffects() {
-            return new ArrayList<>(grantedEffects);
-        }
-
         public String getDescription() {
             return description;
         }
 
         public boolean hasEffects() {
-            return atkLevelIncrease > 0 || defLevelIncrease > 0 || instantDamageToAttacker > 0 || !grantedEffects.isEmpty();
+            return atkLevelIncrease > 0 || defLevelIncrease > 0 || instantDamageToAttacker > 0;
         }
     }
 
@@ -294,7 +288,7 @@ public class PassiveEvaluator {
             result.addGrantedEffect(StatusEffect.COMBO, 1);
             result.addAttackBonus(15);
         }
-        if (currentHp > 0 && maxHp > 0 && currentHp == maxHp) {
+        if (maxHp > 0 && currentHp == maxHp) {
             result.addAttackBonus(5);
         }
     }
@@ -369,7 +363,7 @@ public class PassiveEvaluator {
     public static class EndOfTurnPassiveResult {
         private int prismaticUseBonus;
         private boolean grantArise;
-        private int atkLevelBoost;
+        private final int atkLevelBoost;
         
         public EndOfTurnPassiveResult() {
             this.prismaticUseBonus = 0;
@@ -431,7 +425,7 @@ public class PassiveEvaluator {
     }
 
     public static PassiveEvaluation toPassiveEvaluation(PassiveResult result, String description) {
-        if (!result.hasEffects()) {
+        if (result.isEmpty()) {
             return PassiveEvaluation.notTriggered();
         }
         int totalBonus = result.getAttackBonus() + result.getDefenseBonus();
@@ -465,7 +459,7 @@ public class PassiveEvaluator {
     }
 
     public static void applyPassiveEffects(PassiveResult result, BattleState state, boolean forPlayer) {
-        if (result == null || !result.hasEffects()) return;
+        if (result == null || result.isEmpty()) return;
         
         StatusEffectProcessor effects = (forPlayer ? state.getPlayerEffects() : state.getOpponentEffects());
         

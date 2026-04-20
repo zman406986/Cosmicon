@@ -1,7 +1,6 @@
 package data.scripts.cosmicon.prismatic;
 
 import data.scripts.cosmicon.prismatic.AvailabilityCondition.ConditionContext;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -14,39 +13,35 @@ public class PrismaticDiceType {
     private final PrismaticEffect effect;
     private final AvailabilityCondition condition;
 
-    private PrismaticDiceType(String id, String nameKey, int[] defaultFaces, int[] trueFaces,
+    private PrismaticDiceType(String id, int[] defaultFaces, int[] trueFaces,
                               Set<Integer> specialIndices, PrismaticEffect effect,
-                              AvailabilityCondition condition, String source) {
+                              AvailabilityCondition condition) {
         this.id = id;
         this.defaultFaces = defaultFaces.clone();
         this.trueFaces = trueFaces != null ? trueFaces.clone() : null;
         this.specialFaceIndices = specialIndices;
         this.effect = effect;
         this.condition = condition;
-        boolean hasTrueVersion = trueFaces != null && !Arrays.equals(defaultFaces, trueFaces);
     }
     
-    public static PrismaticDiceType create(String id, String nameKey, int[] faces,
-                                           PrismaticEffect effect, AvailabilityCondition condition,
-                                           String source) {
-        return new PrismaticDiceType(id, nameKey, faces, null, new HashSet<>(), effect, condition, source);
+    public static PrismaticDiceType create(String id, int[] faces,
+                                           PrismaticEffect effect, AvailabilityCondition condition) {
+        return new PrismaticDiceType(id, faces, null, new HashSet<>(), effect, condition);
     }
     
-    public static PrismaticDiceType createWithSpecialFaces(String id, String nameKey,
+    public static PrismaticDiceType createWithSpecialFaces(String id,
                                                            int[] faces, Set<Integer> specialIndices,
                                                            PrismaticEffect effect,
-                                                           AvailabilityCondition condition,
-                                                           String source) {
-        return new PrismaticDiceType(id, nameKey, faces, null, specialIndices, effect, condition, source);
+                                                           AvailabilityCondition condition) {
+        return new PrismaticDiceType(id, faces, null, specialIndices, effect, condition);
     }
     
-    public static PrismaticDiceType createWithVersions(String id, String nameKey,
+    public static PrismaticDiceType createWithVersions(String id,
                                                        int[] defaultFaces, int[] trueFaces,
                                                        Set<Integer> specialIndices,
                                                        PrismaticEffect effect,
-                                                       AvailabilityCondition condition,
-                                                       String source) {
-        return new PrismaticDiceType(id, nameKey, defaultFaces, trueFaces, specialIndices, effect, condition, source);
+                                                       AvailabilityCondition condition) {
+        return new PrismaticDiceType(id, defaultFaces, trueFaces, specialIndices, effect, condition);
     }
     
     public String getId() {
@@ -70,15 +65,6 @@ public class PrismaticDiceType {
     
     public boolean isAvailable(ConditionContext context) {
         return condition.isAvailable(context);
-    }
-    
-    public int getMaxFace(boolean useTrueVersion) {
-        int[] faces = getFaces(useTrueVersion);
-        int max = 0;
-        for (int face : faces) {
-            if (face > max) max = face;
-        }
-        return max;
     }
     
     public int roll(boolean useTrueVersion, java.util.Random random) {

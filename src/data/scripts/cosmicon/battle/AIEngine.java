@@ -44,16 +44,15 @@ public class AIEngine {
         List<Integer> diceValues = state.getDiceValues(forPlayer);
         List<DiceType> diceTypes = state.getDiceTypes(forPlayer);
         int requiredCount = state.getRequiredDiceCount(forPlayer);
-        CharacterCard card = state.getCard(forPlayer);
         int rerollsAvailable = state.getRemainingRerolls(forPlayer);
         
-        if (diceValues == null || diceTypes == null || card == null || rerollsAvailable <= 0) return;
+        if (diceValues == null || diceTypes == null || rerollsAvailable <= 0) return;
         
         boolean isAttacking = state.isAttacker(forPlayer);
         
         Set<Integer> rerollIndices = CosmiconAICore.recommendRerolls(
             diceValues, diceTypes, requiredCount, rerollsAvailable,
-            card.getId(), isAttacking, 0);
+            isAttacking, 0);
         
         if (!rerollIndices.isEmpty()) {
             List<Boolean> selected = state.getDiceSelected(forPlayer);

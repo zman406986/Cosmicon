@@ -370,13 +370,7 @@ public class BattleState {
     
     
     
-    public List<Boolean> getPrismaticDiceSelected(boolean isPlayer) {
-        if (prismaticManager == null) return new ArrayList<>();
-        List<PrismaticDiceInstance> dice = prismaticManager.getRolledDice(isPlayer);
-        List<Boolean> selected = new ArrayList<>();
-        for (PrismaticDiceInstance d : dice) selected.add(d.isSelected());
-        return selected;
-    }
+    
     
     public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         if (prismaticManager == null) return true;

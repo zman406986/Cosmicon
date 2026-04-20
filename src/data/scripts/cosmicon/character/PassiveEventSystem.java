@@ -71,11 +71,6 @@ public final class PassiveEventSystem {
             if (result.getDefLevelIncrease() > 0 && card != null) {
                 card.setDefLevel(card.getDefLevel() + result.getDefLevelIncrease());
             }
-
-            var effects = defenderIsPlayer ? state.getPlayerEffects() : state.getOpponentEffects();
-            for (PassiveEvaluator.GrantedEffect ge : result.getGrantedEffects()) {
-                effects.addEffect(ge.effect(), ge.layers());
-            }
         }
 
         return result.getInstantDamageToAttacker();
@@ -117,11 +112,6 @@ public final class PassiveEventSystem {
                 card.setAtkLevel(card.getAtkLevel() + result.getAtkLevelBoost());
             }
         }
-    }
-
-    public static int getThornsCostForRerollYaoGuang(int currentRerollsUsed) {
-        if (currentRerollsUsed <= YAO_GUANG_FREE_REROLL_THRESHOLD) return 0;
-        return YAO_GUANG_THORNS_PER_EXTRA_REROLL;
     }
 
     public static int getTotalThornsAfterRerollsYaoGuang(int totalRerollsUsed) {
