@@ -4,12 +4,9 @@ import data.scripts.CosmiconConfig;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.Phase;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.battle.BattleState.TurnType;
-import data.scripts.cosmicon.character.YaoGuangPassiveProcessor;
-import data.scripts.cosmicon.prismatic.PrismaticDiceType;
+import data.scripts.cosmicon.character.PassiveEventSystem;
 import data.scripts.cosmicon.util.PassiveEvaluator;
-import data.scripts.cosmicon.util.PassiveEvaluator.EndOfTurnPassiveResult;
 import data.scripts.cosmicon.util.PassiveEvaluator.PassiveResult;
-import data.scripts.cosmicon.util.PassiveEvaluator.GrantedEffect;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -92,16 +89,8 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         TurnType playerTurnType = state.isPlayerAttacker() ? TurnType.ATTACK : TurnType.DEFENSE;
         TurnType opponentTurnType = state.isPlayerAttacker() ? TurnType.DEFENSE : TurnType.ATTACK;
         
-        if (YaoGuangPassiveProcessor.isYaoGuang(state.getPlayerCard() != null ? state.getPlayerCard().getId() : null)) {
-            if (state.isPlayerAttacker()) {
-                state.getPlayerEffects().addEffect(StatusEffectProcessor.StatusEffect.YAO_GUANG_REROLLS, 4);
-            }
-        }
-        if (YaoGuangPassiveProcessor.isYaoGuang(state.getOpponentCard() != null ? state.getOpponentCard().getId() : null)) {
-            if (!state.isPlayerAttacker()) {
-                state.getOpponentEffects().addEffect(StatusEffectProcessor.StatusEffect.YAO_GUANG_REROLLS, 4);
-            }
-        }
+        PassiveEventSystem.onStartOfAttackTurn(state, true);
+        PassiveEventSystem.onStartOfAttackTurn(state, false);
         
         state.getPlayerEffects().processPhase(Phase.BEFORE_ROLL, playerTurnType, playerContext);
         state.getOpponentEffects().processPhase(Phase.BEFORE_ROLL, opponentTurnType, opponentContext);
@@ -255,8 +244,40 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             weatherController.applyPreResolution(state);
         }
 
-        YaoGuangPassiveProcessor.onAttackResolution(state, state.isPlayerAttacker());
-        YaoGuangPassiveProcessor.onAttackResolution(state, !state.isPlayerAttacker());
+        StatusEffectProcessor.BattleContext attackerContext = createBattleContext(state.isPlayerAttacker());
+        StatusEffectProcessor.BattleContext defenderContext = createBattleContext(!state.isPlayerAttacker());
+        
+        TurnType attackerTurnType = TurnType.ATTACK;
+        TurnType defenderTurnType = TurnType.DEFENSE;
+        
+        state.getPlayerEffects().processPhase(Phase.BEFORE_RESOLUTION, 
+            state.isPlayerAttacker() ? attackerTurnType : defenderTurnType, 
+            state.isPlayerAttacker() ? attackerContext : defenderContext);
+        state.getOpponentEffects().processPhase(Phase.BEFORE_RESOLUTION,
+            state.isPlayerAttacker() ? defenderTurnType : attackerTurnType,
+            state.isPlayerAttacker() ? defenderContext : attackerContext);
+        
+        int attackerInstantDamage = attackerContext.getInstantDamageToOpponent();
+        int defenderInstantDamage = defenderContext.getInstantDamageToOpponent();
+        
+        if (attackerInstantDamage > 0) {
+            if (state.isPlayerAttacker()) {
+                state.setOpponentHp(Math.max(0, state.getOpponentHp() - attackerInstantDamage));
+            } else {
+                state.setPlayerHp(Math.max(0, state.getPlayerHp() - attackerInstantDamage));
+            }
+        }
+        
+        if (defenderInstantDamage > 0) {
+            if (state.isPlayerAttacker()) {
+                state.setPlayerHp(Math.max(0, state.getPlayerHp() - defenderInstantDamage));
+            } else {
+                state.setOpponentHp(Math.max(0, state.getOpponentHp() - defenderInstantDamage));
+            }
+        }
+
+        PassiveEventSystem.onAttackResolution(state, state.isPlayerAttacker());
+        PassiveEventSystem.onAttackResolution(state, !state.isPlayerAttacker());
 
         if (damageResolver != null) {
             DamageResolver.DamageResult result = damageResolver.resolve(state);
@@ -267,65 +288,51 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
     private void applyDamageResult(DamageResolver.DamageResult result) {
         int damage = result.damageToDefender();
         boolean playerIsAttacker = state.isPlayerAttacker();
+        boolean defenderIsPlayer = !playerIsAttacker;
         
         if (damage > 0) {
             if (playerIsAttacker) {
-                state.setOpponentHp(Math.max(0, state.getOpponentHp() - damage));
-                state.recordDamageTaken(damage, false);
+                state.applyDamageTo(false, damage);
                 
                 if (result.siphonHeal() > 0) {
-                    state.setPlayerHp(Math.min(state.getPlayerHp() + result.siphonHeal(), state.getPlayerCard().getMaxHp()));
+                    state.applyHealTo(true, result.siphonHeal());
                 }
             } else {
-                state.setPlayerHp(Math.max(0, state.getPlayerHp() - damage));
-                state.recordDamageTaken(damage, true);
+                state.applyDamageTo(true, damage);
                 
                 if (result.siphonHeal() > 0) {
-                    state.setOpponentHp(Math.min(state.getOpponentHp() + result.siphonHeal(), state.getOpponentCard().getMaxHp()));
+                    state.applyHealTo(false, result.siphonHeal());
                 }
+            }
+            
+            int instantDamageToAttacker = PassiveEventSystem.onDamageTaken(state, defenderIsPlayer, damage);
+            if (instantDamageToAttacker > 0) {
+                state.applyDamageTo(playerIsAttacker, instantDamageToAttacker);
             }
         }
         
         state.setLastDamageDealt(damage);
         
         if (result.thornsDamage() > 0) {
-            if (playerIsAttacker) {
-                state.setPlayerHp(Math.max(0, state.getPlayerHp() - result.thornsDamage()));
-                state.recordDamageTaken(result.thornsDamage(), true);
-            } else {
-                state.setOpponentHp(Math.max(0, state.getOpponentHp() - result.thornsDamage()));
-                state.recordDamageTaken(result.thornsDamage(), false);
-            }
+            state.applyDamageTo(playerIsAttacker, result.thornsDamage());
         }
         
         if (result.counterDamage() > 0) {
-            if (playerIsAttacker) {
-                state.setPlayerHp(Math.max(0, state.getPlayerHp() - result.counterDamage()));
-                state.recordDamageTaken(result.counterDamage(), true);
-            } else {
-                state.setOpponentHp(Math.max(0, state.getOpponentHp() - result.counterDamage()));
-                state.recordDamageTaken(result.counterDamage(), false);
-            }
+            state.applyDamageTo(playerIsAttacker, result.counterDamage());
         }
         
         if (result.selfThornsDamage() > 0) {
-            if (playerIsAttacker) {
-                state.setPlayerHp(Math.max(0, state.getPlayerHp() - result.selfThornsDamage()));
-                state.recordDamageTaken(result.selfThornsDamage(), true);
-            } else {
-                state.setOpponentHp(Math.max(0, state.getOpponentHp() - result.selfThornsDamage()));
-                state.recordDamageTaken(result.selfThornsDamage(), false);
-            }
+            state.applyDamageTo(playerIsAttacker, result.selfThornsDamage());
             StatusEffectProcessor attackerEffects = playerIsAttacker ? state.getPlayerEffects() : state.getOpponentEffects();
             attackerEffects.removeEffect(StatusEffectProcessor.StatusEffect.THORNS);
         }
         
         if (result.overloadSelfDamage() > 0) {
-            if (playerIsAttacker) {
-                state.setPlayerHp(Math.max(0, state.getPlayerHp() - result.overloadSelfDamage()));
-            } else {
-                state.setOpponentHp(Math.max(0, state.getOpponentHp() - result.overloadSelfDamage()));
-            }
+            state.applyDamageTo(playerIsAttacker, result.overloadSelfDamage());
+        }
+        
+        if (result.instantDamage() > 0) {
+            state.applyDamageTo(defenderIsPlayer, result.instantDamage());
         }
         
         state.notifyDamageResolved(damage, state.getPlayerHp(), state.getOpponentHp());
@@ -353,8 +360,8 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             state.isPlayerAttacker() ? TurnType.DEFENSE : TurnType.ATTACK,
             opponentContext);
         
-        state.setPlayerHp(Math.max(0, state.getPlayerHp() - playerPoisonDamage));
-        state.setOpponentHp(Math.max(0, state.getOpponentHp() - opponentPoisonDamage));
+        state.applyDamageTo(true, playerPoisonDamage);
+        state.applyDamageTo(false, opponentPoisonDamage);
         
         if (state.getPlayerHp() <= 0 || state.getOpponentHp() <= 0) {
             endBattle();
@@ -501,9 +508,7 @@ public void skipRerollPhase() {
             (state.getPlayerCard() != null ? state.getPlayerCard().getMaxHp() : currentHp) :
             (state.getOpponentCard() != null ? state.getOpponentCard().getMaxHp() : currentHp);
         
-        StatusEffectProcessor effects = state.isPlayerAttacker() ?
-            (forPlayer ? state.getPlayerEffects() : state.getOpponentEffects()) :
-            (forPlayer ? state.getPlayerEffects() : state.getOpponentEffects());
+        StatusEffectProcessor effects = (forPlayer ? state.getPlayerEffects() : state.getOpponentEffects());
         int currentToughness = effects.getLayers(StatusEffect.TOUGHNESS);
         
         PassiveResult result = PassiveEvaluator.evaluateForCharacter(
@@ -521,40 +526,6 @@ public void skipRerollPhase() {
     }
     
     private void processEndOfTurnPassives(boolean forPlayer) {
-        CharacterCard card = state.getCard(forPlayer);
-        if (card == null) return;
-        
-        String characterId = card.getId();
-        int triggerCount = state.getPrismaticTriggerCount(forPlayer);
-        
-        state.recordTurnAtkDef(forPlayer);
-        int cumulativeAtkDef = state.getCumulativeAtkDef(forPlayer);
-        
-        EndOfTurnPassiveResult result = PassiveEvaluator.evaluateEndOfTurnPassive(
-            characterId, triggerCount, cumulativeAtkDef);
-        
-        if ("cyrene".equals(characterId)) {
-            boolean thresholdAlreadyMet = state.isCyreneThresholdMet(forPlayer);
-            if (PassiveEvaluator.shouldApplyCyreneAtkBoost(thresholdAlreadyMet, cumulativeAtkDef)) {
-                card.setAtkLevel(5);
-                state.setCyreneThresholdMet(forPlayer, true);
-            }
-        }
-        
-        if (result.hasEffects()) {
-            if (result.getPrismaticUseBonus() > 0) {
-                for (int i = 0; i < result.getPrismaticUseBonus(); i++) {
-                    state.addPrismaticUseByType(null, forPlayer, 1);
-                }
-            }
-            
-            if (result.shouldGrantArise()) {
-                state.getEffectManager().applyEffect(StatusEffect.ARISE, 1, forPlayer);
-            }
-            
-            if (result.getAtkLevelBoost() > 0) {
-                card.setAtkLevel(card.getAtkLevel() + result.getAtkLevelBoost());
-            }
-        }
+        PassiveEventSystem.onEndOfTurn(state, forPlayer);
     }
 }

@@ -9,15 +9,15 @@ import java.util.Set;
 
 public class PrismaticState {
     private int uses;
-    private Map<PrismaticDiceType, Integer> usesByType;
-    private List<PrismaticDiceInstance> rolledDice;
-    private Set<Integer> selectedIndices;
+    private final Map<PrismaticDiceType, Integer> usesByType;
+    private final List<PrismaticDiceInstance> rolledDice;
+    private final Set<Integer> selectedIndices;
     private boolean modeActive;
     private PrismaticDiceType selectedType;
     private boolean useTrueVersion;
     private boolean doubleValueActive;
     private int instantDamage;
-    private List<PrismaticDiceInstance> mustSelectDice;
+    private final List<PrismaticDiceInstance> mustSelectDice;
     
     public PrismaticState() {
         this.uses = 2;
@@ -63,9 +63,11 @@ public class PrismaticState {
     
     public List<PrismaticDiceInstance> getSelectedDice() {
         List<PrismaticDiceInstance> selected = new ArrayList<>();
-        for (int i = 0; i < rolledDice.size(); i++) {
-            if (rolledDice.get(i).isSelected()) {
-                selected.add(rolledDice.get(i));
+        for (PrismaticDiceInstance prismaticDiceInstance : rolledDice)
+        {
+            if (prismaticDiceInstance.isSelected())
+            {
+                selected.add(prismaticDiceInstance);
             }
         }
         return selected;

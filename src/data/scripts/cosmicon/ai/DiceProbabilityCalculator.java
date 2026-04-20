@@ -2,10 +2,8 @@ package data.scripts.cosmicon.ai;
 
 import data.scripts.cosmicon.battle.DiceType;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public final class DiceProbabilityCalculator {
@@ -15,9 +13,11 @@ public final class DiceProbabilityCalculator {
     private static final int MAX_CACHE_SIZE = 64;
     private static final int MAX_CACHE_KEY_LENGTH = 8;
 
-    private static final Map<DiceCacheKey, float[]> SUM_PMF_CACHE = new LinkedHashMap<DiceCacheKey, float[]>(16, 0.75f, true) {
+    private static final Map<DiceCacheKey, float[]> SUM_PMF_CACHE = new LinkedHashMap<>(16, 0.75f, true)
+    {
         @Override
-        protected boolean removeEldestEntry(Map.Entry<DiceCacheKey, float[]> eldest) {
+        protected boolean removeEldestEntry(Map.Entry<DiceCacheKey, float[]> eldest)
+        {
             return size() > MAX_CACHE_SIZE;
         }
     };
@@ -202,44 +202,6 @@ public final class DiceProbabilityCalculator {
         return expected;
     }
 
-    public static float probabilityAllSame(List<Integer> values) {
-        if (values == null || values.isEmpty()) return 0f;
-        int first = values.get(0);
-        for (int v : values) {
-            if (v != first) return 0f;
-        }
-        return 1.0f;
-    }
-
-    public static float probabilityAllEven(List<Integer> values) {
-        if (values == null || values.isEmpty()) return 0f;
-        for (int v : values) {
-            if (v % 2 != 0) return 0f;
-        }
-        return 1.0f;
-    }
-
-    public static float probabilityAllFour(List<Integer> values) {
-        if (values == null || values.isEmpty()) return 0f;
-        for (int v : values) {
-            if (v != 4) return 0f;
-        }
-        return 1.0f;
-    }
-
-    public static int countPairs(List<Integer> values) {
-        if (values == null || values.isEmpty()) return 0;
-        Map<Integer, Integer> counts = new HashMap<>();
-        for (int v : values) {
-            counts.merge(v, 1, Integer::sum);
-        }
-        int pairs = 0;
-        for (int count : counts.values()) {
-            pairs += count / 2;
-        }
-        return pairs;
-    }
-
     private static DiceCacheKey buildCacheKey(List<DiceType> diceTypes, int selectCount) {
         int[] maxFaces = new int[diceTypes.size()];
         for (int i = 0; i < diceTypes.size(); i++) {
@@ -250,10 +212,6 @@ public final class DiceProbabilityCalculator {
 
     public static void clearCache() {
         SUM_PMF_CACHE.clear();
-    }
-
-    public static int getMinPossibleSum(List<DiceType> diceTypes, int selectCount) {
-        return selectCount;
     }
 
     public static int getMaxPossibleSum(List<DiceType> diceTypes, int selectCount) {

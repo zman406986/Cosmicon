@@ -113,19 +113,7 @@ public class BattleState {
         this.opponentCyreneThresholdMet = false;
     }
 
-    public void initRandomBattle() {
-        playerCard = CharacterRegistry.getRandomCharacter();
-        opponentCard = CharacterRegistry.getRandomOpponent();
-        playerDicePoolCounts = DicePoolCounts.fromPool(playerCard.getDicePool());
-        opponentDicePoolCounts = DicePoolCounts.fromPool(opponentCard.getDicePool());
-        resetBattleState(playerCard.getMaxHp(), opponentCard.getMaxHp());
-        effectManager = new EffectManager();
-        prismaticManager = new PrismaticManager(effectManager);
-        weatherController = new WeatherController();
-        playerPrismaticTriggerCount = 0;
-        opponentPrismaticTriggerCount = 0;
-        if (prismaticManager != null) prismaticManager.resetForNewBattle();
-    }
+    
     
     public void init(CharacterCard playerCard, CharacterCard opponentCard) {
         this.playerCard = playerCard;
@@ -187,12 +175,7 @@ public class BattleState {
         return playerRerollsUsedThisTurn;
     }
 
-    public void clearDiceSelection() {
-        clearDiceSelection(true);
-        clearDiceSelection(false);
-        attackValue = 0;
-        defenseValue = 0;
-    }
+    
 
     public int getRequiredDiceCount(boolean isPlayer) {
         CharacterCard card = isPlayer ? playerCard : opponentCard;
@@ -354,42 +337,24 @@ public class BattleState {
     }
 
     public boolean isPlayerPrismaticModeActive() {
-        return prismaticManager != null ? prismaticManager.isModeActive(true) : false;
+        return prismaticManager != null && prismaticManager.isModeActive(true);
     }
     
-    public int getPrismaticUsesRemaining(PrismaticDiceType type, boolean isPlayer) {
-        return prismaticManager != null ? prismaticManager.getUsesByType(type, isPlayer) : 0;
-    }
     
-    public void consumePrismaticUse(PrismaticDiceType type, boolean isPlayer) {
-        if (prismaticManager != null) prismaticManager.consumePrismaticUse(type, isPlayer);
-    }
     
     public void addPrismaticUse(PrismaticDiceType type, boolean isPlayer) {
         if (prismaticManager != null) prismaticManager.addPrismaticUse(type, isPlayer);
     }
     
-    public List<PrismaticDiceType> getAvailablePrismaticDice(boolean isPlayer) {
-        if (prismaticManager == null) return new ArrayList<>();
-        return prismaticManager.getAvailable(isPlayer, this);
-    }
     
-    public boolean canUsePrismaticDice(PrismaticDiceType type, boolean isPlayer) {
-        if (prismaticManager == null) return false;
-        return prismaticManager.canUsePrismaticDice(type, isPlayer, this);
-    }
     
     public void setPlayerSelectedPrismaticType(PrismaticDiceType type, boolean useTrueVersion) {
         if (prismaticManager != null) prismaticManager.setSelectedType(true, type, useTrueVersion);
     }
     
-    public PrismaticDiceType getPlayerSelectedPrismaticType() {
-        return prismaticManager != null ? prismaticManager.getSelectedType(true) : null;
-    }
     
-    public boolean isPlayerUseTrueVersion() {
-        return prismaticManager != null ? prismaticManager.isUseTrueVersion(true) : false;
-    }
+    
+    
     
     public void rollPrismaticDice(boolean isPlayer) {
         if (prismaticManager == null) return;
@@ -397,7 +362,7 @@ public class BattleState {
         prismaticManager.clearRolledDice();
         
         PrismaticDiceType type = isPlayer ? prismaticManager.getSelectedType(true) : null;
-        boolean useTrue = isPlayer ? prismaticManager.isUseTrueVersion(true) : false;
+        boolean useTrue = isPlayer && prismaticManager.isUseTrueVersion(true);
         
         if (type == null && isPlayer) return;
         if (!isPlayer) return;
@@ -412,13 +377,7 @@ public class BattleState {
         }
     }
     
-    public List<PrismaticDiceInstance> getPlayerRolledPrismatic() {
-        return prismaticManager != null ? prismaticManager.getRolledDice(true) : new ArrayList<>();
-    }
     
-    public List<PrismaticDiceInstance> getOpponentRolledPrismatic() {
-        return prismaticManager != null ? prismaticManager.getRolledDice(false) : new ArrayList<>();
-    }
     
     public List<Boolean> getPrismaticDiceSelected(boolean isPlayer) {
         if (prismaticManager == null) return new ArrayList<>();
@@ -436,29 +395,9 @@ public class BattleState {
         return getPrismaticDiceSelected(false);
     }
     
-    public boolean selectPrismaticDice(int index, boolean isPlayer) {
-        if (prismaticManager == null) return false;
-        
-        boolean result = prismaticManager.selectPrismaticDice(isPlayer, index);
-        if (result) {
-            List<PrismaticDiceInstance> dice = prismaticManager.getRolledDice(isPlayer);
-            boolean isSelected = dice.get(index).isSelected();
-            notifyPrismaticDiceSelected(isPlayer, index, isSelected);
-        }
-        return result;
-    }
     
-    public boolean hasMustSelectDiceRemaining(boolean isPlayer) {
-        return prismaticManager != null ? prismaticManager.hasMustSelectDiceRemaining(isPlayer) : false;
-    }
     
-    public boolean canConfirmPrismaticSelection(boolean isPlayer) {
-        return prismaticManager != null ? prismaticManager.canConfirmPrismaticSelection(isPlayer) : true;
-    }
     
-    public int getPrismaticSelectedSum(boolean isPlayer) {
-        return prismaticManager != null ? prismaticManager.getPrismaticSelectedSum(isPlayer) : 0;
-    }
     
     public int getPlayerTotalDamageTaken() {
         return playerTotalDamageTaken;
@@ -468,10 +407,7 @@ public class BattleState {
         return opponentTotalDamageTaken;
     }
     
-    public int getFaceSelectionCount(int faceValue, boolean isPlayer) {
-        Map<Integer, Integer> history = isPlayer ? playerFaceSelectionHistory : opponentFaceSelectionHistory;
-        return history.getOrDefault(faceValue, 0);
-    }
+    
     
     public void recordFaceSelection(int faceValue, boolean isPlayer) {
         Map<Integer, Integer> history = isPlayer ? playerFaceSelectionHistory : opponentFaceSelectionHistory;
@@ -525,13 +461,7 @@ public class BattleState {
         }
     }
     
-    public boolean isPlayerDoubleValueActive() {
-        return prismaticManager != null ? prismaticManager.isDoubleValueActive(true) : false;
-    }
     
-    public boolean isOpponentDoubleValueActive() {
-        return prismaticManager != null ? prismaticManager.isDoubleValueActive(false) : false;
-    }
     
     public void setDoubleValueActive(boolean isPlayer, boolean active) {
         if (prismaticManager != null) prismaticManager.setDoubleValueActive(isPlayer, active);
@@ -590,28 +520,13 @@ public class BattleState {
         if (prismaticManager != null) prismaticManager.toggleMode(true);
     }
 
-    public boolean consumePlayerPrismaticUse() {
-        if (getPlayerPrismaticUses() <= 0 || !isPlayerPrismaticModeActive()) return false;
-        if (prismaticManager != null) prismaticManager.setModeActive(true, false);
-        return true;
-    }
-
-    public void applyPrismaticDiceEffects() {
-        if (prismaticManager != null) prismaticManager.applyQueuedEffects(this);
-    }
-
-    public int getPrismaticDiceTotalValue(boolean isPlayer) {
-        if (prismaticManager == null) return 0;
-        return prismaticManager.calculateTotalValue(isPlayer, true);
-    }
+    
     
     public WeatherController getWeatherController() {
         return weatherController;
     }
     
-    public WeatherType getCurrentWeather() {
-        return weatherController != null ? weatherController.getCurrentWeather() : null;
-    }
+    
     
     public CharacterCard getCard(boolean forPlayer) {
         return forPlayer ? playerCard : opponentCard;
@@ -750,11 +665,7 @@ public class BattleState {
         }
     }
     
-    public void notifyDiceSelected(boolean isPlayer, int index, boolean selected) {
-        for (BattleEventListener l : listeners) {
-            l.onDiceSelected(isPlayer, index, selected);
-        }
-    }
+    
     
     public void notifyPrismaticDiceRolled(boolean isPlayer, List<PrismaticDiceInstance> dice) {
         for (BattleEventListener l : listeners) {
@@ -778,9 +689,7 @@ public class BattleState {
         return diceRoller;
     }
     
-    public void setDiceRoller(DiceRoller roller) {
-        this.diceRoller = roller;
-    }
+    
     
     public void setWinner(String winner) {
         this.winner = winner;

@@ -1,6 +1,6 @@
 package data.scripts.cosmicon.battle;
 
-import data.scripts.cosmicon.character.YaoGuangPassiveProcessor;
+import data.scripts.cosmicon.character.PassiveEventSystem;
 import data.scripts.cosmicon.util.CosmiconRandom;
 import java.util.ArrayList;
 import java.util.List;
@@ -73,7 +73,12 @@ public class DiceRoller {
         state.decrementRerolls(forPlayer);
         state.incrementRerollsUsed(forPlayer);
         
-        YaoGuangPassiveProcessor.onRerollCompleted(state, forPlayer);
+        PassiveEventSystem.onRerollCompleted(state, forPlayer);
+        
+        if (weatherController != null) {
+            weatherController.applyRerollThornsEffect(state, forPlayer);
+            weatherController.applyRerollGlidingEffect(state, forPlayer);
+        }
         
         state.notifyDiceRerolled(forPlayer, values, rerolledIndices);
     }

@@ -19,8 +19,9 @@ public abstract class AbstractCharacterAIProfile implements CharacterAIProfile {
     }
 
     @Override
-    public boolean isAttackPassive() {
-        return true;
+    public boolean isAttackPassive()
+    {
+        return CharacterAIProfile.super.isAttackPassive();
     }
 
     @Override

@@ -3,7 +3,6 @@ package data.scripts.cosmicon.prismatic;
 import java.util.List;
 
 import data.scripts.cosmicon.battle.BattleState;
-import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.EffectManager;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 
@@ -32,15 +31,7 @@ public class PrismaticDiceProcessor {
         
         if (effect.isHealHp()) {
             int healAmount = dice.rolledFace;
-            int currentHp = forPlayer ? state.getPlayerHp() : state.getOpponentHp();
-            CharacterCard card = forPlayer ? state.getPlayerCard() : state.getOpponentCard();
-            int maxHp = card != null ? card.getMaxHp() : currentHp;
-            int newHp = Math.min(currentHp + healAmount, maxHp);
-            if (forPlayer) {
-                state.setPlayerHp(newHp);
-            } else {
-                state.setOpponentHp(newHp);
-            }
+            state.applyHealTo(forPlayer, healAmount);
             return;
         }
         
@@ -51,12 +42,7 @@ public class PrismaticDiceProcessor {
         
         if (effect.isInstantDamage()) {
             int damage = effect.getInstantDamageAmount();
-            int targetHp = forPlayer ? state.getOpponentHp() : state.getPlayerHp();
-            if (forPlayer) {
-                state.setOpponentHp(Math.max(0, targetHp - damage));
-            } else {
-                state.setPlayerHp(Math.max(0, targetHp - damage));
-            }
+            state.applyDamageTo(!forPlayer, damage);
         }
     }
     

@@ -543,16 +543,7 @@ public class PassiveEvaluator {
         }
         
         if (result.getHealAmount() > 0) {
-            int currentHp = forPlayer ? state.getPlayerHp() : state.getOpponentHp();
-            int maxHp = forPlayer ? 
-                (state.getPlayerCard() != null ? state.getPlayerCard().getMaxHp() : currentHp) :
-                (state.getOpponentCard() != null ? state.getOpponentCard().getMaxHp() : currentHp);
-            int newHp = Math.min(currentHp + result.getHealAmount(), maxHp);
-            if (forPlayer) {
-                state.setPlayerHp(newHp);
-            } else {
-                state.setOpponentHp(newHp);
-            }
+            state.applyHealTo(forPlayer, result.getHealAmount());
         }
         
         if (result.hasPerforation()) {

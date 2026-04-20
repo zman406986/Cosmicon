@@ -27,7 +27,6 @@ import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleState.BattleEventListener;
 import data.scripts.cosmicon.battle.BattleState.Phase;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
-import data.scripts.cosmicon.prismatic.PrismaticManager;
 import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.CoordHelper;
 import data.scripts.cosmicon.util.GLStateUtil;
@@ -320,7 +319,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         return label;
     }
 
-    private void updateLabelsFromState() {
+    public void updateLabelsFromState() {
         if (battleState == null || playerNameLabel == null) return;
 
         CharacterCard playerCard = battleState.getPlayerCard();
@@ -552,6 +551,19 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
 
     @Override
     public void onDiceRolled(boolean isPlayer, List<DiceType> types, List<Integer> values) {
+        if (isPlayer && types != null) {
+            DicePoolCounts counts = DicePoolCounts.fromPool(types);
+            playerPrismaticLabel.setText(String.valueOf(counts.getCount(DiceType.PRISMATIC_D12)));
+            playerOrangeLabel.setText(String.valueOf(counts.getCount(DiceType.ORANGE_D8)));
+            playerPurpleLabel.setText(String.valueOf(counts.getCount(DiceType.PURPLE_D6)));
+            playerBlueLabel.setText(String.valueOf(counts.getCount(DiceType.BLUE_D4)));
+        } else if (!isPlayer && types != null) {
+            DicePoolCounts counts = DicePoolCounts.fromPool(types);
+            opponentPrismaticLabel.setText(String.valueOf(counts.getCount(DiceType.PRISMATIC_D12)));
+            opponentOrangeLabel.setText(String.valueOf(counts.getCount(DiceType.ORANGE_D8)));
+            opponentPurpleLabel.setText(String.valueOf(counts.getCount(DiceType.PURPLE_D6)));
+            opponentBlueLabel.setText(String.valueOf(counts.getCount(DiceType.BLUE_D4)));
+        }
     }
 
     @Override

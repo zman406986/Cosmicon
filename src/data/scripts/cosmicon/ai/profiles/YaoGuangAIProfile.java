@@ -2,7 +2,7 @@ package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.DiceType;
-import data.scripts.cosmicon.character.YaoGuangPassiveProcessor;
+import data.scripts.cosmicon.character.PassiveEventSystem;
 import data.scripts.cosmicon.util.PassiveEvaluator;
 import java.util.List;
 
@@ -61,7 +61,7 @@ public class YaoGuangAIProfile extends AbstractCharacterAIProfile {
 
     public float evaluateRerollWithThornsCost(int currentRerollsUsed, float improvement, int currentAttackSum) {
         int newRerollsUsed = currentRerollsUsed + 1;
-        int thornsCost = YaoGuangPassiveProcessor.getThornsCostForReroll(currentRerollsUsed);
+        int thornsCost = PassiveEventSystem.getThornsCostForRerollYaoGuang(currentRerollsUsed);
         
         float thornsPenalty = thornsCost * 1.5f;
         
@@ -74,7 +74,7 @@ public class YaoGuangAIProfile extends AbstractCharacterAIProfile {
     }
 
     private float calculateThornsCleansingValue(int totalRerollsUsed) {
-        int totalThorns = YaoGuangPassiveProcessor.getTotalThornsAfterRerolls(totalRerollsUsed);
+        int totalThorns = PassiveEventSystem.getTotalThornsAfterRerollsYaoGuang(totalRerollsUsed);
         return totalThorns * 1.2f;
     }
 
@@ -82,14 +82,10 @@ public class YaoGuangAIProfile extends AbstractCharacterAIProfile {
         if (currentSum >= ATTACK_THRESHOLD) return false;
         if (rerollsRemaining <= 0) return false;
         
-        int potentialThorns = YaoGuangPassiveProcessor.getTotalThornsAfterRerolls(rerollsUsedThisTurn + 1);
-        int currentThorns = YaoGuangPassiveProcessor.getTotalThornsAfterRerolls(rerollsUsedThisTurn);
-        
-        if (potentialThorns > currentThorns && potentialThorns >= 6) {
-            return false;
-        }
-        
-        return true;
+        int potentialThorns = PassiveEventSystem.getTotalThornsAfterRerollsYaoGuang(rerollsUsedThisTurn + 1);
+        int currentThorns = PassiveEventSystem.getTotalThornsAfterRerollsYaoGuang(rerollsUsedThisTurn);
+
+        return potentialThorns <= currentThorns || potentialThorns < 6;
     }
 
     @Override

@@ -35,6 +35,7 @@ public class BattleDialogDelegate implements com.fs.starfarer.api.campaign.Custo
     public void init(CustomPanelAPI panel, DialogCallbacks callbacks) {
         battlePanel.init(panel, callbacks);
         battleController.initRandomBattle();
+        battlePanel.updateLabelsFromState();
     }
 
     @Override

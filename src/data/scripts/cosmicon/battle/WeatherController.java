@@ -24,10 +24,6 @@ public class WeatherController {
         return schedule.getCurrentWeather();
     }
     
-    public WeatherManager getWeatherManager() {
-        return schedule;
-    }
-    
     public void advanceTurn() {
         schedule.advanceTurn();
     }
@@ -97,12 +93,8 @@ public class WeatherController {
         if (weather == null) return;
         
         switch (weather) {
-            case FISH_RAIN -> {
-                state.setRemainingRerolls(state.isPlayerAttacker(), attackerBaseRerolls + 1);
-            }
-            case PARHELION -> {
-                state.setRemainingRerolls(state.isPlayerAttacker(), attackerBaseRerolls + 2);
-            }
+            case FISH_RAIN -> state.setRemainingRerolls(state.isPlayerAttacker(), attackerBaseRerolls + 1);
+            case PARHELION -> state.setRemainingRerolls(state.isPlayerAttacker(), attackerBaseRerolls + 2);
             default -> {}
         }
     }
@@ -179,11 +171,7 @@ public class WeatherController {
                 Map<Integer, Integer> counts = countSelectedValues(values, selected);
                 for (int count : counts.values()) {
                     if (count >= 3) {
-                        if (isPlayer) {
-                            state.setPlayerHp(Math.min(state.getPlayerHp() + 10, state.getPlayerCard(). getMaxHp()));
-                        } else {
-                            state.setOpponentHp(Math.min(state.getOpponentHp() + 10, state.getOpponentCard(). getMaxHp()));
-                        }
+                        state.applyHealTo(isPlayer, 10);
                         break;
                     }
                 }
@@ -203,7 +191,6 @@ public class WeatherController {
         WeatherType weather = getCurrentWeather();
         if (weather == null) return;
         
-        boolean defenderIsPlayer = !state.isPlayerAttacker();
         List<Integer> values = state.getOpponentDiceValues();
         List<Boolean> selected = state.getOpponentDiceSelected();
         

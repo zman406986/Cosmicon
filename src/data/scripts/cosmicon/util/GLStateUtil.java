@@ -19,18 +19,6 @@ public final class GLStateUtil {
         GL11.glDisable(GL11.GL_TEXTURE_2D);
     }
 
-    public static void enableBlend() {
-        GL11.glEnable(GL11.GL_BLEND);
-    }
-
-    public static void disableBlend() {
-        GL11.glDisable(GL11.GL_BLEND);
-    }
-
-    public static void setBlendFuncStandard() {
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-    }
-
     public static void enableTexturingWithBlend() {
         GL11.glEnable(GL11.GL_TEXTURE_2D);
         GL11.glEnable(GL11.GL_BLEND);

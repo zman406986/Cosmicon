@@ -26,13 +26,15 @@ public class SparxieAIProfile extends AbstractCharacterAIProfile {
     }
 
     @Override
-    public float getRiskTolerance() {
-        return 0.5f;
+    public float getRiskTolerance()
+    {
+        return super.getRiskTolerance();
     }
 
     @Override
-    public int getTargetThreshold(boolean isAttacking) {
-        return isAttacking ? 15 : 10;
+    public int getTargetThreshold(boolean isAttacking)
+    {
+        return super.getTargetThreshold(isAttacking);
     }
 
     @Override
@@ -41,8 +43,9 @@ public class SparxieAIProfile extends AbstractCharacterAIProfile {
     }
 
     @Override
-    public boolean isAttackPassive() {
-        return true;
+    public boolean isAttackPassive()
+    {
+        return super.isAttackPassive();
     }
 
     @Override

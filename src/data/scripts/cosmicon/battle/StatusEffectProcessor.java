@@ -197,6 +197,13 @@ TACTICS,
             durations.remove(StatusEffect.THORNS);
         }
 
+        if (hasEffect(StatusEffect.INSTANT_DAMAGE)) {
+            int instantDamage = getLayers(StatusEffect.INSTANT_DAMAGE);
+            context.addInstantDamageToOpponent(instantDamage);
+            effects.remove(StatusEffect.INSTANT_DAMAGE);
+            durations.remove(StatusEffect.INSTANT_DAMAGE);
+        }
+
         return damage;
     }
 
@@ -351,6 +358,7 @@ TACTICS,
         private int attackValue;
         private int defenseValue;
         private int selectedCount;
+        private int instantDamageToOpponent;
 
         public BattleContext(int hp, int maxHp) {
             this.currentHp = hp;
@@ -362,6 +370,7 @@ TACTICS,
             this.attackValue = 0;
             this.defenseValue = 0;
             this.selectedCount = 0;
+            this.instantDamageToOpponent = 0;
         }
 
         public void setDiceValues(List<Integer> values, List<Boolean> isPrismatic) {
@@ -498,6 +507,14 @@ TACTICS,
                 diceSelected.set(i, true);
             }
             selectedCount = diceValues.size();
+        }
+
+        public void addInstantDamageToOpponent(int damage) {
+            this.instantDamageToOpponent += damage;
+        }
+
+        public int getInstantDamageToOpponent() {
+            return instantDamageToOpponent;
         }
     }
 }

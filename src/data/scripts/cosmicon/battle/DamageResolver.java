@@ -1,7 +1,7 @@
 package data.scripts.cosmicon.battle;
 
 import data.scripts.cosmicon.battle.BattleState.TurnType;
-import data.scripts.cosmicon.character.YaoGuangPassiveProcessor;
+import data.scripts.cosmicon.character.PassiveEventSystem;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
 
 public class DamageResolver {
@@ -44,7 +44,7 @@ public class DamageResolver {
         int thornsDamage = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.THORNS);
         
         int attackerSelfThorns = 0;
-        if (YaoGuangPassiveProcessor.isYaoGuang(state.isPlayerAttacker() ? 
+        if (PassiveEventSystem.isYaoGuang(state.isPlayerAttacker() ? 
                 (state.getPlayerCard() != null ? state.getPlayerCard().getId() : null) :
                 (state.getOpponentCard() != null ? state.getOpponentCard().getId() : null))) {
             attackerSelfThorns = attackerEffects.getLayers(StatusEffectProcessor.StatusEffect.THORNS);
@@ -69,6 +69,11 @@ public class DamageResolver {
             reflectDamage = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.REFLECT);
         }
         
+        int instantDamage = 0;
+        if (prismaticManager != null) {
+            instantDamage = prismaticManager.getInstantDamage(!state.isPlayerAttacker());
+        }
+        
         return new DamageResult(
             damage,
             thornsDamage,
@@ -76,12 +81,13 @@ public class DamageResolver {
             counterDamage,
             overloadSelfDamage,
             siphonHeal + weatherSiphon,
-            reflectDamage
+            reflectDamage,
+            instantDamage
         );
     }
 
     public record DamageResult(int damageToDefender, int thornsDamage, int selfThornsDamage, int counterDamage, 
-                               int overloadSelfDamage, int siphonHeal, int reflectDamage)
+                               int overloadSelfDamage, int siphonHeal, int reflectDamage, int instantDamage)
     {
     }
 }

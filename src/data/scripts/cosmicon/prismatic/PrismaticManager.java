@@ -1,8 +1,5 @@
 package data.scripts.cosmicon.prismatic;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -110,10 +107,6 @@ public class PrismaticManager {
     
     public List<PrismaticDiceInstance> getRolledDice(boolean forPlayer) {
         return getState(forPlayer).getRolledDice();
-    }
-    
-    public Set<Integer> getSelectedIndices(boolean forPlayer) {
-        return getState(forPlayer).getSelectedIndices();
     }
     
     public List<PrismaticDiceInstance> getSelectedDice(boolean forPlayer) {
