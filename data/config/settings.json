@@ -1,0 +1,35 @@
+{
+    "cosmiconDiceEnabled": true,
+    "marketSizeMin": 3,
+    "defaultHP": 20,
+    "defaultRerolls": 2,
+    "graphics": {
+        "cosmicon_dice": {
+            "d4": "graphics/cosmicon/Dice/Dice_D4.png",
+            "d6": "graphics/cosmicon/Dice/Dice_D6.png",
+            "d8": "graphics/cosmicon/Dice/Dice_D8.png",
+            "d12": "graphics/cosmicon/Dice/Dice_D12.png",
+            "prismatic": "graphics/cosmicon/Dice/Dice_Pristmatic.png",
+            "prismatic_btn": "graphics/cosmicon/Icons/Prismatic_Icon.png"
+        },
+        "cosmicon_cards": {
+            "frame": "graphics/cosmicon/Cards/Character_Card_Frame_Full.png",
+            "atk_icon": "graphics/cosmicon/Icons/IconAttack.png",
+            "def_icon": "graphics/cosmicon/Icons/IconDefence.png",
+            "portrait_acheron": "graphics/cosmicon/Cards/Characters/Acheron.png",
+            "portrait_aventurine": "graphics/cosmicon/Cards/Characters/Aventurine.png",
+            "portrait_castorice": "graphics/cosmicon/Cards/Characters/Castorice.png",
+            "portrait_cyrene": "graphics/cosmicon/Cards/Characters/Cyrene.png",
+            "portrait_dan_heng_pt": "graphics/cosmicon/Cards/Characters/Dan_Heng_PT.png",
+            "portrait_firefly": "graphics/cosmicon/Cards/Characters/Firefly.png",
+            "portrait_hyacine": "graphics/cosmicon/Cards/Characters/Hyacine.png",
+            "portrait_kafka": "graphics/cosmicon/Cards/Characters/Kafka.png",
+            "portrait_march_7th": "graphics/cosmicon/Cards/Characters/March_7th.png",
+            "portrait_phainon": "graphics/cosmicon/Cards/Characters/Phainon.png",
+            "portrait_robin": "graphics/cosmicon/Cards/Characters/Robin.png",
+            "portrait_sparxie": "graphics/cosmicon/Cards/Characters/Sparxie.png",
+            "portrait_the_herta": "graphics/cosmicon/Cards/Characters/The_Herta.png",
+            "portrait_yao_guang": "graphics/cosmicon/Cards/Characters/Yao_Guang.png"
+        }
+    }
+}

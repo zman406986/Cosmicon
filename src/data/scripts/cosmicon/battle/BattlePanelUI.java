@@ -1,0 +1,818 @@
+package data.scripts.cosmicon.battle;
+
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
+import org.lwjgl.opengl.GL11;
+
+import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.SettingsAPI;
+
+import com.fs.starfarer.api.campaign.BaseCustomUIPanelPlugin;
+import com.fs.starfarer.api.campaign.CustomVisualDialogDelegate.DialogCallbacks;
+import com.fs.starfarer.api.ui.Alignment;
+import com.fs.starfarer.api.ui.ButtonAPI;
+import com.fs.starfarer.api.ui.CustomPanelAPI;
+import com.fs.starfarer.api.ui.Fonts;
+import com.fs.starfarer.api.ui.LabelAPI;
+import com.fs.starfarer.api.ui.PositionAPI;
+import com.fs.starfarer.api.ui.TooltipMakerAPI;
+import com.fs.starfarer.api.ui.UIComponentAPI;
+import com.fs.starfarer.api.ui.TooltipMakerAPI.ActionListenerDelegate;
+
+import data.scripts.Strings;
+import data.scripts.cosmicon.battle.BattleState.BattleEventListener;
+import data.scripts.cosmicon.battle.BattleState.Phase;
+import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
+import data.scripts.cosmicon.prismatic.PrismaticManager;
+import data.scripts.cosmicon.util.CoordHelper;
+
+public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionListenerDelegate, BattleEventListener {
+
+    private static final SettingsAPI settings = Global.getSettings();
+
+    private static final String ACTION_END_TURN = "end_turn";
+    private static final String ACTION_CONTINUE = "continue";
+    private static final String ACTION_PRISMATIC = "prismatic";
+    private static final String ACTION_REROLL = "reroll";
+    private static final String ACTION_SKIP_REROLL = "skip_reroll";
+    private static final float DICE_SIZE = 60f;
+    private static final float DICE_SPACING = 70f;
+    private static final float DICE_CLICK_PADDING = 5f;
+
+    private CustomPanelAPI panel;
+    private DialogCallbacks callbacks;
+    private BattleController battleController;
+    private BattleState battleState;
+    private DiceRollManager diceRollManager;
+    private boolean buttonsCreated = false;
+
+    private ButtonAPI actionButton;
+    private ButtonAPI prismaticButton;
+    private ButtonAPI rerollButton;
+    private ButtonAPI skipRerollButton;
+    private LabelAPI prismaticUsesLabel;
+    private LabelAPI phaseLabel;
+    private LabelAPI instructionLabel;
+    private LabelAPI playerHpLabel;
+    private LabelAPI opponentHpLabel;
+    private LabelAPI playerNameLabel;
+    private LabelAPI opponentNameLabel;
+    private LabelAPI resultLabel;
+    private LabelAPI playerAtkLabel;
+    private LabelAPI playerDefLabel;
+    private LabelAPI opponentAtkLabel;
+    private LabelAPI opponentDefLabel;
+    private LabelAPI playerPrismaticLabel;
+    private LabelAPI playerOrangeLabel;
+    private LabelAPI playerPurpleLabel;
+    private LabelAPI playerBlueLabel;
+    private LabelAPI opponentPrismaticLabel;
+    private LabelAPI opponentOrangeLabel;
+    private LabelAPI opponentPurpleLabel;
+    private LabelAPI opponentBlueLabel;
+
+    private float panelX;
+    private float panelY;
+    private float diceZoneCenterX;
+    private float diceZoneCenterY;
+    private float rollAnimationDelay;
+    private boolean diceAnimating;
+
+    private float roleTransitionProgress;
+    private float targetRoleTransition;
+    private static final float ROLE_TRANSITION_DURATION = 0.4f;
+    private boolean lastPlayerWasAttacker;
+
+    private int lastMouseButtonState;
+
+    private final List<float[]> diceHitboxes;
+
+    public BattlePanelUI() {
+        this.diceHitboxes = new ArrayList<>();
+        this.lastMouseButtonState = 0;
+        this.roleTransitionProgress = 0f;
+        this.targetRoleTransition = 0f;
+        this.lastPlayerWasAttacker = true;
+    }
+
+    public void setBattleController(BattleController controller) {
+        this.battleController = controller;
+        if (controller != null) {
+            this.battleState = controller.getState();
+            battleState.addListener(this);
+        }
+    }
+
+    
+
+    public void init(CustomPanelAPI panel, DialogCallbacks callbacks) {
+        this.panel = panel;
+        this.callbacks = callbacks;
+        callbacks.getPanelFader().setDurationOut(0.5f);
+
+        this.diceRollManager = new DiceRollManager();
+        diceRollManager.init(panel);
+
+        PositionAPI pos = panel.getPosition();
+        panelX = pos.getX();
+        panelY = pos.getY();
+        diceZoneCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
+        diceZoneCenterY = BattleRenderingUtils.PANEL_HEIGHT / 2f;
+
+        createButtons();
+        createLabels();
+
+        if (battleState != null) {
+            updateLabelsFromState();
+            lastPlayerWasAttacker = battleState.isPlayerAttacker();
+            roleTransitionProgress = lastPlayerWasAttacker ? 0f : 1f;
+            targetRoleTransition = roleTransitionProgress;
+        }
+    }
+
+    private void createButtons() {
+        if (buttonsCreated) return;
+
+        PositionAPI pos = panel.getPosition();
+        TooltipMakerAPI btnTp = panel.createUIElement(pos.getWidth(), pos.getHeight(), false);
+        btnTp.setActionListenerDelegate(this);
+        panel.addUIElement(btnTp).inBL(0f, 0f);
+
+        actionButton = btnTp.addButton(Strings.get("battle.end_turn"), ACTION_END_TURN, 
+            BattleRenderingUtils.BUTTON_WIDTH, BattleRenderingUtils.BUTTON_HEIGHT, 0f);
+        actionButton.setQuickMode(true);
+        actionButton.setShortcut(Keyboard.KEY_SPACE, false);
+        actionButton.getPosition().inTL(
+            BattleRenderingUtils.PANEL_WIDTH / 2f - BattleRenderingUtils.BUTTON_WIDTH / 2f,
+            BattleRenderingUtils.PANEL_HEIGHT - 60f);
+
+        float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
+        float playerCardY = BattleRenderingUtils.MARGIN;
+
+        TooltipMakerAPI prismTp = panel.createUIElement(50f, 50f, false);
+        prismTp.setActionListenerDelegate(this);
+        panel.addUIElement(prismTp).inTL(playerCardX - 60f, playerCardY + 40f);
+
+        Color prismBase = new Color(255, 215, 0);
+        Color prismBg = new Color(80, 60, 30);
+        Color prismBright = new Color(255, 255, 150);
+        prismaticButton = prismTp.addAreaCheckbox("", ACTION_PRISMATIC, 
+            prismBase, prismBg, prismBright, 40f, 40f, 0f);
+        prismaticButton.setQuickMode(true);
+
+        prismaticUsesLabel = settings.createLabel("2", Fonts.DEFAULT_SMALL);
+        prismaticUsesLabel.setColor(new Color(255, 215, 0));
+        prismaticUsesLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) prismaticUsesLabel)
+            .setSize(40, 20)
+            .inTL(playerCardX - 55f, playerCardY + 85f);
+
+        TooltipMakerAPI rerollTp = panel.createUIElement(200f, 40f, false);
+        rerollTp.setActionListenerDelegate(this);
+        panel.addUIElement(rerollTp).inTL(
+            BattleRenderingUtils.PANEL_WIDTH / 2f - 100f,
+            BattleRenderingUtils.PANEL_HEIGHT - 100f);
+
+        rerollButton = rerollTp.addButton(Strings.get("phase.reroll_selected"), ACTION_REROLL,
+            90f, 30f, 0f);
+        rerollButton.setQuickMode(true);
+        rerollButton.getPosition().inTL(0f, 0f);
+
+        skipRerollButton = rerollTp.addButton(Strings.get("phase.skip_reroll"), ACTION_SKIP_REROLL,
+            90f, 30f, 0f);
+        skipRerollButton.setQuickMode(true);
+        skipRerollButton.getPosition().inTL(100f, 0f);
+
+        buttonsCreated = true;
+    }
+
+    private void createLabels() {
+        phaseLabel = settings.createLabel("", Fonts.INSIGNIA_LARGE);
+        phaseLabel.setColor(new Color(255, 220, 100));
+        phaseLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) phaseLabel)
+            .setSize(400, 30)
+            .inTL(BattleRenderingUtils.PANEL_WIDTH / 2f - 200, 30);
+
+        instructionLabel = settings.createLabel("", Fonts.DEFAULT_SMALL);
+        instructionLabel.setColor(BattleRenderingUtils.COLOR_TEXT);
+        instructionLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) instructionLabel)
+            .setSize(400, 25)
+            .inTL(BattleRenderingUtils.PANEL_WIDTH / 2f - 200, 60);
+
+        playerNameLabel = settings.createLabel(Strings.get("battle.player"), Fonts.DEFAULT_SMALL);
+        playerNameLabel.setColor(new Color(100, 150, 255));
+        playerNameLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) playerNameLabel)
+            .setSize(BattleRenderingUtils.CARD_WIDTH, 20)
+            .inTL(BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN,
+                  BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN + 5);
+
+        playerHpLabel = settings.createLabel("25/25", Fonts.DEFAULT_SMALL);
+        playerHpLabel.setColor(BattleRenderingUtils.COLOR_HP_TEXT);
+        playerHpLabel.setAlignment(Alignment.LMID);
+        panel.addComponent((UIComponentAPI) playerHpLabel)
+            .setSize(50, 20)
+            .inTL(BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN + 5,
+                  BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN + 5);
+
+        opponentNameLabel = settings.createLabel(Strings.get("battle.opponent"), Fonts.DEFAULT_SMALL);
+        opponentNameLabel.setColor(new Color(255, 100, 100));
+        opponentNameLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) opponentNameLabel)
+            .setSize(BattleRenderingUtils.CARD_WIDTH, 20)
+            .inTL(BattleRenderingUtils.MARGIN,
+                  BattleRenderingUtils.MARGIN + 5);
+
+        opponentHpLabel = settings.createLabel("30/30", Fonts.DEFAULT_SMALL);
+        opponentHpLabel.setColor(BattleRenderingUtils.COLOR_HP_TEXT);
+        opponentHpLabel.setAlignment(Alignment.LMID);
+        panel.addComponent((UIComponentAPI) opponentHpLabel)
+            .setSize(50, 20)
+            .inTL(BattleRenderingUtils.MARGIN + 5,
+                  BattleRenderingUtils.MARGIN + 5);
+
+        resultLabel = settings.createLabel("", Fonts.INSIGNIA_LARGE);
+        resultLabel.setColor(new Color(255, 215, 0));
+        resultLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) resultLabel)
+            .setSize(400, 40)
+            .inTL(BattleRenderingUtils.PANEL_WIDTH / 2f - 200, BattleRenderingUtils.PANEL_HEIGHT / 2f - 20);
+        resultLabel.setOpacity(0f);
+
+        playerAtkLabel = settings.createLabel("3", Fonts.DEFAULT_SMALL);
+        playerAtkLabel.setColor(new Color(255, 100, 80));
+        playerAtkLabel.setAlignment(Alignment.MID);
+        float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
+        float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        panel.addComponent((UIComponentAPI) playerAtkLabel)
+            .setSize(30, 20)
+            .inTL(playerCardX + BattleRenderingUtils.ATK_LEFT_MARGIN + 2f,
+                  playerCardY + BattleRenderingUtils.CARD_HEIGHT - 22f);
+
+        playerDefLabel = settings.createLabel("2", Fonts.DEFAULT_SMALL);
+        playerDefLabel.setColor(new Color(80, 150, 255));
+        playerDefLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) playerDefLabel)
+            .setSize(30, 20)
+            .inTL(playerCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DEF_RIGHT_MARGIN - 30f,
+                  playerCardY + BattleRenderingUtils.CARD_HEIGHT - 22f);
+
+        float opponentCardX = BattleRenderingUtils.MARGIN;
+        float opponentCardY = BattleRenderingUtils.MARGIN;
+        opponentAtkLabel = settings.createLabel("3", Fonts.DEFAULT_SMALL);
+        opponentAtkLabel.setColor(new Color(255, 100, 80));
+        opponentAtkLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) opponentAtkLabel)
+            .setSize(30, 20)
+            .inTL(opponentCardX + BattleRenderingUtils.ATK_LEFT_MARGIN + 2f,
+                  opponentCardY + BattleRenderingUtils.CARD_HEIGHT - 22f);
+
+        opponentDefLabel = settings.createLabel("2", Fonts.DEFAULT_SMALL);
+        opponentDefLabel.setColor(new Color(80, 150, 255));
+        opponentDefLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) opponentDefLabel)
+            .setSize(30, 20)
+            .inTL(opponentCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DEF_RIGHT_MARGIN - 30f,
+                  opponentCardY + BattleRenderingUtils.CARD_HEIGHT - 22f);
+
+        // Player dice count labels (centered on dice icons at top-right of card)
+        float diceX = playerCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DICE_POOL_RIGHT_MARGIN - BattleRenderingUtils.DICE_ICON_SIZE / 2f - 11f;
+        float diceStartY = playerCardY + BattleRenderingUtils.DICE_POOL_TOP_MARGIN + 3f;
+
+        playerPrismaticLabel = createCountLabel(settings, diceX, diceStartY);
+        playerOrangeLabel = createCountLabel(settings, diceX, diceStartY + 26);
+        playerPurpleLabel = createCountLabel(settings, diceX, diceStartY + 52);
+        playerBlueLabel = createCountLabel(settings, diceX, diceStartY + 78);
+
+        // Opponent dice count labels (centered on dice icons at top-right of card)
+        diceX = opponentCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DICE_POOL_RIGHT_MARGIN - BattleRenderingUtils.DICE_ICON_SIZE / 2f - 11f;
+        diceStartY = opponentCardY + BattleRenderingUtils.DICE_POOL_TOP_MARGIN + 3f;
+
+        opponentPrismaticLabel = createCountLabel(settings, diceX, diceStartY);
+        opponentOrangeLabel = createCountLabel(settings, diceX, diceStartY + 26);
+        opponentPurpleLabel = createCountLabel(settings, diceX, diceStartY + 52);
+        opponentBlueLabel = createCountLabel(settings, diceX, diceStartY + 78);
+    }
+
+    private LabelAPI createCountLabel(SettingsAPI settings, float x, float y) {
+        LabelAPI label = settings.createLabel("0", Fonts.DEFAULT_SMALL);
+        label.setColor(Color.WHITE);
+        label.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) label).setSize(22, 16).inTL(x, y);
+        return label;
+    }
+
+    private void updateLabelsFromState() {
+        if (battleState == null || playerNameLabel == null) return;
+
+        CharacterCard playerCard = battleState.getPlayerCard();
+        CharacterCard opponentCard = battleState.getOpponentCard();
+
+        if (playerCard != null) {
+            playerNameLabel.setText(playerCard.getName());
+            playerHpLabel.setText(String.format("%d/%d", battleState.getPlayerHp(), playerCard.getMaxHp()));
+            playerAtkLabel.setText(String.valueOf(playerCard.getAtkLevel()));
+            playerDefLabel.setText(String.valueOf(playerCard.getDefLevel()));
+        }
+
+        if (opponentCard != null) {
+            opponentNameLabel.setText(opponentCard.getName());
+            opponentHpLabel.setText(String.format("%d/%d", battleState.getOpponentHp(), opponentCard.getMaxHp()));
+            opponentAtkLabel.setText(String.valueOf(opponentCard.getAtkLevel()));
+            opponentDefLabel.setText(String.valueOf(opponentCard.getDefLevel()));
+        }
+
+        // Update dice pool count labels from CharacterCard's base dice pool
+        List<DiceType> playerPool = playerCard != null ? playerCard.getDicePool() : null;
+        List<DiceType> opponentPool = opponentCard != null ? opponentCard.getDicePool() : null;
+
+        playerPrismaticLabel.setText(String.valueOf(countDiceOfType(playerPool, DiceType.PRISMATIC_D12)));
+        playerOrangeLabel.setText(String.valueOf(countDiceOfType(playerPool, DiceType.ORANGE_D8)));
+        playerPurpleLabel.setText(String.valueOf(countDiceOfType(playerPool, DiceType.PURPLE_D6)));
+        playerBlueLabel.setText(String.valueOf(countDiceOfType(playerPool, DiceType.BLUE_D4)));
+
+        opponentPrismaticLabel.setText(String.valueOf(countDiceOfType(opponentPool, DiceType.PRISMATIC_D12)));
+        opponentOrangeLabel.setText(String.valueOf(countDiceOfType(opponentPool, DiceType.ORANGE_D8)));
+        opponentPurpleLabel.setText(String.valueOf(countDiceOfType(opponentPool, DiceType.PURPLE_D6)));
+        opponentBlueLabel.setText(String.valueOf(countDiceOfType(opponentPool, DiceType.BLUE_D4)));
+
+        updatePhaseLabel();
+        updatePrismaticButton();
+    }
+
+    private int countDiceOfType(List<DiceType> pool, DiceType type) {
+        if (pool == null) return 0;
+        int count = 0;
+        for (DiceType d : pool) {
+            if (d == type) count++;
+        }
+        return count;
+    }
+
+    private void updatePhaseLabel() {
+        if (phaseLabel == null || battleState == null) return;
+        Phase phase = battleState.getCurrentPhase();
+        boolean playerAttacking = battleState.isPlayerAttacker();
+
+        String phaseText = switch (phase) {
+            case ROLLING -> Strings.get("phase.rolling");
+            case REROLL_PHASE -> Strings.get("phase.reroll");
+            case SELECTING_ATTACK -> playerAttacking ? Strings.get("phase.your_attack") : Strings.get("phase.opponent_attack");
+            case SELECTING_DEFENSE -> playerAttacking ? Strings.get("phase.opponent_defense") : Strings.get("phase.your_defense");
+            case RESOLVING -> Strings.get("phase.resolving");
+            case WAITING_NEXT_TURN -> Strings.format("phase.turn_complete", battleState.getTurnNumber());
+            case ENDED -> battleState.getWinner().equals("player") ? Strings.get("phase.victory") : Strings.get("phase.defeat");
+        };
+
+        phaseLabel.setText(phaseText);
+
+        String instructionText = "";
+        if (phase == Phase.REROLL_PHASE) {
+            int remaining = battleState.getRemainingRerolls();
+            instructionText = Strings.format("phase.select_reroll", remaining);
+        } else if (phase == Phase.SELECTING_ATTACK || phase == Phase.SELECTING_DEFENSE) {
+            if (phase == Phase.SELECTING_ATTACK && playerAttacking ||
+                phase == Phase.SELECTING_DEFENSE && !playerAttacking) {
+                int required = battleState.getRequiredPlayerDiceCount();
+                instructionText = Strings.format("phase.select_dice", required);
+            } else {
+                instructionText = Strings.get("phase.opponent_selecting");
+            }
+        } else if (phase == Phase.WAITING_NEXT_TURN) {
+            instructionText = Strings.get("phase.click_continue");
+        }
+
+        instructionLabel.setText(instructionText);
+
+        if (phase == Phase.ENDED) {
+            resultLabel.setText(battleState.getWinner().equals("player") ? Strings.get("battle.you_won") : Strings.get("battle.you_lost"));
+            resultLabel.setOpacity(1f);
+        } else {
+            resultLabel.setOpacity(0f);
+        }
+
+        updateActionButton(phase);
+    }
+
+    private void updateActionButton(Phase phase) {
+        if (actionButton == null) return;
+
+        boolean playerIsAttacker = battleState.isPlayerAttacker();
+        boolean playerShouldSelect = (playerIsAttacker && phase == Phase.SELECTING_ATTACK) ||
+                                      (!playerIsAttacker && phase == Phase.SELECTING_DEFENSE);
+
+        String buttonText = switch (phase) {
+            case ROLLING, REROLL_PHASE -> Strings.get("phase.waiting");
+            case SELECTING_ATTACK -> playerIsAttacker ? Strings.get("battle.confirm_attack") : Strings.get("phase.waiting");
+            case SELECTING_DEFENSE -> playerIsAttacker ? Strings.get("phase.waiting") : Strings.get("battle.confirm_defense");
+            case RESOLVING -> Strings.get("phase.resolving");
+            case WAITING_NEXT_TURN -> Strings.get("phase.continue");
+            case ENDED -> Strings.get("phase.close");
+        };
+
+        actionButton.setText(buttonText);
+        actionButton.setCustomData(switch (phase) {
+            case SELECTING_ATTACK, SELECTING_DEFENSE -> playerShouldSelect ? ACTION_END_TURN : "none";
+            case WAITING_NEXT_TURN -> ACTION_CONTINUE;
+            case ENDED -> "close";
+            default -> "none";
+        });
+
+        boolean enabled = playerShouldSelect || phase == Phase.WAITING_NEXT_TURN || phase == Phase.ENDED;
+        actionButton.setEnabled(enabled);
+
+        updateRerollButtons(phase);
+    }
+
+    private void updateRerollButtons(Phase phase) {
+        if (rerollButton == null || skipRerollButton == null) return;
+
+        boolean inRerollPhase = phase == Phase.REROLL_PHASE && battleState.isPlayerAttacker();
+        rerollButton.setEnabled(inRerollPhase && battleState.getRemainingRerolls() > 0);
+        skipRerollButton.setEnabled(inRerollPhase);
+    }
+
+    private void updatePrismaticButton() {
+        if (prismaticButton == null || prismaticUsesLabel == null || battleState == null) return;
+
+        int uses = battleState.getPlayerPrismaticUses();
+        prismaticUsesLabel.setText(String.valueOf(uses));
+
+        boolean playerShouldSelect = (battleState.isPlayerAttacker() && 
+            battleState.getCurrentPhase() == Phase.SELECTING_ATTACK) ||
+            (!battleState.isPlayerAttacker() && 
+            battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE);
+
+        prismaticButton.setEnabled(uses > 0 && playerShouldSelect);
+
+        if (battleState.isPlayerPrismaticModeActive()) {
+            prismaticUsesLabel.setColor(new Color(255, 100, 100));
+        } else if (uses > 0) {
+            prismaticUsesLabel.setColor(new Color(255, 215, 0));
+        } else {
+            prismaticUsesLabel.setColor(new Color(128, 128, 128));
+        }
+    }
+
+    @Override
+    public void actionPerformed(Object input, Object source) {
+        if (source instanceof ButtonAPI btn) {
+            String action = (String) btn.getCustomData();
+
+            switch (action) {
+                case ACTION_PRISMATIC -> {
+                    if (battleController != null) {
+                        battleController.onTogglePrismaticMode();
+                        updatePrismaticButton();
+                    }
+                }
+                case ACTION_REROLL -> {
+                    if (battleController != null) {
+                        battleController.onPlayerReroll();
+                    }
+                }
+                case ACTION_SKIP_REROLL -> {
+                    if (battleController != null) {
+                        battleController.onPlayerSkipReroll();
+                    }
+                }
+                case ACTION_END_TURN -> {
+                    if (battleController != null) {
+                        battleController.onPlayerConfirmSelection();
+                    }
+                }
+                case ACTION_CONTINUE -> {
+                    if (battleController != null) {
+                        battleController.onContinueToNextTurn();
+                    }
+                }
+                case "close" -> {
+                    if (callbacks != null) {
+                        callbacks.dismissDialog();
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onPhaseChange(Phase newPhase) {
+        if (phaseLabel == null) return;
+        updatePhaseLabel();
+
+        if (newPhase == Phase.ROLLING) {
+            rollAnimationDelay = 0.3f;
+            diceAnimating = true;
+        }
+    }
+
+    @Override
+    public void onDiceRerolled(boolean isPlayer, List<Integer> newValues, List<Integer> rerolledIndices) {
+        if (isPlayer && diceRollManager != null && !rerolledIndices.isEmpty()) {
+            diceRollManager.partialReroll(rerolledIndices, newValues);
+            rollAnimationDelay = DiceAnimator.getTotalDuration() + 0.1f;
+            diceAnimating = true;
+        }
+    }
+
+    @Override
+    public void onDamageResolved(int damage, int playerHp, int opponentHp) {
+        updateLabelsFromState();
+    }
+
+    @Override
+    public void onBattleEnd(String winner) {
+        updatePhaseLabel();
+    }
+
+    @Override
+    public void onDiceSelected(boolean isPlayer, int index, boolean selected) {
+    }
+
+    @Override
+    public void onPrismaticDiceRolled(boolean isPlayer, List<PrismaticDiceInstance> dice) {
+    }
+
+    @Override
+    public void onPrismaticDiceSelected(boolean isPlayer, int index, boolean selected) {
+    }
+
+    @Override
+    public void onMustSelectDiceMarked(boolean isPlayer, List<PrismaticDiceInstance> mustSelect) {
+    }
+
+    @Override
+    public void onDiceRolled(boolean isPlayer, List<DiceType> types, List<Integer> values) {
+    }
+
+    @Override
+    public void onWeatherChange(WeatherType newWeather) {
+    }
+
+    @Override
+    public void advance(float amount) {
+        if (battleState == null) return;
+
+        updateRoleTransition(amount);
+
+        if (battleController != null) {
+            battleController.advanceAiSelection(amount);
+        }
+
+        if (diceAnimating) {
+            rollAnimationDelay -= amount;
+            if (rollAnimationDelay <= 0f && diceAnimating) {
+                diceAnimating = false;
+                List<DiceType> types = battleState.getPlayerDiceTypes();
+                List<Integer> values = battleState.getPlayerDiceValues();
+                if (types != null && values != null) {
+                    createDiceHitboxes(types);
+                    diceRollManager.startRoll(types, values, diceZoneCenterX, diceZoneCenterY);
+                }
+
+                types = battleState.getOpponentDiceTypes();
+                values = battleState.getOpponentDiceValues();
+                if (types != null && values != null) {
+                    diceRollManager.appendRoll(types, values, diceZoneCenterX, diceZoneCenterY - 80f);
+                }
+
+                rollAnimationDelay = DiceAnimator.getTotalDuration() + 0.1f;
+                diceAnimating = true;
+            } else if (rollAnimationDelay <= DiceAnimator.getTotalDuration() && diceRollManager.isComplete()) {
+                diceAnimating = false;
+                if (battleState.getCurrentPhase() == Phase.ROLLING) {
+                        battleController.advanceToSelectPhase();
+                    }
+            }
+        }
+
+        if (battleState.getCurrentPhase() == Phase.REROLL_PHASE && 
+            battleState.getRemainingRerolls() <= 0) {
+            battleController.advanceToAttackPhase();
+        }
+
+        diceRollManager.advance(amount);
+
+        handleMouseInput();
+
+        PositionAPI pos = panel.getPosition();
+        panelX = pos.getX();
+        panelY = pos.getY();
+    }
+
+    private void updateRoleTransition(float amount) {
+        boolean currentPlayerIsAttacker = battleState.isPlayerAttacker();
+        
+        if (currentPlayerIsAttacker != lastPlayerWasAttacker) {
+            lastPlayerWasAttacker = currentPlayerIsAttacker;
+            targetRoleTransition = currentPlayerIsAttacker ? 0f : 1f;
+        }
+
+        if (roleTransitionProgress != targetRoleTransition) {
+            float diff = targetRoleTransition - roleTransitionProgress;
+            float step = Math.abs(diff) / ROLE_TRANSITION_DURATION * amount;
+            
+            if (Math.abs(diff) <= step) {
+                roleTransitionProgress = targetRoleTransition;
+            } else {
+                roleTransitionProgress += diff > 0 ? step : -step;
+            }
+        }
+    }
+
+private void handleMouseInput() {
+        int currentButton = Mouse.isButtonDown(0) ? 1 : 0;
+        
+        if (currentButton == 1 && lastMouseButtonState == 0) {
+            if (battleState.getCurrentPhase() == Phase.ROLLING) {
+                diceRollManager.forceCompleteAll();
+                lastMouseButtonState = currentButton;
+                return;
+            }
+            
+            if (battleState.getCurrentPhase() != Phase.SELECTING_ATTACK &&
+                battleState.getCurrentPhase() != Phase.SELECTING_DEFENSE &&
+                battleState.getCurrentPhase() != Phase.REROLL_PHASE) {
+                lastMouseButtonState = currentButton;
+                return;
+            }
+
+            boolean playerShouldSelect = (battleState.isPlayerAttacker() && 
+                                           battleState.getCurrentPhase() == Phase.SELECTING_ATTACK) ||
+                                          (!battleState.isPlayerAttacker() && 
+                                           battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE);
+
+            boolean inRerollPhase = battleState.getCurrentPhase() == Phase.REROLL_PHASE && battleState.isPlayerAttacker();
+
+            if (!playerShouldSelect && !inRerollPhase) {
+                lastMouseButtonState = currentButton;
+                return;
+            }
+
+            int mouseX = Mouse.getX();
+            int mouseY = Mouse.getY();
+            float[] uiPos = CoordHelper.mouseToPanelUi(mouseX, mouseY,
+                panelX, panelY, BattleRenderingUtils.PANEL_WIDTH, BattleRenderingUtils.PANEL_HEIGHT);
+            float panelUiX = uiPos[0];
+            float panelUiY = uiPos[1];
+
+            for (int i = 0; i < diceHitboxes.size(); i++) {
+                float[] hb = diceHitboxes.get(i);
+                if (CoordHelper.isInsideUiRect(panelUiX, panelUiY, hb[0], hb[1], hb[2], hb[3])) {
+                    battleController.onPlayerSelectDice(i);
+                    break;
+                }
+            }
+        }
+        lastMouseButtonState = currentButton;
+    }
+
+    private void createDiceHitboxes(List<DiceType> types) {
+        diceHitboxes.clear();
+        int count = types.size();
+        float totalWidth = DICE_SPACING * (count - 1) + DICE_SIZE;
+        float startX = diceZoneCenterX - totalWidth / 2f;
+        float startY = diceZoneCenterY - DICE_SIZE / 2f;
+
+        for (int i = 0; i < count; i++) {
+            float x = startX + i * DICE_SPACING;
+            float y = startY;
+            diceHitboxes.add(new float[]{x, y, DICE_SIZE + DICE_CLICK_PADDING * 2, DICE_SIZE + DICE_CLICK_PADDING * 2});
+        }
+    }
+
+    private void startDiceAnimation(List<DiceType> types, List<Integer> values, boolean isPlayer) {
+        if (types == null || values == null) return;
+
+        float centerY = diceZoneCenterY;
+        if (!isPlayer) {
+            centerY -= 80f;
+        }
+
+        diceRollManager.startRoll(types, values, diceZoneCenterX, centerY);
+    }
+
+    @Override
+    public void renderBelow(float alphaMult) {
+        PositionAPI pos = panel.getPosition();
+        float x = pos.getX();
+        float y = pos.getY();
+        float w = pos.getWidth();
+        float h = pos.getHeight();
+
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+
+        BattleRenderingUtils.renderBattleBackground(x, y, w, h, 
+            roleTransitionProgress, alphaMult, battleState != null);
+
+        renderPlayerCard(x, y, alphaMult);
+        renderOpponentCard(x, y, alphaMult);
+        renderDiceZone(x, y, alphaMult);
+
+        diceRollManager.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+
+        renderDiceSelectionHighlights(alphaMult);
+
+        GL11.glColor4f(1f, 1f, 1f, 1f);
+    }
+
+    private void renderPlayerCard(float panelX, float panelY, float alphaMult) {
+        float cardX = panelX + BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
+        float cardY = CoordHelper.uiTopLeftToGlSpriteY(panelY, BattleRenderingUtils.PANEL_HEIGHT,
+            BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN,
+            BattleRenderingUtils.CARD_HEIGHT);
+
+        if (battleState != null) {
+            CharacterCard card = battleState.getPlayerCard();
+            BattleRenderingUtils.renderCharacterCard(cardX, cardY, card, alphaMult);
+
+            float passiveX = cardX - 20;
+            float passiveY = cardY - 70;
+            BattleRenderingUtils.renderPassiveBox(passiveX, passiveY, 
+                BattleRenderingUtils.CARD_WIDTH + 40, 60, alphaMult);
+        } else {
+            Color playerCardColor = new Color(100, 120, 180);
+            BattleRenderingUtils.renderCardPlaceholder(cardX, cardY, BattleRenderingUtils.CARD_WIDTH, 
+                BattleRenderingUtils.CARD_HEIGHT, playerCardColor, alphaMult);
+        }
+    }
+
+    private void renderOpponentCard(float panelX, float panelY, float alphaMult) {
+        float cardX = panelX + BattleRenderingUtils.MARGIN;
+        float cardY = CoordHelper.uiTopLeftToGlSpriteY(panelY, BattleRenderingUtils.PANEL_HEIGHT,
+            BattleRenderingUtils.MARGIN, BattleRenderingUtils.CARD_HEIGHT);
+
+        if (battleState != null) {
+            CharacterCard card = battleState.getOpponentCard();
+            BattleRenderingUtils.renderCharacterCard(cardX, cardY, card, alphaMult);
+
+            float passiveX = cardX - 20;
+            float passiveY = cardY + BattleRenderingUtils.CARD_HEIGHT + 10;
+            BattleRenderingUtils.renderPassiveBox(passiveX, passiveY, 
+                BattleRenderingUtils.CARD_WIDTH + 40, 60, alphaMult);
+        } else {
+            Color opponentCardColor = new Color(180, 100, 120);
+            BattleRenderingUtils.renderCardPlaceholder(cardX, cardY, BattleRenderingUtils.CARD_WIDTH, 
+                BattleRenderingUtils.CARD_HEIGHT, opponentCardColor, alphaMult);
+        }
+    }
+
+    private void renderDiceZone(float panelX, float panelY, float alphaMult) {
+        float zoneW = 400f;
+        float zoneH = 160f;
+        float zoneX = panelX + (BattleRenderingUtils.PANEL_WIDTH - zoneW) / 2f;
+        float zoneY = panelY + (BattleRenderingUtils.PANEL_HEIGHT - zoneH) / 2f - 40f;
+
+        BattleRenderingUtils.renderDiceZone(zoneX, zoneY, zoneW, zoneH, alphaMult);
+    }
+
+    private void renderDiceSelectionHighlights(float alphaMult) {
+        if (battleState == null) return;
+        if (battleState.getCurrentPhase() != Phase.SELECTING_ATTACK &&
+            battleState.getCurrentPhase() != Phase.SELECTING_DEFENSE &&
+            battleState.getCurrentPhase() != Phase.REROLL_PHASE) return;
+
+        List<Boolean> selected = battleState.getPlayerDiceSelected();
+        if (selected == null) return;
+
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+
+        Color highlightColor = new Color(100, 255, 100, 150);
+        float r = highlightColor.getRed() / 255f;
+        float g = highlightColor.getGreen() / 255f;
+        float b = highlightColor.getBlue() / 255f;
+        float a = (highlightColor.getAlpha() / 255f) * alphaMult;
+
+        GL11.glColor4f(r, g, b, a);
+        GL11.glLineWidth(3f);
+
+        for (int i = 0; i < Math.min(selected.size(), diceHitboxes.size()); i++) {
+            if (selected.get(i)) {
+                float[] hb = diceHitboxes.get(i);
+                float hx = panelX + hb[0];
+                float hy = CoordHelper.uiToGlY(panelY, BattleRenderingUtils.PANEL_HEIGHT, hb[1] + DICE_SIZE);
+                float hw = DICE_SIZE;
+                float hh = DICE_SIZE;
+
+                GL11.glBegin(GL11.GL_LINE_LOOP);
+                GL11.glVertex2f(hx, hy);
+                GL11.glVertex2f(hx + hw, hy);
+                GL11.glVertex2f(hx + hw, hy + hh);
+                GL11.glVertex2f(hx, hy + hh);
+                GL11.glEnd();
+            }
+        }
+
+        GL11.glColor4f(1f, 1f, 1f, 1f);
+    }
+}

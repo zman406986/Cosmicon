@@ -1,0 +1,8 @@
+id,trigger,conditions,script,text,options
+# Add Play Cosmicon option to any market (size >= 3)
+cosmicon_add_option,PopulateOptions,"$hasMarket
+$marketSize >= 3
+$menuState == main
+$tradeMode == OPEN",,,20:play_cosmicon:Play Cosmicon,
+# Handle option selection
+cosmicon_visit_selected,DialogOptionSelected,$option == play_cosmicon,Cosmicon_StartCosmiconInteraction,,

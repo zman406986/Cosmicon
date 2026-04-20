@@ -1,0 +1,14 @@
+{
+  "music": {
+    "cosmicon_theme": [
+      {
+        "source": "sounds/cosmicon",
+        "volume": 0.80,
+        "files": [
+          "cosmicon_theme.ogg"
+        ],
+        "randomStart": false
+      }
+    ]
+  }
+}

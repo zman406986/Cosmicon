@@ -1,0 +1,168 @@
+{
+  "threeStar": [
+    {
+      "name": "Castorice",
+      "hp": 27,
+      "dice": ["prismatic:2", "orange_d8:2", "purple_d6:1", "blue_d4:2"],
+      "prismaticDice": [
+        {"type": "Doctor's Advice", "count": 2}
+      ],
+      "atkLevel": 3,
+      "defLevel": 2,
+      "passive": "When defending: If DMG taken is no less than 8, increases ATK Level and DEF Level by 1. If DMG taken is no more than 5, immediately deals 3 Instant Damage. Attack/Defense Level: The required number of dice that must be selected for attack/defense. Instant Damage: Deals damage instantly, skipping the calculation of Final DMG."
+    },
+    {
+      "name": "Acheron",
+      "hp": 33,
+      "dice": ["prismatic:2", "orange_d8:1", "purple_d6:1", "blue_d4:3"],
+      "prismaticDice": [
+        {"type": "Repeater", "count": 2}
+      ],
+      "atkLevel": 2,
+      "defLevel": 3,
+      "passive": "When attacking: If all selected dice numbers are 4, this attack gains Perforation: for each successful Perforation triggered, increases ATK Level by 1. Perforation: When attacking, ignores the opponent's Defense and Forcefield. Attack Level: The required number of dice that must be selected for attack."
+    },
+    {
+      "name": "Firefly",
+      "hp": 28,
+      "dice": ["prismatic:2", "purple_d6:3", "blue_d4:2"],
+      "prismaticDice": [
+        {"type": "Sorcerer", "count": 2}
+      ],
+      "atkLevel": 4,
+      "defLevel": 3,
+      "passive": "When attacking, If the selected dice contain 2 pairs of matching numbers, this attack gains Combo. If this unit has full HP, increases Attack by 5. Combo: Performs 1 additional attack based on the current Attack."
+    },
+    {
+      "name": "Robin",
+      "hp": 30,
+      "dice": ["purple_d6:2", "blue_d4:3"],
+      "atkLevel": 4,
+      "defLevel": 3,
+      "passive": "When attacking: If all selected dice are even numbers, the selected dice gain a Level Up. Level Up: Upgrades eligible dice by increasing their Rarity and max number of faces up to twelve. Note: The d12 dice are treated as Prismatic Dice."
+    },
+    {
+      "name": "The Herta",
+      "hp": 42,
+      "dice": ["prismatic:2", "orange_d8:2", "purple_d6:3"],
+      "prismaticDice": [
+        {"type": "Berserker", "count": 2}
+      ],
+      "atkLevel": 3,
+      "defLevel": 2,
+      "passive": "At the end of the turn: Gains 1 Prismatic Dice Use. If its special effect has been triggered more than 4 times, subsequently gains Arise each turn. Arise: Before the end of the turn, randomly turns the selected die with the lowest value to that die's maximum value. (Prismatic Dice are unaffected)"
+    },
+    {
+      "name": "Kafka",
+      "hp": 30,
+      "dice": ["prismatic:2", "purple_d6:2", "blue_d4:3"],
+      "prismaticDice": [
+        {"type": "Prime Number", "count": 2}
+      ],
+      "atkLevel": 4,
+      "defLevel": 3,
+      "passive": "When attacking: For each different number on the selected dice, applies 1 stack of Poison. When defense fails, removes 1 stack of Poison from the opponent. Poison: At the end of the turn, takes DMG based on the number of stacks, then reduce the number of stacks by 1."
+    },
+    {
+      "name": "Aventurine",
+      "hp": 33,
+      "dice": ["prismatic:2", "orange_d8:1", "purple_d6:3", "blue_d4:1"],
+      "prismaticDice": [
+        {"type": "Prime Number", "count": 2}
+      ],
+      "atkLevel": 4,
+      "defLevel": 2,
+      "passive": "When attacking: Gains 1 stack of Toughness for every 1 odd number in the selected dice. When Toughness accumulates to 7 stacks, immediately deals 7 Instant Damage and removes 7 stacks of Toughness. Toughness: When defending, provides a DEF bonus based on the number of stacks. Instant Damage: Deals damage instantly, skipping the calculation of Final DMG."
+    },
+    {
+      "name": "March 7th",
+      "hp": 25,
+      "dice": ["prismatic:2", "purple_d6:2", "blue_d4:3"],
+      "prismaticDice": [
+        {"type": "Magic Bullet", "count": 2}
+      ],
+      "atkLevel": 4,
+      "defLevel": 3,
+      "passive": "When attacking or defending: For each 1 pair of matching numbers on selected dice, deals 3 Instant Damage. Instant Damage: Deals damage instantly, skipping the calculation of Final DMG."
+    },
+    {
+      "name": "Dan Heng • Permansor Terrae",
+      "hp": 25,
+      "dice": ["prismatic:2", "orange_d8:2", "purple_d6:3"],
+      "prismaticDice": [
+        {"type": "Sorcerer", "count": 2}
+      ],
+      "atkLevel": 3,
+      "defLevel": 2,
+      "passive": "When attacking: If Attack is no less than 18, next time when defending, increases DEF Level by 3, and gains Counter. After defense ends, DEF Level will be restored to the initial value. Defense Level: The required number of dice that must be selected for defense. Counter: When attacked, if your DEF is higher, deals DMG to the attacker equal to the difference."
+    },
+    {
+      "name": "Sparxie",
+      "hp": 22,
+      "dice": ["prismatic:2", "orange_d8:1", "purple_d6:2", "blue_d4:2"],
+      "prismaticDice": [
+        {"type": "Sorcerer", "count": 2}
+      ],
+      "atkLevel": 4,
+      "defLevel": 3,
+      "passive": "When attacking or defending: If the selected dice include identical numbers, gains Hack. Hack: Before the end of the turn, turns your opponent's selected die with the highest value into a 2. (Prismatic Dice are unaffected)"
+    },
+    {
+      "name": "Yao Guang",
+      "hp": 35,
+      "dice": ["prismatic:2", "orange_d8:2", "purple_d6:3"],
+      "prismaticDice": [
+        {"type": "Destiny", "count": 2}
+      ],
+      "atkLevel": 3,
+      "defLevel": 2,
+      "passive": "When attacking: Gain 4 reroll attempts; after exceeding 2 rerolls in a single turn, each reroll grants 2 stacks of Thorns. Additionally, if Attack is no less than 18, removes all Thorns and gains 1 Prismatic Dice use. Thorns: Before the end of the turn, takes DMG based on the number of stacks. This effect is removed at the end of the turn."
+    },
+    {
+      "name": "Cyrene",
+      "hp": 30,
+      "dice": ["prismatic:2", "orange_d8:1", "purple_d6:3", "blue_d4:1"],
+      "prismaticDice": [
+        {"type": "Gambler", "count": 2}
+      ],
+      "atkLevel": 3,
+      "defLevel": 2,
+      "passive": "This unit's ATK and DEF values are tallied each turn. When the total exceeds 24, Attack Level becomes 5, and subsequently gains Arise each turn. Attack Level: The required number of dice that must be selected for attack. Arise: Before the end of the turn, randomly turns the selected die with the lowest value to that die's maximum value. (Prismatic Dice are unaffected)"
+    },
+    {
+      "name": "Phainon",
+      "hp": 20,
+      "dice": ["prismatic:2", "orange_d8:2", "purple_d6:3"],
+      "prismaticDice": [
+        {"type": "Astral Shield", "count": 2}
+      ],
+      "atkLevel": 4,
+      "defLevel": 2,
+      "passive": "When attacking: Siphons HP equal to 50% of the DMG dealt. When defending: If all selected dice have the same number, gains Unyielding, which can be triggered up to 1 time. Siphon: When attacking, restores HP equal to a portion of the DMG dealt. Unyielding: While active, always keeps 1 HP."
+    },
+    {
+      "name": "Hyacine",
+      "hp": 28,
+      "dice": ["prismatic:2", "orange_d8:1", "purple_d6:4"],
+      "prismaticDice": [
+        {"type": "Oath", "count": 2}
+      ],
+      "atkLevel": 2,
+      "defLevel": 2,
+      "passive": "After attacking: Sets Strength stacks to 50% of this attack's value. If all selected dice numbers are 6, sets it to 100% and Heals 6 HP. Strength: When attacking, provides an ATK bonus based on the number of stacks. Heal: Restores a specified amount of HP."
+    }
+  ],
+  "opponentOnly": [
+    {
+      "name": "Ricecasto",
+      "hp": 99,
+      "dice": ["prismatic:2", "orange_d8:5"],
+      "prismaticDice": [
+        {"type": "True • \"Doctor's Advice\"", "count": 2}
+      ],
+      "atkLevel": 5,
+      "defLevel": 5,
+      "passive": "Has Perforation, Combo, Counter, Forcefield, and Unyielding. Perforation: When attacking, ignores the opponent's Defense and Forcefield. Combo: Performs 1 additional attack based on the current Attack. Counter: When attacked, if your DEF is higher, deals DMG to the attacker equal to the difference. Forcefield: While active, takes no DMG from general attacks. Unyielding: While active, always keeps 1 HP."
+    }
+  ]
+}

@@ -1,0 +1,341 @@
+{
+    "mod": {
+        "name": "Cosmicon Dice"
+    },
+    "menu": {
+        "welcome": "Welcome to the Cosmicon Collective!",
+        "play": "Play Cosmicon",
+        "help": "How to Play",
+        "leave": "Leave"
+    },
+    "help": {
+        "title": "=== How to Play Cosmicon ===",
+        "intro": "Cosmicon is a turn-based dice battle game from Honkai: Star Rail.",
+        "rule_1": "- Each player has a character card with dice pool, HP, ATK/DEF Levels",
+        "rule_2": "- Roll dice each turn, select required number based on current phase",
+        "rule_3": "- Attack Value = sum of selected dice + Strength stacks",
+        "rule_4": "- Defense Value = sum of selected dice + Toughness stacks",
+        "rule_5": "- Damage = Attack - Defense (when attack > defense)",
+        "back": "Back"
+    },
+    "battle": {
+        "end_turn": "End Turn",
+        "player": "Player",
+        "opponent": "Opponent",
+        "confirm_attack": "Confirm Attack",
+        "confirm_defense": "Confirm Defense",
+        "you_won": "You Won!",
+        "you_lost": "You Lost!"
+    },
+    "errors": {
+        "market_too_small": "This market is too small to host Cosmicon games."
+    },
+    "dice": {
+        "blue_d4": "Blue d4",
+        "purple_d6": "Purple d6",
+        "orange_d8": "Orange d8",
+        "prismatic": "Prismatic"
+    },
+    "phase": {
+        "attack": "Attack Phase",
+        "defense": "Defense Phase",
+        "reroll": "Reroll Phase",
+        "select_dice": "Select {0} dice",
+        "select_reroll": "Select dice to reroll ({0} remaining)",
+        "rolling": "Rolling dice...",
+        "waiting": "Waiting...",
+        "confirm": "Confirm Selection",
+        "reroll_selected": "Reroll Selected",
+        "skip_reroll": "Skip Reroll",
+        "continue": "Continue",
+        "close": "Close",
+        "your_attack": "Your Attack Phase",
+        "opponent_attack": "Opponent Attack Phase",
+        "your_defense": "Your Defense Phase",
+        "opponent_defense": "Opponent Defense Phase",
+        "resolving": "Resolving...",
+        "turn_complete": "Turn {0} Complete",
+        "victory": "Victory!",
+        "defeat": "Defeat!",
+        "opponent_selecting": "Opponent selecting...",
+        "click_continue": "Click Continue to proceed"
+    },
+    "status": {
+        "poison": "Poison",
+        "strength": "Strength",
+        "toughness": "Toughness",
+        "forcefield": "Forcefield",
+        "perforation": "Perforation",
+        "counter": "Counter",
+        "unyielding": "Unyielding",
+        "hack": "Hack",
+        "thorns": "Thorns",
+        "arise": "Arise",
+        "level_up": "Level Up",
+        "last_stand": "Last Stand",
+        "overload": "Overload",
+        "siphon": "Siphon",
+        "destined": "Destined",
+        "venom": "Venom",
+        "combo": "Combo",
+        "deterrence": "Deterrence",
+        "tactics": "Tactics",
+        "awakening": "Awakening",
+        "heal": "Heal",
+        "reflect": "Reflect"
+    },
+    "weather_category": {
+        "safeguard": "Safeguard",
+        "attack": "Attack",
+        "help": "Help",
+        "reversal": "Reversal",
+        "safeguard_desc": "Benefits defenders",
+        "attack_desc": "Benefits attackers",
+        "help_desc": "Neutral benefits",
+        "reversal_desc": "Punishes or reverses normal flow"
+    },
+    "weather": {
+        "frost": "Frost",
+        "frog_rain": "Frog Rain",
+        "fine_snow": "Fine Snow",
+        "fish_rain": "Fish Rain",
+        "parhelion": "Parhelion",
+        "cyclonic_swarm": "Cyclonic Swarm",
+        "sleet": "Sleet",
+        "solar_eclipse": "Solar Eclipse",
+        "thunderstorm": "Thunderstorm",
+        "blizzard": "Blizzard",
+        "scorching_sun": "Scorching Sun",
+        "acid_rain": "Acid Rain",
+        "high_temperature": "High Temperature",
+        "storm": "Storm",
+        "moderate_snow": "Moderate Snow",
+        "heavy_snow": "Heavy Snow",
+        "dust": "Dust",
+        "sea_of_clouds": "Sea of Clouds",
+        "rainbow": "Rainbow",
+        "drought": "Drought",
+        "lunisolar_luminance": "Lunisolar Luminance",
+        "crepuscular_rays": "Crepuscular Rays",
+        "temporal_storm": "Temporal Storm",
+        "sunshower": "Sunshower",
+        "sunny": "Sunny",
+        "dry_thunderstorm": "Dry Thunderstorm",
+        "toxic_fog": "Toxic Fog",
+        "the_decisive_moment": "The Decisive Moment",
+        "venocloud": "Venocloud",
+        "drizzle": "Drizzle",
+        "frost_desc": "If the attacker's selected dice contain matching numbers, increases their Defense Level by 1 in the next turn.",
+        "frog_rain_desc": "Neither side will roll the minimum value on their dice.",
+        "fine_snow_desc": "If you don't reroll during your attack turn, gain 3 stacks of Toughness that can only be used next turn.",
+        "fish_rain_desc": "Both sides additionally gain 1 reroll attempt during Attack/Defense.",
+        "parhelion_desc": "Gain 2 extra reroll chances, but also gain 2 stacks of Thorns when rerolling.",
+        "cyclonic_swarm_desc": "When either side attacks, gain Combo. Performs 1 additional attack based on the current Attack.",
+        "sleet_desc": "Players without full HP gain Counter, and their DEF Level increases by 2.",
+        "solar_eclipse_desc": "When either side attacks, if the selected dice contain different values, increases Attack by 4.",
+        "thunderstorm_desc": "During this weather, the card increases ATK/DEF by 2 each time it undergoes a Gliding.",
+        "blizzard_desc": "When the defender is selecting dice, if DEF is 8 or less, they gain Forcefield this turn.",
+        "scorching_sun_desc": "When either side attacks, Siphons HP equal to 50% of the DMG dealt.",
+        "acid_rain_desc": "At the start of each turn: The side with more HP will be inflicted with 1 stack of Poison.",
+        "high_temperature_desc": "At the start of the turn: The side with less HP gains 2 stacks of Strength, lasting until the end of this weather.",
+        "storm_desc": "Additionally increases both sides' ATK Level by 1 and DEF Level by 1.",
+        "moderate_snow_desc": "When attacking or defending, if either side's selected dice contains 3 identical numbers, heals 10 HP.",
+        "heavy_snow_desc": "When selecting dice, if the selected number includes 7, ATK/DEF increases by 4.",
+        "dust_desc": "When the attacker selects dice, if all dice values are odd numbers, gains 3 stacks of Strength.",
+        "sea_of_clouds_desc": "When transformed to this weather, both sides gain 1 Prismatic Dice use.",
+        "rainbow_desc": "When the attacker selects dice, if attack value is 10 or less, gains Perforation.",
+        "drought_desc": "Based on the opponent's Defense Level, the attacker gains 3 additional ATK per level.",
+        "lunisolar_luminance_desc": "When the attacker selects dice, if current HP is 3 or less, ATK is doubled.",
+        "crepuscular_rays_desc": "Player with lower HP gains Combo when attacking.",
+        "temporal_storm_desc": "When the attack selects dice, if all dice values are 6s, the HP of both sides will be switched.",
+        "sunshower_desc": "The defender's dice cannot roll the maximum value.",
+        "sunny_desc": "Both sides gain 5 stacks of Strength, lasting until the end of this weather.",
+        "dry_thunderstorm_desc": "When the attacker selects dice, directly deal 3 Instant Damage when attacking.",
+        "toxic_fog_desc": "Both sides are inflicted with 2 stacks of Poison.",
+        "the_decisive_moment_desc": "Both sides gain 5 stacks of Strength. (NPC-Exclusive)",
+        "venocloud_desc": "Both sides gain Venom. (Story-Exclusive)",
+        "drizzle_desc": "When selecting dice, if the selected number includes 6, the Poison state is removed from themselves. (Story-Exclusive)"
+    },
+    "character": {
+        "acheron": {
+            "name": "Acheron",
+            "passive": "When attacking: If all selected dice numbers are 4, this attack gains Perforation: for each successful Perforation triggered, increases ATK Level by 1. Perforation: When attacking, ignores the opponent's Defense and Forcefield. Attack Level: The required number of dice that must be selected for attack.",
+            "passive_desc": "All dice = 4: Perforation"
+        },
+        "castorice": {
+            "name": "Castorice",
+            "passive": "When defending: If DMG taken is no less than 8, increases ATK Level and DEF Level by 1. If DMG taken is no more than 5, immediately deals 3 Instant Damage. Attack/Defense Level: The required number of dice that must be selected for attack/defense. Instant Damage: Deals damage instantly, skipping the calculation of Final DMG."
+        },
+        "firefly": {
+            "name": "Firefly",
+            "passive": "When attacking, If the selected dice contain 2 pairs of matching numbers, this attack gains Combo. If this unit has full HP, increases Attack by 5. Combo: Performs 1 additional attack based on the current Attack.",
+            "passive_desc": "2 pairs: Combo"
+        },
+        "robin": {
+            "name": "Robin",
+            "passive": "When attacking: If all selected dice are even numbers, the selected dice gain a Level Up. Level Up: Upgrades eligible dice by increasing their Rarity and max number of faces up to twelve. Note: The d12 dice are treated as Prismatic Dice.",
+            "passive_desc": "All even: Level Up"
+        },
+        "the_herta": {
+            "name": "The Herta",
+            "passive": "At the end of the turn: Gains 1 Prismatic Dice Use. If its special effect has been triggered more than 4 times, subsequently gains Arise each turn. Arise: Before the end of the turn, randomly turns the selected die with the lowest value to that die's maximum value. (Prismatic Dice are unaffected)"
+        },
+        "kafka": {
+            "name": "Kafka",
+            "passive": "When attacking: For each different number on the selected dice, applies 1 stack of Poison. When defense fails, removes 1 stack of Poison from the opponent. Poison: At the end of the turn, takes DMG based on the number of stacks, then reduce the number of stacks by 1.",
+            "passive_desc": "{0} Poison stacks"
+        },
+        "aventurine": {
+            "name": "Aventurine",
+            "passive": "When attacking: Gains 1 stack of Toughness for every 1 odd number in the selected dice. When Toughness accumulates to 7 stacks, immediately deals 7 Instant Damage and removes 7 stacks of Toughness. Toughness: When defending, provides a DEF bonus based on the number of stacks. Instant Damage: Deals damage instantly, skipping the calculation of Final DMG.",
+            "passive_desc": "{0} Toughness"
+        },
+        "march_7th": {
+            "name": "March 7th",
+            "passive": "When attacking or defending: For each 1 pair of matching numbers on selected dice, deals 3 Instant Damage. Instant Damage: Deals damage instantly, skipping the calculation of Final DMG.",
+            "passive_desc": "{0} pair(s) = {1} Instant Damage"
+        },
+        "dan_heng_pt": {
+            "name": "Dan Heng • Permansor Terrae",
+            "passive": "When attacking: If Attack is no less than 18, next time when defending, increases DEF Level by 3, and gains Counter. After defense ends, DEF Level will be restored to the initial value. Defense Level: The required number of dice that must be selected for defense. Counter: When attacked, if your DEF is higher, deals DMG to the attacker equal to the difference.",
+            "passive_desc": "Attack >= 18: Counter + DEF boost"
+        },
+        "sparxie": {
+            "name": "Sparxie",
+            "passive": "When attacking or defending: If the selected dice include identical numbers, gains Hack. Hack: Before the end of the turn, turns your opponent's selected die with the highest value into a 2. (Prismatic Dice are unaffected)",
+            "passive_desc": "Pair detected: Hack effect"
+        },
+        "yao_guang": {
+            "name": "Yao Guang",
+            "passive": "When attacking: Gain 4 reroll attempts; after exceeding 2 rerolls in a single turn, each reroll grants 2 stacks of Thorns. Additionally, if Attack is no less than 18, removes all Thorns and gains 1 Prismatic Dice use. Thorns: Before the end of the turn, takes DMG based on the number of stacks. This effect is removed at the end of the turn.",
+            "passive_desc": "Attack >= 18: Thorns cleansed + Prismatic use"
+        },
+        "cyrene": {
+            "name": "Cyrene",
+            "passive": "This unit's ATK and DEF values are tallied each turn. When the total exceeds 24, Attack Level becomes 5, and subsequently gains Arise each turn. Attack Level: The required number of dice that must be selected for attack. Arise: Before the end of the turn, randomly turns the selected die with the lowest value to that die's maximum value. (Prismatic Dice are unaffected)",
+            "passive_desc": "Cumulative ATK+DEF > 24: ATK Level 5 + Arise",
+            "passive_progress": "Turn value: %d toward threshold"
+        },
+        "phainon": {
+            "name": "Phainon",
+            "passive": "When attacking: Siphons HP equal to 50% of the DMG dealt. When defending: If all selected dice have the same number, gains Unyielding, which can be triggered up to 1 time. Siphon: When attacking, restores HP equal to a portion of the DMG dealt. Unyielding: While active, always keeps 1 HP.",
+            "passive_desc": "All same: Unyielding"
+        },
+        "hyacine": {
+            "name": "Hyacine",
+            "passive": "After attacking: Sets Strength stacks to 50% of this attack's value. If all selected dice numbers are 6, sets it to 100% and Heals 6 HP. Strength: When attacking, provides an ATK bonus based on the number of stacks. Heal: Restores a specified amount of HP.",
+            "passive_desc_full": "All dice = 6: 100% Strength + heal",
+            "passive_desc_half": "Strength = 50% of attack"
+        },
+        "default": {
+            "name": "Default"
+        }
+    },
+    "prismatic": {
+        "select_title": "Select Prismatic Dice",
+        "version_true": "True Version",
+        "version_default": "Default Version",
+        "uses_remaining": "{0} uses remaining",
+        "add_to_pool": "Add to Pool",
+        "destined_warning": "DESTINED - MUST SELECT!",
+        "special_face": "Special Face",
+        "condition_not_met": "Condition not met",
+        "evolution": {
+            "name": "\"Evolution\"",
+            "description": "After selected, provides 2 points and doubles ATK/DEF"
+        },
+        "absolute_six": {
+            "name": "\"Absolute Six\"",
+            "description": "Always rolls 6",
+            "effect_desc": "All faces are 6"
+        },
+        "destiny": {
+            "name": "\"Destiny\"",
+            "description": "All faces grant Destined - dice must be selected"
+        },
+        "revenge": {
+            "name": "\"Revenge\"",
+            "description": "Available after taking 25+ total damage"
+        },
+        "doctors_advice": {
+            "name": "\"Doctor's Advice\"",
+            "description": "Special faces heal HP equal to face value"
+        },
+        "last_words": {
+            "name": "\"Last Words\"",
+            "description": "Available at HP <= 8, doubles ATK/DEF on special faces"
+        },
+        "repeater": {
+            "name": "\"Repeater\"",
+            "description": "Available after selecting face 4 twice, grants Combo"
+        },
+        "cactus": {
+            "name": "\"Cactus\"",
+            "description": "Defense only, grants Counter"
+        },
+        "miracle": {
+            "name": "\"Miracle\"",
+            "description": "Available after selecting face 1 nine times, rolls 99"
+        },
+        "loan": {
+            "name": "\"Loan\"",
+            "description": "Grants Overload stacks equal to face value"
+        },
+        "astral_shield": {
+            "name": "\"Astral Shield\"",
+            "description": "Defense only, grants Forcefield on special faces"
+        },
+        "oath": {
+            "name": "\"Oath\"",
+            "description": "Defense only, grants Unyielding on special faces"
+        },
+        "prime_number": {
+            "name": "\"Prime Number\"",
+            "description": "All faces are prime numbers"
+        },
+        "big_red_button": {
+            "name": "\"Big Red Button\"",
+            "description": "Available from turn 5+ when attacking, grants Last Stand"
+        },
+        "sorcerer": {
+            "name": "\"Sorcerer\"",
+            "description": "Grants Hack on special faces"
+        },
+        "heartbeat": {
+            "name": "\"Heartbeat\"",
+            "description": "Grants +1 Prismatic use on special faces"
+        },
+        "berserker": {
+            "name": "\"Berserker\"",
+            "description": "Grants Thorns stacks equal to face value"
+        },
+        "gambler": {
+            "name": "\"Gambler\"",
+            "description": "Available during first 4 turns"
+        },
+        "magic_bullet": {
+            "name": "\"Magic Bullet\"",
+            "description": "Deals 3 instant damage on special faces"
+        },
+        "condition": {
+            "always": "Available anytime",
+            "hp_threshold_low": "Available when HP is {0} or less",
+            "hp_threshold_high": "Available when HP is {0} or more",
+            "turn_threshold_low": "Available during first {0} turns",
+            "turn_threshold_high": "Available from turn {0} onward",
+            "defense_only": "Only available while defending",
+            "attack_only": "Only available while attacking",
+            "damage_taken": "Available after taking {0}+ total damage",
+            "face_selection": "Available after selecting face {0} {1}+ times",
+            "composite_and": "{0} AND {1}",
+            "composite_or": "{0} OR {1}",
+            "composite_and_separator": " AND ",
+            "composite_or_separator": " OR "
+        }
+    },
+    "ai": {
+        "decision_selected": "Selected: {0}",
+        "decision_passive": " (+{0} passive)",
+        "decision_reroll": ", Reroll: {0} dice"
+    }
+}

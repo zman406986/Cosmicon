@@ -1,0 +1,341 @@
+{
+    "mod": {
+        "name": "银河战力党"
+    },
+    "menu": {
+        "welcome": "欢迎来到战力党!",
+        "play": "开始游戏",
+        "help": "游戏说明",
+        "leave": "离开"
+    },
+    "help": {
+        "title": "=== 游戏说明 ===",
+        "intro": "银河战力党是一款来自《崩坏：星穹铁道》的回合制骰子对战游戏。",
+        "rule_1": "- 每位玩家拥有角色卡牌，包含骰子池、生命值、攻击/防御等级",
+        "rule_2": "- 每回合投骰子，根据当前阶段选择指定数量的骰子",
+        "rule_3": "- 攻击值 = 选定骰子总和 + 力量层数",
+        "rule_4": "- 防御值 = 选定骰子总和 + 韧性层数",
+        "rule_5": "- 伤害 = 攻击值 - 防御值（当攻击>防御时）",
+        "back": "返回"
+    },
+    "battle": {
+        "end_turn": "结束回合",
+        "player": "玩家",
+        "opponent": "对手",
+        "confirm_attack": "确认攻击",
+        "confirm_defense": "确认防御",
+        "you_won": "你赢了！",
+        "you_lost": "你输了！"
+    },
+    "errors": {
+        "market_too_small": "这个市场太小，无法进行战力党游戏。"
+    },
+    "dice": {
+        "blue_d4": "蓝色 d4",
+        "purple_d6": "紫色 d6",
+        "orange_d8": "橙色 d8",
+        "prismatic": "棱镜骰"
+    },
+    "phase": {
+        "attack": "攻击阶段",
+        "defense": "防御阶段",
+        "reroll": "重投阶段",
+        "select_dice": "选择 {0} 个骰子",
+        "select_reroll": "选择要重投的骰子（剩余 {0} 次）",
+        "rolling": "正在投骰...",
+        "waiting": "等待中...",
+        "confirm": "确认选择",
+        "reroll_selected": "重投选定",
+        "skip_reroll": "跳过重投",
+        "continue": "继续",
+        "close": "关闭",
+        "your_attack": "你的攻击阶段",
+        "opponent_attack": "对手攻击阶段",
+        "your_defense": "你的防御阶段",
+        "opponent_defense": "对手防御阶段",
+        "resolving": "结算中...",
+        "turn_complete": "第 {0} 回合完成",
+        "victory": "胜利！",
+        "defeat": "失败！",
+        "opponent_selecting": "对手正在选择...",
+        "click_continue": "点击继续以推进"
+    },
+    "status": {
+        "poison": "中毒",
+        "strength": "力量",
+        "toughness": "韧性",
+        "forcefield": "力场",
+        "perforation": "洞穿",
+        "counter": "反击",
+        "unyielding": "不屈",
+        "hack": "骇入",
+        "thorns": "荆棘",
+        "arise": "跃升",
+        "level_up": "升级",
+        "last_stand": "背水",
+        "overload": "超载",
+        "siphon": "虹吸",
+        "destined": "命定",
+        "venom": "猛毒",
+        "combo": "连击",
+        "deterrence": "干扰",
+        "tactics": "战术",
+        "awakening": "觉醒",
+        "heal": "治愈",
+        "reflect": "反弹"
+    },
+    "weather_category": {
+        "safeguard": "坚守",
+        "attack": "进攻",
+        "help": "助力",
+        "reversal": "逆转",
+        "safeguard_desc": "有利于防守方",
+        "attack_desc": "有利于进攻方",
+        "help_desc": "中立效果",
+        "reversal_desc": "惩罚或逆转正常流程"
+    },
+    "weather": {
+        "frost": "霜",
+        "frog_rain": "青蛙雨",
+        "fine_snow": "细雪",
+        "fish_rain": "鱼雨",
+        "parhelion": "幻日",
+        "cyclonic_swarm": "飓风",
+        "sleet": "雨夹雪",
+        "solar_eclipse": "日食",
+        "thunderstorm": "雷雨",
+        "blizzard": "暴雪",
+        "scorching_sun": "烈日",
+        "acid_rain": "酸雨",
+        "high_temperature": "高温",
+        "storm": "暴雨",
+        "moderate_snow": "中雪",
+        "heavy_snow": "大雪",
+        "dust": "沙尘",
+        "sea_of_clouds": "云海",
+        "rainbow": "彩虹",
+        "drought": "干旱",
+        "lunisolar_luminance": "日月同辉",
+        "crepuscular_rays": "云隙光",
+        "temporal_storm": "时空暴",
+        "sunshower": "晴天雨",
+        "sunny": "晴",
+        "dry_thunderstorm": "晴雷",
+        "toxic_fog": "毒雾",
+        "the_decisive_moment": "决胜时刻",
+        "venocloud": "毒云",
+        "drizzle": "小雨",
+        "frost_desc": "若攻击方选择的骰子中包含相同点数，则下回合其防御等级 +1",
+        "frog_rain_desc": "双方所有骰子均不会掷出最小值",
+        "fine_snow_desc": "攻击回合若未重投过，则获得3层仅下回合可用的韧性",
+        "fish_rain_desc": "双方在攻击/防御时，都会额外获得1次重投机会",
+        "parhelion_desc": "额外多2次重投机会，但重投时会被施加2层荆棘",
+        "cyclonic_swarm_desc": "双方攻击时均获得连击",
+        "sleet_desc": "生命值不为满的玩家，获得反击，且防御等级+2",
+        "solar_eclipse_desc": "双方攻击时，若选择的骰子中包含不同点数，则攻击值 +4",
+        "thunderstorm_desc": "在此天气下，卡片每经过一次镀闪，攻击值/防御值+2",
+        "blizzard_desc": "防御方选定骰子时，若防御值≤8点，则其在本回合获得力场",
+        "scorching_sun_desc": "双方攻击时，虹吸造成伤害50%的生命值",
+        "acid_rain_desc": "每回合开始时：场上生命值更多的一方，会被附加1层中毒",
+        "high_temperature_desc": "回合开始时：场上生命值更少的一方，获得2层力量，持续到本次天气结束",
+        "storm_desc": "双方额外攻击等级+1，防御等级+1",
+        "moderate_snow_desc": "双方攻击或防御时，若选择的骰子包含3个相同点数，则治愈10点生命值",
+        "heavy_snow_desc": "选定骰子时，若包含7，则攻击值/防御值+4",
+        "dust_desc": "攻击方选定骰子时，若点数全为奇数，则获得3层力量",
+        "sea_of_clouds_desc": "变换至此天气时，双方获得1次曜彩骰使用次数",
+        "rainbow_desc": "攻击方选定骰子时，若攻击值≤10，获得洞穿",
+        "drought_desc": "根据对方防御等级，每一级攻击方附加3点攻击值",
+        "lunisolar_luminance_desc": "攻击方选定骰子时，若当前生命值≤3，攻击值翻倍",
+        "crepuscular_rays_desc": "生命值更少的玩家，攻击时获得连击",
+        "temporal_storm_desc": "攻击方选定骰子时，若点数全为6，双方生命值将互换",
+        "sunshower_desc": "防御方骰子无法掷出最大值",
+        "sunny_desc": "双方获得5层力量，持续到本次天气结束",
+        "dry_thunderstorm_desc": "攻击方选定骰子时，直接造成3点瞬伤",
+        "toxic_fog_desc": "双方均被附加2层中毒",
+        "the_decisive_moment_desc": "双方获得5层力量",
+        "venocloud_desc": "双方获得猛毒",
+        "drizzle_desc": "选定骰子时，若包含6，则消除身上的中毒状态"
+    },
+    "character": {
+        "acheron": {
+            "name": "黄泉",
+            "passive": "攻击时：若选定的骰子点数全为4，则本次攻击获得洞穿；每成功触发一次洞穿，攻击等级+1。洞穿：攻击时，无视对方的防御和力场。攻击等级：攻击时必须选定的骰子数量。",
+            "passive_desc": "全为4点：洞穿"
+        },
+        "castorice": {
+            "name": "遐蝶",
+            "passive": "防御时：如果受到的伤害值≥8，则使攻击等级与防御等级+1；如果受到伤害，且伤害值≤5，则立刻造成3点的瞬伤。攻击等级/防御等级：攻击/防御时必须选定的骰子数量。瞬伤：直接造成伤害，跳过最终伤害计算。"
+        },
+        "firefly": {
+            "name": "流萤",
+            "passive": "攻击时：若选定的骰子包含2组2个相同点数，则本次攻击获得连击。如果自身满生命值，攻击值+5。连击：本回合额外进行1次基于当前攻击值的攻击。",
+            "passive_desc": "2组相同：连击"
+        },
+        "robin": {
+            "name": "知更鸟",
+            "passive": "攻击时：若选定的骰子全为偶数，则使选定的骰子获得升级。升级：升级符合条件的骰子，提高其稀有度并将最大面数提升至十二。注：d12骰子视为曜彩骰。",
+            "passive_desc": "全偶数：升级"
+        },
+        "the_herta": {
+            "name": "大黑塔",
+            "passive": "回合结束时：获得1次曜彩骰使用次数。若已触发4次以上曜彩骰的特殊效果，则此后每回合获得跃升。跃升：回合结束前，随机将选定骰子中点数最低的一个转为该骰子的最大值。（曜彩骰不受影响）"
+        },
+        "kafka": {
+            "name": "卡芙卡",
+            "passive": "攻击时：选定的骰子每有一个不同的点数，便使对方陷入1层中毒。防御失败时，移除对方1层中毒。中毒：回合结束时，根据层数受到伤害，随后层数减少1。",
+            "passive_desc": "{0}层中毒"
+        },
+        "aventurine": {
+            "name": "砂金",
+            "passive": "攻击时：选定的骰子里每有1个奇数，则获得1层韧性。韧性累计至7层时，立即造成7点瞬伤，并移除7层韧性。韧性：防御时，根据层数提供防御加成。瞬伤：直接造成伤害，跳过最终伤害计算。",
+            "passive_desc": "{0}层韧性"
+        },
+        "march_7th": {
+            "name": "三月七",
+            "passive": "攻击或防御时：选定的骰子每出现1组2个相同点数，立刻造成3点瞬伤。瞬伤：直接造成伤害，跳过最终伤害计算。",
+            "passive_desc": "{0}组 = {1}点瞬伤"
+        },
+        "dan_heng_pt": {
+            "name": "丹恒•腾荒",
+            "passive": "攻击时：若攻击值≥18，下次防御时防御等级+3，并获得反击，防御结束将还原至初始防御等级。防御等级：防御时必须选定的骰子数量。反击：受到攻击时，如果防御值更大，对攻击方造成差值伤害。",
+            "passive_desc": "攻击≥18：反击+防御加成"
+        },
+        "sparxie": {
+            "name": "火花",
+            "passive": "攻击或防御时：若选定的骰子包含相同点数，则获得骇入。骇入：回合结束前，将对方选定的骰子中点数最高的一个转为2。（曜彩骰不受影响）",
+            "passive_desc": "相同点数：骇入效果"
+        },
+        "yao_guang": {
+            "name": "爻光",
+            "passive": "攻击时：获得4次重投机会；在单回合内超过2次重投后，每次重投会获得2层荆棘。此外，若攻击值≥18，则移除所有荆棘，并获得1次曜彩骰使用次数。荆棘：回合结束前，根据层数受到伤害。回合结束时移除该效果。",
+            "passive_desc": "攻击≥18：荆棘清除+曜彩骰"
+        },
+        "cyrene": {
+            "name": "昔涟",
+            "passive": "将每回合自身的攻击值与防御值进行累加，总计超过24后，攻击等级变为5，此后每回合获得跃升。攻击等级：攻击时必须选定的骰子数量。跃升：回合结束前，随机将选定骰子中点数最低的一个转为该骰子的最大值。（曜彩骰不受影响）",
+            "passive_desc": "累计攻击+防御>24：攻击等级5+跃升",
+            "passive_progress": "本回合数值：%d，累计进度"
+        },
+        "phainon": {
+            "name": "白厄",
+            "passive": "攻击时：虹吸自己造成伤害数额50%的生命值。防御时：若选定的骰子点数全部相同，则获得不屈，最多触发1次。虹吸：攻击时，回复造成伤害一定比例的生命值。不屈：生效期间，始终保留1点生命值。",
+            "passive_desc": "全相同：不屈"
+        },
+        "hyacine": {
+            "name": "风堇",
+            "passive": "攻击后：将力量层数设置为本次攻击值的50%；若选定的骰子点数全为6，则设置为100%并治愈6点生命值。力量：攻击时，根据层数提供攻击加成。治愈：回复指定数量的生命值。",
+            "passive_desc_full": "全为6点：100%力量+治愈",
+            "passive_desc_half": "力量 = 攻击值50%"
+        },
+        "default": {
+            "name": "默认"
+        }
+    },
+    "prismatic": {
+        "select_title": "选择曜彩骰",
+        "version_true": "真版本",
+        "version_default": "默认版本",
+        "uses_remaining": "剩余{0}次使用",
+        "add_to_pool": "添加到池中",
+        "destined_warning": "命定 - 必须选择！",
+        "special_face": "特殊骰面",
+        "condition_not_met": "条件未满足",
+        "evolution": {
+            "name": "「真•进化」",
+            "description": "选定后提供点数，随后让攻击值/防御值翻倍"
+        },
+        "absolute_six": {
+            "name": "「真•6•6」",
+            "description": "总是投出6点",
+            "effect_desc": "所有骰面都是6"
+        },
+        "destiny": {
+            "name": "「真•命运」",
+            "description": "所有骰面获得命定——骰子必须被选择"
+        },
+        "revenge": {
+            "name": "「真•复仇」",
+            "description": "累计受到25点伤害后可在攻击时使用"
+        },
+        "doctors_advice": {
+            "name": "「真•医嘱」",
+            "description": "特殊骰面治愈等同于点数的生命值"
+        },
+        "last_words": {
+            "name": "「真•遗语」",
+            "description": "生命值≤8时可用，特殊骰面使攻击值/防御值翻倍"
+        },
+        "repeater": {
+            "name": "「真•复读」",
+            "description": "累计选择2次骰面4后可在攻击时使用，获得连击"
+        },
+        "cactus": {
+            "name": "「真•仙人球」",
+            "description": "仅防御时可用，获得反击"
+        },
+        "miracle": {
+            "name": "「真•奇迹」",
+            "description": "累计选择9次骰面1后可在攻击时使用，投出99"
+        },
+        "loan": {
+            "name": "「真•贷款」",
+            "description": "获得等同于骰面点数的超载层数"
+        },
+        "astral_shield": {
+            "name": "「真•星盾」",
+            "description": "仅防御时可用，特殊骰面获得力场"
+        },
+        "oath": {
+            "name": "「真•誓言」",
+            "description": "仅防御时可用，特殊骰面获得不屈"
+        },
+        "prime_number": {
+            "name": "「真•质数」",
+            "description": "所有骰面都是质数"
+        },
+        "big_red_button": {
+            "name": "「大红按钮」",
+            "description": "回合≥5时攻击可用，获得背水"
+        },
+        "sorcerer": {
+            "name": "「真•奇术师」",
+            "description": "特殊骰面获得骇入"
+        },
+        "heartbeat": {
+            "name": "「真•心跳」",
+            "description": "特殊骰面获得+1次曜彩骰使用次数"
+        },
+        "berserker": {
+            "name": "「真•战狂」",
+            "description": "获得等同于骰面点数的荆棘层数"
+        },
+        "gambler": {
+            "name": "「真•赌徒」",
+            "description": "仅前4回合内可用"
+        },
+        "magic_bullet": {
+            "name": "「真•魔弹」",
+            "description": "特殊骰面造成3点瞬伤"
+        },
+        "condition": {
+            "always": "随时可用",
+            "hp_threshold_low": "当前生命值≤{0}时可用",
+            "hp_threshold_high": "当前生命值≥{0}时可用",
+            "turn_threshold_low": "前{0}回合内可用",
+            "turn_threshold_high": "第{0}回合起可用",
+            "defense_only": "仅防御回合可用",
+            "attack_only": "仅攻击回合可用",
+            "damage_taken": "累计受到{0}点以上伤害后可用",
+            "face_selection": "选择骰面{0}累计{1}次以上后可用",
+            "composite_and": "{0} 且 {1}",
+            "composite_or": "{0} 或 {1}",
+            "composite_and_separator": " 且 ",
+            "composite_or_separator": " 或 "
+        }
+    },
+    "ai": {
+        "decision_selected": "已选: {0}",
+        "decision_passive": "(+{0} 被动)",
+        "decision_reroll": ", 重投: {0} 个骰子"
+    }
+}

@@ -1,0 +1,27 @@
+# 「上骰了！战力党！」/Cosmicon, Roll On! - 曜彩骰图鉴/Prismatic Dice Index
+
+## Prismatic Dice / 曜彩骰
+
+Detailed information only applies to faces with *. / 详细信息仅适用于带有*的骰面。
+
+| Name / 名称 | Dice Faces (Default) / 骰面 (默认) | Dice Faces (True) / 骰面 (真) | Use Conditions in Match / 对局中使用条件 | Detailed Information / 详细信息 |
+|------|---------------------|-------------------|------------------------|---------------------|
+| "Evolution" / 「真•进化」 | N/A | 3, 3, 4, 4, 6, 2* | Available anytime / 随时可用翻倍 | EN: After it is selected, provide 2 points, and doubles ATK/DEF<br/><br/>CN: 翻倍：选定后提供#点数，随后让攻击值/防御值翻倍 |
+| "Absolute Six" / 「真•6•6」 | N/A | 6, 6, 6, 6, 6, 6 | Available anytime / 随时可用 | N/A |
+| "Destiny" / 「真•命运」 | 1*, 3*, 3*, 6*, 6*, 12* | 1*, 3*, 3*, 12*, 12*, 16* | Available anytime / 随时可用 | EN: After it is selected, provides 1/3/6/12/16 points and gains Destined. Destined: Dice with these effect must be selected for use after being rolled.<br/><br/>CN: 命定：选定后提供#点数，持有这一效果的骰子在投出后必须被选择使用 |
+| "Revenge" / 「真•复仇」 | N/A | 6, 6, 8, 8, 12, 12 | Available when attacking after taking a total of 25 DMG / 累计受到25点伤害后，可以在攻击时使用 | N/A |
+| "Doctor's Advice" / 「真•医嘱」 | 1*, 2*, 3*, 4*, 6*, 6* | 1*, 2*, 3*, 4*, 6*, 6* | Available anytime (Default: Available when HP is 10 or less) / 随时可用 | EN: After it is selected, provides 1/2/3/4/6 points and heals 1/2/3/4/6 HP. Heal: Restores a specified amount of HP.<br/><br/>CN: 治愈：选定后提供#点数，回复#点数的生命值 |
+| "Last Words" / 「真•遗语」 | N/A | 4, 5, 5, 1*, 2*, 4* | Available when HP is 8 or less / 生命值≤8点时可用 | EN: After it is selected, provide 1/2/4 points, and doubles ATK/DEF<br/><br/>CN: 翻倍：选定后提供#点数，随后让攻击值/防御值翻倍 |
+| "Repeater" / 「真•复读」 | 1, 1, 1, 1, 4*, 4* | 1, 1, 4, 4, 4*, 4* | Available when attacking after selecting Dice Face 4 a total of 2 times / 累计选择2次骰面4后，可以在攻击时使用 | EN: After it is selected, provides 4 points and gains Combo this turn. Combo: Performs 1 additional attack based on the current Attack.<br/><br/>CN: 连击：选定后提供#点数，本回合额外进行1次基于当前攻击值的攻击 |
+| "Cactus" / 「真•仙人球」 | N/A | 4*, 5*, 6*, 7*, 8*, 9* | Only available while defending / 只能在防御时使用 | EN: After it is selected, provides 4/5/6/7/8/9 points, and gains Counter this turn. Counter: When attacked, if your DEF is higher, deals DMG to the attacker equal to the difference.<br/><br/>CN: 反击：选定后提供#点数，本回合在受到攻击时，如果防御值更大，对攻击方造成差值伤害 |
+| "Miracle" / 「真•奇迹」 | N/A | 99, 99, 99, 99, 99, 99 | Available when attacking after selecting Dice Face 1 a total of 9 times / 累计选择9次骰面1后，可以在攻击时使用 | N/A |
+| "Loan" / 「真•贷款」 | N/A | 2*, 2*, 3*, 3*, 4*, 4* | Available anytime / 随时可用 | EN: After it is selected, provides 2/3/4 points, and gains 2/3/4 stacks of Overload. Overload: When attacking, gains bonus ATK equal to the number of stacks. However, when defending, takes DMG equal to 50% of the number of stacks.<br/><br/>CN: 超载：选定后提供#点数，获得#层超载。攻击时附加与层数相同的攻击值，但防御时对自己造成层数50%的伤害 |
+| "Astral Shield" / 「真•星盾」 | 5, 5, 5, 1*, 1*, 1* | 7, 7, 7, 1*, 1*, 1* | Only available when defending / 只能在防御时使用 | EN: After it is selected, provides 1 point, and gains Forcefield this turn. Forcefield: When active, takes no DMG from general attacks.<br/><br/>CN: 力场：选定后提供#点数，本回合获得力场。力场生效期间，不会受到常规攻击伤害 |
+| "Oath" / 「真•誓言」 | 6, 6, 6, 4*, 4*, 6* | 8, 8, 4*, 4*, 6*, 6* | Only available when defending / 只能在防御时使用 | EN: After it is selected, provides 4/6 points, and gains Unyielding this turn. Unyielding: While active, always keeps 1 HP.<br/><br/>CN: 不屈：选定后提供#点数，本回合获得不屈。不屈生效期间，始终保留1点生命值 |
+| "Prime Number" / 「真•质数」 | 3, 3, 5, 5, 7, 7 | 5, 5, 5, 7, 7, 7 | Available anytime / 随时可用 | N/A |
+| "Big Red Button" / 「大红按钮」 | N/A | 6*, 6*, 6*, 8*, 8*, 8* | Available when attacking during or after turn 5 / 回合数≥5时，可以在攻击时使用 | EN: After it is selected, provides 6/8 points, and immediately triggers Last Stand. Last Stand: Reduces HP to 1 and gains a point bonus equal to the HP amount reduced.<br/><br/>CN: 背水：选定后提供#点数，立刻触发背水。将自身生命值降低为1，获得降低值的点数加成 |
+| "Sorcerer" / 「真•奇术师」 | 2, 3, 4, 4*, 6*, 6* | 4, 4, 4, 4*, 6*, 6* | Available anytime / 随时可用 | EN: After it is selected, provides 4/6 points, and gains Hack this turn. Hack: Before the end of the turn, turns your opponent's selected die with the highest value into a 2. (Prismatic Dice are unaffected)<br/><br/>CN: 骇入：选定后提供#点数，本回合获得骇入。结算前，将对手已选择骰子中点数最大的一颗转变为2点（不会作用于曜彩骰） |
+| "Heartbeat" / 「真•心跳」 | N/A | 1, 1, 1, 1, 9*, 9* | Available anytime / 随时可用 | EN: After it is selected, provides 9 points, and gains 1 Prismatic Dice use<br/><br/>CN: 曜彩：选定后提供#点数，获得1次曜彩骰使用次数 |
+| "Berserker" / 「真•战狂」 | 3, 3, 3, 8*, 8*, 12* | 4, 4, 8*, 8*, 12*, 12* | Available anytime / 随时可用 | EN: After it is selected, provides 8/12 points, and gains 2/3 stacks of Thorns. Thorns: Before the end of the turn, takes DMG based on the number of stacks. This effect is removed at the end of the turn.<br/><br/>CN: 荆棘：选定后提供#点数，获得#/4层荆棘。在回合结算前，将会受到对应层数的伤害，结算后清除荆棘 |
+| "Gambler" / 「真•赌徒」 | 1, 1, 4, 6, 8, 10 | 1, 1, 6, 8, 10, 12 | Only available during the first 4 turns / 仅能在前4回合内使用 | N/A |
+| "Magic Bullet" / 「真•魔弹」 | 1, 3, 5, 7, 3*, 5* | 3, 5, 7, 3*, 5*, 7* | Available anytime / 随时可用 | EN: After it is selected, provides 3/5/7 points, and immediately deals 3 Instant Damage. Instant Damage: Deals damage instantly, skipping the calculation of Final DMG.<br/><br/>CN: 瞬伤：选定后提供#点数，立刻造成3点瞬伤。瞬伤无需进入伤害结算环节，立刻造成的伤害 |

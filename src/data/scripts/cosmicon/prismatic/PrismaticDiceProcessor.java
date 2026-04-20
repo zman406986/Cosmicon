@@ -1,0 +1,69 @@
+package data.scripts.cosmicon.prismatic;
+
+import java.util.List;
+
+import data.scripts.cosmicon.battle.BattleState;
+import data.scripts.cosmicon.battle.CharacterCard;
+import data.scripts.cosmicon.battle.EffectManager;
+import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
+
+public class PrismaticDiceProcessor {
+    
+    public void applyEffect(PrismaticDiceInstance dice, BattleState state, EffectManager effectManager, boolean forPlayer) {
+        if (!dice.shouldTriggerEffect()) return;
+        
+        PrismaticEffect effect = dice.getEffect();
+        
+        if (effect.isNone()) return;
+        
+        state.incrementPrismaticTriggerCount(forPlayer);
+        
+        if (effect.isDoubleValue()) {
+            state.setDoubleValueActive(forPlayer, true);
+            return;
+        }
+        
+        if (effect.isGrantStatus()) {
+            StatusEffect statusEffect = effect.getGrantedEffect();
+            int layers = effect.calculateLayers(dice.rolledFace);
+            effectManager.applyEffect(statusEffect, layers, forPlayer);
+            return;
+        }
+        
+        if (effect.isHealHp()) {
+            int healAmount = dice.rolledFace;
+            int currentHp = forPlayer ? state.getPlayerHp() : state.getOpponentHp();
+            CharacterCard card = forPlayer ? state.getPlayerCard() : state.getOpponentCard();
+            int maxHp = card != null ? card.getMaxHp() : currentHp;
+            int newHp = Math.min(currentHp + healAmount, maxHp);
+            if (forPlayer) {
+                state.setPlayerHp(newHp);
+            } else {
+                state.setOpponentHp(newHp);
+            }
+            return;
+        }
+        
+        if (effect.isGainPrismaticUse()) {
+            state.addPrismaticUse(dice.type, forPlayer);
+            return;
+        }
+        
+        if (effect.isInstantDamage()) {
+            int damage = effect.getInstantDamageAmount();
+            int targetHp = forPlayer ? state.getOpponentHp() : state.getPlayerHp();
+            if (forPlayer) {
+                state.setOpponentHp(Math.max(0, targetHp - damage));
+            } else {
+                state.setPlayerHp(Math.max(0, targetHp - damage));
+            }
+        }
+    }
+    
+    public void checkDestinedDice(PrismaticDiceInstance dice, boolean forPlayer) {
+        PrismaticEffect effect = dice.getEffect();
+        if (effect.isGrantStatus() && effect.getGrantedEffect() == StatusEffect.DESTINED) {
+            dice.setMustSelect(true);
+        }
+    }
+}
