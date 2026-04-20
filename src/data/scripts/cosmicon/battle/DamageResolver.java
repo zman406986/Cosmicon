@@ -2,7 +2,6 @@ package data.scripts.cosmicon.battle;
 
 import data.scripts.cosmicon.battle.BattleState.TurnType;
 import data.scripts.cosmicon.character.PassiveEventSystem;
-import data.scripts.cosmicon.prismatic.PrismaticManager;
 
 public class DamageResolver {
     
@@ -21,13 +20,10 @@ public class DamageResolver {
         int modifiedAttack = attackValue + attackerEffects.calculateAttackBonus(TurnType.ATTACK, attackValue);
         int modifiedDefense = defenseValue + defenderEffects.calculateDefenseBonus(TurnType.DEFENSE, defenseValue);
         
-        PrismaticManager prismaticManager = state.getPrismaticManager();
-        if (prismaticManager != null) {
-            int attackerPrismaticValue = prismaticManager.calculateTotalValue(state.isPlayerAttacker(), true);
-            int defenderPrismaticValue = prismaticManager.calculateTotalValue(!state.isPlayerAttacker(), true);
-            modifiedAttack += attackerPrismaticValue;
-            modifiedDefense += defenderPrismaticValue;
-        }
+        int attackerPrismaticValue = state.getPrismaticDiceTotalValue(state.isPlayerAttacker());
+        int defenderPrismaticValue = state.getPrismaticDiceTotalValue(!state.isPlayerAttacker());
+        modifiedAttack += attackerPrismaticValue;
+        modifiedDefense += defenderPrismaticValue;
         
         if (attackerEffects.shouldIgnoreDefense()) {
             modifiedDefense = 0;
@@ -69,10 +65,7 @@ public class DamageResolver {
             reflectDamage = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.REFLECT);
         }
         
-        int instantDamage = 0;
-        if (prismaticManager != null) {
-            instantDamage = prismaticManager.getInstantDamage(!state.isPlayerAttacker());
-        }
+        int instantDamage = state.getPrismaticInstantDamage(!state.isPlayerAttacker());
         
         return new DamageResult(
             damage,

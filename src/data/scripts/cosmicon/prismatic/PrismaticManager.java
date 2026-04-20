@@ -2,7 +2,6 @@ package data.scripts.cosmicon.prismatic;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import data.scripts.cosmicon.battle.BattleState;
@@ -168,10 +167,6 @@ public class PrismaticManager {
     
     public boolean isModeActive(boolean forPlayer) {
         return getState(forPlayer).isModeActive();
-    }
-    
-    public void setModeActive(boolean forPlayer, boolean active) {
-        getState(forPlayer).setModeActive(active);
     }
     
     public void toggleMode(boolean forPlayer) {

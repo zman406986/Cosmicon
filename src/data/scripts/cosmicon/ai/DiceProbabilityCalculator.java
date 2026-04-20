@@ -4,6 +4,7 @@ import data.scripts.cosmicon.battle.DiceType;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public final class DiceProbabilityCalculator {
@@ -225,5 +226,18 @@ public final class DiceProbabilityCalculator {
             maxSum += maxFaces.get(i);
         }
         return maxSum;
+    }
+
+    public static int countPairs(List<Integer> values) {
+        if (values == null || values.size() < 2) return 0;
+        Map<Integer, Integer> counts = new java.util.HashMap<>();
+        for (int v : values) {
+            counts.merge(v, 1, Integer::sum);
+        }
+        int pairs = 0;
+        for (int count : counts.values()) {
+            pairs += count / 2;
+        }
+        return pairs;
     }
 }

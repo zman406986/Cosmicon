@@ -350,7 +350,7 @@ TACTICS,
 
     public static class BattleContext {
         private int currentHp;
-        private int maxHp;
+        private final int maxHp;
         private int rerollCount;
         private final List<Integer> diceValues;
         private final List<Boolean> diceSelected;

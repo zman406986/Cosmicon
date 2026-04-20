@@ -1,7 +1,5 @@
 package data.scripts.cosmicon.prismatic;
 
-import java.util.List;
-
 import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.EffectManager;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;

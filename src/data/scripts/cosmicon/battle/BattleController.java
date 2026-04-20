@@ -8,12 +8,11 @@ public class BattleController {
 
     private final BattleState state;
     private final TurnProcessor turnProcessor;
-    private final PrismaticManager prismaticManager;
 
     public BattleController() {
         EffectManager effectManager = new EffectManager();
         WeatherController weatherController = new WeatherController();
-        this.prismaticManager = new PrismaticManager(effectManager);
+        PrismaticManager prismaticManager = new PrismaticManager(effectManager);
 
         AIEngine aiEngine = new AIEngine();
         DiceRoller diceRoller = new DiceRoller(weatherController);
@@ -71,10 +70,6 @@ public class BattleController {
 
     public BattleState getState() {
         return state;
-    }
-
-    public PrismaticManager getPrismaticManager() {
-        return prismaticManager;
     }
 
     public BattleState.Phase getCurrentPhase() {

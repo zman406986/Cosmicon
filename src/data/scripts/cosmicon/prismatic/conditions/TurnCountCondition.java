@@ -24,9 +24,9 @@ public class TurnCountCondition implements AvailabilityCondition {
     @Override
     public boolean isAvailable(ConditionContext context) {
         if (greaterOrEqual) {
-            return context.turnNumber >= threshold;
+            return context.turnNumber() >= threshold;
         } else {
-            return context.turnNumber <= threshold;
+            return context.turnNumber() <= threshold;
         }
     }
     

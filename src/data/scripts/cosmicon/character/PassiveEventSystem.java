@@ -22,13 +22,12 @@ public final class PassiveEventSystem {
         String characterId = getCharacterId(state, forPlayer);
         if (characterId == null) return;
 
-        if (!isAttacker(state, forPlayer)) return;
+        if (isAttacker(state, forPlayer)) return;
 
-        switch (characterId) {
-            case "yao_guang" -> {
-                var effects = forPlayer ? state.getPlayerEffects() : state.getOpponentEffects();
-                effects.addEffect(StatusEffect.YAO_GUANG_REROLLS, YAO_GUANG_EXTRA_REROLLS);
-            }
+        if (characterId.equals("yao_guang"))
+        {
+            var effects = forPlayer ? state.getPlayerEffects() : state.getOpponentEffects();
+            effects.addEffect(StatusEffect.YAO_GUANG_REROLLS, YAO_GUANG_EXTRA_REROLLS);
         }
     }
 
@@ -36,10 +35,11 @@ public final class PassiveEventSystem {
         String characterId = getCharacterId(state, forPlayer);
         if (characterId == null) return;
 
-        if (!isAttacker(state, forPlayer)) return;
+        if (isAttacker(state, forPlayer)) return;
 
-        switch (characterId) {
-            case "yao_guang" -> applyYaoGuangRerollThorns(state, forPlayer);
+        if (characterId.equals("yao_guang"))
+        {
+            applyYaoGuangRerollThorns(state, forPlayer);
         }
     }
 
@@ -47,10 +47,11 @@ public final class PassiveEventSystem {
         String characterId = getCharacterId(state, forPlayer);
         if (characterId == null) return;
 
-        if (!isAttacker(state, forPlayer)) return;
+        if (isAttacker(state, forPlayer)) return;
 
-        switch (characterId) {
-            case "yao_guang" -> applyYaoGuangAttackResolution(state, forPlayer);
+        if (characterId.equals("yao_guang"))
+        {
+            applyYaoGuangAttackResolution(state, forPlayer);
         }
     }
 
@@ -73,7 +74,7 @@ public final class PassiveEventSystem {
 
             var effects = defenderIsPlayer ? state.getPlayerEffects() : state.getOpponentEffects();
             for (PassiveEvaluator.GrantedEffect ge : result.getGrantedEffects()) {
-                effects.addEffect(ge.effect, ge.layers);
+                effects.addEffect(ge.effect(), ge.layers());
             }
         }
 
@@ -86,10 +87,9 @@ public final class PassiveEventSystem {
         
         if (instantDamageLayers <= 0) return 0;
 
-        int damage = instantDamageLayers;
         effects.removeEffect(StatusEffect.INSTANT_DAMAGE);
 
-        return damage;
+        return instantDamageLayers;
     }
 
     public static void onEndOfTurn(BattleState state, boolean forPlayer) {
@@ -166,7 +166,7 @@ public final class PassiveEventSystem {
     }
 
     private static boolean isAttacker(BattleState state, boolean forPlayer) {
-        return state.isPlayerAttacker() == forPlayer;
+        return state.isPlayerAttacker() != forPlayer;
     }
 
     public static boolean isYaoGuang(String characterId) {

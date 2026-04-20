@@ -248,9 +248,7 @@ public class BattleState {
         return effectManager;
     }
 
-    public PrismaticManager getPrismaticManager() {
-        return prismaticManager;
-    }
+    
 
     public int getPlayerHp() {
         return playerHp;
@@ -395,6 +393,16 @@ public class BattleState {
         return getPrismaticDiceSelected(false);
     }
     
+    public boolean selectPrismaticDice(int index, boolean isPlayer) {
+        if (prismaticManager == null) return false;
+        return prismaticManager.selectPrismaticDice(isPlayer, index);
+    }
+    
+    public boolean canConfirmPrismaticSelection(boolean isPlayer) {
+        if (prismaticManager == null) return true;
+        return prismaticManager.canConfirmPrismaticSelection(isPlayer);
+    }
+    
     
     
     
@@ -473,6 +481,20 @@ public class BattleState {
     
     public void clearPrismaticState() {
         if (prismaticManager != null) prismaticManager.clearState();
+    }
+    
+    public void applyPrismaticDiceEffects() {
+        if (prismaticManager != null) prismaticManager.applyQueuedEffects(this);
+    }
+    
+    public int getPrismaticDiceTotalValue(boolean isPlayer) {
+        if (prismaticManager == null) return 0;
+        return prismaticManager.calculateTotalValue(isPlayer, true);
+    }
+    
+    public int getPrismaticInstantDamage(boolean isPlayer) {
+        if (prismaticManager == null) return 0;
+        return prismaticManager.getInstantDamage(isPlayer);
     }
     
     public void setRemainingRerolls(boolean isPlayer, int count) {

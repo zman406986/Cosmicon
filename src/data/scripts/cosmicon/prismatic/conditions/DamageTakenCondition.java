@@ -17,7 +17,7 @@ public class DamageTakenCondition implements AvailabilityCondition {
     
     @Override
     public boolean isAvailable(ConditionContext context) {
-        return context.totalDamageTaken >= threshold;
+        return context.totalDamageTaken() >= threshold;
     }
     
     @Override

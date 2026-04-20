@@ -244,6 +244,8 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             weatherController.applyPreResolution(state);
         }
 
+        state.applyPrismaticDiceEffects();
+
         StatusEffectProcessor.BattleContext attackerContext = createBattleContext(state.isPlayerAttacker());
         StatusEffectProcessor.BattleContext defenderContext = createBattleContext(!state.isPlayerAttacker());
         
@@ -421,6 +423,8 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         int selectedCount = state.countSelectedDice(true);
         
         if (selectedCount != requiredCount) return false;
+        
+        if (!state.canConfirmPrismaticSelection(true)) return false;
         
         state.recordSelectedFaces(true);
         

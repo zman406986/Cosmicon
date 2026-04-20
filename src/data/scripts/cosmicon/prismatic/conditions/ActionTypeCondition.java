@@ -22,7 +22,7 @@ public class ActionTypeCondition implements AvailabilityCondition {
     
     @Override
     public boolean isAvailable(ConditionContext context) {
-        return context.turnType == requiredType;
+        return context.turnType() == requiredType;
     }
     
     @Override

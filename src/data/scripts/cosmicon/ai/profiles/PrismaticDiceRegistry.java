@@ -39,7 +39,7 @@ public final class PrismaticDiceRegistry {
     }
 
     private static void register(PrismaticDiceProfile profile) {
-        REGISTRY.put(profile.getDiceId(), profile);
+        REGISTRY.put(profile.diceId(), profile);
     }
 
     public static PrismaticDiceProfile get(String diceId) {

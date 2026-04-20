@@ -24,9 +24,9 @@ public class HpThresholdCondition implements AvailabilityCondition {
     @Override
     public boolean isAvailable(ConditionContext context) {
         if (lessOrEqual) {
-            return context.currentHp <= threshold;
+            return context.currentHp() <= threshold;
         } else {
-            return context.currentHp >= threshold;
+            return context.currentHp() >= threshold;
         }
     }
     

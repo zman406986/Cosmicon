@@ -9,17 +9,17 @@ public class AbsoluteSixProfile implements PrismaticDiceProfile {
     private static final int MAX_FACE = 6;
 
     @Override
-    public String getDiceId() {
+    public String diceId() {
         return "absolute_six";
     }
 
     @Override
-    public String getDiceName() {
+    public String diceName() {
         return Strings.get("prismatic.absolute_six.name");
     }
 
     @Override
-    public int[] getFaces() {
+    public int[] faces() {
         return FACES.clone();
     }
 

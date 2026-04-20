@@ -100,14 +100,8 @@ public class PassiveEvaluator {
         }
     }
 
-    public static class GrantedEffect {
-        public final StatusEffect effect;
-        public final int layers;
-
-        public GrantedEffect(StatusEffect effect, int layers) {
-            this.effect = effect;
-            this.layers = layers;
-        }
+    public record GrantedEffect(StatusEffect effect, int layers)
+    {
     }
 
     public static class PostDamageResult {
@@ -525,9 +519,7 @@ public class PassiveEvaluator {
     public static void applyPassiveEffects(PassiveResult result, BattleState state, boolean forPlayer) {
         if (result == null || !result.hasEffects()) return;
         
-        StatusEffectProcessor effects = state.isPlayerAttacker() ? 
-            (forPlayer ? state.getPlayerEffects() : state.getOpponentEffects()) :
-            (forPlayer ? state.getPlayerEffects() : state.getOpponentEffects());
+        StatusEffectProcessor effects = (forPlayer ? state.getPlayerEffects() : state.getOpponentEffects());
         
         for (GrantedEffect ge : result.getGrantedEffects()) {
             effects.addEffect(ge.effect, ge.layers);
