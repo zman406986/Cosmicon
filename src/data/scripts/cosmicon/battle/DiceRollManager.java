@@ -14,11 +14,15 @@ public class DiceRollManager {
     private static final float DICE_SIZE = 60f;
 
     private final List<DiceAnimator> animators;
+    private final List<DiceAnimator> opponentAnimators;
+    private float opponentZoneX;
+    private float opponentZoneY;
     private CustomPanelAPI panel;
     private boolean initialized;
 
     public DiceRollManager() {
         this.animators = new ArrayList<>();
+        this.opponentAnimators = new ArrayList<>();
         this.initialized = false;
     }
 
@@ -117,5 +121,79 @@ public class DiceRollManager {
         for (DiceAnimator animator : animators) {
             animator.forceComplete();
         }
+    }
+
+    public void startOpponentRoll(List<DiceType> types, List<Integer> results, float zoneX, float zoneY) {
+        if (!initialized) return;
+
+        clearOpponentAnimators();
+        
+        this.opponentZoneX = zoneX;
+        this.opponentZoneY = zoneY;
+
+        int count = Math.min(types.size(), results.size());
+        float totalWidth = DICE_SPACING * (count - 1) + DICE_SIZE;
+        float startX = zoneX + (BattleRenderingUtils.OPPONENT_DICE_ZONE_W - totalWidth) / 2f;
+        float startY = zoneY + (BattleRenderingUtils.OPPONENT_DICE_ZONE_H - DICE_SIZE) / 2f;
+        
+        for (int i = 0; i < count; i++) {
+            DiceAnimator animator = new DiceAnimator();
+            animator.init(panel);
+            float diceX = startX + i * DICE_SPACING;
+            float delay = i * STAGGER_DELAY;
+            animator.start(types.get(i), results.get(i), diceX, startY, delay);
+            opponentAnimators.add(animator);
+        }
+    }
+
+    public void renderOpponentDice(float panelX, float panelY, float alphaMult) {
+        for (DiceAnimator animator : opponentAnimators) {
+            animator.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+        }
+    }
+
+    public void rerollOpponentDice(List<Integer> indices, List<Integer> newValues) {
+        for (int animatorIndex : indices) {
+            if (animatorIndex >= 0 && animatorIndex < opponentAnimators.size()) {
+                DiceAnimator animator = opponentAnimators.get(animatorIndex);
+                animator.reroll(newValues.get(animatorIndex));
+            }
+        }
+    }
+
+    public boolean isOpponentComplete() {
+        if (opponentAnimators.isEmpty()) return true;
+        for (DiceAnimator animator : opponentAnimators) {
+            if (!animator.isComplete()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean hasOpponentAnimators() {
+        return !opponentAnimators.isEmpty();
+    }
+
+    public void clearOpponentAnimators() {
+        for (DiceAnimator animator : opponentAnimators) {
+            animator.getNumberLabel().setOpacity(0f);
+        }
+        opponentAnimators.clear();
+    }
+
+    public void forceCompleteOpponent() {
+        for (DiceAnimator animator : opponentAnimators) {
+            animator.forceComplete();
+        }
+    }
+
+    public List<DiceAnimator> getOpponentAnimators() {
+        return opponentAnimators;
+    }
+
+    public void clearAll() {
+        clear();
+        clearOpponentAnimators();
     }
 }

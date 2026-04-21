@@ -32,6 +32,7 @@ import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.CoordHelper;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.util.GLStateUtil;
+import data.scripts.cosmicon.battle.AISelectionVisualizer;
 
 public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionListenerDelegate, BattleEventListener {
 
@@ -41,7 +42,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
     private static final String ACTION_CONTINUE = "continue";
     private static final String ACTION_PRISMATIC = "prismatic";
     private static final String ACTION_REROLL = "reroll";
-    private static final String ACTION_SKIP_REROLL = "skip_reroll";
     private static final float DICE_SIZE = 60f;
     private static final float DICE_SPACING = 70f;
     private static final float DICE_CLICK_PADDING = 5f;
@@ -54,10 +54,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
     private DiceRollManager diceRollManager;
     private boolean buttonsCreated = false;
 
-    private ButtonAPI actionButton;
-    private ButtonAPI prismaticButton;
     private ButtonAPI rerollButton;
-    private ButtonAPI skipRerollButton;
+    private ButtonAPI confirmButton;
+    private ButtonAPI prismaticButton;
     private LabelAPI prismaticUsesLabel;
     private LabelAPI phaseLabel;
     private LabelAPI instructionLabel;
@@ -86,6 +85,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
     private float rollAnimationDelay;
     private boolean diceAnimating;
 
+    private boolean opponentDiceAnimating;
+    private float opponentRollDelay;
+
     private float roleTransitionProgress;
     private float targetRoleTransition;
     private static final float ROLE_TRANSITION_DURATION = 0.4f;
@@ -104,6 +106,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         this.roleTransitionProgress = 0f;
         this.targetRoleTransition = 0f;
         this.lastPlayerWasAttacker = true;
+        this.opponentDiceAnimating = false;
+        this.opponentRollDelay = 0f;
     }
 
     public void setBattleController(BattleController controller) {
@@ -161,13 +165,21 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         btnTp.setActionListenerDelegate(this);
         panel.addUIElement(btnTp).inBL(0f, 0f);
 
-        actionButton = btnTp.addButton(Strings.get("battle.end_turn"), ACTION_END_TURN, 
-            BattleRenderingUtils.BUTTON_WIDTH, BattleRenderingUtils.BUTTON_HEIGHT, 0f);
-        actionButton.setQuickMode(true);
-        actionButton.setShortcut(Keyboard.KEY_SPACE, false);
-        actionButton.getPosition().inTL(
-            BattleRenderingUtils.PANEL_WIDTH / 2f - BattleRenderingUtils.BUTTON_WIDTH / 2f,
-            BattleRenderingUtils.PANEL_HEIGHT - 60f);
+        float btnWidth = 100f;
+        float btnHeight = 30f;
+        float centerX = BattleRenderingUtils.PANEL_WIDTH / 2f;
+        float bottomY = BattleRenderingUtils.PANEL_HEIGHT - 60f;
+
+        confirmButton = btnTp.addButton(Strings.get("battle.confirm_attack"), ACTION_END_TURN, 
+            btnWidth, btnHeight, 0f);
+        confirmButton.setQuickMode(true);
+        confirmButton.setShortcut(Keyboard.KEY_SPACE, false);
+        confirmButton.getPosition().inTL(centerX - btnWidth - 10f, bottomY);
+
+        rerollButton = btnTp.addButton(Strings.get("phase.reroll_selected"), ACTION_REROLL,
+            btnWidth, btnHeight, 0f);
+        rerollButton.setQuickMode(true);
+        rerollButton.getPosition().inTL(centerX + 10f, bottomY);
 
         float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
         float playerCardY = BattleRenderingUtils.MARGIN;
@@ -190,22 +202,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         panel.addComponent((UIComponentAPI) prismaticUsesLabel)
             .setSize(40, 20)
             .inTL(playerCardX - 55f, playerCardY + 85f);
-
-        TooltipMakerAPI rerollTp = panel.createUIElement(200f, 40f, false);
-        rerollTp.setActionListenerDelegate(this);
-        panel.addUIElement(rerollTp).inTL(
-            BattleRenderingUtils.PANEL_WIDTH / 2f - 100f,
-            BattleRenderingUtils.PANEL_HEIGHT - 100f);
-
-        rerollButton = rerollTp.addButton(Strings.get("phase.reroll_selected"), ACTION_REROLL,
-            90f, 30f, 0f);
-        rerollButton.setQuickMode(true);
-        rerollButton.getPosition().inTL(0f, 0f);
-
-        skipRerollButton = rerollTp.addButton(Strings.get("phase.skip_reroll"), ACTION_SKIP_REROLL,
-            90f, 30f, 0f);
-        skipRerollButton.setQuickMode(true);
-        skipRerollButton.getPosition().inTL(100f, 0f);
 
         buttonsCreated = true;
     }
@@ -373,7 +369,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
 
         String phaseText = switch (phase) {
             case ROLLING -> Strings.get("phase.rolling");
-            case REROLL_PHASE -> Strings.get("phase.reroll");
             case SELECTING_ATTACK -> playerAttacking ? Strings.get("phase.your_attack") : Strings.get("phase.opponent_attack");
             case SELECTING_DEFENSE -> playerAttacking ? Strings.get("phase.opponent_defense") : Strings.get("phase.your_defense");
             case RESOLVING -> Strings.get("phase.resolving");
@@ -384,14 +379,14 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         phaseLabel.setText(phaseText);
 
         String instructionText = "";
-        if (phase == Phase.REROLL_PHASE) {
-            int remaining = battleState.getRemainingRerolls();
-            instructionText = Strings.format("phase.select_reroll", remaining);
-        } else if (phase == Phase.SELECTING_ATTACK || phase == Phase.SELECTING_DEFENSE) {
-            if (phase == Phase.SELECTING_ATTACK && playerAttacking ||
-                phase == Phase.SELECTING_DEFENSE && !playerAttacking) {
+        if (phase == Phase.SELECTING_ATTACK || phase == Phase.SELECTING_DEFENSE) {
+            boolean playerShouldSelect = (phase == Phase.SELECTING_ATTACK && playerAttacking) ||
+                                         (phase == Phase.SELECTING_DEFENSE && !playerAttacking);
+            if (playerShouldSelect) {
                 int required = battleState.getRequiredPlayerDiceCount();
-                instructionText = Strings.format("phase.select_dice", required);
+                int remaining = battleState.getRemainingRerolls();
+                String rerollHint = remaining > 0 ? Strings.format("phase.reroll_hint", remaining) : "";
+                instructionText = Strings.format("phase.select_dice", required) + rerollHint;
             } else {
                 instructionText = Strings.get("phase.opponent_selecting");
             }
@@ -408,45 +403,44 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
             resultLabel.setOpacity(0f);
         }
 
-        updateActionButton(phase);
+        updateButtons(phase);
     }
 
-    private void updateActionButton(Phase phase) {
-        if (actionButton == null) return;
+    private void updateButtons(Phase phase) {
+        if (confirmButton == null || rerollButton == null) return;
 
         boolean playerIsAttacker = battleState.isPlayerAttacker();
         boolean playerShouldSelect = (playerIsAttacker && phase == Phase.SELECTING_ATTACK) ||
                                       (!playerIsAttacker && phase == Phase.SELECTING_DEFENSE);
 
-        String buttonText = switch (phase) {
-            case ROLLING, REROLL_PHASE -> Strings.get("phase.waiting");
+        String confirmText = switch (phase) {
             case SELECTING_ATTACK -> playerIsAttacker ? Strings.get("battle.confirm_attack") : Strings.get("phase.waiting");
             case SELECTING_DEFENSE -> playerIsAttacker ? Strings.get("phase.waiting") : Strings.get("battle.confirm_defense");
             case RESOLVING -> Strings.get("phase.resolving");
             case WAITING_NEXT_TURN -> Strings.get("phase.continue");
             case ENDED -> Strings.get("phase.close");
+            default -> Strings.get("phase.waiting");
         };
-
-        actionButton.setText(buttonText);
-        actionButton.setCustomData(switch (phase) {
+        
+        confirmButton.setText(confirmText);
+        confirmButton.setCustomData(switch (phase) {
             case SELECTING_ATTACK, SELECTING_DEFENSE -> playerShouldSelect ? ACTION_END_TURN : "none";
             case WAITING_NEXT_TURN -> ACTION_CONTINUE;
             case ENDED -> "close";
             default -> "none";
         });
 
-        boolean enabled = playerShouldSelect || phase == Phase.WAITING_NEXT_TURN || phase == Phase.ENDED;
-        actionButton.setEnabled(enabled);
+        int selectedCount = battleState.countSelectedDice(true);
+        int requiredCount = battleState.getRequiredPlayerDiceCount();
+        boolean hasRerolls = battleState.getRemainingRerolls(true) > 0;
 
-        updateRerollButtons(phase);
-    }
+        boolean canConfirm = playerShouldSelect && selectedCount == requiredCount 
+                             && battleState.canConfirmPrismaticSelection(true);
+        confirmButton.setEnabled(canConfirm || phase == Phase.WAITING_NEXT_TURN || phase == Phase.ENDED);
 
-    private void updateRerollButtons(Phase phase) {
-        if (rerollButton == null || skipRerollButton == null) return;
+        rerollButton.setEnabled(playerShouldSelect && selectedCount > 0 && hasRerolls);
 
-        boolean inRerollPhase = phase == Phase.REROLL_PHASE && battleState.getRemainingRerolls(true) > 0;
-        rerollButton.setEnabled(inRerollPhase && battleState.getRemainingRerolls() > 0);
-        skipRerollButton.setEnabled(inRerollPhase);
+        updatePrismaticButton();
     }
 
     private void updatePrismaticButton() {
@@ -488,12 +482,6 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
                     CosmiconLogger.info("Player clicked Reroll button");
                     if (battleController != null) {
                         battleController.onPlayerReroll();
-                    }
-                }
-                case ACTION_SKIP_REROLL -> {
-                    CosmiconLogger.info("Player clicked Skip Reroll button");
-                    if (battleController != null) {
-                        battleController.onPlayerSkipReroll();
                     }
                 }
                 case ACTION_END_TURN -> {
@@ -564,12 +552,16 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
             playerOrangeLabel.setText(String.valueOf(counts.getCount(DiceType.ORANGE_D8)));
             playerPurpleLabel.setText(String.valueOf(counts.getCount(DiceType.PURPLE_D6)));
             playerBlueLabel.setText(String.valueOf(counts.getCount(DiceType.BLUE_D4)));
+            
+            createDiceHitboxes(types);
         } else if (!isPlayer && types != null) {
             DicePoolCounts counts = DicePoolCounts.fromPool(types);
             opponentPrismaticLabel.setText(String.valueOf(counts.getCount(DiceType.PRISMATIC_D12)));
             opponentOrangeLabel.setText(String.valueOf(counts.getCount(DiceType.ORANGE_D8)));
             opponentPurpleLabel.setText(String.valueOf(counts.getCount(DiceType.PURPLE_D6)));
             opponentBlueLabel.setText(String.valueOf(counts.getCount(DiceType.BLUE_D4)));
+            
+            triggerOpponentDiceRoll();
         }
     }
 
@@ -645,9 +637,16 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
             }
         }
 
-        if (battleState.getCurrentPhase() == Phase.REROLL_PHASE && 
-            battleState.getRemainingRerolls() <= 0) {
-            battleController.advanceToAttackPhase();
+        if (opponentDiceAnimating) {
+            opponentRollDelay -= amount;
+            
+            if (diceRollManager.hasOpponentAnimators()) {
+                if (diceRollManager.isOpponentComplete() && opponentRollDelay <= 0f) {
+                    opponentDiceAnimating = false;
+                }
+            } else if (opponentRollDelay <= 0f) {
+                startOpponentDiceAnimation();
+            }
         }
 
         diceRollManager.advance(amount);
@@ -679,6 +678,20 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
         }
     }
 
+    private boolean shouldShowOpponentDice() {
+        if (battleState == null) return false;
+        
+        BattleState.Phase phase = battleState.getCurrentPhase();
+        AISelectionVisualizer viz = battleState.getAiSelectionVisualizer();
+        
+        boolean aiIsSelecting = (phase == BattleState.Phase.SELECTING_ATTACK && !battleState.isPlayerAttacker()) ||
+                                (phase == BattleState.Phase.SELECTING_DEFENSE && battleState.isPlayerAttacker());
+        
+        boolean vizActive = viz != null && viz.hasStarted();
+        
+        return aiIsSelecting || vizActive;
+    }
+
 private void handleMouseInput() {
         int currentButton = Mouse.isButtonDown(0) ? 1 : 0;
         
@@ -703,26 +716,19 @@ private void handleMouseInput() {
             }
             
             if (battleState.getCurrentPhase() != Phase.SELECTING_ATTACK &&
-                battleState.getCurrentPhase() != Phase.SELECTING_DEFENSE &&
-                battleState.getCurrentPhase() != Phase.REROLL_PHASE) {
+                battleState.getCurrentPhase() != Phase.SELECTING_DEFENSE) {
                 CosmiconLogger.debug("[CLICK] Wrong phase for dice selection: %s", battleState.getCurrentPhase().name());
                 lastMouseButtonState = currentButton;
                 return;
             }
 
 boolean playerShouldSelect = (battleState.isAttacker(true) &&
-                                           battleState.getCurrentPhase() == Phase.SELECTING_ATTACK) ||
-                                          (battleState.isDefender(true) &&
-                                           battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE);
+                               battleState.getCurrentPhase() == Phase.SELECTING_ATTACK) ||
+                              (battleState.isDefender(true) &&
+                               battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE);
 
-            boolean inRerollPhase = battleState.getCurrentPhase() == Phase.REROLL_PHASE && 
-                battleState.getRemainingRerolls(true) > 0;
-
-            CosmiconLogger.debug("[CLICK] playerShouldSelect=%s, inRerollPhase=%s, isAttacker(true)=%s, isDefender(true)=%s",
-                playerShouldSelect, inRerollPhase, battleState.isAttacker(true), battleState.isDefender(true));
-
-            if (!playerShouldSelect && !inRerollPhase) {
-                CosmiconLogger.debug("[CLICK] Player should not select - conditions not met");
+            if (!playerShouldSelect) {
+                CosmiconLogger.debug("[CLICK] Player should not select");
                 lastMouseButtonState = currentButton;
                 return;
             }
@@ -789,6 +795,30 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
         }
     }
 
+    private void startOpponentDiceAnimation() {
+        if (battleState == null || diceRollManager == null) return;
+        
+        List<DiceType> types = battleState.getOpponentDiceTypes();
+        List<Integer> values = battleState.getOpponentDiceValues();
+        
+        if (types == null || values == null || types.isEmpty()) {
+            opponentDiceAnimating = false;
+            return;
+        }
+        
+        float zoneX = BattleRenderingUtils.MARGIN + BattleRenderingUtils.OPPONENT_DICE_ZONE_OFFSET_X;
+        float zoneY = BattleRenderingUtils.MARGIN + BattleRenderingUtils.OPPONENT_DICE_ZONE_Y_OFFSET;
+        
+        diceRollManager.startOpponentRoll(types, values, zoneX, zoneY);
+        opponentRollDelay = DiceAnimator.getTotalDuration() + 0.1f;
+        opponentDiceAnimating = true;
+    }
+
+    public void triggerOpponentDiceRoll() {
+        opponentRollDelay = 0.3f;
+        opponentDiceAnimating = true;
+    }
+
     @Override
     public void renderBelow(float alphaMult) {
         PositionAPI pos = panel.getPosition();
@@ -807,6 +837,10 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
         renderDiceZone(x, y, alphaMult);
 
         diceRollManager.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+
+        if (shouldShowOpponentDice()) {
+            renderOpponentDiceZone(alphaMult);
+        }
 
         renderDiceSelectionHighlights(alphaMult);
         renderPrismaticButton(alphaMult);
@@ -867,8 +901,7 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
     private void renderDiceSelectionHighlights(float alphaMult) {
         if (battleState == null) return;
         if (battleState.getCurrentPhase() != Phase.SELECTING_ATTACK &&
-            battleState.getCurrentPhase() != Phase.SELECTING_DEFENSE &&
-            battleState.getCurrentPhase() != Phase.REROLL_PHASE) return;
+            battleState.getCurrentPhase() != Phase.SELECTING_DEFENSE) return;
 
         List<Boolean> selected = battleState.getPlayerDiceSelected();
         if (selected == null) return;
@@ -896,6 +929,61 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
             }
         }
 
+        GLStateUtil.resetColor();
+    }
+
+    private void renderOpponentDiceZone(float alphaMult) {
+        float zoneX = panelX + BattleRenderingUtils.MARGIN + BattleRenderingUtils.OPPONENT_DICE_ZONE_OFFSET_X;
+        float zoneY = panelY + BattleRenderingUtils.MARGIN + BattleRenderingUtils.OPPONENT_DICE_ZONE_Y_OFFSET;
+        
+        BattleRenderingUtils.renderOpponentDiceZone(zoneX, zoneY, alphaMult);
+        
+        diceRollManager.renderOpponentDice(panelX, panelY, alphaMult);
+        
+        renderOpponentSelectionHighlights(alphaMult);
+    }
+
+    private void renderOpponentSelectionHighlights(float alphaMult) {
+        if (battleState == null) return;
+        
+        AISelectionVisualizer viz = battleState.getAiSelectionVisualizer();
+        if (viz == null || !viz.hasStarted()) return;
+        
+        List<Integer> visibleIndices = viz.getVisibleIndices();
+        if (visibleIndices.isEmpty()) return;
+        
+        List<DiceAnimator> opponentAnimators = diceRollManager.getOpponentAnimators();
+        if (opponentAnimators == null || opponentAnimators.isEmpty()) return;
+        
+        GLStateUtil.resetBlendState();
+        
+        Color highlightColor = viz.isRerollPhase() ? 
+            ColorHelper.OPPONENT_REROLL_HIGHLIGHT : 
+            ColorHelper.OPPONENT_SELECTION_HIGHLIGHT;
+        
+        float[] c = ColorHelper.toGLComponents(highlightColor, alphaMult);
+        GL11.glColor4f(c[0], c[1], c[2], c[3]);
+        GL11.glLineWidth(3f);
+        
+        for (int idx : visibleIndices) {
+            if (idx >= 0 && idx < opponentAnimators.size()) {
+                DiceAnimator animator = opponentAnimators.get(idx);
+                if (animator != null && animator.getNumberLabel() != null) {
+                    PositionAPI pos = animator.getNumberLabel().getPosition();
+                    float diceX = panelX + pos.getX();
+                    float diceY = CoordHelper.uiToGlY(panelY, BattleRenderingUtils.PANEL_HEIGHT, 
+                        pos.getY() + DiceAnimator.DICE_SIZE);
+                    
+                    GL11.glBegin(GL11.GL_LINE_LOOP);
+                    GL11.glVertex2f(diceX, diceY);
+                    GL11.glVertex2f(diceX + DiceAnimator.DICE_SIZE, diceY);
+                    GL11.glVertex2f(diceX + DiceAnimator.DICE_SIZE, diceY + DiceAnimator.DICE_SIZE);
+                    GL11.glVertex2f(diceX, diceY + DiceAnimator.DICE_SIZE);
+                    GL11.glEnd();
+                }
+            }
+        }
+        
         GLStateUtil.resetColor();
     }
 

@@ -1,5 +1,6 @@
 package data.scripts.cosmicon.battle;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -89,5 +90,61 @@ public class AIEngine {
         } else {
             CosmiconLogger.debug("AIEngine: %s chose not to reroll", charId);
         }
+    }
+    
+    /**
+     * Compute AI selection decision without applying it yet.
+     * Returns the indices the AI would select.
+     */
+    public List<Integer> planSelection(BattleState state, boolean forPlayer) {
+        List<Integer> diceValues = state.getDiceValues(forPlayer);
+        List<DiceType> diceTypes = state.getDiceTypes(forPlayer);
+        int requiredCount = state.getRequiredDiceCount(forPlayer);
+        CharacterCard card = state.getCard(forPlayer);
+        
+        if (diceValues == null || diceTypes == null || card == null) {
+            return new ArrayList<>();
+        }
+        
+        boolean isAttacking = state.isAttacker(forPlayer);
+        int rerolls = state.getRemainingRerolls(forPlayer);
+        String charId = card.getId();
+        
+        CosmiconLogger.debug("AIEngine: planning selection for %s (%s), dice: %s", 
+            charId, isAttacking ? "attack" : "defense", diceValues);
+        
+        AIDecision decision = CosmiconAICore.makeDecision(
+            diceValues, diceTypes, requiredCount,
+            charId, isAttacking, rerolls, 0);
+        
+        return decision.getSelectedIndicesList();
+    }
+    
+    /**
+     * Compute AI reroll decision without applying it yet.
+     * Returns the indices the AI would reroll.
+     */
+    public List<Integer> planReroll(BattleState state, boolean forPlayer) {
+        List<Integer> diceValues = state.getDiceValues(forPlayer);
+        List<DiceType> diceTypes = state.getDiceTypes(forPlayer);
+        int requiredCount = state.getRequiredDiceCount(forPlayer);
+        int rerollsAvailable = state.getRemainingRerolls(forPlayer);
+        
+        if (diceValues == null || diceTypes == null || rerollsAvailable <= 0) {
+            return new ArrayList<>();
+        }
+        
+        boolean isAttacking = state.isAttacker(forPlayer);
+        CharacterCard card = state.getCard(forPlayer);
+        String charId = card != null ? card.getId() : "unknown";
+        
+        CosmiconLogger.debug("AIEngine: planning reroll for %s (%s), dice: %s, rerolls left: %d", 
+            charId, isAttacking ? "attack" : "defense", diceValues, rerollsAvailable);
+        
+        Set<Integer> rerollIndices = CosmiconAICore.recommendRerolls(
+            diceValues, diceTypes, requiredCount, rerollsAvailable,
+            isAttacking, 0);
+        
+        return new ArrayList<>(rerollIndices);
     }
 }

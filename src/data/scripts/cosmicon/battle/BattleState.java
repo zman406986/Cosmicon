@@ -15,7 +15,6 @@ public class BattleState {
 
     public enum Phase {
         ROLLING,
-        REROLL_PHASE,
         SELECTING_ATTACK,
         SELECTING_DEFENSE,
         RESOLVING,
@@ -78,6 +77,7 @@ public class BattleState {
     private String winner;
 
     private final List<BattleEventListener> listeners;
+    private AISelectionVisualizer aiSelectionVisualizer;
 
     public interface BattleEventListener {
         void onPhaseChange(Phase newPhase);
@@ -111,6 +111,7 @@ public class BattleState {
         this.opponentCumulativeAtkDef = 0;
         this.playerCyreneThresholdMet = false;
         this.opponentCyreneThresholdMet = false;
+        this.aiSelectionVisualizer = new AISelectionVisualizer();
     }
 
     
@@ -166,13 +167,21 @@ public class BattleState {
     }
 
     public void selectPlayerDice(int index) {
-        if (currentPhase != Phase.SELECTING_ATTACK && currentPhase != Phase.SELECTING_DEFENSE && currentPhase != Phase.REROLL_PHASE) return;
+        if (currentPhase != Phase.SELECTING_ATTACK && currentPhase != Phase.SELECTING_DEFENSE) return;
         if (index < 0 || index >= playerDiceValues.size()) return;
         playerDiceSelected.set(index, !playerDiceSelected.get(index));
     }
 
     public int getRemainingRerolls() {
         return playerRemainingRerolls;
+    }
+
+    public boolean canReroll(boolean forPlayer) {
+        Phase phase = getCurrentPhase();
+        boolean inSelection = phase == Phase.SELECTING_ATTACK || phase == Phase.SELECTING_DEFENSE;
+        boolean isCorrectRole = (phase == Phase.SELECTING_ATTACK && isAttacker(forPlayer)) ||
+                                (phase == Phase.SELECTING_DEFENSE && isDefender(forPlayer));
+        return inSelection && isCorrectRole && getRemainingRerolls(forPlayer) > 0;
     }
 
     public int getRerollsUsedThisTurn() {
@@ -735,6 +744,16 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         addCumulativeAtkDef(forPlayer, value);
     }
     
+    public AISelectionVisualizer getAiSelectionVisualizer() {
+        return aiSelectionVisualizer;
+    }
+
+    public void resetAiVisualizer() {
+        if (aiSelectionVisualizer != null) {
+            aiSelectionVisualizer.reset();
+        }
+    }
+    
     public void cleanup() {
         CosmiconLogger.debug("BattleState cleanup - clearing listeners and state");
         
@@ -769,6 +788,10 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         opponentTotalDamageTaken = 0;
         playerPrismaticTriggerCount = 0;
         opponentPrismaticTriggerCount = 0;
+        
+        if (aiSelectionVisualizer != null) {
+            aiSelectionVisualizer.reset();
+        }
         
         CosmiconLogger.debug("BattleState cleanup complete");
     }

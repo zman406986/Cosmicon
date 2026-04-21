@@ -25,6 +25,10 @@ public final class ColorHelper {
 
     public static final Color DICE_BORDER = new Color(255, 255, 255, 200);
 
+    public static final Color OPPONENT_SELECTION_HIGHLIGHT = new Color(255, 80, 80, 150);
+    public static final Color OPPONENT_REROLL_HIGHLIGHT = new Color(255, 160, 80, 150);
+    public static final Color OPPONENT_DICE_ZONE_BG = new Color(70, 50, 50, 180);
+
     public static float[] toGLComponents(Color color, float alphaMult) {
         return new float[] {
             color.getRed() / 255f,

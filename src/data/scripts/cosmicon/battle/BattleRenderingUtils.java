@@ -37,6 +37,10 @@ public final class BattleRenderingUtils {
     public static final float PORTRAIT_DISPLAY_H = CARD_HEIGHT * PORTRAIT_SCALE;
 
     public static final float MARGIN = 20f;
+    public static final float OPPONENT_DICE_ZONE_OFFSET_X = 30f;
+    public static final float OPPONENT_DICE_ZONE_Y_OFFSET = 80f;
+    public static final float OPPONENT_DICE_ZONE_W = 350f;
+    public static final float OPPONENT_DICE_ZONE_H = 80f;
     public static final float BUTTON_WIDTH = 120f;
     public static final float BUTTON_HEIGHT = 40f;
 
@@ -280,6 +284,22 @@ public final class BattleRenderingUtils {
         renderDashedLine(x + w, y + h, x, y + h, dashLen, gapLen);
         renderDashedLine(x, y + h, x, y, dashLen, gapLen);
 
+        GLStateUtil.resetColor();
+    }
+
+    public static void renderOpponentDiceZone(float x, float y, float alphaMult) {
+        GLStateUtil.resetBlendState();
+        Misc.renderQuad(x, y, OPPONENT_DICE_ZONE_W, OPPONENT_DICE_ZONE_H, ColorHelper.OPPONENT_DICE_ZONE_BG, alphaMult);
+        
+        GL11.glLineWidth(2f);
+        float[] c = ColorHelper.toGLComponents(new Color(120, 80, 80, 150), alphaMult);
+        GL11.glColor4f(c[0], c[1], c[2], c[3]);
+        GL11.glBegin(GL11.GL_LINE_LOOP);
+        GL11.glVertex2f(x, y);
+        GL11.glVertex2f(x + OPPONENT_DICE_ZONE_W, y);
+        GL11.glVertex2f(x + OPPONENT_DICE_ZONE_W, y + OPPONENT_DICE_ZONE_H);
+        GL11.glVertex2f(x, y + OPPONENT_DICE_ZONE_H);
+        GL11.glEnd();
         GLStateUtil.resetColor();
     }
 

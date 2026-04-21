@@ -15,6 +15,10 @@ public class CosmiconConfig {
     public static int DEFAULT_REROLLS = 2;
     public static boolean COSMICON_ENABLED = true;
 
+    public static final float AI_REVEAL_PER_DICE_DELAY = 0.15f;
+    public static final float AI_REROLL_PREVIEW_DELAY = 0.5f;
+    public static final float AI_CONFIRM_DELAY = 0.3f;
+
     public static void loadSettings() {
         try {
             JSONObject settings = Global.getSettings().loadJSON(CONFIG_PATH, MOD_ID);

@@ -61,11 +61,7 @@ public class BattleController {
     }
 
     public void onPlayerReroll() {
-        turnProcessor.confirmPlayerSelection();
-    }
-
-    public void onPlayerSkipReroll() {
-        turnProcessor.skipRerollPhase();
+        turnProcessor.executePlayerReroll();
     }
 
     public void onPlayerConfirmSelection() {
