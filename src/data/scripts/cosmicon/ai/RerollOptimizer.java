@@ -1,6 +1,7 @@
 package data.scripts.cosmicon.ai;
 
 import data.scripts.cosmicon.battle.DiceType;
+import data.scripts.cosmicon.util.CosmiconLogger;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -32,6 +33,7 @@ public final class RerollOptimizer {
         int currentSum = calculateSum(currentValues, alreadySelected);
 
         if (currentSum >= targetSum) {
+            CosmiconLogger.debug("Reroll: current sum %d meets target %d, no reroll needed", currentSum, targetSum);
             return Set.of();
         }
 
@@ -47,6 +49,7 @@ public final class RerollOptimizer {
         }
 
         if (candidates.isEmpty()) {
+            CosmiconLogger.debug("Reroll: no valid candidates found");
             return Set.of();
         }
 
@@ -54,9 +57,12 @@ public final class RerollOptimizer {
 
         RerollCandidate best = candidates.get(0);
         if (best.expectedImprovement() > 0) {
+            CosmiconLogger.debug("Reroll: best indices %s, expected improvement: %.1f (current: %d, target: %d)", 
+                best.rerollIndices(), best.expectedImprovement(), currentSum, targetSum);
             return best.rerollIndices();
         }
 
+        CosmiconLogger.debug("Reroll: no positive improvement found, keeping current dice");
         return Set.of();
     }
 
@@ -183,8 +189,7 @@ public final class RerollOptimizer {
                 Set<Integer> newSelection = findOptimalSelectionAfterReroll(
                     currentValues, rerollIndices, currentSelection, requiredCount);
                 
-                int newSum = calculateExpectedSumAfterReroll(currentValues, diceTypes, rerollIndices, newSelection);
-                expectedNewSum = newSum;
+                expectedNewSum = calculateExpectedSumAfterReroll(currentValues, diceTypes, rerollIndices, newSelection);
             }
         }
 

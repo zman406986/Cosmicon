@@ -2,6 +2,7 @@ package data.scripts.cosmicon.ai;
 
 import data.scripts.cosmicon.ai.profiles.CharacterProfileRegistry;
 import data.scripts.cosmicon.battle.DiceType;
+import data.scripts.cosmicon.util.CosmiconLogger;
 import java.util.*;
 
 public final class CosmiconAICore {
@@ -21,6 +22,9 @@ public final class CosmiconAICore {
             int rerollsAvailable,
             int targetSum) {
         
+        CosmiconLogger.debug("AI Decision: character=%s, role=%s, dice=%s, need=%d, rerolls=%d", 
+            characterId, isAttacking ? "ATTACK" : "DEFEND", diceValues, requiredSelectCount, rerollsAvailable);
+        
         CharacterAIProfile profile = getProfile(characterId);
 
         SelectionOptimizer.SelectionResult selection = SelectionOptimizer.optimalSelection(
@@ -33,6 +37,9 @@ public final class CosmiconAICore {
                 diceValues, diceTypes, requiredSelectCount, rerollsAvailable, effectiveTarget, isAttacking);
         }
 
+        CosmiconLogger.debug("AI Decision result: %s selected indices %s (sum=%d), reroll indices %s", 
+            characterId, selection.selectedIndices, selection.sumValue, rerollIndices);
+        
         return new AIDecision(selection, rerollIndices, profile);
     }
 
@@ -44,7 +51,10 @@ public final class CosmiconAICore {
             boolean isAttacking,
             int targetSum) {
         
-        return RerollOptimizer.optimalRerolls(diceValues, diceTypes, requiredCount, rerollsAvailable, targetSum, isAttacking);
+        Set<Integer> result = RerollOptimizer.optimalRerolls(diceValues, diceTypes, requiredCount, rerollsAvailable, targetSum, isAttacking);
+        CosmiconLogger.debug("AI reroll recommendation: indices %s, role: %s, target: %d", 
+            result, isAttacking ? "attacker" : "defender", targetSum);
+        return result;
     }
 
     public static final class AIDecision {

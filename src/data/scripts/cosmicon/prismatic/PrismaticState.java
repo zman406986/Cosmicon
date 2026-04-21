@@ -1,5 +1,6 @@
 package data.scripts.cosmicon.prismatic;
 
+import data.scripts.cosmicon.util.CosmiconLogger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -69,15 +70,6 @@ public class PrismaticState {
     
     public List<PrismaticDiceInstance> getMustSelectDice() { return mustSelectDice; }
     
-    public boolean selectDice(int index) {
-        if (index < 0 || index >= rolledDice.size()) return false;
-        
-        PrismaticDiceInstance dice = rolledDice.get(index);
-        dice.setSelected(!dice.isSelected());
-        
-        return true;
-    }
-    
     public boolean isModeActive() { return modeActive; }
     public void setModeActive(boolean active) { this.modeActive = active; }
     
@@ -88,7 +80,10 @@ public class PrismaticState {
     public void setUseTrueVersion(boolean trueVersion) { this.useTrueVersion = trueVersion; }
     
     public boolean isDoubleValueActive() { return doubleValueActive; }
-    public void setDoubleValueActive(boolean active) { this.doubleValueActive = active; }
+    public void setDoubleValueActive(boolean active) { 
+        this.doubleValueActive = active;
+        CosmiconLogger.debug("Prismatic DoubleValue %s", active ? "activated" : "deactivated");
+    }
     
     public int getInstantDamage() { return instantDamage; }
     public void addInstantDamage(int amount) { this.instantDamage += amount; }
@@ -110,5 +105,6 @@ public class PrismaticState {
     public void reset() {
         clear();
         modeActive = false;
+        CosmiconLogger.debug("Prismatic state fully reset (mode deactivated)");
     }
 }

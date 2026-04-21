@@ -1,6 +1,7 @@
 package data.scripts.cosmicon.battle;
 
 import data.scripts.cosmicon.battle.BattleState.TurnType;
+import data.scripts.cosmicon.util.CosmiconLogger;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -77,10 +78,18 @@ public class StatusEffectProcessor {
 
     public void setEffect(StatusEffect effect, int layers) {
         if (layers <= 0) {
-            effects.remove(effect);
-            durations.remove(effect);
+            if (hasEffect(effect)) {
+                int oldLayers = getLayers(effect);
+                effects.remove(effect);
+                durations.remove(effect);
+                CosmiconLogger.debug("Effect cleared: %s (was %d layers)", effect.name(), oldLayers);
+            }
         } else {
+            int oldLayers = getLayers(effect);
             effects.put(effect, layers);
+            if (oldLayers != layers) {
+                CosmiconLogger.debug("Effect set: %s %d layers (was %d)", effect.name(), layers, oldLayers);
+            }
         }
     }
 
@@ -211,6 +220,9 @@ public class StatusEffectProcessor {
             int poisonDamage = poisonLayers;
             if (hasEffect(StatusEffect.VENOM)) {
                 poisonDamage *= 2;
+                CosmiconLogger.debug("POISON ticked: %d damage (doubled by VENOM)", poisonDamage);
+            } else {
+                CosmiconLogger.debug("POISON ticked: %d damage", poisonDamage);
             }
             damage += poisonDamage;
             setEffect(StatusEffect.POISON, poisonLayers - 1);

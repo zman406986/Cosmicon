@@ -15,6 +15,7 @@ import com.fs.starfarer.api.ui.UIComponentAPI;
 
 import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.CoordHelper;
+import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.util.CosmiconRandom;
 import data.scripts.cosmicon.util.GLStateUtil;
 
@@ -265,6 +266,8 @@ public class DiceAnimator {
     }
 
     public void forceComplete() {
+        CosmiconLogger.debug("Dice animation completed: %s = %d", type.name(), finalValue);
+
         elapsed = TOTAL_DURATION;
         currentValue = finalValue;
         jitterX = 0f;

@@ -8,7 +8,7 @@ import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.EffectManager;
 import data.scripts.cosmicon.prismatic.AvailabilityCondition.ConditionContext;
-import data.scripts.cosmicon.util.CosmiconRandom;
+import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class PrismaticManager {
     
@@ -45,17 +45,6 @@ public class PrismaticManager {
             .collect(Collectors.toList());
     }
     
-    public void rollPrismaticDice(boolean forPlayer, PrismaticDiceType type, boolean trueVersion) {
-        PrismaticState ps = getState(forPlayer);
-        ps.setSelectedType(type);
-        ps.setUseTrueVersion(trueVersion);
-        
-        PrismaticDiceInstance instance = PrismaticDiceInstance.roll(type, trueVersion, CosmiconRandom.getRandom());
-        ps.addRolledDice(instance);
-        
-        processor.checkDestinedDice(instance);
-    }
-    
     public void applyQueuedEffects(BattleState state) {
         applyQueuedEffectsFor(state, true);
         applyQueuedEffectsFor(state, false);
@@ -73,8 +62,12 @@ public class PrismaticManager {
     
     public void consumePrismaticUse(PrismaticDiceType type, boolean forPlayer) {
         PrismaticState ps = getState(forPlayer);
+        int oldUses = ps.getUsesByType(type);
         ps.decrementUsesByType(type);
         ps.decrementUses();
+        int newUses = ps.getUsesByType(type);
+        CosmiconLogger.debug("Prismatic dice consumed: %s by %s (uses: %d -> %d)", 
+            type.getId(), forPlayer ? "Player" : "Opponent", oldUses, newUses);
     }
     
     public void addPrismaticUse(PrismaticDiceType type, boolean forPlayer) {
@@ -85,14 +78,6 @@ public class PrismaticManager {
     
     public int getUses(boolean forPlayer) {
         return getState(forPlayer).getUses();
-    }
-    
-    public List<PrismaticDiceInstance> getRolledDice(boolean forPlayer) {
-        return getState(forPlayer).getRolledDice();
-    }
-    
-    public List<PrismaticDiceInstance> getMustSelectDice(boolean forPlayer) {
-        return getState(forPlayer).getMustSelectDice();
     }
     
     public boolean hasMustSelectDiceRemaining(boolean forPlayer) {
@@ -149,34 +134,16 @@ public class PrismaticManager {
         ps.setModeActive(!ps.isModeActive());
     }
     
-    public PrismaticDiceType getSelectedType(boolean forPlayer) {
-        return getState(forPlayer).getSelectedType();
-    }
-    
-    public boolean isUseTrueVersion(boolean forPlayer) {
-        return getState(forPlayer).isUseTrueVersion();
-    }
-    
-    public void setSelectedType(boolean forPlayer, PrismaticDiceType type, boolean trueVersion) {
-        PrismaticState ps = getState(forPlayer);
-        ps.setSelectedType(type);
-        ps.setUseTrueVersion(trueVersion);
-    }
-    
     public void clearState() {
         playerPrismatic.clear();
         opponentPrismatic.clear();
-    }
-    
-    public void clearRolledDice() {
-        playerPrismatic.clearRolledDice();
-        opponentPrismatic.clearRolledDice();
     }
     
     public void resetForNewBattle() {
         playerPrismatic.reset();
         opponentPrismatic.reset();
         initializePrismaticUses();
+        CosmiconLogger.debug("Prismatic state reset for new battle");
     }
     
     private PrismaticState getState(boolean forPlayer) {

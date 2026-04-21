@@ -30,7 +30,7 @@ public final class CosmiconSprites {
         PORTRAIT_KEYS.put("aventurine", "portrait_aventurine");
         PORTRAIT_KEYS.put("castorice", "portrait_castorice");
         PORTRAIT_KEYS.put("cyrene", "portrait_cyrene");
-        PORTRAIT_KEYS.put("dan_heng_pt", "portrait_dan_heng_pt");
+        PORTRAIT_KEYS.put("dan_heng", "portrait_dan_heng");
         PORTRAIT_KEYS.put("firefly", "portrait_firefly");
         PORTRAIT_KEYS.put("hyacine", "portrait_hyacine");
         PORTRAIT_KEYS.put("kafka", "portrait_kafka");
@@ -112,6 +112,11 @@ public final class CosmiconSprites {
             case ORANGE_D8 -> diceD8Sprite;
             case PRISMATIC_D12 -> prismaticDiceSprite;
         };
+    }
+
+    public static SpriteAPI getPrismaticButtonSprite() {
+        if (!loaded) load();
+        return prismaticButtonSprite;
     }
 
     public static void clearCache() {

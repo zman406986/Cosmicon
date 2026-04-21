@@ -2,6 +2,7 @@ package data.scripts.cosmicon.battle;
 
 import data.scripts.cosmicon.battle.BattleState.TurnType;
 import data.scripts.cosmicon.character.PassiveEventSystem;
+import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class DamageResolver {
     
@@ -66,7 +67,7 @@ public class DamageResolver {
         
         int instantDamage = state.getPrismaticInstantDamage(!state.isPlayerAttacker());
         
-        return new DamageResult(
+        DamageResult result = new DamageResult(
             damage,
             thornsDamage,
             attackerSelfThorns,
@@ -76,10 +77,55 @@ public class DamageResolver {
             reflectDamage,
             instantDamage
         );
+        
+        logDamageResolution(state, attackValue, defenseValue, modifiedAttack, modifiedDefense,
+            attackerPrismaticValue, defenderPrismaticValue, damage, result);
+        
+        return result;
     }
 
     public record DamageResult(int damageToDefender, int thornsDamage, int selfThornsDamage, int counterDamage, 
                                int overloadSelfDamage, int siphonHeal, int reflectDamage, int instantDamage)
     {
+    }
+    
+    private void logDamageResolution(BattleState state, int baseAttack, int baseDefense,
+                                     int modifiedAttack, int modifiedDefense,
+                                     int attackerPrismatic, int defenderPrismatic,
+                                     int finalDamage, DamageResult result) {
+        String attacker = state.isPlayerAttacker() ? "Player" : "Enemy";
+        String defender = state.isPlayerAttacker() ? "Enemy" : "Player";
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append("=== Damage Resolution ===\n");
+        sb.append("  Attacker: ").append(attacker).append(" | Defender: ").append(defender).append("\n");
+        sb.append("  Base: Attack=").append(baseAttack).append(" Defense=").append(baseDefense).append("\n");
+        sb.append("  Prismatic: +").append(attackerPrismatic).append(" attack, +").append(defenderPrismatic).append(" defense\n");
+        sb.append("  Modified: Attack=").append(modifiedAttack).append(" Defense=").append(modifiedDefense).append("\n");
+        sb.append("  Final damage to defender: ").append(finalDamage);
+        
+        if (result.thornsDamage() > 0 || result.selfThornsDamage() > 0) {
+            sb.append("\n  Thorns: ").append(result.thornsDamage());
+            if (result.selfThornsDamage() > 0) {
+                sb.append(" (self: ").append(result.selfThornsDamage()).append(")");
+            }
+        }
+        if (result.counterDamage() > 0) {
+            sb.append("\n  Counter damage: ").append(result.counterDamage());
+        }
+        if (result.overloadSelfDamage() > 0) {
+            sb.append("\n  Overload self-damage: ").append(result.overloadSelfDamage());
+        }
+        if (result.siphonHeal() > 0) {
+            sb.append("\n  Siphon heal: ").append(result.siphonHeal());
+        }
+        if (result.reflectDamage() > 0) {
+            sb.append("\n  Reflect: ").append(result.reflectDamage());
+        }
+        if (result.instantDamage() > 0) {
+            sb.append("\n  Instant damage: ").append(result.instantDamage());
+        }
+        
+        CosmiconLogger.info(sb.toString());
     }
 }

@@ -121,19 +121,6 @@ public final class DiceProbabilityCalculator {
         return resultPMF;
     }
 
-    public static float[] getSumPMFWithCustomDice(List<int[]> customFaceArrays, int selectCount) {
-        if (customFaceArrays == null || customFaceArrays.isEmpty() || selectCount <= 0) {
-            return new float[0];
-        }
-
-        List<float[]> dicePMFs = new ArrayList<>();
-        for (int[] faces : customFaceArrays) {
-            dicePMFs.add(getSingleDicePMF(faces));
-        }
-
-        return computeSelectKSumPMF(dicePMFs, selectCount);
-    }
-
     private static float[] computeSelectKSumPMF(List<float[]> dicePMFs, int k) {
         int n = dicePMFs.size();
         int maxSum = 0;

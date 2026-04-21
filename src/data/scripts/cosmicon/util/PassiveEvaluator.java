@@ -259,7 +259,7 @@ public class PassiveEvaluator {
             case "robin" -> evaluateRobin(result, diceValues, isAttacking);
             case "march_7th" -> evaluateMarch7th(result, diceValues);
             case "hyacine" -> evaluateHyacine(result, diceValues, isAttacking);
-            case "dan_heng_pt" -> evaluateDanHengPT(result, diceValues, isAttacking);
+            case "dan_heng" -> evaluateDanHengPT(result, diceValues, isAttacking);
             case "phainon" -> evaluatePhainon(result, diceValues, isAttacking);
             case "the_herta" -> {}
             case "sparxie" -> evaluateSparxie(result, diceValues);

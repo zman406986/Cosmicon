@@ -9,6 +9,7 @@ import java.util.Map;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
+import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class BattleState {
 
@@ -123,6 +124,10 @@ public class BattleState {
         playerCyreneThresholdMet = false;
         opponentCyreneThresholdMet = false;
         if (prismaticManager != null) prismaticManager.resetForNewBattle();
+        
+        CosmiconLogger.debug("BattleState initialized - Player: %s (HP %d), Opponent: %s (HP %d)",
+            playerCard.getName(), playerHp, opponentCard.getName(), opponentHp);
+        CosmiconLogger.debug("Initial turn: Turn 1, Player is attacker: %s", playerIsAttacker);
     }
     
     private void resetBattleState(int playerMaxHp, int opponentMaxHp) {
@@ -372,21 +377,46 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
     
     public void applyDamageTo(boolean isPlayer, int damage) {
+        int oldHp = isPlayer ? playerHp : opponentHp;
+        String characterName = isPlayer ? 
+            (playerCard != null ? playerCard.getName() : "Player") : 
+            (opponentCard != null ? opponentCard.getName() : "Opponent");
+        
         if (isPlayer) {
             playerHp = Math.max(0, playerHp - damage);
         } else {
             opponentHp = Math.max(0, opponentHp - damage);
         }
         recordDamageTaken(damage, isPlayer);
+        
+        int newHp = isPlayer ? playerHp : opponentHp;
+        int maxHp = isPlayer ? 
+            (playerCard != null ? playerCard.getMaxHp() : oldHp) : 
+            (opponentCard != null ? opponentCard.getMaxHp() : oldHp);
+        
+        CosmiconLogger.hpChange(characterName, oldHp, newHp, maxHp);
+        if (damage > 0) {
+            CosmiconLogger.info("%s took %d damage (HP: %d/%d)", characterName, damage, newHp, maxHp);
+        }
     }
     
     public void applyHealTo(boolean isPlayer, int heal) {
         CharacterCard card = isPlayer ? playerCard : opponentCard;
         int maxHp = card != null ? card.getMaxHp() : Integer.MAX_VALUE;
+        int oldHp = isPlayer ? playerHp : opponentHp;
+        String characterName = isPlayer ? 
+            (playerCard != null ? playerCard.getName() : "Player") : 
+            (opponentCard != null ? opponentCard.getName() : "Opponent");
+        
         if (isPlayer) {
             playerHp = Math.min(playerHp + heal, maxHp);
         } else {
             opponentHp = Math.min(opponentHp + heal, maxHp);
+        }
+        
+        if (heal > 0) {
+            CosmiconLogger.debug("%s healed %d (HP: %d -> %d/%d)", characterName, heal, oldHp, 
+                isPlayer ? playerHp : opponentHp, maxHp);
         }
     }
     
@@ -546,7 +576,20 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
     
     public void setCurrentPhase(Phase phase) {
+        Phase oldPhase = this.currentPhase;
         this.currentPhase = phase;
+        CosmiconLogger.debug("Phase change: %s -> %s", oldPhase, phase);
+        if (isMajorPhaseTransition(oldPhase, phase)) {
+            CosmiconLogger.info("Phase: %s -> %s", oldPhase, phase);
+        }
+    }
+    
+    private boolean isMajorPhaseTransition(Phase oldPhase, Phase newPhase) {
+        return newPhase == Phase.SELECTING_ATTACK || 
+               newPhase == Phase.SELECTING_DEFENSE ||
+               newPhase == Phase.RESOLVING ||
+               newPhase == Phase.WAITING_NEXT_TURN ||
+               newPhase == Phase.ENDED;
     }
     
     public void setAttackValue(int value) {
@@ -611,6 +654,13 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
     
     public void notifyBattleEnd(String winner) {
+        CosmiconLogger.info("========== BATTLE END ==========");
+        CosmiconLogger.info("Winner: %s", winner);
+        CosmiconLogger.info("Final HP - Player: %d, Opponent: %d", playerHp, opponentHp);
+        CosmiconLogger.info("Total damage taken - Player: %d, Opponent: %d", 
+            playerTotalDamageTaken, opponentTotalDamageTaken);
+        CosmiconLogger.info("================================");
+        
         for (BattleEventListener listener : listeners) {
             listener.onBattleEnd(winner);
         }
@@ -623,18 +673,6 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
     
     
-    
-    public void notifyPrismaticDiceRolled(boolean isPlayer, List<PrismaticDiceInstance> dice) {
-        for (BattleEventListener l : listeners) {
-            l.onPrismaticDiceRolled(isPlayer, dice);
-        }
-    }
-    
-    public void notifyMustSelectDiceMarked(boolean isPlayer, List<PrismaticDiceInstance> mustSelect) {
-        for (BattleEventListener l : listeners) {
-            l.onMustSelectDiceMarked(isPlayer, mustSelect);
-        }
-    }
     
     public DiceRoller getDiceRoller() {
         return diceRoller;
@@ -684,6 +722,8 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
     
     public void cleanup() {
+        CosmiconLogger.debug("BattleState cleanup - clearing listeners and state");
+        
         listeners.clear();
         
         if (effectManager != null) {
@@ -715,5 +755,7 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         opponentTotalDamageTaken = 0;
         playerPrismaticTriggerCount = 0;
         opponentPrismaticTriggerCount = 0;
+        
+        CosmiconLogger.debug("BattleState cleanup complete");
     }
 }

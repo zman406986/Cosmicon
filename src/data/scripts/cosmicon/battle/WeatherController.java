@@ -7,6 +7,7 @@ import java.util.Map;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
+import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class WeatherController {
     
@@ -21,7 +22,12 @@ public class WeatherController {
     }
     
     public void advanceTurn() {
+        WeatherType oldWeather = schedule.getCurrentWeather();
         schedule.advanceTurn();
+        WeatherType newWeather = schedule.getCurrentWeather();
+        if (oldWeather != newWeather) {
+            CosmiconLogger.debug("Weather changed: %s -> %s", oldWeather, newWeather);
+        }
     }
     
     public void applyStartOfBattle(BattleState state) {
@@ -81,8 +87,14 @@ public class WeatherController {
         if (weather == null) return;
         
         switch (weather) {
-            case FISH_RAIN -> state.setRemainingRerolls(state.isPlayerAttacker(), attackerBaseRerolls + 1);
-            case PARHELION -> state.setRemainingRerolls(state.isPlayerAttacker(), attackerBaseRerolls + 2);
+            case FISH_RAIN -> {
+                state.setRemainingRerolls(state.isPlayerAttacker(), attackerBaseRerolls + 1);
+                CosmiconLogger.debug("%s: +1 reroll for attacker", weather);
+            }
+            case PARHELION -> {
+                state.setRemainingRerolls(state.isPlayerAttacker(), attackerBaseRerolls + 2);
+                CosmiconLogger.debug("%s: +2 rerolls for attacker", weather);
+            }
             default -> {}
         }
     }
@@ -169,6 +181,7 @@ public class WeatherController {
                 if (hasSix) {
                     StatusEffectProcessor effects = isPlayer ? state.getPlayerEffects() : state.getOpponentEffects();
                     effects.removeEffect(StatusEffect.POISON);
+                    CosmiconLogger.debug("DRIZZLE: Removed POISON from %s (rolled a 6)", isPlayer ? "Player" : "Opponent");
                 }
             }
             default -> {}

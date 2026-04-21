@@ -24,7 +24,7 @@ public final class CharacterProfileRegistry {
         register(new KafkaAIProfile());
         register(new AventurineAIProfile());
         register(new March7thAIProfile());
-        register(new DanHengPTAIProfile());
+        register(new DanHengAIProfile());
         register(new SparxieAIProfile());
         register(new YaoGuangAIProfile());
         register(new CyreneAIProfile());

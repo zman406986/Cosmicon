@@ -195,8 +195,8 @@
             "passive": "When attacking or defending: For each 1 pair of matching numbers on selected dice, deals 3 Instant Damage. Instant Damage: Deals damage instantly, skipping the calculation of Final DMG.",
             "passive_desc": "{0} pair(s) = {1} Instant Damage"
         },
-        "dan_heng_pt": {
-            "name": "Dan Heng • Permansor Terrae",
+        "dan_heng": {
+            "name": "Dan Heng",
             "passive": "When attacking: If Attack is no less than 18, next time when defending, increases DEF Level by 3, and gains Counter. After defense ends, DEF Level will be restored to the initial value. Defense Level: The required number of dice that must be selected for defense. Counter: When attacked, if your DEF is higher, deals DMG to the attacker equal to the difference.",
             "passive_desc": "Attack >= 18: Counter + DEF boost"
         },

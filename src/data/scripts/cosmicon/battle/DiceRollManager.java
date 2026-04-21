@@ -5,6 +5,8 @@ import java.util.List;
 
 import com.fs.starfarer.api.ui.CustomPanelAPI;
 
+import data.scripts.cosmicon.util.CosmiconLogger;
+
 public class DiceRollManager {
 
     private static final float STAGGER_DELAY = 0.05f;
@@ -59,7 +61,7 @@ public class DiceRollManager {
     }
 
     public boolean isComplete() {
-        if (animators.isEmpty()) return false;
+        if (animators.isEmpty()) return true;
         for (DiceAnimator animator : animators) {
             if (!animator.isComplete()) {
                 return false;
@@ -68,10 +70,17 @@ public class DiceRollManager {
         return true;
     }
     
+    public boolean hasAnimators() {
+        return !animators.isEmpty();
+    }
+    
     public void appendRoll(List<DiceType> types, List<Integer> results, float centerX, float centerY) {
         if (!initialized) return;
-        
+
         int count = Math.min(types.size(), results.size());
+        CosmiconLogger.debug("Appending %d dice to existing %d animators at center (%.0f, %.0f)",
+            count, animators.size(), centerX, centerY);
+
         float totalWidth = DICE_SPACING * (count - 1) + DICE_SIZE;
         float startX = centerX - totalWidth / 2f;
         float startY = centerY - DICE_SIZE / 2f;

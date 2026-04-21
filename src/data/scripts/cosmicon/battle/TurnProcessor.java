@@ -1,6 +1,7 @@
 package data.scripts.cosmicon.battle;
 
 import data.scripts.CosmiconConfig;
+import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.Phase;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.battle.BattleState.TurnType;
@@ -102,11 +103,15 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         state.setRemainingRerolls(false, opponentContext.getRerollCount());
         
         state.setCurrentPhase(BattleState.Phase.ROLLING);
-        state.notifyPhaseChange(BattleState.Phase.ROLLING);
         
         if (diceRoller != null) {
             diceRoller.rollAll(state);
         }
+        
+        state.notifyPhaseChange(BattleState.Phase.ROLLING);
+        
+        playerContext = createBattleContext(true);
+        opponentContext = createBattleContext(false);
         
         state.getPlayerEffects().processPhase(Phase.AFTER_ROLL, playerTurnType, playerContext);
         state.getOpponentEffects().processPhase(Phase.AFTER_ROLL, opponentTurnType, opponentContext);
@@ -190,11 +195,7 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         boolean isAttackPhase = state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK;
         boolean aiIsAttacker = !state.isPlayerAttacker();
         
-        if (isAttackPhase == aiIsAttacker) {
-            aiEngine.executeSelection(state, false);
-        } else {
-            aiEngine.executeSelection(state, true);
-        }
+        aiEngine.executeSelection(state, isAttackPhase != aiIsAttacker);
         
         processPassiveEffects(false);
         
@@ -381,6 +382,9 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         
         state.incrementTurnNumber();
         state.swapAttackerDefender();
+        
+        CosmiconLogger.debug("Turn transition: Turn %d, Player now %s", 
+            state.getTurnNumber(), state.isPlayerAttacker() ? "attacker" : "defender");
         
         if (weatherController != null) {
             WeatherType oldWeather = weatherController.getCurrentWeather();

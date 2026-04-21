@@ -1,6 +1,7 @@
 package data.scripts.cosmicon.ai;
 
 import data.scripts.cosmicon.battle.DiceType;
+import data.scripts.cosmicon.util.CosmiconLogger;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -27,6 +28,8 @@ public final class SelectionOptimizer {
         if (profile != null && profile.shouldOptimizeForPassive(isAttacking)) {
             SelectionResult passiveResult = optimizeForPassive(diceValues, diceTypes, requiredCount, profile, isAttacking);
             if (passiveResult != null && passiveResult.passiveTriggered) {
+                CosmiconLogger.debug("Selection: passive optimization triggered for profile, indices: %s, bonus: %.1f", 
+                    passiveResult.selectedIndices, passiveResult.passiveBonus);
                 return passiveResult;
             }
         }
@@ -36,10 +39,14 @@ public final class SelectionOptimizer {
         if (profile != null && !profile.shouldOptimizeForPassive(isAttacking)) {
             SelectionResult enhancedResult = considerPassiveBonus(diceValues, diceTypes, requiredCount, profile, isAttacking);
             if (enhancedResult.totalScore > greedyResult.totalScore) {
+                CosmiconLogger.debug("Selection: passive bonus enhanced score from %.1f to %.1f", 
+                    greedyResult.totalScore, enhancedResult.totalScore);
                 return enhancedResult;
             }
         }
 
+        CosmiconLogger.debug("Selection: greedy selection chosen, indices: %s, sum: %d, score: %.1f", 
+            greedyResult.selectedIndices, greedyResult.sumValue, greedyResult.totalScore);
         return greedyResult;
     }
 

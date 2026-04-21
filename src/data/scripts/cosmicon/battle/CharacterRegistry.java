@@ -17,11 +17,9 @@ public class CharacterRegistry {
     private static final Random random = new Random();
     private static final String CARDS_PATH = "data/config/cards.json";
     private static List<CharacterCard> threeStarCards = null;
-    private static List<CharacterCard> opponentOnlyCards = null;
 
     static { 
         threeStarCards = new ArrayList<>();
-        opponentOnlyCards = new ArrayList<>();
     }
 
     public static void loadCards() {
@@ -29,16 +27,12 @@ public class CharacterRegistry {
             JSONObject cardsJson = Global.getSettings().loadJSON(CARDS_PATH, CosmiconConfig.MOD_ID);
             
             threeStarCards = parseCardArray(cardsJson.getJSONArray("threeStar"));
-            opponentOnlyCards = parseCardArray(cardsJson.optJSONArray("opponentOnly"));
-            if (opponentOnlyCards == null) opponentOnlyCards = new ArrayList<>();
             
             Global.getLogger(CharacterRegistry.class).info(
-                "Loaded " + threeStarCards.size() + " threeStar cards, " + 
-                opponentOnlyCards.size() + " opponentOnly cards from " + CARDS_PATH);
+                "Loaded " + threeStarCards.size() + " threeStar cards from " + CARDS_PATH);
         } catch (IOException | JSONException e) {
             Global.getLogger(CharacterRegistry.class).error("Error loading cards from " + CARDS_PATH, e);
             threeStarCards = new ArrayList<>();
-            opponentOnlyCards = new ArrayList<>();
         }
     }
 
@@ -110,7 +104,6 @@ public class CharacterRegistry {
 
     private static DiceType mapDiceType(String typeStr) {
         return switch (typeStr) {
-            case "prismatic" -> DiceType.PRISMATIC_D12;
             case "orange_d8" -> DiceType.ORANGE_D8;
             case "purple_d6" -> DiceType.PURPLE_D6;
             case "blue_d4" -> DiceType.BLUE_D4;
@@ -124,33 +117,22 @@ public class CharacterRegistry {
     }
 
     public static CharacterCard getRandomOpponent() {
-        List<CharacterCard> allOpponents = new ArrayList<>(opponentOnlyCards);
-        allOpponents.addAll(threeStarCards);
-        if (allOpponents.isEmpty()) return null;
-        return allOpponents.get(random.nextInt(allOpponents.size()));
+        if (threeStarCards.isEmpty()) return null;
+        return threeStarCards.get(random.nextInt(threeStarCards.size()));
     }
 
     public static CharacterCard getCharacterById(String id) {
         for (CharacterCard card : threeStarCards) {
             if (card.getId().equals(id)) return card;
         }
-        for (CharacterCard card : opponentOnlyCards) {
-            if (card.getId().equals(id)) return card;
-        }
         return getRandomCharacter();
     }
 
     public static List<CharacterCard> getAllCards() {
-        List<CharacterCard> all = new ArrayList<>(threeStarCards);
-        all.addAll(opponentOnlyCards);
-        return all;
+        return new ArrayList<>(threeStarCards);
     }
 
     public static List<CharacterCard> getThreeStarCards() {
         return new ArrayList<>(threeStarCards);
-    }
-
-    public static List<CharacterCard> getOpponentOnlyCards() {
-        return new ArrayList<>(opponentOnlyCards);
     }
 }

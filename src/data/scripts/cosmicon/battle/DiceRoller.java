@@ -1,6 +1,7 @@
 package data.scripts.cosmicon.battle;
 
 import data.scripts.cosmicon.character.PassiveEventSystem;
+import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.util.CosmiconRandom;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +45,23 @@ public class DiceRoller {
         state.setDiceSelected(forPlayer, selected);
         
         state.notifyDiceRolled(forPlayer, types, values);
+        
+        logDiceRoll(card.getName(), types, values, isAttacker);
+    }
+    
+    private void logDiceRoll(String character, List<DiceType> types, List<Integer> values, boolean isAttacker) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(character).append(" (").append(isAttacker ? "Attacker" : "Defender").append(") rolled: ");
+        int total = 0;
+        for (int i = 0; i < types.size(); i++) {
+            DiceType type = types.get(i);
+            int value = values.get(i);
+            total += value;
+            if (i > 0) sb.append(" + ");
+            sb.append(type.name()).append("(").append(value).append(")");
+        }
+        sb.append(" = ").append(total);
+        CosmiconLogger.debug(sb.toString());
     }
     
     public void rerollSelected(BattleState state, boolean forPlayer) {
@@ -81,5 +99,30 @@ public class DiceRoller {
         }
         
         state.notifyDiceRerolled(forPlayer, values, rerolledIndices);
+        
+        logReroll(state.getCard(forPlayer).getName(), types, values, rerolledIndices);
+    }
+    
+    private void logReroll(String character, List<DiceType> types, List<Integer> values, List<Integer> rerolledIndices) {
+        if (rerolledIndices.isEmpty()) {
+            return;
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append(character).append(" rerolled: ");
+        int rerollTotal = 0;
+        for (int i = 0; i < rerolledIndices.size(); i++) {
+            int idx = rerolledIndices.get(i);
+            DiceType type = types.get(idx);
+            int value = values.get(idx);
+            rerollTotal += value;
+            if (i > 0) sb.append(", ");
+            sb.append(type.name()).append("(").append(value).append(")");
+        }
+        int total = 0;
+        for (int i = 0; i < values.size(); i++) {
+            total += values.get(i);
+        }
+        sb.append(" | New total: ").append(total);
+        CosmiconLogger.debug(sb.toString());
     }
 }
