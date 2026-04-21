@@ -19,7 +19,17 @@ public class DiceRoller {
         rollForParticipant(state, false);
     }
     
-    private void rollForParticipant(BattleState state, boolean forPlayer) {
+    public void rollForAttacker(BattleState state) {
+        boolean attackerIsPlayer = state.isPlayerAttacker();
+        rollForParticipant(state, attackerIsPlayer);
+    }
+    
+    public void rollForDefender(BattleState state) {
+        boolean defenderIsPlayer = !state.isPlayerAttacker();
+        rollForParticipant(state, defenderIsPlayer);
+    }
+    
+    public void rollForParticipant(BattleState state, boolean forPlayer) {
         CharacterCard card = state.getCard(forPlayer);
         boolean isAttacker = state.isAttacker(forPlayer);
         
@@ -109,12 +119,10 @@ public class DiceRoller {
         }
         StringBuilder sb = new StringBuilder();
         sb.append(character).append(" rerolled: ");
-        int rerollTotal = 0;
         for (int i = 0; i < rerolledIndices.size(); i++) {
             int idx = rerolledIndices.get(i);
             DiceType type = types.get(idx);
             int value = values.get(idx);
-            rerollTotal += value;
             if (i > 0) sb.append(", ");
             sb.append(type.name()).append("(").append(value).append(")");
         }

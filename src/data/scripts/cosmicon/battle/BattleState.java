@@ -62,6 +62,8 @@ public class BattleState {
     private int opponentRemainingRerolls;
     private int playerRerollsUsedThisTurn;
     private int opponentRerollsUsedThisTurn;
+    
+    private boolean isDefenderRolling;
 
     private List<DiceType> playerDiceTypes;
     private List<Integer> playerDiceValues;
@@ -246,6 +248,10 @@ public class BattleState {
         return effectManager.getEffects(false);
     }
 
+    public StatusEffectProcessor getEffects(boolean forPlayer) {
+        return effectManager.getEffects(forPlayer);
+    }
+
     public EffectManager getEffectManager() {
         return effectManager;
     }
@@ -282,6 +288,14 @@ public class BattleState {
 
     public boolean isDefender(boolean forPlayer) {
         return !isAttacker(forPlayer);
+    }
+
+    public boolean isDefenderRolling() {
+        return isDefenderRolling;
+    }
+
+    public void setDefenderRolling(boolean isDefenderRolling) {
+        this.isDefenderRolling = isDefenderRolling;
     }
 
     public Phase getCurrentPhase() {

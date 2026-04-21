@@ -96,6 +96,10 @@ public class BattleController {
         turnProcessor.advanceToAttackPhase();
     }
 
+    public void advanceToDefenderSelectPhase() {
+        turnProcessor.advanceToDefenderSelectPhase();
+    }
+
     public void cleanup() {
         CosmiconLogger.info("========== BATTLE CLEANUP ==========");
         String winner = state.getWinner();

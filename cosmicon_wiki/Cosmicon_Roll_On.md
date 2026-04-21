@@ -9,18 +9,39 @@
 ## Core Mechanics
 
 ### Turn Structure
-- Players alternate between **Attack** and **Defense** phases
-- Each turn, roll dice and select dice faces to determine Attack Value or Defense Value
-- Attack Value > Defense Value = damage dealt
+
+Each turn follows a strict sequential flow:
+
+1. **Attacker Phase**:
+   - Attacker rolls all dice from their dice pool
+   - Attacker **Reroll Phase**: Can select any number of dice to reroll (up to 2 times by default, unless abilities/weather grant more)
+   - After rerolls (or skipping reroll), attacker must select exactly **Attack Level** dice
+   - Attacker confirms selection (cannot confirm unless exact Attack Level dice are selected)
+   - Attack Value is calculated from selected dice + bonuses
+
+2. **Defender Phase**:
+   - Defender rolls all dice from their dice pool (happens AFTER attacker confirms)
+   - Defender **Reroll Phase**: 0 rerolls by default (unless abilities/weather grant more)
+   - Defender must select exactly **Defense Level** dice
+   - Defender confirms selection (cannot confirm unless exact Defense Level dice are selected)
+   - Defense Value is calculated from selected dice + bonuses
+
+3. **Damage Resolution**:
+   - If Attack Value > Defense Value: Damage = Attack Value - Defense Value
+   - If Attack Value ≤ Defense Value: No damage dealt
+   - Turn ends, roles swap for next turn (attacker becomes defender)
+
 - Cards have passive abilities triggered by dice patterns
+- Players alternate between Attack and Defense roles each turn
 
 ### Dice System
 * **Attack Level**: The exact number of dice that MUST be selected when attacking.
 * **Defense Level**: The exact number of dice that MUST be selected when defending.
 * **Rerolling**:
-    * On an attacking turn, you can reroll any number of dice a maximum of two times. Defender cannot reroll unless ability allows so.
-    * By selecting dice and using the reroll feature, all selected dice will be rerolled. 
-    * *(Note: Certain status effects or weather conditions can modify this base reroll count).*
+    * **Attacker**: Can reroll any number of dice up to 2 times per turn (default). Select dice, then use reroll - all selected dice will be rerolled.
+    * **Defender**: 0 rerolls by default (unless abilities/weather grant reroll attempts).
+    * After using all rerolls or skipping reroll phase, proceed to dice selection.
+    * *(Note: Certain status effects or weather conditions can modify base reroll count for either side).*
 * **Dice Types**:
     * **Blue d4**: 4-sided dice (faces 1-4)
     * **Purple d6**: 6-sided dice (faces 1-6)

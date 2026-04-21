@@ -16,7 +16,7 @@ public class CharacterRegistry {
 
     private static final Random random = new Random();
     private static final String CARDS_PATH = "data/config/cards.json";
-    private static List<CharacterCard> threeStarCards = null;
+    private static List<CharacterCard> threeStarCards;
 
     static { 
         threeStarCards = new ArrayList<>();

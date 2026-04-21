@@ -105,19 +105,16 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         state.setCurrentPhase(BattleState.Phase.ROLLING);
         
         if (diceRoller != null) {
-            diceRoller.rollAll(state);
+            diceRoller.rollForAttacker(state);
         }
         
         state.notifyPhaseChange(BattleState.Phase.ROLLING);
         
-        playerContext = createBattleContext(true);
-        opponentContext = createBattleContext(false);
-        
-        state.getPlayerEffects().processPhase(Phase.AFTER_ROLL, playerTurnType, playerContext);
-        state.getOpponentEffects().processPhase(Phase.AFTER_ROLL, opponentTurnType, opponentContext);
-        
-        state.setDiceValues(true, playerContext.getDiceValues());
-        state.setDiceValues(false, opponentContext.getDiceValues());
+        boolean attackerIsPlayer = state.isPlayerAttacker();
+        StatusEffectProcessor.BattleContext attackerContext = createBattleContext(attackerIsPlayer);
+        TurnType attackerTurnType = TurnType.ATTACK;
+        state.getEffects(attackerIsPlayer).processPhase(Phase.AFTER_ROLL, attackerTurnType, attackerContext);
+        state.setDiceValues(attackerIsPlayer, attackerContext.getDiceValues());
         
         state.clearPrismaticState();
     }
@@ -125,27 +122,24 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
     public void advanceToSelectPhase() {
         if (state.getCurrentPhase() != BattleState.Phase.ROLLING) return;
         
-        boolean attackerHasRerolls = state.isPlayerAttacker() ? 
+        boolean attackerIsPlayer = state.isPlayerAttacker();
+        boolean attackerHasRerolls = attackerIsPlayer ? 
             state.getRemainingRerolls(true) > 0 : 
             state.getRemainingRerolls(false) > 0;
         
-        boolean defenderHasRerolls = state.isPlayerAttacker() ? 
-            state.getRemainingRerolls(false) > 0 : 
-            state.getRemainingRerolls(true) > 0;
-        
-        if (attackerHasRerolls || defenderHasRerolls) {
+        if (attackerHasRerolls) {
             state.setCurrentPhase(BattleState.Phase.REROLL_PHASE);
             state.notifyPhaseChange(BattleState.Phase.REROLL_PHASE);
             
-            if (!state.isPlayerAttacker()) {
-                executeOpponentReroll();
+            if (!attackerIsPlayer) {
+                executeAiAttackerReroll();
             }
         } else {
             advanceToAttackPhase();
         }
     }
     
-    private void executeOpponentReroll() {
+    private void executeAiAttackerReroll() {
         if (aiEngine != null && state.getRemainingRerolls(false) > 0) {
             aiEngine.executeReroll(state, false);
         }
@@ -167,11 +161,51 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
     }
     
     private void advanceToDefensePhase() {
-        state.setCurrentPhase(BattleState.Phase.SELECTING_DEFENSE);
-        state.notifyPhaseChange(BattleState.Phase.SELECTING_DEFENSE);
+        state.setDefenderRolling(true);
         
-        if (state.isPlayerAttacker()) {
-            startAiSelection();
+        if (diceRoller != null) {
+            diceRoller.rollForDefender(state);
+        }
+        
+        boolean defenderIsPlayer = !state.isPlayerAttacker();
+        StatusEffectProcessor.BattleContext defenderContext = createBattleContext(defenderIsPlayer);
+        TurnType defenderTurnType = TurnType.DEFENSE;
+        state.getEffects(defenderIsPlayer).processPhase(Phase.AFTER_ROLL, defenderTurnType, defenderContext);
+        state.setDiceValues(defenderIsPlayer, defenderContext.getDiceValues());
+        
+        state.setCurrentPhase(BattleState.Phase.ROLLING);
+        state.notifyPhaseChange(BattleState.Phase.ROLLING);
+    }
+    
+    public void advanceToDefenderSelectPhase() {
+        if (!state.isDefenderRolling()) return;
+        state.setDefenderRolling(false);
+        
+        boolean defenderIsPlayer = !state.isPlayerAttacker();
+        boolean defenderHasRerolls = defenderIsPlayer ?
+            state.getRemainingRerolls(true) > 0 :
+            state.getRemainingRerolls(false) > 0;
+        
+        if (defenderHasRerolls) {
+            state.setCurrentPhase(BattleState.Phase.REROLL_PHASE);
+            state.notifyPhaseChange(BattleState.Phase.REROLL_PHASE);
+            
+            if (!defenderIsPlayer) {
+                executeAiDefenderReroll();
+            }
+        } else {
+            state.setCurrentPhase(BattleState.Phase.SELECTING_DEFENSE);
+            state.notifyPhaseChange(BattleState.Phase.SELECTING_DEFENSE);
+            
+            if (state.isPlayerAttacker()) {
+                startAiSelection();
+            }
+        }
+    }
+    
+    private void executeAiDefenderReroll() {
+        if (aiEngine != null && state.getRemainingRerolls(false) > 0) {
+            aiEngine.executeReroll(state, false);
         }
     }
     
@@ -211,25 +245,11 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         
         aiSelectionComplete = true;
         
-        if (state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
-            state.setDefenseValue(state.calculateSelectedSum(false));
-            if (weatherController != null) {
-                weatherController.applyDefenderSelectionPhase(state);
-            }
-            state.setCurrentPhase(BattleState.Phase.RESOLVING);
-            state.notifyPhaseChange(BattleState.Phase.RESOLVING);
-            resolveDamage();
-        } else if (!state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
+        if (aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
             state.setAttackValue(state.calculateSelectedSum(false));
-            state.setCurrentPhase(BattleState.Phase.SELECTING_DEFENSE);
-            state.notifyPhaseChange(BattleState.Phase.SELECTING_DEFENSE);
-        } else if (!state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
-            state.setDefenseValue(state.calculateSelectedSum(true));
-            state.setCurrentPhase(BattleState.Phase.RESOLVING);
-            state.notifyPhaseChange(BattleState.Phase.RESOLVING);
-            resolveDamage();
-        } else if (state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
-            state.setDefenseValue(state.calculateSelectedSum(true));
+            advanceToDefensePhase();
+        } else if (!aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
+            state.setDefenseValue(state.calculateSelectedSum(false));
             state.setCurrentPhase(BattleState.Phase.RESOLVING);
             state.notifyPhaseChange(BattleState.Phase.RESOLVING);
             resolveDamage();
@@ -421,7 +441,10 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         int requiredCount = state.getRequiredDiceCount(true);
         int selectedCount = state.countSelectedDice(true);
         
-        if (selectedCount != requiredCount) return;
+        if (selectedCount != requiredCount) {
+            CosmiconLogger.debug("Cannot confirm: need %d dice selected, have %d", requiredCount, selectedCount);
+            return;
+        }
         
         if (!state.canConfirmPrismaticSelection(true)) return;
         
@@ -457,23 +480,33 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         TurnType playerTurnType = state.isPlayerAttacker() ? TurnType.ATTACK : TurnType.DEFENSE;
         state.getPlayerEffects().processPhase(Phase.AFTER_ROLL, playerTurnType, playerContext);
         state.setDiceValues(true, playerContext.getDiceValues());
-        
-        if (!state.isPlayerAttacker() && state.getRemainingRerolls(false) > 0) {
-            executeOpponentReroll();
-        }
     }
     
-public void skipRerollPhase() {
+    public void skipRerollPhase() {
         if (state.getCurrentPhase() != BattleState.Phase.REROLL_PHASE) return;
 
+        boolean playerIsAttacker = state.isPlayerAttacker();
+        boolean playerIsDefender = !playerIsAttacker;
+        
         state.clearDiceSelection(true);
         state.clearDiceSelection(false);
 
-        if (!state.isPlayerAttacker() && state.getRemainingRerolls(false) > 0) {
-            executeOpponentReroll();
+        if (playerIsAttacker) {
+            if (state.getRemainingRerolls(false) > 0) {
+                executeAiAttackerReroll();
+            }
+            advanceToAttackPhase();
+        } else if (playerIsDefender) {
+            if (state.getRemainingRerolls(false) > 0) {
+                executeAiDefenderReroll();
+            }
+            state.setCurrentPhase(BattleState.Phase.SELECTING_DEFENSE);
+            state.notifyPhaseChange(BattleState.Phase.SELECTING_DEFENSE);
+            
+            if (state.isPlayerAttacker()) {
+                startAiSelection();
+            }
         }
-
-        advanceToAttackPhase();
     }
 
     private StatusEffectProcessor.BattleContext createBattleContext(boolean forPlayer) {

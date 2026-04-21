@@ -6,5 +6,7 @@ Please do not use or redistribute any part of this mod commercially.
 Find Hoyo's guide on the usage of their copyrighted materials at
 https://www.hoyolab.com/article/17883171
 
-Cosmicon, Roll On! (银河战力党) is a card-based dice game from Honkai: Star Rail version 4.0.
-Game mechanics reference: https://wiki.biligame.com/sr/『上骰了！战力党！』
+Cosmicon, Roll On! (银河战力党) is a dice game from Honkai: Star Rail version 4.0.
+Game mechanics reference: 
+https://honkai-star-rail.fandom.com/wiki/Cosmicon,_Roll_On!
+https://wiki.biligame.com/sr/%E3%80%8C%E4%B8%8A%E9%AA%B0%E4%BA%86%EF%BC%81%E6%88%98%E5%8A%9B%E5%85%9A%EF%BC%81%E3%80%8D

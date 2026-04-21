@@ -140,7 +140,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         panelX = pos.getX();
         panelY = pos.getY();
         diceZoneCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
-        diceZoneCenterY = BattleRenderingUtils.PANEL_HEIGHT / 2f;
+        diceZoneCenterY = BattleRenderingUtils.PANEL_HEIGHT / 2f - 40f;
 
         createButtons();
         createLabels();
@@ -444,7 +444,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
     private void updateRerollButtons(Phase phase) {
         if (rerollButton == null || skipRerollButton == null) return;
 
-        boolean inRerollPhase = phase == Phase.REROLL_PHASE && battleState.isPlayerAttacker();
+        boolean inRerollPhase = phase == Phase.REROLL_PHASE && battleState.getRemainingRerolls(true) > 0;
         rerollButton.setEnabled(inRerollPhase && battleState.getRemainingRerolls() > 0);
         skipRerollButton.setEnabled(inRerollPhase);
     }
@@ -589,35 +589,58 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
 
         if (diceAnimating) {
             rollAnimationDelay -= amount;
-            if (rollAnimationDelay <= 0f) {
-                diceAnimating = false;
-                List<DiceType> types = battleState.getPlayerDiceTypes();
-                List<Integer> values = battleState.getPlayerDiceValues();
-                boolean anyDiceRolled = false;
-
-                if (types != null && values != null && !types.isEmpty()) {
-                    createDiceHitboxes(types);
-                    diceRollManager.startRoll(types, values, diceZoneCenterX, diceZoneCenterY);
-                    anyDiceRolled = true;
+            
+            if (diceRollManager.hasAnimators()) {
+                // Animation is running, check completion
+                if (diceRollManager.isComplete() && rollAnimationDelay <= 0f) {
+                    diceAnimating = false;
+                    if (battleState.getCurrentPhase() == Phase.ROLLING) {
+                        if (battleState.isDefenderRolling()) {
+                            battleController.advanceToDefenderSelectPhase();
+                        } else {
+                            battleController.advanceToSelectPhase();
+                        }
+                    }
                 }
-
-                types = battleState.getOpponentDiceTypes();
-                values = battleState.getOpponentDiceValues();
-                if (types != null && values != null && !types.isEmpty()) {
-                    diceRollManager.appendRoll(types, values, diceZoneCenterX, diceZoneCenterY - 80f);
-                    anyDiceRolled = true;
+            } else if (rollAnimationDelay <= 0f) {
+                // No animators yet, start animation
+                diceAnimating = false;
+                
+                boolean isDefenderRolling = battleState.isDefenderRolling();
+                boolean showPlayerDice = isDefenderRolling ? !battleState.isPlayerAttacker() : battleState.isPlayerAttacker();
+                boolean anyDiceRolled = false;
+                
+                CosmiconLogger.debug("[ANIM] Starting animation - isDefenderRolling=%s, showPlayerDice=%s, playerIsAttacker=%s",
+                    isDefenderRolling, showPlayerDice, battleState.isPlayerAttacker());
+                
+                if (showPlayerDice) {
+                    List<DiceType> types = battleState.getPlayerDiceTypes();
+                    List<Integer> values = battleState.getPlayerDiceValues();
+                    if (types != null && values != null && !types.isEmpty()) {
+                        createDiceHitboxes(types);
+                        diceRollManager.startRoll(types, values, diceZoneCenterX, diceZoneCenterY);
+                        anyDiceRolled = true;
+                        CosmiconLogger.debug("[ANIM] Player dice animation started - %d dice", types.size());
+                    }
+                } else {
+                    List<DiceType> types = battleState.getOpponentDiceTypes();
+                    List<Integer> values = battleState.getOpponentDiceValues();
+                    if (types != null && values != null && !types.isEmpty()) {
+                        diceRollManager.startRoll(types, values, diceZoneCenterX, diceZoneCenterY);
+                        anyDiceRolled = true;
+                        CosmiconLogger.debug("[ANIM] Opponent dice animation started - %d dice (no hitboxes created)", types.size());
+                    }
                 }
 
                 if (anyDiceRolled) {
                     rollAnimationDelay = DiceAnimator.getTotalDuration() + 0.1f;
                     diceAnimating = true;
                 } else if (battleState.getCurrentPhase() == Phase.ROLLING) {
-                    battleController.advanceToSelectPhase();
-                }
-            } else if (diceRollManager.hasAnimators() && diceRollManager.isComplete()) {
-                diceAnimating = false;
-                if (battleState.getCurrentPhase() == Phase.ROLLING) {
-                    battleController.advanceToSelectPhase();
+                    if (isDefenderRolling) {
+                        battleController.advanceToDefenderSelectPhase();
+                    } else {
+                        battleController.advanceToSelectPhase();
+                    }
                 }
             }
         }
@@ -629,11 +652,11 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
 
         diceRollManager.advance(amount);
 
-        handleMouseInput();
-
         PositionAPI pos = panel.getPosition();
         panelX = pos.getX();
         panelY = pos.getY();
+
+        handleMouseInput();
     }
 
     private void updateRoleTransition(float amount) {
@@ -660,9 +683,21 @@ private void handleMouseInput() {
         int currentButton = Mouse.isButtonDown(0) ? 1 : 0;
         
         if (currentButton == 1 && lastMouseButtonState == 0) {
+            CosmiconLogger.debug("[CLICK] Mouse clicked - Phase: %s, panelX=%.0f, panelY=%.0f",
+                battleState.getCurrentPhase().name(), panelX, panelY);
+            
             if (battleState.getCurrentPhase() == Phase.ROLLING) {
                 CosmiconLogger.debug("Player clicked to skip dice roll animation");
                 diceRollManager.forceCompleteAll();
+                
+                boolean showPlayerDice = battleState.isDefenderRolling() ? !battleState.isPlayerAttacker() : battleState.isPlayerAttacker();
+                if (showPlayerDice && diceHitboxes.isEmpty()) {
+                    List<DiceType> types = battleState.getPlayerDiceTypes();
+                    if (types != null && !types.isEmpty()) {
+                        createDiceHitboxes(types);
+                    }
+                }
+                
                 lastMouseButtonState = currentButton;
                 return;
             }
@@ -670,6 +705,7 @@ private void handleMouseInput() {
             if (battleState.getCurrentPhase() != Phase.SELECTING_ATTACK &&
                 battleState.getCurrentPhase() != Phase.SELECTING_DEFENSE &&
                 battleState.getCurrentPhase() != Phase.REROLL_PHASE) {
+                CosmiconLogger.debug("[CLICK] Wrong phase for dice selection: %s", battleState.getCurrentPhase().name());
                 lastMouseButtonState = currentButton;
                 return;
             }
@@ -679,9 +715,14 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
                                           (battleState.isDefender(true) &&
                                            battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE);
 
-            boolean inRerollPhase = battleState.getCurrentPhase() == Phase.REROLL_PHASE && battleState.isAttacker(true);
+            boolean inRerollPhase = battleState.getCurrentPhase() == Phase.REROLL_PHASE && 
+                battleState.getRemainingRerolls(true) > 0;
+
+            CosmiconLogger.debug("[CLICK] playerShouldSelect=%s, inRerollPhase=%s, isAttacker(true)=%s, isDefender(true)=%s",
+                playerShouldSelect, inRerollPhase, battleState.isAttacker(true), battleState.isDefender(true));
 
             if (!playerShouldSelect && !inRerollPhase) {
+                CosmiconLogger.debug("[CLICK] Player should not select - conditions not met");
                 lastMouseButtonState = currentButton;
                 return;
             }
@@ -693,9 +734,15 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
             float panelUiX = uiPos[0];
             float panelUiY = uiPos[1];
 
+            CosmiconLogger.debug("[CLICK] Mouse screen: (%d, %d), Panel UI: (%.0f, %.0f), hitboxCount=%d",
+                mouseX, mouseY, panelUiX, panelUiY, diceHitboxes.size());
+
             for (int i = 0; i < diceHitboxes.size(); i++) {
                 float[] hb = diceHitboxes.get(i);
-                if (CoordHelper.isInsideUiRect(panelUiX, panelUiY, hb[0], hb[1], hb[2], hb[3])) {
+                boolean inside = CoordHelper.isInsideUiRect(panelUiX, panelUiY, hb[0], hb[1], hb[2], hb[3]);
+                CosmiconLogger.debug("[CLICK] Hitbox %d: UI(%.0f,%.0f) size(%.0f,%.0f) - point (%.0f,%.0f) inside=%s",
+                    i, hb[0], hb[1], hb[2], hb[3], panelUiX, panelUiY, inside);
+                if (inside) {
                     logDiceSelection(i);
                     battleController.onPlayerSelectDice(i);
                     break;
@@ -730,9 +777,15 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
         float startX = diceZoneCenterX - totalWidth / 2f;
         float startY = diceZoneCenterY - DICE_SIZE / 2f;
 
+        CosmiconLogger.debug("[HITBOX] Creating %d hitboxes, center=(%.0f,%.0f), startX=%.0f, startY=%.0f",
+            count, diceZoneCenterX, diceZoneCenterY, startX, startY);
+
         for (int i = 0; i < count; i++) {
             float x = startX + i * DICE_SPACING;
-            diceHitboxes.add(new float[]{x, startY, DICE_SIZE + DICE_CLICK_PADDING * 2, DICE_SIZE + DICE_CLICK_PADDING * 2});
+            float hbW = DICE_SIZE + DICE_CLICK_PADDING * 2;
+            float hbH = DICE_SIZE + DICE_CLICK_PADDING * 2;
+            diceHitboxes.add(new float[]{x, startY, hbW, hbH});
+            CosmiconLogger.debug("[HITBOX] Hitbox %d: UI(%.0f, %.0f) size %.0fx%.0f", i, x, startY, hbW, hbH);
         }
     }
 
