@@ -42,8 +42,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
     private static final String ACTION_CONTINUE = "continue";
     private static final String ACTION_PRISMATIC = "prismatic";
     private static final String ACTION_REROLL = "reroll";
-    private static final float DICE_SIZE = 60f;
-    private static final float DICE_SPACING = 70f;
+    private static final String ACTION_EXIT = "exit";
+    private static final float DICE_SPACING = 130f;
     private static final float DICE_CLICK_PADDING = 5f;
     private static final float PRISMATIC_BTN_SIZE = 40f;
 
@@ -57,6 +57,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
     private ButtonAPI rerollButton;
     private ButtonAPI confirmButton;
     private ButtonAPI prismaticButton;
+    private ButtonAPI exitButton;
     private LabelAPI prismaticUsesLabel;
     private LabelAPI phaseLabel;
     private LabelAPI instructionLabel;
@@ -202,6 +203,12 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         panel.addComponent((UIComponentAPI) prismaticUsesLabel)
             .setSize(40, 20)
             .inTL(playerCardX - 55f, playerCardY + 85f);
+
+        TooltipMakerAPI exitTp = panel.createUIElement(btnWidth, btnHeight, false);
+        exitTp.setActionListenerDelegate(this);
+        panel.addUIElement(exitTp).inTL(BattleRenderingUtils.PANEL_WIDTH - btnWidth - 10f, 10f);
+        exitButton = exitTp.addButton("Exit", ACTION_EXIT, btnWidth, btnHeight, 0f);
+        exitButton.setQuickMode(true);
 
         buttonsCreated = true;
     }
@@ -502,6 +509,12 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
                         callbacks.dismissDialog();
                     }
                 }
+                case ACTION_EXIT -> {
+                    CosmiconLogger.info("Player clicked Exit button - dismissing dialog");
+                    if (callbacks != null) {
+                        callbacks.dismissDialog();
+                    }
+                }
             }
         }
     }
@@ -779,19 +792,22 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
     private void createDiceHitboxes(List<DiceType> types) {
         diceHitboxes.clear();
         int count = types.size();
-        float totalWidth = DICE_SPACING * (count - 1) + DICE_SIZE;
+        float maxDiceSize = 80f;
+        float totalWidth = DICE_SPACING * (count - 1) + maxDiceSize;
         float startX = diceZoneCenterX - totalWidth / 2f;
-        float startY = diceZoneCenterY - DICE_SIZE / 2f;
 
-        CosmiconLogger.debug("[HITBOX] Creating %d hitboxes, center=(%.0f,%.0f), startX=%.0f, startY=%.0f",
-            count, diceZoneCenterX, diceZoneCenterY, startX, startY);
+        CosmiconLogger.debug("[HITBOX] Creating %d hitboxes, center=(%.0f,%.0f), startX=%.0f",
+            count, diceZoneCenterX, diceZoneCenterY, startX);
 
         for (int i = 0; i < count; i++) {
-            float x = startX + i * DICE_SPACING;
-            float hbW = DICE_SIZE + DICE_CLICK_PADDING * 2;
-            float hbH = DICE_SIZE + DICE_CLICK_PADDING * 2;
+            float diceSize = types.get(i).getDisplaySize();
+            float x = startX + i * DICE_SPACING + (maxDiceSize - diceSize) / 2f;
+            float startY = diceZoneCenterY - diceSize / 2f;
+            float hbW = diceSize + DICE_CLICK_PADDING * 2;
+            float hbH = diceSize + DICE_CLICK_PADDING * 2;
             diceHitboxes.add(new float[]{x, startY, hbW, hbH});
-            CosmiconLogger.debug("[HITBOX] Hitbox %d: UI(%.0f, %.0f) size %.0fx%.0f", i, x, startY, hbW, hbH);
+            CosmiconLogger.debug("[HITBOX] Hitbox %d: UI(%.0f, %.0f) size %.0fx%.0f (diceSize=%.0f)", 
+                i, x, startY, hbW, hbH, diceSize);
         }
     }
 
@@ -916,9 +932,9 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
             if (selected.get(i)) {
                 float[] hb = diceHitboxes.get(i);
                 float hx = panelX + hb[0];
-                float hy = CoordHelper.uiToGlY(panelY, BattleRenderingUtils.PANEL_HEIGHT, hb[1] + DICE_SIZE);
-                float hw = DICE_SIZE;
-                float hh = DICE_SIZE;
+                float hy = CoordHelper.uiToGlY(panelY, BattleRenderingUtils.PANEL_HEIGHT, hb[1] + hb[3] - DICE_CLICK_PADDING * 2);
+                float hw = hb[2] - DICE_CLICK_PADDING * 2;
+                float hh = hb[3] - DICE_CLICK_PADDING * 2;
 
                 GL11.glBegin(GL11.GL_LINE_LOOP);
                 GL11.glVertex2f(hx, hy);
@@ -968,17 +984,17 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
         for (int idx : visibleIndices) {
             if (idx >= 0 && idx < opponentAnimators.size()) {
                 DiceAnimator animator = opponentAnimators.get(idx);
-                if (animator != null && animator.getNumberLabel() != null) {
-                    PositionAPI pos = animator.getNumberLabel().getPosition();
-                    float diceX = panelX + pos.getX();
+                if (animator != null) {
+                    float diceSize = animator.getDisplaySize();
+                    float diceX = panelX + animator.getX();
                     float diceY = CoordHelper.uiToGlY(panelY, BattleRenderingUtils.PANEL_HEIGHT, 
-                        pos.getY() + DiceAnimator.DICE_SIZE);
+                        animator.getY() + diceSize);
                     
                     GL11.glBegin(GL11.GL_LINE_LOOP);
                     GL11.glVertex2f(diceX, diceY);
-                    GL11.glVertex2f(diceX + DiceAnimator.DICE_SIZE, diceY);
-                    GL11.glVertex2f(diceX + DiceAnimator.DICE_SIZE, diceY + DiceAnimator.DICE_SIZE);
-                    GL11.glVertex2f(diceX, diceY + DiceAnimator.DICE_SIZE);
+                    GL11.glVertex2f(diceX + diceSize, diceY);
+                    GL11.glVertex2f(diceX + diceSize, diceY + diceSize);
+                    GL11.glVertex2f(diceX, diceY + diceSize);
                     GL11.glEnd();
                 }
             }

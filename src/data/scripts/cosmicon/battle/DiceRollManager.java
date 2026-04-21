@@ -10,8 +10,7 @@ import data.scripts.cosmicon.util.CosmiconLogger;
 public class DiceRollManager {
 
     private static final float STAGGER_DELAY = 0.05f;
-    private static final float DICE_SPACING = 70f;
-    private static final float DICE_SIZE = 60f;
+    private static final float DICE_SPACING = 130f;
 
     private final List<DiceAnimator> animators;
     private final List<DiceAnimator> opponentAnimators;
@@ -38,9 +37,9 @@ public class DiceRollManager {
         animators.clear();
 
         int count = Math.min(types.size(), results.size());
-        float totalWidth = DICE_SPACING * (count - 1) + DICE_SIZE;
+        float totalWidth = DICE_SPACING * (count - 1) + DiceAnimator.DICE_SIZE;
         float startX = centerX - totalWidth / 2f;
-        float startY = centerY - DICE_SIZE / 2f;
+        float startY = centerY - DiceAnimator.DICE_SIZE / 2f;
         
         for (int i = 0; i < count; i++) {
             DiceAnimator animator = new DiceAnimator();
@@ -85,9 +84,9 @@ public class DiceRollManager {
         CosmiconLogger.debug("Appending %d dice to existing %d animators at center (%.0f, %.0f)",
             count, animators.size(), centerX, centerY);
 
-        float totalWidth = DICE_SPACING * (count - 1) + DICE_SIZE;
+        float totalWidth = DICE_SPACING * (count - 1) + DiceAnimator.DICE_SIZE;
         float startX = centerX - totalWidth / 2f;
-        float startY = centerY - DICE_SIZE / 2f;
+        float startY = centerY - DiceAnimator.DICE_SIZE / 2f;
         
         for (int i = 0; i < count; i++) {
             DiceAnimator animator = new DiceAnimator();
@@ -101,7 +100,7 @@ public class DiceRollManager {
 
     public void clear() {
         for (DiceAnimator animator : animators) {
-            animator.getNumberLabel().setOpacity(0f);
+            animator.forceComplete();
         }
         animators.clear();
     }
@@ -132,9 +131,9 @@ public class DiceRollManager {
         this.opponentZoneY = zoneY;
 
         int count = Math.min(types.size(), results.size());
-        float totalWidth = DICE_SPACING * (count - 1) + DICE_SIZE;
+        float totalWidth = DICE_SPACING * (count - 1) + DiceAnimator.DICE_SIZE;
         float startX = zoneX + (BattleRenderingUtils.OPPONENT_DICE_ZONE_W - totalWidth) / 2f;
-        float startY = zoneY + (BattleRenderingUtils.OPPONENT_DICE_ZONE_H - DICE_SIZE) / 2f;
+        float startY = zoneY + (BattleRenderingUtils.OPPONENT_DICE_ZONE_H - DiceAnimator.DICE_SIZE) / 2f;
         
         for (int i = 0; i < count; i++) {
             DiceAnimator animator = new DiceAnimator();
@@ -177,7 +176,7 @@ public class DiceRollManager {
 
     public void clearOpponentAnimators() {
         for (DiceAnimator animator : opponentAnimators) {
-            animator.getNumberLabel().setOpacity(0f);
+            animator.forceComplete();
         }
         opponentAnimators.clear();
     }

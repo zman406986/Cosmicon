@@ -192,16 +192,19 @@ public class BattleState {
 
     public int getRequiredDiceCount(boolean isPlayer) {
         CharacterCard card = isPlayer ? playerCard : opponentCard;
+        if (card == null) return 0;
         return (isPlayer == playerIsAttacker) ? card.getAtkLevel() : card.getDefLevel();
     }
 
     public int countSelected(List<Boolean> selected) {
+        if (selected == null) return 0;
         int count = 0;
         for (Boolean b : selected) if (b) count++;
         return count;
     }
 
     public int calculateSelectedSum(List<Integer> values, List<Boolean> selected) {
+        if (values == null || selected == null) return 0;
         int sum = 0;
         for (int i = 0; i < values.size(); i++) if (selected.get(i)) sum += values.get(i);
         return sum;

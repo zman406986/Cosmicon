@@ -12,12 +12,18 @@ public enum DiceType {
     private final Color bodyColor;
     private final Color numberColor;
     private final int vertices;
+    private final float displaySize;
 
     DiceType(int maxFace, Color bodyColor, Color numberColor, int vertices) {
         this.maxFace = maxFace;
         this.bodyColor = bodyColor;
         this.numberColor = numberColor;
         this.vertices = vertices;
+        this.displaySize = this == PURPLE_D6 ? 60f : 80f;
+    }
+
+    public float getDisplaySize() {
+        return displaySize;
     }
 
     public int getMaxFace() {
@@ -34,5 +40,14 @@ public enum DiceType {
 
     public int getVertices() {
         return vertices;
+    }
+
+    public String getSpritePrefix() {
+        return switch (this) {
+            case BLUE_D4 -> "d4";
+            case PURPLE_D6 -> "d6";
+            case ORANGE_D8 -> "d8";
+            case PRISMATIC_D12 -> "d12";
+        };
     }
 }

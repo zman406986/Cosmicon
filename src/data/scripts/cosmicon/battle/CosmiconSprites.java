@@ -53,6 +53,7 @@ public final class CosmiconSprites {
             prismaticButtonSprite = settings.getSprite("cosmicon_dice", "prismatic_btn");
             atkIconSprite = settings.getSprite("cosmicon_cards", "atk_icon");
             defIconSprite = settings.getSprite("cosmicon_cards", "def_icon");
+            DiceSpriteRegistry.load();
             loaded = true;
             Global.getLogger(CosmiconSprites.class).info("Cosmicon sprites loaded successfully");
         } catch (Exception e) {
@@ -120,6 +121,7 @@ public final class CosmiconSprites {
 
     public static void clearCache() {
         portraitCache.clear();
+        DiceSpriteRegistry.clearCache();
         loaded = false;
     }
 }
