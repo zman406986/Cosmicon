@@ -293,8 +293,8 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             CharacterCard card = characters.get(i);
             SpriteAPI portrait = CosmiconSprites.getPortrait(card.getId());
             if (portrait != null) {
-                float portraitW = CARD_WIDTH * 0.85f;
-                float portraitH = CARD_HEIGHT * 0.85f;
+                float portraitW = CARD_WIDTH * 0.95f;
+                float portraitH = CARD_HEIGHT * 0.95f;
                 float centerX = panelX + boxX + CARD_WIDTH / 2f;
                 float centerY = glY + CARD_HEIGHT / 2f;
                 portrait.setSize(portraitW, portraitH);

@@ -308,7 +308,9 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
                 showingConfirmation = false;
                 selectedType = null;
                 rolledInstance = null;
-                updateVisibility();
+                if (selectionCallback != null) {
+                    selectionCallback.onPopupClosed();
+                }
             } else if (action.equals("confirm_roll")) {
                 confirmRoll();
             } else if (action.startsWith("roll_")) {

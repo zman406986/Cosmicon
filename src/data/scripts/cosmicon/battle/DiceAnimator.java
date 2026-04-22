@@ -377,11 +377,11 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         float displaySize = getDisplaySize();
         float centeringOffset = (DICE_SIZE - displaySize) / 2f;
         
-        float renderX = panelX + x + posXOffset;
+float renderX = panelX + x + posXOffset;
         float renderY;
         
         boolean isCenteringPhase = phase == Phase.PICKUP || phase == Phase.CENTERING_TRAVEL || 
-                                   phase == Phase.CENTERING_DROP || phase == Phase.WAITING_FOR_CENTERING;
+                                   phase == Phase.CENTERING_DROP;
         
         if (isCenteringPhase || phase == Phase.COMPLETE || (complete && useDirectionalAnimation)) {
             renderX += centeringOffset;
@@ -398,7 +398,12 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         renderX -= extraWidth / 2f;
         
         float visualRotation;
-        if (isCenteringPhase || phase == Phase.COMPLETE || (complete && useDirectionalAnimation)) {
+        if (phase == Phase.WAITING_FOR_CENTERING) {
+            visualRotation = 180f - rotation;
+            if (type == DiceType.BLUE_D4) {
+                visualRotation -= 90f;
+            }
+        } else if (isCenteringPhase || phase == Phase.COMPLETE || (complete && useDirectionalAnimation)) {
             visualRotation = 0f;
         } else if (complete) {
             visualRotation = 0f;

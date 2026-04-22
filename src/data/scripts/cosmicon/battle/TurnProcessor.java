@@ -635,8 +635,6 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         if (selectedCount == 0) return;
         
         diceRoller.rerollSelected(state, true);
-        state.decrementRerolls(true);
-        state.incrementRerollsUsed(true);
         state.clearDiceSelection(true);
         
         StatusEffectProcessor.BattleContext playerContext = createBattleContext(true);

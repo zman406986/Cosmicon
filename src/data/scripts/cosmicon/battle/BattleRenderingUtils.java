@@ -23,7 +23,7 @@ public final class BattleRenderingUtils {
     public static final float CARD_WIDTH = 180f;
     public static final float CARD_HEIGHT = 254f;
 
-    public static final float PORTRAIT_SCALE = 0.85f;
+    public static final float PORTRAIT_SCALE = 0.95f;
     public static final float DICE_ICON_SIZE = 22f;
     public static final float DICE_ICON_SPACING = 26f;
     public static final float DICE_POOL_RIGHT_MARGIN = 12f;
