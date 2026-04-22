@@ -44,12 +44,12 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
     private static final float MARGIN = 15f;
 
     private CustomPanelAPI panel;
-    private BattleState battleState;
-    private PrismaticDiceSelectionCallback selectionCallback;
+    private final BattleState battleState;
+    private final PrismaticDiceSelectionCallback selectionCallback;
 
     private LabelAPI titleLabel;
     private LabelAPI noDiceLabel;
-    private List<DiceEntry> diceEntries;
+    private final List<DiceEntry> diceEntries;
     private ButtonAPI closeButton;
 
     private LabelAPI confirmTitleLabel;
@@ -389,9 +389,5 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
         GL11.glEnd();
 
         GLStateUtil.resetColor();
-    }
-
-    @Override
-    public void render(float alphaMult) {
     }
 }

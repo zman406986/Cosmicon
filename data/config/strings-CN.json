@@ -334,6 +334,20 @@
             "composite_or": "{0} 或 {1}",
             "composite_and_separator": " 且 ",
             "composite_or_separator": " 或 "
+        },
+        "face": {
+            "mapping_header": "骰面:",
+            "effect_header": "效果:",
+            "rolled_label": "{0}={1}{2}",
+            "face_a": "A",
+            "face_b": "B",
+            "face_c": "C",
+            "face_d": "D",
+            "face_e": "E",
+            "face_f": "F",
+            "special_marker": "*",
+            "no_dice": "无曜彩骰",
+            "separator": " "
         }
     },
     "setup": {

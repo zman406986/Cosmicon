@@ -155,25 +155,6 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         }
     }
     
-    private void executeAiAttackerReroll() {
-        if (aiEngine == null || state.getRemainingRerolls(false) <= 0) return;
-        
-        List<Integer> rerollIndices = aiEngine.planReroll(state, false);
-        
-        if (!rerollIndices.isEmpty()) {
-            aiPlannedIndices = rerollIndices;
-            aiVisualPhase = AIVisualPhase.REROLL_PLANNING;
-            aiPhaseTimer = 0f;
-            
-            AISelectionVisualizer viz = state.getAiSelectionVisualizer();
-            if (viz != null) {
-                viz.planSelection(rerollIndices, true);
-            }
-        } else {
-            advanceToAttackPhase();
-        }
-    }
-    
     public void advanceToAttackPhase() {
         if (state.getCurrentPhase() != BattleState.Phase.ROLLING) return;
         
@@ -217,30 +198,6 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         
         if (state.isPlayerAttacker()) {
             startAiSelection();
-        }
-    }
-    
-    private void executeAiDefenderReroll() {
-        if (aiEngine == null || state.getRemainingRerolls(false) <= 0) return;
-        
-        List<Integer> rerollIndices = aiEngine.planReroll(state, false);
-        
-        if (!rerollIndices.isEmpty()) {
-            aiPlannedIndices = rerollIndices;
-            aiVisualPhase = AIVisualPhase.REROLL_PLANNING;
-            aiPhaseTimer = 0f;
-            
-            AISelectionVisualizer viz = state.getAiSelectionVisualizer();
-            if (viz != null) {
-                viz.planSelection(rerollIndices, true);
-            }
-        } else {
-            state.setCurrentPhase(BattleState.Phase.SELECTING_DEFENSE);
-            state.notifyPhaseChange(BattleState.Phase.SELECTING_DEFENSE);
-            
-            if (state.isPlayerAttacker()) {
-                startAiSelection();
-            }
         }
     }
     

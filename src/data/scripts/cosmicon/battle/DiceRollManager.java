@@ -13,8 +13,6 @@ public class DiceRollManager {
 
     private final List<DiceAnimator> animators;
     private final List<DiceAnimator> opponentAnimators;
-    private float opponentZoneX;
-    private float opponentZoneY;
     private CustomPanelAPI panel;
     private boolean initialized;
 
@@ -44,7 +42,8 @@ public class DiceRollManager {
             DicePathPlanner.PlannedPath path = paths.get(i);
             
             animator.start(types.get(i), results.get(i), path.startX, path.startY, path.delay,
-                           path.rotation, path.travelDistance, path.bounceCount, path.bounceHeights);
+                           path.rotation, path.travelDistance, path.bounceCount, path.bounceHeights,
+                           path.targetCenterX, path.targetCenterY);
             animators.add(animator);
         }
     }
@@ -129,28 +128,29 @@ public void advance(float amount) {
             DicePathPlanner.PlannedPath path = newPaths.get(i);
             
             animator.start(types.get(i), results.get(i), path.startX, path.startY, path.delay,
-                           path.rotation, path.travelDistance, path.bounceCount, path.bounceHeights);
+                           path.rotation, path.travelDistance, path.bounceCount, path.bounceHeights,
+                           path.targetCenterX, path.targetCenterY);
             animators.add(animator);
         }
     }
     
     public void appendInstantDice(DiceType type, int value, float centerX, float centerY) {
         if (!initialized) return;
-        
-        List<DicePathPlanner.PlannedPath> existingPaths = collectExistingPaths();
+
         List<DiceType> types = new ArrayList<>();
         types.add(type);
         List<Integer> results = new ArrayList<>();
         results.add(value);
-        List<DicePathPlanner.PlannedPath> newPaths = DicePathPlanner.planPathsAppend(
-            types, results, centerX, centerY, DICE_SPACING, animators.size(), existingPaths);
-        
+
+        List<float[]> existingPositions = collectAllDicePositions();
+        DicePathPlanner.PlannedPath path = DicePathPlanner.planSinglePrismaticPath(
+            animators.size(), centerX, centerY, DICE_SPACING, existingPositions);
+
         DiceAnimator animator = new DiceAnimator();
         animator.init(panel);
-        DicePathPlanner.PlannedPath path = newPaths.get(0);
-        
         animator.start(type, value, path.startX, path.startY, path.delay,
-                       path.rotation, path.travelDistance, path.bounceCount, path.bounceHeights);
+                       path.rotation, path.travelDistance, path.bounceCount, path.bounceHeights,
+                       path.targetCenterX, path.targetCenterY);
         animators.add(animator);
     }
     
@@ -160,9 +160,31 @@ public void advance(float amount) {
             float endX = animator.getX() + animator.getPosXOffset();
             float endY = animator.getY() + animator.getPosYOffset();
             paths.add(new DicePathPlanner.PlannedPath(animator.getRotation(), 
-                0f, 0, new float[0], endX, endY, 0f));
+                0f, 0, new float[0], endX, endY, 0f, endX, endY));
         }
         return paths;
+    }
+    
+    private List<float[]> collectAllDicePositions() {
+        List<float[]> positions = new ArrayList<>();
+        for (DiceAnimator animator : animators) {
+            positions.add(new float[]{
+                animator.getX() + animator.getPosXOffset(),
+                animator.getY() + animator.getPosYOffset()
+            });
+        }
+        return positions;
+    }
+    
+    private List<float[]> collectAllOpponentDicePositions() {
+        List<float[]> positions = new ArrayList<>();
+        for (DiceAnimator animator : opponentAnimators) {
+            positions.add(new float[]{
+                animator.getX() + animator.getPosXOffset(),
+                animator.getY() + animator.getPosYOffset()
+            });
+        }
+        return positions;
     }
 
     public void clear() {
@@ -173,12 +195,17 @@ public void advance(float amount) {
     }
 
     public void partialReroll(List<Integer> indices, List<Integer> newValues) {
-        for (int animatorIndex : indices)
-        {
-            if (animatorIndex >= 0 && animatorIndex < animators.size())
-            {
+        List<float[]> allPositions = collectAllDicePositions();
+        List<DicePathPlanner.PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, newValues, allPositions);
+        
+        for (int i = 0; i < indices.size(); i++) {
+            int animatorIndex = indices.get(i);
+            if (animatorIndex >= 0 && animatorIndex < animators.size()) {
                 DiceAnimator animator = animators.get(animatorIndex);
-                animator.reroll(newValues.get(animatorIndex));
+                DicePathPlanner.PlannedPath path = rerollPaths.get(i);
+                animator.rerollWithNewPath(newValues.get(i), path.rotation, path.travelDistance,
+                                            path.bounceCount, path.bounceHeights,
+                                            path.targetCenterX, path.targetCenterY);
             }
         }
     }
@@ -193,9 +220,6 @@ public void advance(float amount) {
         if (!initialized) return;
 
         clearOpponentAnimators();
-        
-        this.opponentZoneX = zoneX;
-        this.opponentZoneY = zoneY;
 
         int count = Math.min(types.size(), results.size());
         float centerX = zoneX + BattleRenderingUtils.OPPONENT_DICE_ZONE_W / 2f;
@@ -209,7 +233,8 @@ public void advance(float amount) {
             DicePathPlanner.PlannedPath path = paths.get(i);
             
             animator.start(types.get(i), results.get(i), path.startX, path.startY, path.delay,
-                           path.rotation, path.travelDistance, path.bounceCount, path.bounceHeights);
+                           path.rotation, path.travelDistance, path.bounceCount, path.bounceHeights,
+                           path.targetCenterX, path.targetCenterY);
             opponentAnimators.add(animator);
         }
     }
@@ -221,10 +246,17 @@ public void advance(float amount) {
     }
 
     public void rerollOpponentDice(List<Integer> indices, List<Integer> newValues) {
-        for (int animatorIndex : indices) {
+        List<float[]> allPositions = collectAllOpponentDicePositions();
+        List<DicePathPlanner.PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, newValues, allPositions);
+        
+        for (int i = 0; i < indices.size(); i++) {
+            int animatorIndex = indices.get(i);
             if (animatorIndex >= 0 && animatorIndex < opponentAnimators.size()) {
                 DiceAnimator animator = opponentAnimators.get(animatorIndex);
-                animator.reroll(newValues.get(animatorIndex));
+                DicePathPlanner.PlannedPath path = rerollPaths.get(i);
+                animator.rerollWithNewPath(newValues.get(i), path.rotation, path.travelDistance,
+                                            path.bounceCount, path.bounceHeights,
+                                            path.targetCenterX, path.targetCenterY);
             }
         }
     }
@@ -263,5 +295,31 @@ public void advance(float amount) {
     public void clearAll() {
         clear();
         clearOpponentAnimators();
+    }
+
+    public float getAnimatorPositionX(int index) {
+        if (index < 0 || index >= animators.size()) return -1f;
+        DiceAnimator animator = animators.get(index);
+        return animator.getX() + animator.getPosXOffset();
+    }
+
+    public float getAnimatorPositionY(int index) {
+        if (index < 0 || index >= animators.size()) return -1f;
+        DiceAnimator animator = animators.get(index);
+        return animator.getY() + animator.getPosYOffset();
+    }
+
+    public float getAnimatorVisualX(int index) {
+        if (index < 0 || index >= animators.size()) return -1f;
+        return animators.get(index).getVisualX();
+    }
+
+    public float getAnimatorVisualY(int index) {
+        if (index < 0 || index >= animators.size()) return -1f;
+        return animators.get(index).getVisualY();
+    }
+
+    public int getAnimatorCount() {
+        return animators.size();
     }
 }

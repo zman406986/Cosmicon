@@ -348,6 +348,20 @@
             "warning_destined": "Warning: This dice will be marked MUST SELECT after rolling!",
             "close": "Close"
         },
+        "face": {
+            "mapping_header": "Faces:",
+            "effect_header": "Effect:",
+            "rolled_label": "{0}={1}{2}",
+            "face_a": "A",
+            "face_b": "B",
+            "face_c": "C",
+            "face_d": "D",
+            "face_e": "E",
+            "face_f": "F",
+            "special_marker": "*",
+            "no_dice": "No prismatic dice",
+            "separator": " "
+        },
         "equip": {
             "title": "SELECT PRISMATIC DICE",
             "current": "Current: {0}",

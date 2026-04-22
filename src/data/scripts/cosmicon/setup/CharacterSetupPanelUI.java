@@ -70,14 +70,9 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private CustomPanelAPI panel;
     private DialogCallbacks callbacks;
 
-    private LabelAPI titleLabel;
     private LabelAPI selectedNameLabel;
     private LabelAPI prismaticLabel;
     private LabelAPI passiveLabel;
-    private ButtonAPI confirmButton;
-    private ButtonAPI cancelButton;
-    private ButtonAPI changeDiceButton;
-    private ButtonAPI backButton;
 
     private boolean buttonsCreated = false;
     private boolean wasMousePressed = false;
@@ -86,7 +81,6 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
     private final CharacterSetupCallback callback;
 
-    private PrismaticEquipPopup prismaticPopup = null;
     private CustomPanelAPI popupPanel = null;
 
     private record ClickRegion(float boxX, float boxY, float width, float height, int index) {}
@@ -99,7 +93,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     public CharacterSetupPanelUI(CharacterSetupCallback callback) {
         this.callback = callback;
         this.characters = CharacterRegistry.getAllCards();
-        if (characters != null && !characters.isEmpty()) {
+        if (!characters.isEmpty()) {
             this.selectedIndex = 0;
             CharacterCard first = characters.get(0);
             Map<String, Integer> prismatic = first.getPrismaticDiceIds();
@@ -129,7 +123,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     }
 
     private void createHeaderLabels() {
-        titleLabel = Global.getSettings().createLabel(
+        LabelAPI titleLabel = Global.getSettings().createLabel(
             Strings.get("menu.play") + " - Character Setup", Fonts.DEFAULT_SMALL);
         titleLabel.setColor(COLOR_HEADER);
         titleLabel.setAlignment(Alignment.LMID);
@@ -139,7 +133,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         TooltipMakerAPI backTp = panel.createUIElement(BUTTON_WIDTH + 20f, HEADER_HEIGHT, false);
         backTp.setActionListenerDelegate(this);
         panel.addUIElement(backTp).inTL(PANEL_WIDTH - BUTTON_WIDTH - MARGIN - 20f, MARGIN);
-        backButton = backTp.addButton("Back", ACTION_BACK, BUTTON_WIDTH, HEADER_HEIGHT - 5f, 0f);
+        ButtonAPI backButton = backTp.addButton("Back", ACTION_BACK, BUTTON_WIDTH, HEADER_HEIGHT - 5f, 0f);
         backButton.setQuickMode(true);
         backButton.getPosition().inTL(0, 0);
     }
@@ -180,15 +174,15 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         btnTp.setActionListenerDelegate(this);
         panel.addUIElement(btnTp).inTL(0, buttonAreaY);
 
-        changeDiceButton = btnTp.addButton("Change Dice", ACTION_CHANGE_DICE, 120f, BUTTON_HEIGHT, 0f);
+        ButtonAPI changeDiceButton = btnTp.addButton("Change Dice", ACTION_CHANGE_DICE, 120f, BUTTON_HEIGHT, 0f);
         changeDiceButton.getPosition().inTL(MARGIN + 400f, 5f);
         changeDiceButton.setQuickMode(true);
 
-        confirmButton = btnTp.addButton("Confirm", ACTION_CONFIRM, BUTTON_WIDTH, BUTTON_HEIGHT, 0f);
+        ButtonAPI confirmButton = btnTp.addButton("Confirm", ACTION_CONFIRM, BUTTON_WIDTH, BUTTON_HEIGHT, 0f);
         confirmButton.getPosition().inTL(centerX - BUTTON_WIDTH - 30f, 5f);
         confirmButton.setQuickMode(true);
 
-        cancelButton = btnTp.addButton("Cancel", ACTION_CANCEL, BUTTON_WIDTH, BUTTON_HEIGHT, 0f);
+        ButtonAPI cancelButton = btnTp.addButton("Cancel", ACTION_CANCEL, BUTTON_WIDTH, BUTTON_HEIGHT, 0f);
         cancelButton.getPosition().inTL(centerX + 30f, 5f);
         cancelButton.setQuickMode(true);
 
@@ -221,7 +215,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         String passive = card.getPassiveDescription();
         if (passive != null && !passive.isEmpty()) {
-            passiveLabel.setText("Passive: " + truncatePassive(passive, 80));
+            passiveLabel.setText("Passive: " + truncatePassive(passive));
         } else {
             passiveLabel.setText("Passive: None");
         }
@@ -235,7 +229,8 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         }
     }
 
-    private String truncatePassive(String text, int maxLen) {
+    private String truncatePassive(String text) {
+        int maxLen = 80;
         if (text.length() <= maxLen) return text;
         return text.substring(0, maxLen - 3) + "...";
     }
@@ -286,7 +281,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
             Misc.renderQuad(panelX + boxX, glY, CARD_WIDTH, CARD_HEIGHT, COLOR_BOX_BG, alphaMult * 0.9f);
 
-            drawBorder(panelX + boxX, glY, CARD_WIDTH, CARD_HEIGHT, borderColor, alphaMult, isSelected);
+            drawBorder(panelX + boxX, glY, borderColor, alphaMult, isSelected);
 
             GLStateUtil.enableTexturing();
 
@@ -310,15 +305,15 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         GL11.glLineWidth(1f);
     }
 
-    private void drawBorder(float x, float y, float w, float h, Color color, float alphaMult, boolean isSelected) {
+    private void drawBorder(float x, float y, Color color, float alphaMult, boolean isSelected) {
         float[] c = ColorHelper.toGLComponents(color, alphaMult);
         GL11.glColor4f(c[0], c[1], c[2], c[3]);
         GL11.glLineWidth(isSelected ? 3f : 1.5f);
         GL11.glBegin(GL11.GL_LINE_LOOP);
         GL11.glVertex2f(x, y);
-        GL11.glVertex2f(x + w, y);
-        GL11.glVertex2f(x + w, y + h);
-        GL11.glVertex2f(x, y + h);
+        GL11.glVertex2f(x + CARD_WIDTH, y);
+        GL11.glVertex2f(x + CARD_WIDTH, y + CARD_HEIGHT);
+        GL11.glVertex2f(x, y + CARD_HEIGHT);
         GL11.glEnd();
         GLStateUtil.resetColor();
     }
@@ -428,7 +423,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         if (prismaticDice == null || prismaticDice.isEmpty()) return;
 
         String charId = card.getId();
-        prismaticPopup = new PrismaticEquipPopup(charId, selectedPrismaticDiceId, new PrismaticEquipPopup.PrismaticEquipCallback() {
+        new PrismaticEquipPopup(charId, selectedPrismaticDiceId, new PrismaticEquipPopup.PrismaticEquipCallback() {
             @Override
             public void onDiceSelected(String selectedId) {
                 selectedPrismaticDiceId = selectedId;
@@ -444,23 +439,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     }
 
     public void closePrismaticPopup() {
-        prismaticPopup = null;
         popupPanel = null;
-    }
-
-    public int getSelectedIndex() {
-        return selectedIndex;
-    }
-
-    public String getSelectedPrismaticDiceId() {
-        return selectedPrismaticDiceId;
-    }
-
-    public CharacterCard getSelectedCharacter() {
-        if (selectedIndex >= 0 && selectedIndex < characters.size()) {
-            return characters.get(selectedIndex);
-        }
-        return null;
     }
 
     public void setSelection(String charId, String diceId) {
@@ -487,7 +466,6 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         if (popupPanel != null && panel != null) {
             panel.removeComponent(popupPanel);
             popupPanel = null;
-            prismaticPopup = null;
         }
     }
 }

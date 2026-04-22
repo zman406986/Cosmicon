@@ -72,15 +72,15 @@ public class BattleState {
     private List<Integer> opponentDiceValues;
     private List<Boolean> opponentDiceSelected;
 
-    private Map<Integer, PrismaticDiceInstance> playerPrismaticDiceByIndex;
-    private Map<Integer, PrismaticDiceInstance> opponentPrismaticDiceByIndex;
+    private final Map<Integer, PrismaticDiceInstance> playerPrismaticDiceByIndex;
+    private final Map<Integer, PrismaticDiceInstance> opponentPrismaticDiceByIndex;
 
     private int attackValue;
     private int defenseValue;
     private String winner;
 
     private final List<BattleEventListener> listeners;
-    private AISelectionVisualizer aiSelectionVisualizer;
+    private final AISelectionVisualizer aiSelectionVisualizer;
 
     public interface BattleEventListener {
         void onPhaseChange(Phase newPhase);
@@ -251,8 +251,6 @@ public class BattleState {
         values.add(dice.faceIndex);
         selected.add(false);
         map.put(types.size() - 1, dice);
-        
-        notifyDiceRolled(forPlayer, types, values);
     }
 
     public PrismaticDiceInstance getPrismaticDiceAt(int index, boolean forPlayer) {

@@ -44,9 +44,6 @@ public class DiceAnimator {
     private boolean complete;
     
     private int currentFrame;
-    private CustomPanelAPI panel;
-    
-    private float bounceAmplitude = 0f;
     private float posXOffset = 0f;
     private float posYOffset = 0f;
     
@@ -55,13 +52,12 @@ public class DiceAnimator {
     private float travelDistance;
     private float travelProgress;
     
-    private float returnStartPosXOffset;
-    private float returnStartPosYOffset;
-    private float returnStartVisualRotation;
-    private float returnVisualRotation;
-    
     private float centeringStartXOffset;
     private float centeringStartYOffset;
+    private float centeringStartX;
+    private float centeringStartY;
+    private float targetCenterX;
+    private float targetCenterY;
     
     private int bounceCount;
     private float[] bounceHeights;
@@ -91,14 +87,9 @@ public DiceAnimator() {
         directionRad = 0f;
         phase = Phase.ROLLING;
         phaseElapsed = 0f;
-        returnStartPosXOffset = 0f;
-        returnStartPosYOffset = 0f;
-        returnStartVisualRotation = 0f;
-        returnVisualRotation = 0f;
     }
     
     public void init(CustomPanelAPI panel) {
-        this.panel = panel;
     }
     
 public void start(DiceType type, int finalValue, float x, float y, float delay) {
@@ -110,7 +101,6 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.scale = 1f;
         this.complete = false;
         this.currentFrame = 0;
-        this.bounceAmplitude = 0f;
         this.posXOffset = 0f;
         this.posYOffset = 0f;
         this.useDirectionalAnimation = false;
@@ -118,7 +108,8 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
     }
     
     public void start(DiceType type, int finalValue, float x, float y, float delay,
-                      float rotation, float travelDistance, int bounceCount, float[] bounceHeights) {
+                      float rotation, float travelDistance, int bounceCount, float[] bounceHeights,
+                      float targetCenterX, float targetCenterY) {
         this.type = type;
         this.finalValue = finalValue;
         this.x = x;
@@ -126,20 +117,20 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.elapsed = -delay;
         this.complete = false;
         this.currentFrame = 0;
-        this.bounceAmplitude = 0f;
         this.posXOffset = 0f;
         this.posYOffset = 0f;
         
         this.rotation = rotation;
         this.directionRad = (float)Math.toRadians(rotation);
         this.travelDistance = travelDistance;
-        this.travelProgress = 0f;
         this.bounceCount = bounceCount;
         this.bounceHeights = bounceHeights;
         this.phase = Phase.DROP;
         this.phaseElapsed = 0f;
         this.scale = INITIAL_SCALE;
         this.useDirectionalAnimation = true;
+        this.targetCenterX = targetCenterX;
+        this.targetCenterY = targetCenterY;
     }
     
     public void reroll(int newFinalValue) {
@@ -148,7 +139,6 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.scale = 1f;
         this.complete = false;
         this.currentFrame = 0;
-        this.bounceAmplitude = 0f;
         this.phaseElapsed = 0f;
         this.travelProgress = 0f;
         this.posXOffset = 0f;
@@ -159,6 +149,30 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         } else {
             this.phase = Phase.ROLLING;
         }
+    }
+    
+    public void rerollWithNewPath(int newFinalValue, float rotation, float travelDistance, 
+                                   int bounceCount, float[] bounceHeights,
+                                   float targetCenterX, float targetCenterY) {
+        this.finalValue = newFinalValue;
+        this.elapsed = 0f;
+        this.complete = false;
+        this.currentFrame = 0;
+        this.phaseElapsed = 0f;
+        this.travelProgress = 0f;
+        this.posXOffset = 0f;
+        this.posYOffset = 0f;
+        
+        this.rotation = rotation;
+        this.directionRad = (float)Math.toRadians(rotation);
+        this.travelDistance = travelDistance;
+        this.bounceCount = bounceCount;
+        this.bounceHeights = bounceHeights;
+        this.useDirectionalAnimation = true;
+        this.phase = Phase.DROP;
+        this.scale = INITIAL_SCALE;
+        this.targetCenterX = targetCenterX;
+        this.targetCenterY = targetCenterY;
     }
     
     public void advance(float amount) {
@@ -269,6 +283,8 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         
         if (phaseElapsed >= REVEAL_DURATION) {
             scale = 1f;
+            centeringStartX = x + posXOffset;
+            centeringStartY = y + posYOffset;
             centeringStartXOffset = posXOffset;
             centeringStartYOffset = posYOffset;
             phase = Phase.WAITING_FOR_CENTERING;
@@ -296,10 +312,15 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         progress = Math.min(1f, progress);
         float eased = easeInOutQuad(progress);
         
-        posXOffset = centeringStartXOffset * (1f - eased);
-        posYOffset = centeringStartYOffset * (1f - eased);
+        float currentX = centeringStartX + (targetCenterX - centeringStartX) * eased;
+        float currentY = centeringStartY + (targetCenterY - centeringStartY) * eased;
+        
+        posXOffset = currentX - x;
+        posYOffset = currentY - y;
         
         if (phaseElapsed >= CENTERING_TRAVEL_DURATION) {
+            x = targetCenterX;
+            y = targetCenterY;
             posXOffset = 0f;
             posYOffset = 0f;
             phase = Phase.CENTERING_DROP;
@@ -377,7 +398,7 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         float displaySize = getDisplaySize();
         float centeringOffset = (DICE_SIZE - displaySize) / 2f;
         
-float renderX = panelX + x + posXOffset;
+        float renderX = panelX + x + posXOffset;
         float renderY;
         
         boolean isCenteringPhase = phase == Phase.PICKUP || phase == Phase.CENTERING_TRAVEL || 
@@ -385,7 +406,7 @@ float renderX = panelX + x + posXOffset;
         
         if (isCenteringPhase || phase == Phase.COMPLETE || (complete && useDirectionalAnimation)) {
             renderX += centeringOffset;
-            float glBaseY = CoordHelper.uiTopLeftToGlSpriteY(panelY, panelHeight, y + centeringOffset, displaySize);
+            float glBaseY = CoordHelper.uiTopLeftToGlSpriteY(panelY, panelHeight, y + posYOffset + centeringOffset, displaySize);
             float extraHeight = displaySize * (scale - 1f);
             renderY = glBaseY - extraHeight / 2f;
         } else {
@@ -418,14 +439,6 @@ float renderX = panelX + x + posXOffset;
         GL11.glColor4f(1f, 1f, 1f, 1f);
     }
     
-    protected float calculateBounceScale(float elapsed) {
-        return 1f;
-    }
-    
-    protected float[] calculateRollPosition(float elapsed) {
-        return new float[]{0f, 0f};
-    }
-    
     public boolean isComplete() {
         return complete;
     }
@@ -453,7 +466,6 @@ float renderX = panelX + x + posXOffset;
         posYOffset = 0f;
         rotation = 0f;
         directionRad = 0f;
-        returnVisualRotation = 0f;
         complete = true;
         phase = Phase.COMPLETE;
     }
@@ -470,10 +482,6 @@ float renderX = panelX + x + posXOffset;
         return scale;
     }
     
-    public int getFinalValue() {
-        return finalValue;
-    }
-    
     public float getRotation() {
         return rotation;
     }
@@ -484,5 +492,31 @@ float renderX = panelX + x + posXOffset;
     
     public float getPosYOffset() {
         return posYOffset;
+    }
+    
+    public boolean isCenteredPhase() {
+        return phase == Phase.PICKUP || phase == Phase.CENTERING_TRAVEL ||
+               phase == Phase.CENTERING_DROP || phase == Phase.COMPLETE ||
+               (complete && useDirectionalAnimation);
+    }
+    
+    public float getVisualX() {
+        float visualX = x + posXOffset;
+        if (isCenteredPhase()) {
+            float displaySize = getDisplaySize();
+            float centeringOffset = (DICE_SIZE - displaySize) / 2f;
+            visualX += centeringOffset;
+        }
+        return visualX;
+    }
+    
+    public float getVisualY() {
+        float visualY = y + posYOffset;
+        if (isCenteredPhase()) {
+            float displaySize = getDisplaySize();
+            float centeringOffset = (DICE_SIZE - displaySize) / 2f;
+            visualY += centeringOffset;
+        }
+        return visualY;
     }
 }

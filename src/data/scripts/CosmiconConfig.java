@@ -18,6 +18,7 @@ public class CosmiconConfig {
     public static final float AI_REVEAL_PER_DICE_DELAY = 0.15f;
     public static final float AI_REROLL_PREVIEW_DELAY = 0.5f;
     public static final float AI_CONFIRM_DELAY = 0.3f;
+    public static final float DICE_PREVIEW_DELAY = 0.8f;
 
     public static void loadSettings() {
         try {
