@@ -18,12 +18,13 @@ public class DiceAnimator {
     private static final float SCALE_BOUNCE = 0.08f;
     
     private static final float DROP_DURATION = 0.4f;
-    private static final float TRAVEL_SPEED = 300f;
     private static final float BOUNCE_DURATION = 0.15f;
     private static final float INITIAL_SCALE = 1.5f;
     private static final int FRAME_COUNT = 48;
+    private static final float MIN_TRAVEL_DISTANCE = 50f;
+    private static final float MAX_TRAVEL_DISTANCE = 500f;
     
-    private enum Phase { ROLLING, DROP, TRAVEL, BOUNCE, SETTLE, REVEAL, COMPLETE }
+    private enum Phase { ROLLING, DROP, TRAVEL, SETTLE, REVEAL, COMPLETE }
     
     private DiceType type;
     private int finalValue;
@@ -49,7 +50,6 @@ public class DiceAnimator {
     private float[] bounceHeights;
     
     private Phase phase;
-    private int currentBounce;
     private float phaseElapsed;
     
     private boolean useDirectionalAnimation;
@@ -73,7 +73,6 @@ public class DiceAnimator {
         rotation = 0f;
         directionRad = 0f;
         phase = Phase.ROLLING;
-        currentBounce = 0;
         phaseElapsed = 0f;
     }
     
@@ -116,7 +115,6 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.travelProgress = 0f;
         this.bounceCount = bounceCount;
         this.bounceHeights = bounceHeights;
-        this.currentBounce = 0;
         this.phase = Phase.DROP;
         this.phaseElapsed = 0f;
         this.scale = INITIAL_SCALE;
@@ -131,6 +129,9 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.currentFrame = 0;
         this.bounceAmplitude = 0f;
         this.phaseElapsed = 0f;
+        this.travelProgress = 0f;
+        this.posXOffset = 0f;
+        this.posYOffset = 0f;
         if (useDirectionalAnimation) {
             this.phase = Phase.DROP;
             this.scale = INITIAL_SCALE;
@@ -158,8 +159,7 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         
         switch (phase) {
             case DROP -> advanceDrop();
-            case TRAVEL -> advanceTravel(amount);
-            case BOUNCE -> advanceBounce();
+            case TRAVEL -> advanceTravel();
             case SETTLE -> advanceSettle();
             case REVEAL -> advanceReveal();
             case COMPLETE -> complete = true;
@@ -177,59 +177,51 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         }
     }
     
-    private void advanceTravel(float amount) {
-        travelProgress += amount * TRAVEL_SPEED / travelDistance;
-        phaseElapsed += amount;
+    private void advanceTravel() {
+        float travelDuration = calculateTravelDuration();
+        travelProgress = Math.min(1f, phaseElapsed / travelDuration);
         
-        // Calculate total frames needed for smooth cycling (min 2 cycles)
-        float travelDuration = travelDistance / TRAVEL_SPEED;
-        int cycles = Math.max(2, (int)(travelDuration / 0.5f));
-        int totalFrames = cycles * FRAME_COUNT - 1; // -1 so we land on 47 at end
-        
-        // Frame cycles smoothly: 0→47→0→47...
-        int rawFrame = (int)(travelProgress * totalFrames);
+        int rawFrame = (int)(phaseElapsed * FRAME_COUNT);
         currentFrame = rawFrame % FRAME_COUNT;
         
-        posXOffset = (float)Math.cos(directionRad) * travelDistance * Math.min(travelProgress, 1f);
-        posYOffset = (float)Math.sin(directionRad) * travelDistance * Math.min(travelProgress, 1f);
+        posXOffset = (float)Math.cos(directionRad) * travelDistance * travelProgress;
+        posYOffset = (float)Math.sin(directionRad) * travelDistance * travelProgress;
         
-        if (travelProgress >= 1.0f) {
+        scale = calculateConcurrentBounceScale(travelDuration);
+        
+        if (phaseElapsed >= travelDuration) {
             travelProgress = 1.0f;
-            currentFrame = FRAME_COUNT - 1; // Force final frame 47
+            currentFrame = FRAME_COUNT - 1;
             posXOffset = (float)Math.cos(directionRad) * travelDistance;
             posYOffset = (float)Math.sin(directionRad) * travelDistance;
-            
-            if (bounceCount > 0) {
-                phase = Phase.BOUNCE;
-                currentBounce = 0;
-            } else {
-                phase = Phase.SETTLE;
-            }
+            scale = 1f;
+            phase = Phase.SETTLE;
             phaseElapsed = 0f;
         }
     }
     
-    private void advanceBounce() {
-        if (currentBounce >= bounceHeights.length) {
-            phase = Phase.SETTLE;
-            phaseElapsed = 0f;
-            return;
-        }
+    private float calculateTravelDuration() {
+        float normalized = (travelDistance - MIN_TRAVEL_DISTANCE) / (MAX_TRAVEL_DISTANCE - MIN_TRAVEL_DISTANCE);
+        return 1f + Math.round(normalized * 2f);
+    }
+    
+    private float calculateConcurrentBounceScale(float travelDuration) {
+        if (bounceCount == 0) return 1f;
         
-        float bounceHeight = bounceHeights[currentBounce];
-        float bounceProgress = phaseElapsed / BOUNCE_DURATION;
-        scale = 1f + (bounceHeight - 1f) * (float)Math.sin(bounceProgress * Math.PI);
-        currentFrame = 47;
+        float bounceInterval = travelDuration / (bounceCount + 1);
         
-        if (phaseElapsed >= BOUNCE_DURATION) {
-            currentBounce++;
-            phaseElapsed = 0f;
+        for (int i = 0; i < bounceCount; i++) {
+            float bounceStart = bounceInterval * (i + 1) - BOUNCE_DURATION / 2f;
+            float bounceEnd = bounceStart + BOUNCE_DURATION;
             
-            if (currentBounce >= bounceCount) {
-                phase = Phase.SETTLE;
-                scale = 1f;
+            if (phaseElapsed >= bounceStart && phaseElapsed < bounceEnd) {
+                float bounceProgress = (phaseElapsed - bounceStart) / BOUNCE_DURATION;
+                float bounceHeight = bounceHeights[i];
+                return 1f + (bounceHeight - 1f) * (float)Math.sin(bounceProgress * Math.PI);
             }
         }
+        
+        return 1f;
     }
     
     private void advanceSettle() {
@@ -291,6 +283,9 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         renderX -= extraWidth / 2f;
         
         float visualRotation = 180f - rotation; // Reflect across vertical axis for visual alignment
+        if (type == DiceType.BLUE_D4) {
+            visualRotation -= 90f; // Triangle dice has different rotation axis
+        }
         DiceSpriteRenderer.render(sprite, renderX, renderY, alphaMult, scale, displaySize, visualRotation);
         
         GL11.glColor4f(1f, 1f, 1f, 1f);
