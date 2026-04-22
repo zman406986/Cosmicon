@@ -179,13 +179,23 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
     
     private void advanceTravel(float amount) {
         travelProgress += amount * TRAVEL_SPEED / travelDistance;
-        currentFrame = (int)(phaseElapsed * 12f) % FRAME_COUNT;
+        phaseElapsed += amount;
+        
+        // Calculate total frames needed for smooth cycling (min 2 cycles)
+        float travelDuration = travelDistance / TRAVEL_SPEED;
+        int cycles = Math.max(2, (int)(travelDuration / 0.5f));
+        int totalFrames = cycles * FRAME_COUNT - 1; // -1 so we land on 47 at end
+        
+        // Frame cycles smoothly: 0→47→0→47...
+        int rawFrame = (int)(travelProgress * totalFrames);
+        currentFrame = rawFrame % FRAME_COUNT;
         
         posXOffset = (float)Math.cos(directionRad) * travelDistance * Math.min(travelProgress, 1f);
         posYOffset = (float)Math.sin(directionRad) * travelDistance * Math.min(travelProgress, 1f);
         
         if (travelProgress >= 1.0f) {
             travelProgress = 1.0f;
+            currentFrame = FRAME_COUNT - 1; // Force final frame 47
             posXOffset = (float)Math.cos(directionRad) * travelDistance;
             posYOffset = (float)Math.sin(directionRad) * travelDistance;
             
@@ -280,7 +290,8 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         float extraWidth = displaySize * (scale - 1f);
         renderX -= extraWidth / 2f;
         
-        DiceSpriteRenderer.render(sprite, renderX, renderY, alphaMult, scale, displaySize, rotation);
+        float visualRotation = 180f - rotation; // Reflect across vertical axis for visual alignment
+        DiceSpriteRenderer.render(sprite, renderX, renderY, alphaMult, scale, displaySize, visualRotation);
         
         GL11.glColor4f(1f, 1f, 1f, 1f);
     }

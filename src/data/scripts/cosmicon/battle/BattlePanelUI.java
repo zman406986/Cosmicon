@@ -837,6 +837,8 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
 
     @Override
     public void renderBelow(float alphaMult) {
+        if (battleState == null || diceRollManager == null) return;
+        
         PositionAPI pos = panel.getPosition();
         float x = pos.getX();
         float y = pos.getY();
