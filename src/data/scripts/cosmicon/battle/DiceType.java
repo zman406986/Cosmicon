@@ -3,10 +3,10 @@ package data.scripts.cosmicon.battle;
 import java.awt.Color;
 
 public enum DiceType {
-    BLUE_D4(4, new Color(74, 144, 217), Color.WHITE, 3),
-    PURPLE_D6(6, new Color(155, 89, 182), Color.WHITE, 4),
-    ORANGE_D8(8, new Color(230, 126, 34), Color.WHITE, 4),
-    PRISMATIC_D12(12, new Color(255, 215, 0), new Color(255, 215, 0), 5);
+    BLUE_D4(4, new Color(74, 144, 217), Color.WHITE, 3, 80f),
+    PURPLE_D6(6, new Color(155, 89, 182), Color.WHITE, 4, 60f),
+    ORANGE_D8(8, new Color(230, 126, 34), Color.WHITE, 4, 80f),
+    PRISMATIC_D12(12, new Color(255, 215, 0), new Color(255, 215, 0), 5, 80f);
 
     private final int maxFace;
     private final Color bodyColor;
@@ -14,12 +14,12 @@ public enum DiceType {
     private final int vertices;
     private final float displaySize;
 
-    DiceType(int maxFace, Color bodyColor, Color numberColor, int vertices) {
+    DiceType(int maxFace, Color bodyColor, Color numberColor, int vertices, float displaySize) {
         this.maxFace = maxFace;
         this.bodyColor = bodyColor;
         this.numberColor = numberColor;
         this.vertices = vertices;
-        this.displaySize = this == PURPLE_D6 ? 60f : 80f;
+        this.displaySize = displaySize;
     }
 
     public float getDisplaySize() {

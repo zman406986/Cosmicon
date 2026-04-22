@@ -2,6 +2,7 @@ package data.scripts.cosmicon.battle;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import com.fs.starfarer.api.ui.CustomPanelAPI;
 
@@ -9,8 +10,14 @@ import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class DiceRollManager {
 
+    private static final Random rand = new Random();
     private static final float STAGGER_DELAY = 0.05f;
     private static final float DICE_SPACING = 130f;
+    private static final float MIN_TRAVEL_DISTANCE = 50f;
+    private static final float MAX_TRAVEL_DISTANCE = 500f;
+    private static final float MIN_BOUNCE_HEIGHT = 1.1f;
+    private static final float MAX_BOUNCE_HEIGHT = 1.3f;
+    private static final int MAX_BOUNCES = 2;
 
     private final List<DiceAnimator> animators;
     private final List<DiceAnimator> opponentAnimators;
@@ -46,7 +53,20 @@ public class DiceRollManager {
             animator.init(panel);
             float diceX = startX + i * DICE_SPACING;
             float delay = i * STAGGER_DELAY;
-            animator.start(types.get(i), results.get(i), diceX, startY, delay);
+            
+            float rotation = rand.nextFloat() * 360f;
+            float travelDistance = MIN_TRAVEL_DISTANCE + rand.nextFloat() * (MAX_TRAVEL_DISTANCE - MIN_TRAVEL_DISTANCE);
+            int bounceCount = rand.nextInt(MAX_BOUNCES + 1);
+            
+            float[] bounceHeights = new float[bounceCount];
+            for (int j = 0; j < bounceCount; j++) {
+                float factor = 1f - (j * 0.2f);
+                bounceHeights[j] = (MIN_BOUNCE_HEIGHT + rand.nextFloat() * (MAX_BOUNCE_HEIGHT - MIN_BOUNCE_HEIGHT)) * factor;
+                bounceHeights[j] = Math.max(1.05f, bounceHeights[j]);
+            }
+            
+            animator.start(types.get(i), results.get(i), diceX, startY, delay,
+                           rotation, travelDistance, bounceCount, bounceHeights);
             animators.add(animator);
         }
     }
@@ -93,7 +113,20 @@ public class DiceRollManager {
             animator.init(panel);
             float diceX = startX + i * DICE_SPACING;
             float delay = (animators.size() + i) * STAGGER_DELAY;
-            animator.start(types.get(i), results.get(i), diceX, startY, delay);
+            
+            float rotation = rand.nextFloat() * 360f;
+            float travelDistance = MIN_TRAVEL_DISTANCE + rand.nextFloat() * (MAX_TRAVEL_DISTANCE - MIN_TRAVEL_DISTANCE);
+            int bounceCount = rand.nextInt(MAX_BOUNCES + 1);
+            
+            float[] bounceHeights = new float[bounceCount];
+            for (int j = 0; j < bounceCount; j++) {
+                float factor = 1f - (j * 0.2f);
+                bounceHeights[j] = (MIN_BOUNCE_HEIGHT + rand.nextFloat() * (MAX_BOUNCE_HEIGHT - MIN_BOUNCE_HEIGHT)) * factor;
+                bounceHeights[j] = Math.max(1.05f, bounceHeights[j]);
+            }
+            
+            animator.start(types.get(i), results.get(i), diceX, startY, delay,
+                           rotation, travelDistance, bounceCount, bounceHeights);
             animators.add(animator);
         }
     }
@@ -140,7 +173,20 @@ public class DiceRollManager {
             animator.init(panel);
             float diceX = startX + i * DICE_SPACING;
             float delay = i * STAGGER_DELAY;
-            animator.start(types.get(i), results.get(i), diceX, startY, delay);
+            
+            float rotation = rand.nextFloat() * 360f;
+            float travelDistance = MIN_TRAVEL_DISTANCE + rand.nextFloat() * (MAX_TRAVEL_DISTANCE - MIN_TRAVEL_DISTANCE);
+            int bounceCount = rand.nextInt(MAX_BOUNCES + 1);
+            
+            float[] bounceHeights = new float[bounceCount];
+            for (int j = 0; j < bounceCount; j++) {
+                float factor = 1f - (j * 0.2f);
+                bounceHeights[j] = (MIN_BOUNCE_HEIGHT + rand.nextFloat() * (MAX_BOUNCE_HEIGHT - MIN_BOUNCE_HEIGHT)) * factor;
+                bounceHeights[j] = Math.max(1.05f, bounceHeights[j]);
+            }
+            
+            animator.start(types.get(i), results.get(i), diceX, startY, delay,
+                           rotation, travelDistance, bounceCount, bounceHeights);
             opponentAnimators.add(animator);
         }
     }
