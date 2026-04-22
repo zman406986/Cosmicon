@@ -6,7 +6,11 @@
         "welcome": "欢迎来到战力党!",
         "play": "开始游戏",
         "help": "游戏说明",
-        "leave": "离开"
+        "leave": "离开",
+        "submenu_title": "上骰了菜单",
+        "start_game": "开始游戏",
+        "character_setup": "角色设置",
+        "back": "返回"
     },
     "help": {
         "title": "=== 游戏说明 ===",
@@ -25,7 +29,8 @@
         "confirm_attack": "确认攻击",
         "confirm_defense": "确认防御",
         "you_won": "你赢了！",
-        "you_lost": "你输了！"
+        "you_lost": "你输了！",
+        "ability_btn": "角色能力"
     },
     "errors": {
         "market_too_small": "这个市场太小，无法进行战力党游戏。"
@@ -330,6 +335,23 @@
             "composite_and_separator": " 且 ",
             "composite_or_separator": " 或 "
         }
+    },
+    "setup": {
+        "title": "角色设置",
+        "selected": "已选择：{0}",
+        "prismatic": "曜彩骰：{0}（2次）",
+        "prismatic_none": "无",
+        "prismatic_robin": "不可用",
+        "change_dice": "更换骰子",
+        "passive": "被动：{0}",
+        "confirm": "确认",
+        "cancel": "取消",
+        "back": "返回",
+        "popup_title": "选择曜彩骰",
+        "popup_current": "当前：{0}",
+        "popup_available": "可用骰子：",
+        "popup_effect": "效果预览：",
+        "popup_robin_blocked": "知更鸟无法装备曜彩骰"
     },
     "ai": {
         "decision_selected": "已选: {0}",

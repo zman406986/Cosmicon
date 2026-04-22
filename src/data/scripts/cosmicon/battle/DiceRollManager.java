@@ -49,9 +49,46 @@ public class DiceRollManager {
         }
     }
 
-    public void advance(float amount) {
+public void advance(float amount) {
         for (DiceAnimator animator : animators) {
             animator.advance(amount);
+        }
+        for (DiceAnimator animator : opponentAnimators) {
+            animator.advance(amount);
+        }
+        
+        if (!animators.isEmpty()) {
+            boolean anyWaiting = false;
+            boolean anyStillAnimating = false;
+            for (DiceAnimator animator : animators) {
+                if (animator.isReadyForCentering()) {
+                    anyWaiting = true;
+                } else if (animator.isActive() && !animator.isComplete()) {
+                    anyStillAnimating = true;
+                }
+            }
+            if (anyWaiting && !anyStillAnimating) {
+                for (DiceAnimator animator : animators) {
+                    animator.startCenteringAnimation();
+                }
+            }
+        }
+        
+        if (!opponentAnimators.isEmpty()) {
+            boolean anyWaiting = false;
+            boolean anyStillAnimating = false;
+            for (DiceAnimator animator : opponentAnimators) {
+                if (animator.isReadyForCentering()) {
+                    anyWaiting = true;
+                } else if (animator.isActive() && !animator.isComplete()) {
+                    anyStillAnimating = true;
+                }
+            }
+            if (anyWaiting && !anyStillAnimating) {
+                for (DiceAnimator animator : opponentAnimators) {
+                    animator.startCenteringAnimation();
+                }
+            }
         }
     }
 
@@ -95,6 +132,26 @@ public class DiceRollManager {
                            path.rotation, path.travelDistance, path.bounceCount, path.bounceHeights);
             animators.add(animator);
         }
+    }
+    
+    public void appendInstantDice(DiceType type, int value, float centerX, float centerY) {
+        if (!initialized) return;
+        
+        List<DicePathPlanner.PlannedPath> existingPaths = collectExistingPaths();
+        List<DiceType> types = new ArrayList<>();
+        types.add(type);
+        List<Integer> results = new ArrayList<>();
+        results.add(value);
+        List<DicePathPlanner.PlannedPath> newPaths = DicePathPlanner.planPathsAppend(
+            types, results, centerX, centerY, DICE_SPACING, animators.size(), existingPaths);
+        
+        DiceAnimator animator = new DiceAnimator();
+        animator.init(panel);
+        DicePathPlanner.PlannedPath path = newPaths.get(0);
+        
+        animator.start(type, value, path.startX, path.startY, path.delay,
+                       path.rotation, path.travelDistance, path.bounceCount, path.bounceHeights);
+        animators.add(animator);
     }
     
     private List<DicePathPlanner.PlannedPath> collectExistingPaths() {

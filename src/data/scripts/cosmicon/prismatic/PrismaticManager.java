@@ -80,6 +80,10 @@ public class PrismaticManager {
         return getState(forPlayer).getUses();
     }
     
+    public int getUsesByType(PrismaticDiceType type, boolean forPlayer) {
+        return getState(forPlayer).getUsesByType(type);
+    }
+    
     public boolean hasMustSelectDiceRemaining(boolean forPlayer) {
         PrismaticState ps = getState(forPlayer);
         for (PrismaticDiceInstance dice : ps.getMustSelectDice()) {

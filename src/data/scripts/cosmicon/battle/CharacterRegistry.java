@@ -9,7 +9,9 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class CharacterRegistry {
@@ -57,7 +59,9 @@ public class CharacterRegistry {
         String name = getLocalizedString(id, "name", jsonName);
         String passive = getLocalizedString(id, "passive", obj.getString("passive"));
         
-        return new CharacterCard(id, name, hp, atkLevel, defLevel, dicePool, passive);
+        Map<String, Integer> prismaticDice = parsePrismaticDice(obj);
+        
+        return new CharacterCard(id, name, hp, atkLevel, defLevel, dicePool, passive, prismaticDice);
     }
 
     private static String getLocalizedString(String id, String field, String fallback) {
@@ -107,6 +111,52 @@ public class CharacterRegistry {
             case "orange_d8" -> DiceType.ORANGE_D8;
             case "purple_d6" -> DiceType.PURPLE_D6;
             case "blue_d4" -> DiceType.BLUE_D4;
+            default -> null;
+        };
+    }
+
+    private static Map<String, Integer> parsePrismaticDice(JSONObject obj) {
+        Map<String, Integer> result = new HashMap<>();
+        
+        if (!obj.has("prismaticDice")) {
+            String[] fallbackTypes = {"doctors_advice", "repeater", "sorcerer", "berserker", 
+                                       "prime_number", "magic_bullet", "destiny", "gambler", 
+                                       "astral_shield", "oath"};
+            String randomType = fallbackTypes[random.nextInt(fallbackTypes.length)];
+            result.put(randomType, 2);
+            return result;
+        }
+        
+        try {
+            JSONArray arr = obj.getJSONArray("prismaticDice");
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject entry = arr.getJSONObject(i);
+                String displayName = entry.getString("type");
+                int count = entry.getInt("count");
+                String registryId = mapPrismaticDiceName(displayName);
+                if (registryId != null) {
+                    result.put(registryId, count);
+                }
+            }
+        } catch (JSONException e) {
+            Global.getLogger(CharacterRegistry.class).warn("Error parsing prismaticDice", e);
+        }
+        
+        return result;
+    }
+
+    private static String mapPrismaticDiceName(String displayName) {
+        return switch (displayName) {
+            case "Doctor's Advice" -> "doctors_advice";
+            case "Repeater" -> "repeater";
+            case "Sorcerer" -> "sorcerer";
+            case "Berserker" -> "berserker";
+            case "Prime Number" -> "prime_number";
+            case "Magic Bullet" -> "magic_bullet";
+            case "Destiny" -> "destiny";
+            case "Gambler" -> "gambler";
+            case "Astral Shield" -> "astral_shield";
+            case "Oath" -> "oath";
             default -> null;
         };
     }

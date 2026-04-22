@@ -21,7 +21,7 @@ public final class BattleRenderingUtils {
     public static final float PANEL_HEIGHT = 700f;
 
     public static final float CARD_WIDTH = 180f;
-    public static final float CARD_HEIGHT = 220f;
+    public static final float CARD_HEIGHT = 254f;
 
     public static final float PORTRAIT_SCALE = 0.85f;
     public static final float DICE_ICON_SIZE = 22f;
@@ -201,7 +201,7 @@ public final class BattleRenderingUtils {
         float startY = cardY + CARD_HEIGHT - DICE_POOL_TOP_MARGIN - DICE_ICON_SIZE;
 
         List<DiceType> order = Arrays.asList(
-            DiceType.PRISMATIC_D12, DiceType.ORANGE_D8, DiceType.PURPLE_D6, DiceType.BLUE_D4
+            DiceType.PRISMATIC, DiceType.ORANGE_D8, DiceType.PURPLE_D6, DiceType.BLUE_D4
         );
 
         float offsetY = 0f;

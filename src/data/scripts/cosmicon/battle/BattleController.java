@@ -2,6 +2,7 @@ package data.scripts.cosmicon.battle;
 
 import data.scripts.cosmicon.ai.DiceProbabilityCalculator;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
+import data.scripts.cosmicon.state.CosmiconPlayerState;
 import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class BattleController {
@@ -31,14 +32,28 @@ public class BattleController {
     }
 
     public void initRandomBattle() {
-        CosmiconLogger.info("Initializing random battle");
+        initBattleWithSelection();
+    }
+
+    public void initBattleWithSelection() {
+        CosmiconLogger.info("Initializing battle with player selection");
         
-        CharacterCard playerCard = CharacterRegistry.getRandomCharacter();
+        CharacterCard playerCard = CosmiconPlayerState.getConfiguredPlayerCard();
         CharacterCard opponentCard = CharacterRegistry.getRandomOpponent();
         
         if (playerCard == null || opponentCard == null) {
             CosmiconLogger.error("Failed to load character cards for battle");
             throw new IllegalStateException("Failed to load character cards");
+        }
+        
+        String savedPrismaticId = CosmiconPlayerState.loadPrismaticDice();
+        String defaultPrismaticId = CosmiconPlayerState.getDefaultPrismaticForCharacter(playerCard.getId());
+        
+        if (savedPrismaticId != null && !savedPrismaticId.isEmpty() 
+            && !savedPrismaticId.equals(defaultPrismaticId)) {
+            int uses = playerCard.getPrismaticDiceIds().getOrDefault(defaultPrismaticId, 2);
+            playerCard = playerCard.withPrismaticDice(savedPrismaticId, uses);
+            CosmiconLogger.info("Applied custom prismatic dice: %s", savedPrismaticId);
         }
         
         CosmiconLogger.info("Selected characters - Player: %s, Opponent: %s", 

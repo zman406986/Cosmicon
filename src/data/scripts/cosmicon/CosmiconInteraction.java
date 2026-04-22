@@ -11,6 +11,9 @@ import data.scripts.CosmiconMusicPlugin;
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleDialogDelegate;
 import data.scripts.cosmicon.battle.BattleRenderingUtils;
+import data.scripts.cosmicon.setup.CharacterSetupDialogDelegate;
+import data.scripts.cosmicon.setup.CharacterSetupPanelUI;
+import data.scripts.cosmicon.state.CosmiconPlayerState;
 
 import java.awt.Color;
 
@@ -25,6 +28,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
     public enum State {
         MAIN_MENU,
+        PLAY_SUBMENU,
         PLAY,
         HELP
     }
@@ -71,30 +75,74 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     public void optionSelected(String optionText, Object optionData) {
         if (optionData == null) return;
 
-        String option = (String) optionData;
+        String data = (String) optionData;
 
-        switch (option) {
-            case "leave":
-                CosmiconMusicPlugin.stopMusic();
-                dialog.dismiss();
+        switch (currentState) {
+            case MAIN_MENU:
+                if ("play".equals(data)) {
+                    showPlaySubmenu();
+                } else if ("help".equals(data)) {
+                    showHelp();
+                } else if ("leave".equals(data)) {
+                    CosmiconMusicPlugin.stopMusic();
+                    dialog.dismiss();
+                }
                 break;
-            case "play":
-                startBattle();
+
+            case PLAY_SUBMENU:
+                if ("start_game".equals(data)) {
+                    startBattleWithSelection();
+                } else if ("character_setup".equals(data)) {
+                    showCharacterSetup();
+                } else if ("back_to_main".equals(data)) {
+                    showMenu();
+                }
                 break;
-            case "help":
-                showHelp();
+
+            case HELP:
+                if ("back".equals(data)) {
+                    showMenu();
+                }
                 break;
-            case "back":
-                showMenu();
-                break;
+
             default:
                 showMenu();
         }
     }
 
-    private void startBattle() {
+    private void showPlaySubmenu() {
+        options.clearOptions();
+        textPanel.addPara(Strings.get("menu.submenu_title"), Color.CYAN);
+
+        options.addOption(Strings.get("menu.start_game"), "start_game");
+        options.addOption(Strings.get("menu.character_setup"), "character_setup");
+        options.addOption(Strings.get("menu.back"), "back_to_main");
+
+        setState(State.PLAY_SUBMENU);
+    }
+
+    private void showCharacterSetup() {
+        CharacterSetupPanelUI.CharacterSetupCallback callback = new CharacterSetupPanelUI.CharacterSetupCallback() {
+            @Override
+            public void onConfirm(String charId, String prismaticDiceId) {
+                CosmiconPlayerState.saveCharacter(charId);
+                CosmiconPlayerState.savePrismaticDice(prismaticDiceId);
+                showPlaySubmenu();
+            }
+
+            @Override
+            public void onCancel() {
+                showPlaySubmenu();
+            }
+        };
+
+        CharacterSetupDialogDelegate delegate = new CharacterSetupDialogDelegate(callback);
+        dialog.showCustomVisualDialog(1000f, 700f, delegate);
+    }
+
+    private void startBattleWithSelection() {
         BattleDialogDelegate delegate = new BattleDialogDelegate(dialog, memoryMap, () -> {
-            showMenu();
+            showPlaySubmenu();
         });
 
         dialog.showCustomVisualDialog(

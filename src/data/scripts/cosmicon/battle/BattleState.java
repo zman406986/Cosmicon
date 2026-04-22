@@ -72,6 +72,9 @@ public class BattleState {
     private List<Integer> opponentDiceValues;
     private List<Boolean> opponentDiceSelected;
 
+    private Map<Integer, PrismaticDiceInstance> playerPrismaticDiceByIndex;
+    private Map<Integer, PrismaticDiceInstance> opponentPrismaticDiceByIndex;
+
     private int attackValue;
     private int defenseValue;
     private String winner;
@@ -111,6 +114,8 @@ public class BattleState {
         this.opponentCumulativeAtkDef = 0;
         this.playerCyreneThresholdMet = false;
         this.opponentCyreneThresholdMet = false;
+        this.playerPrismaticDiceByIndex = new HashMap<>();
+        this.opponentPrismaticDiceByIndex = new HashMap<>();
         this.aiSelectionVisualizer = new AISelectionVisualizer();
     }
 
@@ -231,9 +236,40 @@ public class BattleState {
         List<DiceType> types = isPlayer ? playerDiceTypes : opponentDiceTypes;
         if (types == null) return flags;
         for (DiceType type : types) {
-            flags.add(type == DiceType.PRISMATIC_D12);
+            flags.add(type == DiceType.PRISMATIC);
         }
         return flags;
+    }
+
+    public void addPrismaticDiceToPool(PrismaticDiceInstance dice, boolean forPlayer) {
+        List<DiceType> types = getDiceTypes(forPlayer);
+        List<Integer> values = getDiceValues(forPlayer);
+        List<Boolean> selected = getDiceSelected(forPlayer);
+        Map<Integer, PrismaticDiceInstance> map = forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
+        
+        types.add(DiceType.PRISMATIC);
+        values.add(dice.faceIndex);
+        selected.add(false);
+        map.put(types.size() - 1, dice);
+        
+        notifyDiceRolled(forPlayer, types, values);
+    }
+
+    public PrismaticDiceInstance getPrismaticDiceAt(int index, boolean forPlayer) {
+        Map<Integer, PrismaticDiceInstance> map = forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
+        return map.get(index);
+    }
+
+    public boolean isPrismaticDiceAt(int index, boolean forPlayer) {
+        Map<Integer, PrismaticDiceInstance> map = forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
+        return map.containsKey(index);
+    }
+
+    public void updatePrismaticDiceAt(int index, PrismaticDiceInstance newInstance, boolean forPlayer) {
+        Map<Integer, PrismaticDiceInstance> map = forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
+        if (map.containsKey(index)) {
+            map.put(index, newInstance);
+        }
     }
 
     public DicePoolCounts getPlayerDicePoolCounts() {
@@ -266,6 +302,10 @@ public class BattleState {
 
     public EffectManager getEffectManager() {
         return effectManager;
+    }
+
+    public PrismaticManager getPrismaticManager() {
+        return prismaticManager;
     }
 
     
@@ -777,6 +817,9 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         opponentDiceTypes = null;
         opponentDiceValues = null;
         opponentDiceSelected = null;
+        
+        if (playerPrismaticDiceByIndex != null) playerPrismaticDiceByIndex.clear();
+        if (opponentPrismaticDiceByIndex != null) opponentPrismaticDiceByIndex.clear();
         
         diceRoller = null;
         weatherController = null;

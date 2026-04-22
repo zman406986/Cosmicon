@@ -22,12 +22,16 @@ import com.fs.starfarer.api.ui.PositionAPI;
 import com.fs.starfarer.api.ui.TooltipMakerAPI;
 import com.fs.starfarer.api.ui.UIComponentAPI;
 import com.fs.starfarer.api.ui.TooltipMakerAPI.ActionListenerDelegate;
+import com.fs.starfarer.api.ui.TooltipMakerAPI.TooltipCreator;
+import com.fs.starfarer.api.ui.TooltipMakerAPI.TooltipLocation;
 
 import com.fs.starfarer.api.graphics.SpriteAPI;
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleState.BattleEventListener;
 import data.scripts.cosmicon.battle.BattleState.Phase;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
+import data.scripts.cosmicon.prismatic.PrismaticDiceType;
+import data.scripts.cosmicon.ui.PrismaticDiceSelectionPopup;
 import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.CoordHelper;
 import data.scripts.cosmicon.util.CosmiconLogger;
@@ -43,9 +47,13 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
     private static final String ACTION_PRISMATIC = "prismatic";
     private static final String ACTION_REROLL = "reroll";
     private static final String ACTION_EXIT = "exit";
+    private static final String ACTION_PLAYER_ABILITY = "player_ability";
+    private static final String ACTION_OPPONENT_ABILITY = "opponent_ability";
     private static final float DICE_SPACING = 130f;
     private static final float DICE_CLICK_PADDING = 5f;
     private static final float PRISMATIC_BTN_SIZE = 40f;
+    private static final float PASSIVE_BTN_WIDTH = 150f;
+    private static final float PASSIVE_BTN_HEIGHT = 25f;
 
     private CustomPanelAPI panel;
     private DialogCallbacks callbacks;
@@ -58,6 +66,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
     private ButtonAPI confirmButton;
     private ButtonAPI prismaticButton;
     private ButtonAPI exitButton;
+    private ButtonAPI playerAbilityButton;
+    private ButtonAPI opponentAbilityButton;
+    private PrismaticDiceSelectionPopup prismaticPopup;
+    private boolean prismaticPopupActive;
     private LabelAPI prismaticUsesLabel;
     private LabelAPI phaseLabel;
     private LabelAPI instructionLabel;
@@ -126,6 +138,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         }
         diceHitboxes.clear();
         diceRollManager = null;
+        prismaticPopup = null;
+        prismaticPopupActive = false;
         battleState = null;
         battleController = null;
     }
@@ -209,6 +223,54 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         panel.addUIElement(exitTp).inTL(BattleRenderingUtils.PANEL_WIDTH - btnWidth - 10f, 10f);
         exitButton = exitTp.addButton("Exit", ACTION_EXIT, btnWidth, btnHeight, 0f);
         exitButton.setQuickMode(true);
+
+        TooltipMakerAPI abilityTp = panel.createUIElement(PASSIVE_BTN_WIDTH, PASSIVE_BTN_HEIGHT, false);
+        abilityTp.setActionListenerDelegate(this);
+        panel.addUIElement(abilityTp).inBL(0f, 0f);
+
+        float opponentCardUiX = BattleRenderingUtils.MARGIN;
+        float opponentCardUiY = BattleRenderingUtils.MARGIN;
+        float opponentAbilityY = opponentCardUiY + BattleRenderingUtils.CARD_HEIGHT + 15f;
+
+        opponentAbilityButton = abilityTp.addButton(Strings.get("battle.ability_btn"), ACTION_OPPONENT_ABILITY,
+            PASSIVE_BTN_WIDTH, PASSIVE_BTN_HEIGHT, 0f);
+        opponentAbilityButton.setQuickMode(true);
+        opponentAbilityButton.getPosition().inTL(opponentCardUiX + 5f, opponentAbilityY);
+
+        abilityTp.addTooltipToPrevious(new TooltipCreator() {
+            @Override
+            public boolean isTooltipExpandable(Object tooltipParam) { return false; }
+            @Override
+            public float getTooltipWidth(Object tooltipParam) { return 350f; }
+            @Override
+            public void createTooltip(TooltipMakerAPI tooltip, boolean expanded, Object tooltipParam) {
+                if (battleState != null && battleState.getOpponentCard() != null) {
+                    tooltip.addPara(battleState.getOpponentCard().getPassiveDescription(), 5f);
+                }
+            }
+        }, TooltipLocation.RIGHT, false);
+
+        float playerCardUiX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
+        float playerCardUiY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        float playerAbilityY = playerCardUiY - PASSIVE_BTN_HEIGHT - 5f;
+
+        playerAbilityButton = abilityTp.addButton(Strings.get("battle.ability_btn"), ACTION_PLAYER_ABILITY,
+            PASSIVE_BTN_WIDTH, PASSIVE_BTN_HEIGHT, 0f);
+        playerAbilityButton.setQuickMode(true);
+        playerAbilityButton.getPosition().inTL(playerCardUiX + 5f, playerAbilityY);
+
+        abilityTp.addTooltipToPrevious(new TooltipCreator() {
+            @Override
+            public boolean isTooltipExpandable(Object tooltipParam) { return false; }
+            @Override
+            public float getTooltipWidth(Object tooltipParam) { return 350f; }
+            @Override
+            public void createTooltip(TooltipMakerAPI tooltip, boolean expanded, Object tooltipParam) {
+                if (battleState != null && battleState.getPlayerCard() != null) {
+                    tooltip.addPara(battleState.getPlayerCard().getPassiveDescription(), 5f);
+                }
+            }
+        }, TooltipLocation.LEFT, false);
 
         buttonsCreated = true;
     }
@@ -355,12 +417,12 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         DicePoolCounts playerCounts = battleState.getPlayerDicePoolCounts();
         DicePoolCounts opponentCounts = battleState.getOpponentDicePoolCounts();
 
-        playerPrismaticLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.PRISMATIC_D12) : 0));
+        playerPrismaticLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.PRISMATIC) : 0));
         playerOrangeLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.ORANGE_D8) : 0));
         playerPurpleLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.PURPLE_D6) : 0));
         playerBlueLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.BLUE_D4) : 0));
 
-        opponentPrismaticLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.PRISMATIC_D12) : 0));
+        opponentPrismaticLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.PRISMATIC) : 0));
         opponentOrangeLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.ORANGE_D8) : 0));
         opponentPurpleLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.PURPLE_D6) : 0));
         opponentBlueLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.BLUE_D4) : 0));
@@ -480,9 +542,8 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
             switch (action) {
                 case ACTION_PRISMATIC -> {
                     CosmiconLogger.info("Player clicked Prismatic button");
-                    if (battleController != null) {
-                        battleController.onTogglePrismaticMode();
-                        updatePrismaticButton();
+                    if (!prismaticPopupActive && battleController != null && battleState != null) {
+                        showPrismaticSelectionPopup();
                     }
                 }
                 case ACTION_REROLL -> {
@@ -519,6 +580,35 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
         }
     }
 
+    private void showPrismaticSelectionPopup() {
+        prismaticPopupActive = true;
+        prismaticPopup = new PrismaticDiceSelectionPopup(battleState, new PrismaticDiceSelectionPopup.PrismaticDiceSelectionCallback() {
+            @Override
+            public void onPrismaticDiceSelected(PrismaticDiceType type, PrismaticDiceInstance instance) {
+                CosmiconLogger.info("Player selected Prismatic dice: %s, face: %d", type.getId(), instance.rolledFace);
+                battleState.addPrismaticDiceToPool(instance, true);
+                diceRollManager.appendInstantDice(DiceType.PRISMATIC, instance.faceIndex, diceZoneCenterX, diceZoneCenterY);
+                prismaticPopupActive = false;
+                prismaticPopup = null;
+                createDiceHitboxes(battleState.getPlayerDiceTypes());
+                updateButtons(battleState.getCurrentPhase());
+            }
+
+            @Override
+            public void onPopupClosed() {
+                CosmiconLogger.info("Prismatic popup closed without selection");
+                prismaticPopupActive = false;
+                prismaticPopup = null;
+            }
+        });
+
+        CustomPanelAPI popupPanel = panel.createCustomPanel(400f, 300f, prismaticPopup);
+        float popupX = (BattleRenderingUtils.PANEL_WIDTH - 400f) / 2f;
+        float popupY = (BattleRenderingUtils.PANEL_HEIGHT - 300f) / 2f;
+        panel.addComponent(popupPanel).inTL(popupX, popupY);
+        prismaticPopup.init(popupPanel);
+    }
+
     @Override
     public void onPhaseChange(Phase newPhase) {
         if (newPhase == Phase.ROLLING) {
@@ -532,10 +622,18 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
 
     @Override
     public void onDiceRerolled(boolean isPlayer, List<Integer> newValues, List<Integer> rerolledIndices) {
-        if (isPlayer && diceRollManager != null && !rerolledIndices.isEmpty()) {
+        if (diceRollManager == null || rerolledIndices.isEmpty()) return;
+        
+        float animDuration = DiceAnimator.getTotalDuration() + 0.1f;
+        
+        if (isPlayer) {
             diceRollManager.partialReroll(rerolledIndices, newValues);
-            rollAnimationDelay = DiceAnimator.getTotalDuration() + 0.1f;
+            rollAnimationDelay = animDuration;
             diceAnimating = true;
+        } else {
+            diceRollManager.rerollOpponentDice(rerolledIndices, newValues);
+            opponentRollDelay = animDuration;
+            opponentDiceAnimating = true;
         }
     }
 
@@ -550,18 +648,10 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
     }
 
     @Override
-    public void onPrismaticDiceRolled(boolean isPlayer, List<PrismaticDiceInstance> dice) {
-    }
-
-    @Override
-    public void onMustSelectDiceMarked(boolean isPlayer, List<PrismaticDiceInstance> mustSelect) {
-    }
-
-    @Override
     public void onDiceRolled(boolean isPlayer, List<DiceType> types, List<Integer> values) {
         if (isPlayer && types != null) {
             DicePoolCounts counts = DicePoolCounts.fromPool(types);
-            playerPrismaticLabel.setText(String.valueOf(counts.getCount(DiceType.PRISMATIC_D12)));
+            playerPrismaticLabel.setText(String.valueOf(counts.getCount(DiceType.PRISMATIC)));
             playerOrangeLabel.setText(String.valueOf(counts.getCount(DiceType.ORANGE_D8)));
             playerPurpleLabel.setText(String.valueOf(counts.getCount(DiceType.PURPLE_D6)));
             playerBlueLabel.setText(String.valueOf(counts.getCount(DiceType.BLUE_D4)));
@@ -569,7 +659,7 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
             createDiceHitboxes(types);
         } else if (!isPlayer && types != null) {
             DicePoolCounts counts = DicePoolCounts.fromPool(types);
-            opponentPrismaticLabel.setText(String.valueOf(counts.getCount(DiceType.PRISMATIC_D12)));
+            opponentPrismaticLabel.setText(String.valueOf(counts.getCount(DiceType.PRISMATIC)));
             opponentOrangeLabel.setText(String.valueOf(counts.getCount(DiceType.ORANGE_D8)));
             opponentPurpleLabel.setText(String.valueOf(counts.getCount(DiceType.PURPLE_D6)));
             opponentBlueLabel.setText(String.valueOf(counts.getCount(DiceType.BLUE_D4)));
@@ -580,6 +670,16 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
 
     @Override
     public void onWeatherChange(WeatherType newWeather) {
+    }
+
+    @Override
+    public void onPrismaticDiceRolled(boolean isPlayer, List<PrismaticDiceInstance> dice) {
+        // TODO: Handle prismatic dice animation for player/opponent
+    }
+
+    @Override
+    public void onMustSelectDiceMarked(boolean isPlayer, List<PrismaticDiceInstance> mustSelect) {
+        // TODO: Handle must-select dice marking for player/opponent
     }
 
     @Override
@@ -663,6 +763,10 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
         }
 
         diceRollManager.advance(amount);
+
+        if (prismaticPopupActive && prismaticPopup != null) {
+            prismaticPopup.advance(amount);
+        }
 
         PositionAPI pos = panel.getPosition();
         panelX = pos.getX();
@@ -764,6 +868,7 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
                 if (inside) {
                     logDiceSelection(i);
                     battleController.onPlayerSelectDice(i);
+                    updateButtons(battleState.getCurrentPhase());
                     break;
                 }
             }
@@ -795,19 +900,17 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
         float maxDiceSize = 80f;
         float totalWidth = DICE_SPACING * (count - 1) + maxDiceSize;
         float startX = diceZoneCenterX - totalWidth / 2f;
+        float startY = diceZoneCenterY - maxDiceSize / 2f;
+        float hbSize = maxDiceSize + DICE_CLICK_PADDING * 2;
 
         CosmiconLogger.debug("[HITBOX] Creating %d hitboxes, center=(%.0f,%.0f), startX=%.0f",
             count, diceZoneCenterX, diceZoneCenterY, startX);
 
         for (int i = 0; i < count; i++) {
-            float diceSize = types.get(i).getDisplaySize();
-            float x = startX + i * DICE_SPACING + (maxDiceSize - diceSize) / 2f;
-            float startY = diceZoneCenterY - diceSize / 2f;
-            float hbW = diceSize + DICE_CLICK_PADDING * 2;
-            float hbH = diceSize + DICE_CLICK_PADDING * 2;
-            diceHitboxes.add(new float[]{x, startY, hbW, hbH});
+            float x = startX + i * DICE_SPACING;
+            diceHitboxes.add(new float[]{x, startY, hbSize, hbSize});
             CosmiconLogger.debug("[HITBOX] Hitbox %d: UI(%.0f, %.0f) size %.0fx%.0f (diceSize=%.0f)", 
-                i, x, startY, hbW, hbH, diceSize);
+                i, x, startY, hbSize, hbSize, types.get(i).getDisplaySize());
         }
     }
 
@@ -863,6 +966,10 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
         renderDiceSelectionHighlights(alphaMult);
         renderPrismaticButton(alphaMult);
 
+        if (prismaticPopupActive && prismaticPopup != null) {
+            renderPrismaticPopup(alphaMult);
+        }
+
         GLStateUtil.resetColor();
     }
 
@@ -877,7 +984,7 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
             BattleRenderingUtils.renderCharacterCard(cardX, cardY, card, alphaMult);
 
             float passiveX = cardX - 20;
-            float passiveY = cardY - 70;
+            float passiveY = cardY + BattleRenderingUtils.CARD_HEIGHT + 10;
             BattleRenderingUtils.renderPassiveBox(passiveX, passiveY, 
                 BattleRenderingUtils.CARD_WIDTH + 40, 60, alphaMult);
         } else {
@@ -897,7 +1004,7 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
             BattleRenderingUtils.renderCharacterCard(cardX, cardY, card, alphaMult);
 
             float passiveX = cardX - 20;
-            float passiveY = cardY + BattleRenderingUtils.CARD_HEIGHT + 10;
+            float passiveY = cardY - 70;
             BattleRenderingUtils.renderPassiveBox(passiveX, passiveY, 
                 BattleRenderingUtils.CARD_WIDTH + 40, 60, alphaMult);
         } else {
@@ -1025,5 +1132,13 @@ boolean playerShouldSelect = (battleState.isAttacker(true) &&
         sprite.render(renderX, renderY);
 
         GLStateUtil.disableTexturing();
+    }
+
+    private void renderPrismaticPopup(float alphaMult) {
+        if (prismaticPopup == null) return;
+
+        prismaticPopup.renderBelow(alphaMult);
+
+        GLStateUtil.resetColor();
     }
 }

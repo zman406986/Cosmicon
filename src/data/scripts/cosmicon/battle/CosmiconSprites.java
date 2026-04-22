@@ -110,7 +110,7 @@ public final class CosmiconSprites {
             case BLUE_D4 -> diceD4Sprite;
             case PURPLE_D6 -> diceD6Sprite;
             case ORANGE_D8 -> diceD8Sprite;
-            case PRISMATIC_D12 -> prismaticDiceSprite;
+            case PRISMATIC -> prismaticDiceSprite;
         };
     }
 

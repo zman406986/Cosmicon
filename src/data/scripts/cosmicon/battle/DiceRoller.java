@@ -1,10 +1,12 @@
 package data.scripts.cosmicon.battle;
 
 import data.scripts.cosmicon.character.PassiveEventSystem;
+import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.util.CosmiconRandom;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class DiceRoller {
     
@@ -87,12 +89,24 @@ public class DiceRoller {
         for (int i = 0; i < selected.size(); i++) {
             if (selected.get(i)) {
                 DiceType type = types.get(i);
-                int minRoll = preventMinimum ? 2 : 1;
-                int maxRoll = type.getMaxFace();
-                if (preventMax) maxRoll = Math.max(1, maxRoll - 1);
                 
-                int value = CosmiconRandom.nextInt(maxRoll - minRoll + 1) + minRoll;
-                values.set(i, value);
+                if (state.isPrismaticDiceAt(i, forPlayer)) {
+                    PrismaticDiceInstance existingInstance = state.getPrismaticDiceAt(i, forPlayer);
+                    if (existingInstance != null) {
+                        Random random = CosmiconRandom.getRandom();
+                        PrismaticDiceInstance newInstance = PrismaticDiceInstance.roll(
+                            existingInstance.type, existingInstance.isTrueVersion, random);
+                        values.set(i, newInstance.rolledFace);
+                        state.updatePrismaticDiceAt(i, newInstance, forPlayer);
+                    }
+                } else {
+                    int minRoll = preventMinimum ? 2 : 1;
+                    int maxRoll = type.getMaxFace();
+                    if (preventMax) maxRoll = Math.max(1, maxRoll - 1);
+                    
+                    int value = CosmiconRandom.nextInt(maxRoll - minRoll + 1) + minRoll;
+                    values.set(i, value);
+                }
                 rerolledIndices.add(i);
             }
         }

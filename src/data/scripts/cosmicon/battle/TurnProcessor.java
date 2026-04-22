@@ -115,8 +115,14 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         state.getPlayerEffects().removeEffect(StatusEffectProcessor.StatusEffect.YAO_GUANG_REROLLS);
         state.getOpponentEffects().removeEffect(StatusEffectProcessor.StatusEffect.YAO_GUANG_REROLLS);
         
-        state.setRemainingRerolls(true, playerContext.getRerollCount());
-        state.setRemainingRerolls(false, opponentContext.getRerollCount());
+        int playerRerollBonus = playerContext.getRerollCount();
+        int opponentRerollBonus = opponentContext.getRerollCount();
+        if (playerRerollBonus != 0) {
+            state.setRemainingRerolls(true, state.getRemainingRerolls(true) + playerRerollBonus);
+        }
+        if (opponentRerollBonus != 0) {
+            state.setRemainingRerolls(false, state.getRemainingRerolls(false) + opponentRerollBonus);
+        }
         
         state.setCurrentPhase(BattleState.Phase.ROLLING);
         

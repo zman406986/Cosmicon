@@ -6,7 +6,11 @@
         "welcome": "Welcome to the Cosmicon Collective!",
         "play": "Play Cosmicon",
         "help": "How to Play",
-        "leave": "Leave"
+        "leave": "Leave",
+        "submenu_title": "COSMICON MENU",
+        "start_game": "Start Game",
+        "character_setup": "Character Setup",
+        "back": "Back"
     },
     "help": {
         "title": "=== How to Play Cosmicon ===",
@@ -25,7 +29,8 @@
         "confirm_attack": "Confirm Attack",
         "confirm_defense": "Confirm Defense",
         "you_won": "You Won!",
-        "you_lost": "You Lost!"
+        "you_lost": "You Lost!",
+        "ability_btn": "Character Ability"
     },
     "errors": {
         "market_too_small": "This market is too small to host Cosmicon games."
@@ -329,6 +334,36 @@
             "composite_or": "{0} OR {1}",
             "composite_and_separator": " AND ",
             "composite_or_separator": " OR "
+        },
+        "popup": {
+            "title": "Select Prismatic Dice",
+            "roll_button": "Roll",
+            "cancel_button": "Cancel",
+            "no_dice_available": "No prismatic dice available",
+            "uses": "{0} uses",
+            "effect_header": "Effect:",
+            "confirm_roll": "Confirm Roll",
+            "about_to_roll": "About to roll: {0}",
+            "dice_effect": "{0}",
+            "warning_destined": "Warning: This dice will be marked MUST SELECT after rolling!",
+            "close": "Close"
+        },
+        "equip": {
+            "title": "SELECT PRISMATIC DICE",
+            "current": "Current: {0}",
+            "available": "Available Dice:",
+            "none": "None",
+            "none_effect": "No dice equipped",
+            "no_effect": "No special effect",
+            "effect_preview": "Effect Preview:",
+            "effect_double": "Doubles ATK/DEF value",
+            "effect_heal": "Heals HP equal to face value",
+            "effect_gain_use": "Grants +1 Prismatic use",
+            "effect_instant_damage": "Deals {0} instant damage",
+            "effect_status": "Grants {0} status",
+            "robin_blocked": "Robin cannot equip prismatic dice",
+            "confirm": "CONFIRM",
+            "close": "X"
         }
     },
     "ai": {

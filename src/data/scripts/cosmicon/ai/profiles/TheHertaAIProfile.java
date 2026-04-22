@@ -24,7 +24,7 @@ public class TheHertaAIProfile extends AbstractCharacterAIProfile {
     @Override
     public float getPrismaticDiceBonus(DiceType type, int faceValue, boolean isAttacking) {
         float bonus = 0f;
-        if (type == DiceType.PRISMATIC_D12) {
+        if (type == DiceType.PRISMATIC) {
             bonus += 5f;
             if (faceValue >= 8) {
                 bonus += 3f;

@@ -65,7 +65,7 @@ public final class DiceProbabilityCalculator {
             case BLUE_D4 -> 2.5f;
             case PURPLE_D6 -> 3.5f;
             case ORANGE_D8 -> 4.5f;
-            case PRISMATIC_D12 -> 6.5f;
+            case PRISMATIC -> 3.5f;
         };
     }
 
