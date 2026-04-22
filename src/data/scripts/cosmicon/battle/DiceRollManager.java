@@ -2,7 +2,6 @@ package data.scripts.cosmicon.battle;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import com.fs.starfarer.api.ui.CustomPanelAPI;
 
@@ -10,14 +9,7 @@ import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class DiceRollManager {
 
-    private static final Random rand = new Random();
-    private static final float STAGGER_DELAY = 0.05f;
     private static final float DICE_SPACING = 130f;
-    private static final float MIN_TRAVEL_DISTANCE = 50f;
-    private static final float MAX_TRAVEL_DISTANCE = 500f;
-    private static final float MIN_BOUNCE_HEIGHT = 1.1f;
-    private static final float MAX_BOUNCE_HEIGHT = 1.3f;
-    private static final int MAX_BOUNCES = 2;
 
     private final List<DiceAnimator> animators;
     private final List<DiceAnimator> opponentAnimators;
@@ -44,29 +36,15 @@ public class DiceRollManager {
         animators.clear();
 
         int count = Math.min(types.size(), results.size());
-        float totalWidth = DICE_SPACING * (count - 1) + DiceAnimator.DICE_SIZE;
-        float startX = centerX - totalWidth / 2f;
-        float startY = centerY - DiceAnimator.DICE_SIZE / 2f;
+        List<DicePathPlanner.PlannedPath> paths = DicePathPlanner.planPaths(types, results, centerX, centerY, DICE_SPACING);
         
         for (int i = 0; i < count; i++) {
             DiceAnimator animator = new DiceAnimator();
             animator.init(panel);
-            float diceX = startX + i * DICE_SPACING;
-            float delay = i * STAGGER_DELAY;
+            DicePathPlanner.PlannedPath path = paths.get(i);
             
-            float rotation = rand.nextFloat() * 360f;
-            float travelDistance = MIN_TRAVEL_DISTANCE + rand.nextFloat() * (MAX_TRAVEL_DISTANCE - MIN_TRAVEL_DISTANCE);
-            int bounceCount = rand.nextInt(MAX_BOUNCES + 1);
-            
-            float[] bounceHeights = new float[bounceCount];
-            for (int j = 0; j < bounceCount; j++) {
-                float factor = 1f - (j * 0.2f);
-                bounceHeights[j] = (MIN_BOUNCE_HEIGHT + rand.nextFloat() * (MAX_BOUNCE_HEIGHT - MIN_BOUNCE_HEIGHT)) * factor;
-                bounceHeights[j] = Math.max(1.05f, bounceHeights[j]);
-            }
-            
-            animator.start(types.get(i), results.get(i), diceX, startY, delay,
-                           rotation, travelDistance, bounceCount, bounceHeights);
+            animator.start(types.get(i), results.get(i), path.startX, path.startY, path.delay,
+                           path.rotation, path.travelDistance, path.bounceCount, path.bounceHeights);
             animators.add(animator);
         }
     }
@@ -104,31 +82,30 @@ public class DiceRollManager {
         CosmiconLogger.debug("Appending %d dice to existing %d animators at center (%.0f, %.0f)",
             count, animators.size(), centerX, centerY);
 
-        float totalWidth = DICE_SPACING * (count - 1) + DiceAnimator.DICE_SIZE;
-        float startX = centerX - totalWidth / 2f;
-        float startY = centerY - DiceAnimator.DICE_SIZE / 2f;
+        List<DicePathPlanner.PlannedPath> existingPaths = collectExistingPaths();
+        List<DicePathPlanner.PlannedPath> newPaths = DicePathPlanner.planPathsAppend(
+            types, results, centerX, centerY, DICE_SPACING, animators.size(), existingPaths);
         
         for (int i = 0; i < count; i++) {
             DiceAnimator animator = new DiceAnimator();
             animator.init(panel);
-            float diceX = startX + i * DICE_SPACING;
-            float delay = (animators.size() + i) * STAGGER_DELAY;
+            DicePathPlanner.PlannedPath path = newPaths.get(i);
             
-            float rotation = rand.nextFloat() * 360f;
-            float travelDistance = MIN_TRAVEL_DISTANCE + rand.nextFloat() * (MAX_TRAVEL_DISTANCE - MIN_TRAVEL_DISTANCE);
-            int bounceCount = rand.nextInt(MAX_BOUNCES + 1);
-            
-            float[] bounceHeights = new float[bounceCount];
-            for (int j = 0; j < bounceCount; j++) {
-                float factor = 1f - (j * 0.2f);
-                bounceHeights[j] = (MIN_BOUNCE_HEIGHT + rand.nextFloat() * (MAX_BOUNCE_HEIGHT - MIN_BOUNCE_HEIGHT)) * factor;
-                bounceHeights[j] = Math.max(1.05f, bounceHeights[j]);
-            }
-            
-            animator.start(types.get(i), results.get(i), diceX, startY, delay,
-                           rotation, travelDistance, bounceCount, bounceHeights);
+            animator.start(types.get(i), results.get(i), path.startX, path.startY, path.delay,
+                           path.rotation, path.travelDistance, path.bounceCount, path.bounceHeights);
             animators.add(animator);
         }
+    }
+    
+    private List<DicePathPlanner.PlannedPath> collectExistingPaths() {
+        List<DicePathPlanner.PlannedPath> paths = new ArrayList<>();
+        for (DiceAnimator animator : animators) {
+            float endX = animator.getX() + animator.getPosXOffset();
+            float endY = animator.getY() + animator.getPosYOffset();
+            paths.add(new DicePathPlanner.PlannedPath(animator.getRotation(), 
+                0f, 0, new float[0], endX, endY, 0f));
+        }
+        return paths;
     }
 
     public void clear() {
@@ -164,29 +141,18 @@ public class DiceRollManager {
         this.opponentZoneY = zoneY;
 
         int count = Math.min(types.size(), results.size());
-        float totalWidth = DICE_SPACING * (count - 1) + DiceAnimator.DICE_SIZE;
-        float startX = zoneX + (BattleRenderingUtils.OPPONENT_DICE_ZONE_W - totalWidth) / 2f;
-        float startY = zoneY + (BattleRenderingUtils.OPPONENT_DICE_ZONE_H - DiceAnimator.DICE_SIZE) / 2f;
+        float centerX = zoneX + BattleRenderingUtils.OPPONENT_DICE_ZONE_W / 2f;
+        float centerY = zoneY + BattleRenderingUtils.OPPONENT_DICE_ZONE_H / 2f;
+        
+        List<DicePathPlanner.PlannedPath> paths = DicePathPlanner.planPaths(types, results, centerX, centerY, DICE_SPACING);
         
         for (int i = 0; i < count; i++) {
             DiceAnimator animator = new DiceAnimator();
             animator.init(panel);
-            float diceX = startX + i * DICE_SPACING;
-            float delay = i * STAGGER_DELAY;
+            DicePathPlanner.PlannedPath path = paths.get(i);
             
-            float rotation = rand.nextFloat() * 360f;
-            float travelDistance = MIN_TRAVEL_DISTANCE + rand.nextFloat() * (MAX_TRAVEL_DISTANCE - MIN_TRAVEL_DISTANCE);
-            int bounceCount = rand.nextInt(MAX_BOUNCES + 1);
-            
-            float[] bounceHeights = new float[bounceCount];
-            for (int j = 0; j < bounceCount; j++) {
-                float factor = 1f - (j * 0.2f);
-                bounceHeights[j] = (MIN_BOUNCE_HEIGHT + rand.nextFloat() * (MAX_BOUNCE_HEIGHT - MIN_BOUNCE_HEIGHT)) * factor;
-                bounceHeights[j] = Math.max(1.05f, bounceHeights[j]);
-            }
-            
-            animator.start(types.get(i), results.get(i), diceX, startY, delay,
-                           rotation, travelDistance, bounceCount, bounceHeights);
+            animator.start(types.get(i), results.get(i), path.startX, path.startY, path.delay,
+                           path.rotation, path.travelDistance, path.bounceCount, path.bounceHeights);
             opponentAnimators.add(animator);
         }
     }

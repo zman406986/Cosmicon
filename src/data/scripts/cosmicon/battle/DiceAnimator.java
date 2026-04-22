@@ -14,7 +14,8 @@ public class DiceAnimator {
     private static final float ROLL_DURATION = 6.0f;
     private static final float SETTLE_DURATION = 0.15f;
     private static final float REVEAL_DURATION = 0.1f;
-    private static final float TOTAL_DURATION = ROLL_DURATION + SETTLE_DURATION + REVEAL_DURATION;
+    private static final float RETURN_DURATION = 0.5f;
+    private static final float TOTAL_DURATION = ROLL_DURATION + SETTLE_DURATION + REVEAL_DURATION + RETURN_DURATION;
     private static final float SCALE_BOUNCE = 0.08f;
     
     private static final float DROP_DURATION = 0.4f;
@@ -23,8 +24,10 @@ public class DiceAnimator {
     private static final int FRAME_COUNT = 48;
     private static final float MIN_TRAVEL_DISTANCE = 50f;
     private static final float MAX_TRAVEL_DISTANCE = 500f;
+    private static final float FRAME_RATE_START = 96f;
+    private static final float FRAME_RATE_END = 24f;
     
-    private enum Phase { ROLLING, DROP, TRAVEL, SETTLE, REVEAL, COMPLETE }
+    private enum Phase { ROLLING, DROP, TRAVEL, SETTLE, REVEAL, RETURN_TO_CENTER, COMPLETE }
     
     private DiceType type;
     private int finalValue;
@@ -46,6 +49,11 @@ public class DiceAnimator {
     private float travelDistance;
     private float travelProgress;
     
+    private float returnStartPosXOffset;
+    private float returnStartPosYOffset;
+    private float returnStartVisualRotation;
+    private float returnVisualRotation;
+    
     private int bounceCount;
     private float[] bounceHeights;
     
@@ -62,7 +70,7 @@ public class DiceAnimator {
         return type != null ? type.getDisplaySize() : DICE_SIZE;
     }
     
-    public DiceAnimator() {
+public DiceAnimator() {
         scale = 1f;
         complete = false;
         useDirectionalAnimation = false;
@@ -74,6 +82,10 @@ public class DiceAnimator {
         directionRad = 0f;
         phase = Phase.ROLLING;
         phaseElapsed = 0f;
+        returnStartPosXOffset = 0f;
+        returnStartPosYOffset = 0f;
+        returnStartVisualRotation = 0f;
+        returnVisualRotation = 0f;
     }
     
     public void init(CustomPanelAPI panel) {
@@ -162,6 +174,7 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
             case TRAVEL -> advanceTravel();
             case SETTLE -> advanceSettle();
             case REVEAL -> advanceReveal();
+            case RETURN_TO_CENTER -> advanceReturnToCenter();
             case COMPLETE -> complete = true;
         }
     }
@@ -181,13 +194,13 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         float travelDuration = calculateTravelDuration();
         travelProgress = Math.min(1f, phaseElapsed / travelDuration);
         
-        int rawFrame = (int)(phaseElapsed * FRAME_COUNT);
-        currentFrame = rawFrame % FRAME_COUNT;
+        float frameIndex = calculateFrameIndexWithSlowdown(travelDuration);
+        currentFrame = (int)frameIndex % FRAME_COUNT;
         
         posXOffset = (float)Math.cos(directionRad) * travelDistance * travelProgress;
         posYOffset = (float)Math.sin(directionRad) * travelDistance * travelProgress;
         
-        scale = calculateConcurrentBounceScale(travelDuration);
+        scale = calculateBounceAtStart();
         
         if (phaseElapsed >= travelDuration) {
             travelProgress = 1.0f;
@@ -200,28 +213,31 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         }
     }
     
+    private float calculateFrameIndexWithSlowdown(float travelDuration) {
+        float progress = phaseElapsed / travelDuration;
+        float currentFrameRate = FRAME_RATE_START - (FRAME_RATE_START - FRAME_RATE_END) * progress;
+        float avgFrameRate = (FRAME_RATE_START + currentFrameRate) / 2f;
+        return phaseElapsed * avgFrameRate;
+    }
+    
     private float calculateTravelDuration() {
         float normalized = (travelDistance - MIN_TRAVEL_DISTANCE) / (MAX_TRAVEL_DISTANCE - MIN_TRAVEL_DISTANCE);
         return 1f + Math.round(normalized * 2f);
     }
     
-    private float calculateConcurrentBounceScale(float travelDuration) {
+    private float calculateBounceAtStart() {
         if (bounceCount == 0) return 1f;
         
-        float bounceInterval = travelDuration / (bounceCount + 1);
+        float bounceTotalTime = bounceCount * BOUNCE_DURATION;
+        if (phaseElapsed >= bounceTotalTime) return 1f;
         
-        for (int i = 0; i < bounceCount; i++) {
-            float bounceStart = bounceInterval * (i + 1) - BOUNCE_DURATION / 2f;
-            float bounceEnd = bounceStart + BOUNCE_DURATION;
-            
-            if (phaseElapsed >= bounceStart && phaseElapsed < bounceEnd) {
-                float bounceProgress = (phaseElapsed - bounceStart) / BOUNCE_DURATION;
-                float bounceHeight = bounceHeights[i];
-                return 1f + (bounceHeight - 1f) * (float)Math.sin(bounceProgress * Math.PI);
-            }
-        }
+        int bounceIndex = (int)(phaseElapsed / BOUNCE_DURATION);
+        if (bounceIndex >= bounceHeights.length) return 1f;
         
-        return 1f;
+        float bounceLocalTime = phaseElapsed - bounceIndex * BOUNCE_DURATION;
+        float bounceProgress = bounceLocalTime / BOUNCE_DURATION;
+        float bounceHeight = bounceHeights[bounceIndex];
+        return 1f + (bounceHeight - 1f) * (float)Math.sin(bounceProgress * Math.PI);
     }
     
     private void advanceSettle() {
@@ -241,12 +257,46 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         
         if (phaseElapsed >= REVEAL_DURATION) {
             scale = 1f;
+            returnStartPosXOffset = posXOffset;
+            returnStartPosYOffset = posYOffset;
+            
+            float baseVisualRotation = 180f - rotation;
+            if (type == DiceType.BLUE_D4) {
+                baseVisualRotation -= 90f;
+            }
+            returnStartVisualRotation = baseVisualRotation;
+            
+            phase = Phase.RETURN_TO_CENTER;
+            phaseElapsed = 0f;
+        }
+    }
+    
+    private void advanceReturnToCenter() {
+        currentFrame = 0;
+        scale = 1f;
+        
+        float t = phaseElapsed / RETURN_DURATION;
+        float progress = 1f - (1f - t) * (1f - t);
+        progress = Math.min(1f, progress);
+        
+        posXOffset = returnStartPosXOffset * (1f - progress);
+        posYOffset = returnStartPosYOffset * (1f - progress);
+        returnVisualRotation = returnStartVisualRotation * (1f - progress);
+        
+        if (phaseElapsed >= RETURN_DURATION) {
+            posXOffset = 0f;
+            posYOffset = 0f;
+            returnVisualRotation = 0f;
+            rotation = 0f;
+            directionRad = 0f;
             phase = Phase.COMPLETE;
             complete = true;
         }
     }
     
     private void advanceSimple() {
+        float returnStartTime = ROLL_DURATION + SETTLE_DURATION + REVEAL_DURATION;
+        
         if (elapsed < ROLL_DURATION) {
             float rollProgress = elapsed / ROLL_DURATION;
             currentFrame = (int)(rollProgress * 6f * FRAME_COUNT) % FRAME_COUNT;
@@ -254,12 +304,15 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         } else if (elapsed < ROLL_DURATION + SETTLE_DURATION) {
             currentFrame = 47;
             scale = 1f;
-        } else if (elapsed < TOTAL_DURATION) {
+        } else if (elapsed < returnStartTime) {
             currentFrame = 47;
             float revealProgress = (elapsed - ROLL_DURATION - SETTLE_DURATION) / REVEAL_DURATION;
             scale = 1f + SCALE_BOUNCE * (float)Math.sin(revealProgress * Math.PI);
+        } else if (elapsed < TOTAL_DURATION) {
+            currentFrame = 0;
+            scale = 1f;
         } else {
-            currentFrame = 47;
+            currentFrame = 0;
             scale = 1f;
             complete = true;
         }
@@ -282,9 +335,16 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         float extraWidth = displaySize * (scale - 1f);
         renderX -= extraWidth / 2f;
         
-        float visualRotation = 180f - rotation; // Reflect across vertical axis for visual alignment
-        if (type == DiceType.BLUE_D4) {
-            visualRotation -= 90f; // Triangle dice has different rotation axis
+        float visualRotation;
+        if (phase == Phase.RETURN_TO_CENTER || phase == Phase.COMPLETE || (complete && useDirectionalAnimation)) {
+            visualRotation = returnVisualRotation;
+        } else if (complete) {
+            visualRotation = 0f;
+        } else {
+            visualRotation = 180f - rotation;
+            if (type == DiceType.BLUE_D4) {
+                visualRotation -= 90f;
+            }
         }
         DiceSpriteRenderer.render(sprite, renderX, renderY, alphaMult, scale, displaySize, visualRotation);
         
@@ -309,8 +369,13 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
     
     public void forceComplete() {
         elapsed = TOTAL_DURATION;
-        currentFrame = 47;
+        currentFrame = 0;
         scale = 1f;
+        posXOffset = 0f;
+        posYOffset = 0f;
+        rotation = 0f;
+        directionRad = 0f;
+        returnVisualRotation = 0f;
         complete = true;
         phase = Phase.COMPLETE;
     }
