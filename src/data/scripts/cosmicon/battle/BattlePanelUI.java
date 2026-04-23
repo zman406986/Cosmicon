@@ -30,6 +30,7 @@ import data.scripts.Strings;
 import data.scripts.CosmiconConfig;
 import data.scripts.cosmicon.battle.BattleState.BattleEventListener;
 import data.scripts.cosmicon.battle.BattleState.Phase;
+import data.scripts.cosmicon.battle.DamageResolver.DamageResult;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
@@ -119,6 +120,14 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
     private int pendingPrismaticAnimatorIndex = -1;
 
     private final List<float[]> diceHitboxes;
+    
+    private DamageResolutionAnimator damageAnimator;
+    private HeartHpBar playerHeart;
+    private HeartHpBar opponentHeart;
+    private DamageResolver.DamageResult pendingDamageResult;
+    private boolean damageAnimationPending;
+    
+    private static final float HEART_OFFSET_Y = 15f;
 
     public BattlePanelUI() {
         this.diceHitboxes = new ArrayList<>();
@@ -150,9 +159,23 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
             prismaticPopupPanel = null;
             prismaticPopup = null;
         }
+        if (damageAnimator != null) {
+            damageAnimator.cleanup();
+            damageAnimator = null;
+        }
+        if (playerHeart != null) {
+            playerHeart.cleanup();
+            playerHeart = null;
+        }
+        if (opponentHeart != null) {
+            opponentHeart.cleanup();
+            opponentHeart = null;
+        }
         diceHitboxes.clear();
         diceRollManager = null;
         prismaticPopupActive = false;
+        damageAnimationPending = false;
+        pendingDamageResult = null;
         battleState = null;
         battleController = null;
     }
@@ -348,6 +371,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
             .setSize(50, 20)
             .inTL(BattleRenderingUtils.MARGIN + 5,
                   BattleRenderingUtils.MARGIN + 5);
+        
+        createHeartHpBars();
 
         resultLabel = settings.createLabel("", Fonts.INSIGNIA_LARGE);
         resultLabel.setColor(ColorHelper.PRISMATIC_GOLD);
@@ -418,6 +443,65 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         label.setAlignment(Alignment.MID);
         panel.addComponent((UIComponentAPI) label).setSize(22, 16).inTL(x, y);
         return label;
+    }
+    
+    private void createHeartHpBars() {
+        float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
+        float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        float playerHeartX = playerCardX + BattleRenderingUtils.CARD_WIDTH / 2f - HeartHpBar.HEART_SIZE / 2f;
+        float playerHeartY = playerCardY - HeartHpBar.HEART_SIZE - HEART_OFFSET_Y;
+        
+        playerHeart = new HeartHpBar();
+        playerHeart.init(panel);
+        playerHeart.setPosition(playerHeartX, playerHeartY);
+        playerHeart.setLabelVisible(false);
+        
+        float opponentCardX = BattleRenderingUtils.MARGIN;
+        float opponentCardY = BattleRenderingUtils.MARGIN;
+        float opponentHeartX = opponentCardX + BattleRenderingUtils.CARD_WIDTH / 2f - HeartHpBar.HEART_SIZE / 2f;
+        float opponentHeartY = opponentCardY + BattleRenderingUtils.CARD_HEIGHT + HEART_OFFSET_Y;
+        
+        opponentHeart = new HeartHpBar();
+        opponentHeart.init(panel);
+        opponentHeart.setPosition(opponentHeartX, opponentHeartY);
+        opponentHeart.setLabelVisible(false);
+        
+        updateHeartHpFromState();
+    }
+    
+    private void updateHeartHpFromState() {
+        if (battleState == null) return;
+        
+        if (playerHeart != null && battleState.getPlayerCard() != null) {
+            playerHeart.setHp(battleState.getPlayerHp(), battleState.getPlayerCard().getMaxHp());
+        }
+        if (opponentHeart != null && battleState.getOpponentCard() != null) {
+            opponentHeart.setHp(battleState.getOpponentHp(), battleState.getOpponentCard().getMaxHp());
+        }
+    }
+    
+    public void startDamageResolutionAnimation(BattleState state, DamageResolver.DamageResult result) {
+        pendingDamageResult = result;
+        damageAnimationPending = true;
+        
+        float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
+        float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        float playerHeartX = playerCardX + BattleRenderingUtils.CARD_WIDTH / 2f - HeartHpBar.HEART_SIZE / 2f;
+        float playerHeartY = playerCardY - HeartHpBar.HEART_SIZE - HEART_OFFSET_Y;
+        
+        float opponentCardX = BattleRenderingUtils.MARGIN;
+        float opponentCardY = BattleRenderingUtils.MARGIN;
+        float opponentHeartX = opponentCardX + BattleRenderingUtils.CARD_WIDTH / 2f - HeartHpBar.HEART_SIZE / 2f;
+        float opponentHeartY = opponentCardY + BattleRenderingUtils.CARD_HEIGHT + HEART_OFFSET_Y;
+        
+        float attackerHeartX = state.isPlayerAttacker() ? playerHeartX : opponentHeartX;
+        float attackerHeartY = state.isPlayerAttacker() ? playerHeartY : opponentHeartY;
+        float defenderHeartX = state.isPlayerAttacker() ? opponentHeartX : playerHeartX;
+        float defenderHeartY = state.isPlayerAttacker() ? opponentHeartY : playerHeartY;
+        
+        damageAnimator = new DamageResolutionAnimator();
+        damageAnimator.startResolution(state, result, attackerHeartX, attackerHeartY,
+                                        defenderHeartX, defenderHeartY, panel);
     }
 
     public void updateLabelsFromState() {
@@ -804,6 +888,19 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
     }
 
     @Override
+    public void onDamageAnimationStart(DamageResolver.DamageResult result) {
+        if (battleState != null) {
+            startDamageResolutionAnimation(battleState, result);
+        }
+    }
+
+    @Override
+    public void onDamageAnimationComplete() {
+        updateHeartHpFromState();
+        updateLabelsFromState();
+    }
+
+    @Override
     public void advance(float amount) {
         if (battleState == null) return;
 
@@ -904,6 +1001,27 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         }
 
         diceRollManager.advance(amount);
+        
+        if (damageAnimator != null) {
+            damageAnimator.advance(amount);
+            
+            if (damageAnimator.isComplete() && damageAnimationPending) {
+                damageAnimationPending = false;
+                damageAnimator.cleanup();
+                damageAnimator = null;
+                
+                if (battleState != null) {
+                    battleState.notifyDamageAnimationComplete();
+                }
+            }
+        }
+        
+        if (playerHeart != null) {
+            playerHeart.advance(amount);
+        }
+        if (opponentHeart != null) {
+            opponentHeart.advance(amount);
+        }
 
         if (prismaticPopupActive && prismaticPopup != null) {
             prismaticPopup.advance(amount);
@@ -1140,6 +1258,12 @@ private void handleMouseInput() {
         renderDiceZone(x, y, alphaMult);
 
         diceRollManager.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+        
+        if (damageAnimator != null && !damageAnimator.isComplete()) {
+            damageAnimator.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+        }
+        
+        renderHeartHpBars(alphaMult);
 
         if (shouldShowOpponentDice()) {
             renderOpponentDiceZone(alphaMult);
@@ -1329,5 +1453,17 @@ private void handleMouseInput() {
         prismaticPopup.renderBelow(alphaMult);
 
         GLStateUtil.resetColor();
+    }
+    
+    private void renderHeartHpBars(float alphaMult) {
+        if (damageAnimator != null && !damageAnimator.isComplete()) {
+            return;
+        }
+        if (playerHeart != null) {
+            playerHeart.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+        }
+        if (opponentHeart != null) {
+            opponentHeart.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+        }
     }
 }

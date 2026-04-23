@@ -19,6 +19,9 @@ public class TurnProcessor {
     private DiceRoller diceRoller;
     private DamageResolver damageResolver;
     
+    private DamageResolver.DamageResult pendingDamageResult;
+    private boolean damageAnimationInProgress;
+    
     private float aiSelectDelay;
     private boolean aiSelectionComplete;
     
@@ -42,6 +45,8 @@ public class TurnProcessor {
         this.state = state;
         this.aiSelectDelay = 0f;
         this.aiSelectionComplete = false;
+        this.pendingDamageResult = null;
+        this.damageAnimationInProgress = false;
     }
     
     public void setAIEngine(AIEngine aiEngine) {
@@ -455,8 +460,19 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
 
         if (damageResolver != null) {
             DamageResolver.DamageResult result = damageResolver.resolve(state);
-            applyDamageResult(result);
+            pendingDamageResult = result;
+            damageAnimationInProgress = true;
+            state.notifyDamageAnimationStart(result);
         }
+    }
+    
+    public void onDamageAnimationComplete() {
+        if (pendingDamageResult == null || !damageAnimationInProgress) return;
+        
+        applyDamageResult(pendingDamageResult);
+        pendingDamageResult = null;
+        damageAnimationInProgress = false;
+        state.notifyDamageAnimationComplete();
     }
     
     private void applyDamageResult(DamageResolver.DamageResult result) {

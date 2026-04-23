@@ -91,6 +91,32 @@ public class BattleState {
         void onMustSelectDiceMarked(boolean isPlayer, List<PrismaticDiceInstance> mustSelect);
         void onDiceRolled(boolean isPlayer, List<DiceType> types, List<Integer> values);
         void onWeatherChange(WeatherType newWeather);
+        void onDamageAnimationStart(DamageResolver.DamageResult result);
+        void onDamageAnimationComplete();
+    }
+    
+    private DamageAnimationCallback damageAnimationCallback;
+    
+    public interface DamageAnimationCallback {
+        void onDamageAnimationComplete();
+    }
+    
+    public void setDamageAnimationCallback(DamageAnimationCallback callback) {
+        this.damageAnimationCallback = callback;
+    }
+    
+    public DamageAnimationCallback getDamageAnimationCallback() {
+        return damageAnimationCallback;
+    }
+    
+    public boolean hasCombo() {
+        StatusEffectProcessor effects = isPlayerAttacker() ? getPlayerEffects() : getOpponentEffects();
+        return effects.hasEffect(StatusEffectProcessor.StatusEffect.COMBO);
+    }
+    
+    public boolean hasPerforation() {
+        StatusEffectProcessor effects = isPlayerAttacker() ? getPlayerEffects() : getOpponentEffects();
+        return effects.shouldIgnoreDefense();
     }
 
     public BattleState() {
@@ -751,6 +777,21 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     public void notifyWeatherChange(WeatherType newWeather) {
         for (BattleEventListener l : listeners) {
             l.onWeatherChange(newWeather);
+        }
+    }
+    
+    public void notifyDamageAnimationStart(DamageResolver.DamageResult result) {
+        for (BattleEventListener l : listeners) {
+            l.onDamageAnimationStart(result);
+        }
+    }
+    
+    public void notifyDamageAnimationComplete() {
+        for (BattleEventListener l : listeners) {
+            l.onDamageAnimationComplete();
+        }
+        if (damageAnimationCallback != null) {
+            damageAnimationCallback.onDamageAnimationComplete();
         }
     }
     

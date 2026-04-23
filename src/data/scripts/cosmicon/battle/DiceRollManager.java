@@ -5,8 +5,6 @@ import java.util.List;
 
 import com.fs.starfarer.api.ui.CustomPanelAPI;
 
-import data.scripts.cosmicon.util.CosmiconLogger;
-
 public class DiceRollManager {
 
     private static final float DICE_SPACING = 130f;
@@ -111,36 +109,8 @@ public void advance(float amount) {
         return !animators.isEmpty();
     }
     
-    public void appendRoll(List<DiceType> types, List<Integer> results, float centerX, float centerY) {
-        if (!initialized) return;
-
-        int count = Math.min(types.size(), results.size());
-        CosmiconLogger.debug("Appending %d dice to existing %d animators at center (%.0f, %.0f)",
-            count, animators.size(), centerX, centerY);
-
-        List<DicePathPlanner.PlannedPath> existingPaths = collectExistingPaths();
-        List<DicePathPlanner.PlannedPath> newPaths = DicePathPlanner.planPathsAppend(
-            types, results, centerX, centerY, DICE_SPACING, animators.size(), existingPaths);
-        
-        for (int i = 0; i < count; i++) {
-            DiceAnimator animator = new DiceAnimator();
-            animator.init(panel);
-            DicePathPlanner.PlannedPath path = newPaths.get(i);
-            
-            animator.start(types.get(i), results.get(i), path.startX(), path.startY(), path.delay(),
-                    path.rotation(), path.travelDistance(), path.bounceCount(), path.bounceHeights(),
-                    path.targetCenterX(), path.targetCenterY());
-            animators.add(animator);
-        }
-    }
-    
     public void appendInstantDice(DiceType type, int value, float centerX, float centerY) {
         if (!initialized) return;
-
-        List<DiceType> types = new ArrayList<>();
-        types.add(type);
-        List<Integer> results = new ArrayList<>();
-        results.add(value);
 
         List<float[]> existingPositions = collectAllDicePositions();
         DicePathPlanner.PlannedPath path = DicePathPlanner.planSinglePrismaticPath(
@@ -196,7 +166,7 @@ public void advance(float amount) {
 
     public void partialReroll(List<Integer> indices, List<Integer> newValues) {
         List<float[]> allPositions = collectAllDicePositions();
-        List<DicePathPlanner.PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, newValues, allPositions);
+        List<DicePathPlanner.PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, allPositions);
         
         for (int i = 0; i < indices.size(); i++) {
             int animatorIndex = indices.get(i);
@@ -247,7 +217,7 @@ public void advance(float amount) {
 
     public void rerollOpponentDice(List<Integer> indices, List<Integer> newValues) {
         List<float[]> allPositions = collectAllOpponentDicePositions();
-        List<DicePathPlanner.PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, newValues, allPositions);
+        List<DicePathPlanner.PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, allPositions);
         
         for (int i = 0; i < indices.size(); i++) {
             int animatorIndex = indices.get(i);
@@ -282,31 +252,8 @@ public void advance(float amount) {
         opponentAnimators.clear();
     }
 
-    public void forceCompleteOpponent() {
-        for (DiceAnimator animator : opponentAnimators) {
-            animator.forceComplete();
-        }
-    }
-
     public List<DiceAnimator> getOpponentAnimators() {
         return opponentAnimators;
-    }
-
-    public void clearAll() {
-        clear();
-        clearOpponentAnimators();
-    }
-
-    public float getAnimatorPositionX(int index) {
-        if (index < 0 || index >= animators.size()) return -1f;
-        DiceAnimator animator = animators.get(index);
-        return animator.getX() + animator.getPosXOffset();
-    }
-
-    public float getAnimatorPositionY(int index) {
-        if (index < 0 || index >= animators.size()) return -1f;
-        DiceAnimator animator = animators.get(index);
-        return animator.getY() + animator.getPosYOffset();
     }
 
     public float getAnimatorVisualX(int index) {

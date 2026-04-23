@@ -5,7 +5,7 @@ import data.scripts.cosmicon.prismatic.PrismaticManager;
 import data.scripts.cosmicon.state.CosmiconPlayerState;
 import data.scripts.cosmicon.util.CosmiconLogger;
 
-public class BattleController {
+public class BattleController implements BattleState.DamageAnimationCallback {
 
     private final BattleState state;
     private final TurnProcessor turnProcessor;
@@ -23,12 +23,18 @@ public class BattleController {
         state.setEffectManager(effectManager);
         state.setPrismaticManager(prismaticManager);
         state.setWeatherController(weatherController);
+        state.setDamageAnimationCallback(this);
         
         this.turnProcessor = new TurnProcessor(state);
         turnProcessor.setAIEngine(aiEngine);
         turnProcessor.setWeatherController(weatherController);
         turnProcessor.setDiceRoller(diceRoller);
         turnProcessor.setDamageResolver(damageResolver);
+    }
+    
+    @Override
+    public void onDamageAnimationComplete() {
+        turnProcessor.onDamageAnimationComplete();
     }
 
     public void initRandomBattle() {
