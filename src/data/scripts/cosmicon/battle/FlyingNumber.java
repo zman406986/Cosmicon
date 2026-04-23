@@ -38,8 +38,7 @@ public class FlyingNumber {
     private float targetY;
     private float currentX;
     private float currentY;
-    
-    private int value;
+
     private String displayText;
     private Color color;
     
@@ -49,8 +48,8 @@ public class FlyingNumber {
     private float scale;
     
     private boolean shatterOnImpact;
-    private List<Particle> particles;
-    private Random random;
+    private final List<Particle> particles;
+    private final Random random;
     
     private LabelAPI label;
     private CustomPanelAPI labelPanel;
@@ -106,7 +105,6 @@ public class FlyingNumber {
     }
     
     public void setValue(int value) {
-        this.value = value;
         this.displayText = String.valueOf(value);
         updateLabelText();
     }
@@ -180,9 +178,9 @@ public class FlyingNumber {
             particles.clear();
             return;
         }
-        
-        for (int i = 0; i < particles.size(); i++) {
-            Particle p = particles.get(i);
+
+        for (Particle p : particles)
+        {
             p.elapsed += amount;
             p.x += p.vx * amount;
             p.y += p.vy * amount;
@@ -269,16 +267,17 @@ public class FlyingNumber {
     }
     
     private void renderShatterParticles(float panelX, float panelY, float panelHeight, float alphaMult) {
-        for (int i = 0; i < particles.size(); i++) {
+        for (Particle particle : particles)
+        {
             GLStateUtil.resetBlendState();
-            
-            Particle p = particles.get(i);
+
+            Particle p = particle;
             float glX = panelX + p.x;
             float glY = CoordHelper.uiToGlY(panelY, panelHeight, p.y);
-            
+
             float size = 8f * p.scale;
             float halfSize = size / 2f;
-            
+
             float[] c = ColorHelper.toGLComponents(color, alphaMult * p.alpha);
             GL11.glColor4f(c[0], c[1], c[2], c[3]);
             GL11.glBegin(GL11.GL_QUADS);

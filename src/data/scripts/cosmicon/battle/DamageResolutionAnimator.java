@@ -11,8 +11,7 @@ public class DamageResolutionAnimator {
     private static final float NUMBERS_CLASH_DURATION = 0.6f;
     private static final float IMPACT_PAUSE_DURATION = 0.4f;
     private static final float RESULT_FLIGHT_DURATION = 0.5f;
-    private static final float HP_FLASH_DURATION = 0.3f;
-    private static final float MAX_HP_DRAIN_DURATION = 1.0f;
+    private static final float IMPACT_FLASH_DURATION = 0.3f;
     private static final float POST_IMPACT_PAUSE_DURATION = 0.6f;
     private static final float COMBO_PAUSE_DURATION = 0.3f;
     
@@ -23,8 +22,7 @@ public class DamageResolutionAnimator {
         NUMBERS_CLASH,
         IMPACT_PAUSE,
         RESULT_FLIGHT,
-        HP_FLASH,
-        HP_DRAIN,
+        IMPACT_FLASH,
         POST_IMPACT_PAUSE,
         COMBO_PAUSE,
         COMBO_SECOND_CLASH,
@@ -32,12 +30,11 @@ public class DamageResolutionAnimator {
         COMPLETE
     }
     
-    private HeartHpBar defenderHeart;
     private FlyingNumber atkNumber;
     private FlyingNumber defNumber;
     private FlyingNumber resultNumber;
     private FlyingNumber comboResultNumber;
-    private ImpactEffect impactEffect;
+    private final ImpactEffect impactEffect;
     
     private Phase phase;
     private float phaseElapsed;
@@ -51,14 +48,9 @@ public class DamageResolutionAnimator {
     
     private float centerX;
     private float centerY;
-    private float attackerHeartX;
-    private float attackerHeartY;
-    private float defenderHeartX;
-    private float defenderHeartY;
+    private float defenderTargetX;
+    private float defenderTargetY;
     
-    private int defenderCurrentHp;
-    private int defenderMaxHp;
-    private int defenderTargetHp;
     private int defenderFinalHp;
     
     private int comboDamage;
@@ -75,17 +67,15 @@ public class DamageResolutionAnimator {
     public void startResolution(
             BattleState state,
             DamageResolver.DamageResult result,
-            float attackerHeartX,
-            float attackerHeartY,
-            float defenderHeartX,
-            float defenderHeartY,
+            float attackerStartX,
+            float attackerStartY,
+            float defenderTargetX,
+            float defenderTargetY,
             CustomPanelAPI panel) {
         
         this.panel = panel;
-        this.attackerHeartX = attackerHeartX;
-        this.attackerHeartY = attackerHeartY;
-        this.defenderHeartX = defenderHeartX;
-        this.defenderHeartY = defenderHeartY;
+        this.defenderTargetX = defenderTargetX;
+        this.defenderTargetY = defenderTargetY;
         
         this.centerX = BattleRenderingUtils.PANEL_WIDTH / 2f;
         this.centerY = BattleRenderingUtils.PANEL_HEIGHT / 2f;
@@ -102,30 +92,22 @@ public class DamageResolutionAnimator {
             this.defenseValue = 0;
         }
         
-        boolean defenderIsPlayer = !state.isPlayerAttacker();
-        this.defenderCurrentHp = defenderIsPlayer ? state.getPlayerHp() : state.getOpponentHp();
-        this.defenderMaxHp = defenderIsPlayer 
-            ? (state.getPlayerCard() != null ? state.getPlayerCard().getMaxHp() : defenderCurrentHp)
-            : (state.getOpponentCard() != null ? state.getOpponentCard().getMaxHp() : defenderCurrentHp);
-        
         this.resultValue = Math.max(0, attackValue - defenseValue);
-        this.defenderTargetHp = Math.max(0, defenderCurrentHp - resultValue);
         
         this.combo = hasCombo(state);
         if (combo) {
             this.comboDamage = resultValue;
-            this.defenderFinalHp = Math.max(0, defenderTargetHp - comboDamage);
+            this.defenderFinalHp = Math.max(0, 
+                (state.isPlayerAttacker() ? state.getOpponentHp() : state.getPlayerHp()) 
+                - resultValue - comboDamage);
         } else {
             this.comboDamage = 0;
-            this.defenderFinalHp = defenderTargetHp;
+            this.defenderFinalHp = Math.max(0,
+                (state.isPlayerAttacker() ? state.getOpponentHp() : state.getPlayerHp())
+                - resultValue);
         }
         
         cleanup();
-        
-        defenderHeart = new HeartHpBar();
-        defenderHeart.init(panel);
-        defenderHeart.setPosition(defenderHeartX, defenderHeartY);
-        defenderHeart.setHp(defenderCurrentHp, defenderMaxHp);
         
         createFlyingNumbers();
         
@@ -133,16 +115,14 @@ public class DamageResolutionAnimator {
         phaseElapsed = 0f;
         complete = false;
         
-        atkNumber.startFrom(attackerHeartX + HeartHpBar.HEART_SIZE / 2f, 
-                            attackerHeartY + HeartHpBar.HEART_SIZE / 2f);
+        atkNumber.startFrom(attackerStartX, attackerStartY);
         atkNumber.flyTo(centerX, centerY, NUMBERS_CLASH_DURATION);
         
-        defNumber.startFrom(defenderHeartX + HeartHpBar.HEART_SIZE / 2f,
-                            defenderHeartY + HeartHpBar.HEART_SIZE / 2f);
+        defNumber.startFrom(defenderTargetX, defenderTargetY);
         defNumber.flyTo(centerX, centerY, NUMBERS_CLASH_DURATION);
     }
     
-private boolean hasCombo(BattleState state) {
+    private boolean hasCombo(BattleState state) {
         return state.hasCombo();
     }
     
@@ -172,16 +152,11 @@ private boolean hasCombo(BattleState state) {
             case NUMBERS_CLASH -> advanceNumbersClash(amount);
             case IMPACT_PAUSE -> advanceImpactPause(amount);
             case RESULT_FLIGHT -> advanceResultFlight(amount);
-            case HP_FLASH -> advanceHpFlash(amount);
-            case HP_DRAIN -> advanceHpDrain(amount);
+            case IMPACT_FLASH -> advanceImpactFlash(amount);
             case POST_IMPACT_PAUSE -> advancePostImpactPause(amount);
             case COMBO_PAUSE -> advanceComboPause(amount);
             case COMBO_SECOND_CLASH -> advanceComboSecondClash(amount);
             case COMBO_SECOND_IMPACT -> advanceComboSecondImpact(amount);
-        }
-        
-        if (defenderHeart != null) {
-            defenderHeart.advance(amount);
         }
         
         if (atkNumber != null) {
@@ -222,10 +197,7 @@ private boolean hasCombo(BattleState state) {
             resultNumber.setValue(resultValue);
             resultNumber.setColor(DAMAGE_RESULT_COLOR);
             resultNumber.startFrom(centerX, centerY);
-            resultNumber.flyTo(
-                defenderHeartX + HeartHpBar.HEART_SIZE / 2f,
-                defenderHeartY + HeartHpBar.HEART_SIZE / 2f,
-                RESULT_FLIGHT_DURATION);
+            resultNumber.flyTo(defenderTargetX, defenderTargetY, RESULT_FLIGHT_DURATION);
             
             phase = Phase.RESULT_FLIGHT;
             phaseElapsed = 0f;
@@ -234,43 +206,20 @@ private boolean hasCombo(BattleState state) {
     
     private void advanceResultFlight(float amount) {
         if (phaseElapsed >= RESULT_FLIGHT_DURATION || resultNumber.hasImpacted()) {
-            if (defenderHeart != null && resultValue > 0) {
-                defenderHeart.flashDamage();
-            }
-            
-            impactEffect.triggerShockwave(
-                defenderHeartX + HeartHpBar.HEART_SIZE / 2f,
-                defenderHeartY + HeartHpBar.HEART_SIZE / 2f);
+            impactEffect.triggerFlash(defenderTargetX, defenderTargetY, 40f, DAMAGE_RESULT_COLOR);
+            impactEffect.triggerShockwave(defenderTargetX, defenderTargetY);
             
             if (resultValue > 0) {
-                impactEffect.triggerParticles(
-                    defenderHeartX + HeartHpBar.HEART_SIZE / 2f,
-                    defenderHeartY + HeartHpBar.HEART_SIZE / 2f,
-                    6, DAMAGE_RESULT_COLOR);
+                impactEffect.triggerParticles(defenderTargetX, defenderTargetY, 6, DAMAGE_RESULT_COLOR);
             }
             
-            phase = Phase.HP_FLASH;
+            phase = Phase.IMPACT_FLASH;
             phaseElapsed = 0f;
         }
     }
     
-    private void advanceHpFlash(float amount) {
-        if (phaseElapsed >= HP_FLASH_DURATION || 
-            (defenderHeart != null && !defenderHeart.isFlashing())) {
-            
-            if (defenderHeart != null && resultValue > 0) {
-                defenderHeart.drainTo(defenderTargetHp);
-            }
-            
-            phase = Phase.HP_DRAIN;
-            phaseElapsed = 0f;
-        }
-    }
-    
-    private void advanceHpDrain(float amount) {
-        boolean drainComplete = defenderHeart == null || !defenderHeart.isDraining();
-        
-        if (phaseElapsed >= MAX_HP_DRAIN_DURATION || drainComplete) {
+    private void advanceImpactFlash(float amount) {
+        if (phaseElapsed >= IMPACT_FLASH_DURATION) {
             phase = Phase.POST_IMPACT_PAUSE;
             phaseElapsed = 0f;
         }
@@ -294,10 +243,7 @@ private boolean hasCombo(BattleState state) {
             comboResultNumber.setValue(comboDamage);
             comboResultNumber.setColor(DAMAGE_RESULT_COLOR);
             comboResultNumber.startFrom(centerX, centerY);
-            comboResultNumber.flyTo(
-                defenderHeartX + HeartHpBar.HEART_SIZE / 2f,
-                defenderHeartY + HeartHpBar.HEART_SIZE / 2f,
-                RESULT_FLIGHT_DURATION);
+            comboResultNumber.flyTo(defenderTargetX, defenderTargetY, RESULT_FLIGHT_DURATION);
             
             phase = Phase.COMBO_SECOND_CLASH;
             phaseElapsed = 0f;
@@ -308,19 +254,11 @@ private boolean hasCombo(BattleState state) {
         if (phaseElapsed >= RESULT_FLIGHT_DURATION || 
             (comboResultNumber != null && comboResultNumber.hasImpacted())) {
             
-            if (defenderHeart != null && comboDamage > 0) {
-                defenderHeart.flashDamage();
-            }
-            
-            impactEffect.triggerShockwave(
-                defenderHeartX + HeartHpBar.HEART_SIZE / 2f,
-                defenderHeartY + HeartHpBar.HEART_SIZE / 2f);
+            impactEffect.triggerFlash(defenderTargetX, defenderTargetY, 40f, DAMAGE_RESULT_COLOR);
+            impactEffect.triggerShockwave(defenderTargetX, defenderTargetY);
             
             if (comboDamage > 0) {
-                impactEffect.triggerParticles(
-                    defenderHeartX + HeartHpBar.HEART_SIZE / 2f,
-                    defenderHeartY + HeartHpBar.HEART_SIZE / 2f,
-                    6, DAMAGE_RESULT_COLOR);
+                impactEffect.triggerParticles(defenderTargetX, defenderTargetY, 6, DAMAGE_RESULT_COLOR);
             }
             
             phase = Phase.COMBO_SECOND_IMPACT;
@@ -329,13 +267,7 @@ private boolean hasCombo(BattleState state) {
     }
     
     private void advanceComboSecondImpact(float amount) {
-        boolean flashComplete = defenderHeart == null || !defenderHeart.isFlashing();
-        
-        if (phaseElapsed >= HP_FLASH_DURATION || flashComplete) {
-            if (defenderHeart != null && comboDamage > 0) {
-                defenderHeart.drainTo(defenderFinalHp);
-            }
-            
+        if (phaseElapsed >= IMPACT_FLASH_DURATION) {
             phase = Phase.COMPLETE;
             complete = true;
         }
@@ -345,10 +277,6 @@ private boolean hasCombo(BattleState state) {
         if (phase == Phase.IDLE) return;
         
         GLStateUtil.resetBlendState();
-        
-        if (defenderHeart != null) {
-            defenderHeart.render(panelX, panelY, panelHeight, alphaMult);
-        }
         
         if (atkNumber != null) {
             atkNumber.render(panelX, panelY, panelHeight, alphaMult, panel);
@@ -378,10 +306,6 @@ private boolean hasCombo(BattleState state) {
         phase = Phase.COMPLETE;
         complete = true;
         phaseElapsed = 0f;
-        
-        if (defenderHeart != null) {
-            defenderHeart.forceComplete();
-        }
         
         if (atkNumber != null) {
             atkNumber.forceComplete();
@@ -417,11 +341,6 @@ private boolean hasCombo(BattleState state) {
         if (comboResultNumber != null) {
             comboResultNumber.cleanup();
             comboResultNumber = null;
-        }
-        
-        if (defenderHeart != null) {
-            defenderHeart.cleanup();
-            defenderHeart = null;
         }
         
         if (impactEffect != null) {
