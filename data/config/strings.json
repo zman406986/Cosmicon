@@ -30,7 +30,8 @@
         "confirm_defense": "Confirm Defense",
         "you_won": "You Won!",
         "you_lost": "You Lost!",
-        "ability_btn": "Character Ability"
+        "ability_btn": "Character Ability",
+        "click_to_continue": "Click to continue"
     },
     "errors": {
         "market_too_small": "This market is too small to host Cosmicon games."

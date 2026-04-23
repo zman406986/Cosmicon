@@ -19,11 +19,11 @@ public class DiceAnimator {
     private static final float SCALE_BOUNCE = 0.08f;
     
     private static final float DROP_DURATION = 0.4f;
-    private static final float BOUNCE_DURATION = 0.15f;
+    private static final float BOUNCE_DURATION = 0.3f;
     private static final float INITIAL_SCALE = 1.5f;
     private static final int FRAME_COUNT = 48;
     private static final float MIN_TRAVEL_DISTANCE = 50f;
-    private static final float MAX_TRAVEL_DISTANCE = 500f;
+    private static final float MAX_TRAVEL_DISTANCE = 333f;
     private static final float FRAME_RATE_START = 96f;
     private static final float FRAME_RATE_END = 24f;
     

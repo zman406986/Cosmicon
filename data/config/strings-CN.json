@@ -30,7 +30,8 @@
         "confirm_defense": "确认防御",
         "you_won": "你赢了！",
         "you_lost": "你输了！",
-        "ability_btn": "角色能力"
+        "ability_btn": "角色能力",
+        "click_to_continue": "点击继续"
     },
     "errors": {
         "market_too_small": "这个市场太小，无法进行战力党游戏。"

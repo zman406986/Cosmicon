@@ -10,7 +10,7 @@ public class DicePathPlanner {
     private static final float COLLISION_BUFFER = 15f;
     private static final float DICE_SIZE = DiceAnimator.DICE_SIZE;
     private static final float MIN_TRAVEL_DISTANCE = 50f;
-    private static final float MAX_TRAVEL_DISTANCE = 500f;
+    private static final float MAX_TRAVEL_DISTANCE = 333f;
     private static final int MAX_RETRIES = 8;
     private static final float TIME_STEP = 0.05f;
 
@@ -85,8 +85,8 @@ public class DicePathPlanner {
         float[] bounceHeights = new float[bounceCount];
         for (int j = 0; j < bounceCount; j++) {
             float factor = 1f - (j * 0.2f);
-            bounceHeights[j] = (1.1f + rand.nextFloat() * 0.2f) * factor;
-            bounceHeights[j] = Math.max(1.05f, bounceHeights[j]);
+            bounceHeights[j] = (1.15f + rand.nextFloat() * 0.25f) * factor;
+            bounceHeights[j] = Math.max(1.15f, bounceHeights[j]);
         }
         
         return new PlannedPath(bestRotation, bestTravelDistance, bounceCount, bounceHeights, 
@@ -206,9 +206,14 @@ public class DicePathPlanner {
                                                      List<float[]> allDicePositions) {
         List<PlannedPath> paths = new ArrayList<>();
 
-        for (int diceIndex : indices)
+        for (int i = 0; i < indices.size(); i++)
         {
-            if (diceIndex >= allDicePositions.size()) continue;
+            int diceIndex = indices.get(i);
+            
+            if (diceIndex >= allDicePositions.size()) {
+                paths.add(null);
+                continue;
+            }
 
             float[] startPos = allDicePositions.get(diceIndex);
             float startX = startPos[0];

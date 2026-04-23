@@ -127,8 +127,8 @@ public void advance(float amount) {
     private List<DicePathPlanner.PlannedPath> collectExistingPaths() {
         List<DicePathPlanner.PlannedPath> paths = new ArrayList<>();
         for (DiceAnimator animator : animators) {
-            float endX = animator.getX() + animator.getPosXOffset();
-            float endY = animator.getY() + animator.getPosYOffset();
+            float endX = animator.getVisualX();
+            float endY = animator.getVisualY();
             paths.add(new DicePathPlanner.PlannedPath(animator.getRotation(), 
                 0f, 0, new float[0], endX, endY, 0f, endX, endY));
         }
@@ -139,8 +139,8 @@ public void advance(float amount) {
         List<float[]> positions = new ArrayList<>();
         for (DiceAnimator animator : animators) {
             positions.add(new float[]{
-                animator.getX() + animator.getPosXOffset(),
-                animator.getY() + animator.getPosYOffset()
+                animator.getVisualX(),
+                animator.getVisualY()
             });
         }
         return positions;
@@ -150,8 +150,8 @@ public void advance(float amount) {
         List<float[]> positions = new ArrayList<>();
         for (DiceAnimator animator : opponentAnimators) {
             positions.add(new float[]{
-                animator.getX() + animator.getPosXOffset(),
-                animator.getY() + animator.getPosYOffset()
+                animator.getVisualX(),
+                animator.getVisualY()
             });
         }
         return positions;
@@ -170,9 +170,9 @@ public void advance(float amount) {
         
         for (int i = 0; i < indices.size(); i++) {
             int animatorIndex = indices.get(i);
-            if (animatorIndex >= 0 && animatorIndex < animators.size()) {
+            DicePathPlanner.PlannedPath path = rerollPaths.get(i);
+            if (animatorIndex >= 0 && animatorIndex < animators.size() && path != null) {
                 DiceAnimator animator = animators.get(animatorIndex);
-                DicePathPlanner.PlannedPath path = rerollPaths.get(i);
                 animator.rerollWithNewPath(newValues.get(i), path.rotation(), path.travelDistance(),
                         path.bounceCount(), path.bounceHeights(),
                         path.targetCenterX(), path.targetCenterY());
@@ -221,9 +221,9 @@ public void advance(float amount) {
         
         for (int i = 0; i < indices.size(); i++) {
             int animatorIndex = indices.get(i);
-            if (animatorIndex >= 0 && animatorIndex < opponentAnimators.size()) {
+            DicePathPlanner.PlannedPath path = rerollPaths.get(i);
+            if (animatorIndex >= 0 && animatorIndex < opponentAnimators.size() && path != null) {
                 DiceAnimator animator = opponentAnimators.get(animatorIndex);
-                DicePathPlanner.PlannedPath path = rerollPaths.get(i);
                 animator.rerollWithNewPath(newValues.get(i), path.rotation(), path.travelDistance(),
                         path.bounceCount(), path.bounceHeights(),
                         path.targetCenterX(), path.targetCenterY());

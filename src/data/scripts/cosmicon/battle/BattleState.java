@@ -81,6 +81,7 @@ public class BattleState {
 
     private final List<BattleEventListener> listeners;
     private final AISelectionVisualizer aiSelectionVisualizer;
+    private final List<ValueChangeRecord> pendingValueChanges;
 
     public interface BattleEventListener {
         void onPhaseChange(Phase newPhase);
@@ -93,6 +94,21 @@ public class BattleState {
         void onWeatherChange(WeatherType newWeather);
         void onDamageAnimationStart(DamageResolver.DamageResult result);
         void onDamageAnimationComplete();
+        void onValueChange(boolean isPlayer, String changeType, int oldValue, int newValue, int delta);
+    }
+
+    public static class ValueChangeRecord {
+        public final String changeType;
+        public final int delta;
+        public final String displayText;
+        public final boolean isPlayer;
+
+        public ValueChangeRecord(String changeType, int delta, String displayText, boolean isPlayer) {
+            this.changeType = changeType;
+            this.delta = delta;
+            this.displayText = displayText;
+            this.isPlayer = isPlayer;
+        }
     }
     
     private DamageAnimationCallback damageAnimationCallback;
@@ -143,6 +159,7 @@ public class BattleState {
         this.playerPrismaticDiceByIndex = new HashMap<>();
         this.opponentPrismaticDiceByIndex = new HashMap<>();
         this.aiSelectionVisualizer = new AISelectionVisualizer();
+        this.pendingValueChanges = new ArrayList<>();
     }
 
     
@@ -794,6 +811,36 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
             damageAnimationCallback.onDamageAnimationComplete();
         }
     }
+
+    public void queueValueChange(boolean isPlayer, String changeType, int delta) {
+        String displayText = delta >= 0 ? "+" + delta : String.valueOf(delta);
+        pendingValueChanges.add(new ValueChangeRecord(changeType, delta, displayText, isPlayer));
+    }
+
+    public void queueValueMultiplier(boolean isPlayer, String changeType, int multiplier) {
+        String displayText = "x" + multiplier;
+        pendingValueChanges.add(new ValueChangeRecord(changeType, multiplier, displayText, isPlayer));
+    }
+
+    public List<ValueChangeRecord> getPendingValueChanges(boolean isPlayer) {
+        List<ValueChangeRecord> result = new ArrayList<>();
+        for (ValueChangeRecord record : pendingValueChanges) {
+            if (record.isPlayer == isPlayer) {
+                result.add(record);
+            }
+        }
+        return result;
+    }
+
+    public void clearPendingValueChanges() {
+        pendingValueChanges.clear();
+    }
+
+    public void notifyValueChange(boolean isPlayer, String changeType, int oldValue, int newValue, int delta) {
+        for (BattleEventListener l : listeners) {
+            l.onValueChange(isPlayer, changeType, oldValue, newValue, delta);
+        }
+    }
     
     public int getCumulativeAtkDef(boolean forPlayer) {
         return forPlayer ? playerCumulativeAtkDef : opponentCumulativeAtkDef;
@@ -877,6 +924,8 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         if (aiSelectionVisualizer != null) {
             aiSelectionVisualizer.reset();
         }
+        
+        pendingValueChanges.clear();
         
         CosmiconLogger.debug("BattleState cleanup complete");
     }

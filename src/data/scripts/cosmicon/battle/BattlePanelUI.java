@@ -94,6 +94,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
     private LabelAPI opponentOrangeLabel;
     private LabelAPI opponentPurpleLabel;
     private LabelAPI opponentBlueLabel;
+    private LabelAPI clickHintLabel;
 
     private float panelX;
     private float panelY;
@@ -124,6 +125,12 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
     private DamageResolutionAnimator damageAnimator;
     private DamageResolver.DamageResult pendingDamageResult;
     private boolean damageAnimationPending;
+    
+    private ValueChangeAnimator attackerValueAnimator;
+    private ValueChangeAnimator defenderValueAnimator;
+    private LabelAPI attackerValueLabel;
+    private LabelAPI defenderValueLabel;
+    private boolean valueAnimationPending;
 
     public BattlePanelUI() {
         this.diceHitboxes = new ArrayList<>();
@@ -135,6 +142,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         this.opponentRollDelay = 0f;
         this.dicePreviewActive = false;
         this.dicePreviewDelay = 0f;
+        this.valueAnimationPending = false;
     }
 
     public void setBattleController(BattleController controller) {
@@ -159,10 +167,19 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
             damageAnimator.cleanup();
             damageAnimator = null;
         }
+        if (attackerValueAnimator != null) {
+            attackerValueAnimator.cleanup();
+            attackerValueAnimator = null;
+        }
+        if (defenderValueAnimator != null) {
+            defenderValueAnimator.cleanup();
+            defenderValueAnimator = null;
+        }
         diceHitboxes.clear();
         diceRollManager = null;
         prismaticPopupActive = false;
         damageAnimationPending = false;
+        valueAnimationPending = false;
         pendingDamageResult = null;
         battleState = null;
         battleController = null;
@@ -421,6 +438,38 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         opponentOrangeLabel = createCountLabel(diceX, diceStartY + 26);
         opponentPurpleLabel = createCountLabel(diceX, diceStartY + 52);
         opponentBlueLabel = createCountLabel(diceX, diceStartY + 78);
+
+        float halfH = BattleRenderingUtils.PANEL_HEIGHT / 2f;
+        float iconSize = halfH * BattleRenderingUtils.ROLE_ICON_SIZE_RATIO;
+        float bottomIconCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
+        float bottomIconCenterY = (halfH - iconSize) / 2f + iconSize / 2f;
+        float topIconCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
+        float topIconCenterY = halfH + (halfH - iconSize) / 2f + iconSize / 2f;
+
+        attackerValueLabel = settings.createLabel("", Fonts.INSIGNIA_LARGE);
+        attackerValueLabel.setColor(ColorHelper.ATTACK_VALUE);
+        attackerValueLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) attackerValueLabel)
+            .setSize(60, 40);
+        attackerValueLabel.setOpacity(0f);
+
+        defenderValueLabel = settings.createLabel("", Fonts.INSIGNIA_LARGE);
+        defenderValueLabel.setColor(ColorHelper.DEFENSE_VALUE);
+        defenderValueLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) defenderValueLabel)
+            .setSize(60, 40);
+        defenderValueLabel.setOpacity(0f);
+
+        attackerValueAnimator = new ValueChangeAnimator();
+        defenderValueAnimator = new ValueChangeAnimator();
+        
+        clickHintLabel = settings.createLabel("", Fonts.DEFAULT_SMALL);
+        clickHintLabel.setColor(new Color(200, 200, 200, 150));
+        clickHintLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) clickHintLabel)
+            .setSize(200, 20)
+            .inTL(BattleRenderingUtils.PANEL_WIDTH / 2f - 100f, BattleRenderingUtils.PANEL_HEIGHT - 30f);
+        clickHintLabel.setOpacity(0f);
     }
 
     private LabelAPI createCountLabel(float x, float y) {
@@ -840,14 +889,83 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
 
     @Override
     public void onDamageAnimationStart(DamageResolver.DamageResult result) {
-        if (battleState != null) {
+        if (battleState == null) return;
+        
+        pendingDamageResult = result;
+        
+        boolean hasAttackerChanges = battleState.getPendingValueChanges(battleState.isPlayerAttacker()).size() > 0;
+        boolean hasDefenderChanges = battleState.getPendingValueChanges(!battleState.isPlayerAttacker()).size() > 0;
+        
+        if (hasAttackerChanges || hasDefenderChanges) {
+            startValueChangeAnimations();
+            valueAnimationPending = true;
+        } else {
             startDamageResolutionAnimation(battleState, result);
         }
+    }
+
+    private void startValueChangeAnimations() {
+        if (battleState == null || panel == null) return;
+        
+        float halfH = BattleRenderingUtils.PANEL_HEIGHT / 2f;
+        float iconSize = halfH * BattleRenderingUtils.ROLE_ICON_SIZE_RATIO;
+        
+        float bottomIconCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
+        float bottomIconCenterY = (halfH - iconSize) / 2f + iconSize / 2f;
+        float topIconCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
+        float topIconCenterY = halfH + (halfH - iconSize) / 2f + iconSize / 2f;
+        
+        boolean playerIsAttacker = battleState.isPlayerAttacker();
+        boolean attackerIsBottom = playerIsAttacker;
+        
+        float attackerCenterX = attackerIsBottom ? bottomIconCenterX : topIconCenterX;
+        float attackerCenterY = attackerIsBottom ? bottomIconCenterY : topIconCenterY;
+        float defenderCenterX = attackerIsBottom ? topIconCenterX : bottomIconCenterX;
+        float defenderCenterY = attackerIsBottom ? topIconCenterY : bottomIconCenterY;
+        
+        int attackValue = battleState.getAttackValue();
+        int defenseValue = battleState.getDefenseValue();
+        
+        List<BattleState.ValueChangeRecord> attackerChanges = battleState.getPendingValueChanges(playerIsAttacker);
+        List<BattleState.ValueChangeRecord> defenderChanges = battleState.getPendingValueChanges(!playerIsAttacker);
+        
+        if (!attackerChanges.isEmpty()) {
+            attackerValueAnimator.start(attackerCenterX, attackerCenterY, attackValue, panel, true);
+        }
+        if (!defenderChanges.isEmpty()) {
+            defenderValueAnimator.start(defenderCenterX, defenderCenterY, defenseValue, panel, false);
+        }
+        
+        battleState.clearPendingValueChanges();
     }
 
     @Override
     public void onDamageAnimationComplete() {
         updateLabelsFromState();
+    }
+
+    @Override
+    public void onValueChange(boolean isPlayer, String changeType, int oldValue, int newValue, int delta) {
+        boolean playerIsAttacker = battleState.isPlayerAttacker();
+        boolean affectsAttackerValue = (playerIsAttacker == isPlayer && 
+            (changeType.equals("ATTACK_LEVEL_UP") || changeType.equals("ATTACK"))) ||
+            (playerIsAttacker != isPlayer && 
+            (changeType.equals("DEFENSE_LEVEL_UP") || changeType.equals("DEFENSE")));
+        
+        ValueChangeAnimator targetAnimator = affectsAttackerValue ? attackerValueAnimator : defenderValueAnimator;
+        java.awt.Color color = getChangeColor(changeType, delta);
+        String displayText = delta >= 0 ? "+" + delta : String.valueOf(delta);
+        targetAnimator.queueChange(displayText, color);
+    }
+
+    private java.awt.Color getChangeColor(String changeType, int delta) {
+        return switch (changeType) {
+            case "AWAKENING", "LEVEL_UP", "ATTACK_LEVEL_UP", "DEFENSE_LEVEL_UP" -> ColorHelper.PRISMATIC_GOLD;
+            case "WEATHER" -> ColorHelper.WEATHER_BONUS;
+            case "PRISMATIC" -> ColorHelper.PRISMATIC_BRIGHT;
+            case "PASSIVE" -> delta > 0 ? ColorHelper.ATTACK_VALUE : ColorHelper.DEFENSE_VALUE;
+            default -> delta >= 0 ? java.awt.Color.GREEN : java.awt.Color.RED;
+        };
     }
 
     @Override
@@ -952,18 +1070,45 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
 
         diceRollManager.advance(amount);
         
+        if (attackerValueAnimator != null) {
+            attackerValueAnimator.advance(amount);
+        }
+        if (defenderValueAnimator != null) {
+            defenderValueAnimator.advance(amount);
+        }
+        
+        if (valueAnimationPending) {
+            boolean attackerComplete = attackerValueAnimator == null || attackerValueAnimator.isComplete();
+            boolean defenderComplete = defenderValueAnimator == null || defenderValueAnimator.isComplete();
+            
+            if (attackerComplete && defenderComplete) {
+                valueAnimationPending = false;
+                startDamageResolutionAnimation(battleState, pendingDamageResult);
+            }
+        }
+        
         if (damageAnimator != null) {
             damageAnimator.advance(amount);
+            
+            if (damageAnimator.isWaitingForClick()) {
+                clickHintLabel.setText(Strings.get("battle.click_to_continue"));
+                clickHintLabel.setOpacity(0.6f);
+            } else {
+                clickHintLabel.setOpacity(0f);
+            }
             
             if (damageAnimator.isComplete() && damageAnimationPending) {
                 damageAnimationPending = false;
                 damageAnimator.cleanup();
                 damageAnimator = null;
+                clickHintLabel.setOpacity(0f);
                 
                 if (battleState != null) {
                     battleState.notifyDamageAnimationComplete();
                 }
             }
+        } else if (clickHintLabel != null) {
+            clickHintLabel.setOpacity(0f);
         }
         
         if (prismaticPopupActive && prismaticPopup != null) {
@@ -1062,6 +1207,13 @@ private void handleMouseInput() {
                     }
                 }
                 
+                lastMouseButtonState = currentButton;
+                return;
+            }
+            
+            if (damageAnimator != null && damageAnimator.isWaitingForClick()) {
+                CosmiconLogger.debug("Player clicked to skip damage animation pause");
+                damageAnimator.forceComplete();
                 lastMouseButtonState = currentButton;
                 return;
             }
@@ -1199,6 +1351,13 @@ private void handleMouseInput() {
         renderPlayerCard(x, y, alphaMult);
         renderOpponentCard(x, y, alphaMult);
         renderDiceZone(x, y, alphaMult);
+        
+        if (attackerValueAnimator != null && !attackerValueAnimator.isComplete()) {
+            attackerValueAnimator.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+        }
+        if (defenderValueAnimator != null && !defenderValueAnimator.isComplete()) {
+            defenderValueAnimator.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+        }
 
         diceRollManager.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
         

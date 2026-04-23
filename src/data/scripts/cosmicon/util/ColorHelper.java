@@ -22,6 +22,7 @@ public final class ColorHelper {
 
     public static final Color ATTACK_VALUE = new Color(255, 100, 80);
     public static final Color DEFENSE_VALUE = new Color(80, 150, 255);
+    public static final Color WEATHER_BONUS = new Color(100, 255, 150);
 
     public static final Color DICE_BORDER = new Color(255, 255, 255, 200);
 
