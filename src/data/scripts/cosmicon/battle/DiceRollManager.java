@@ -36,7 +36,7 @@ public class DiceRollManager {
         
         for (int i = 0; i < count; i++) {
             DiceAnimator animator = new DiceAnimator();
-            animator.init(panel);
+            animator.init();
             DicePathPlanner.PlannedPath path = paths.get(i);
             
             animator.start(types.get(i), results.get(i), path.startX(), path.startY(), path.delay(),
@@ -124,16 +124,7 @@ public void advance(float amount) {
         animators.add(animator);
     }
     
-    private List<DicePathPlanner.PlannedPath> collectExistingPaths() {
-        List<DicePathPlanner.PlannedPath> paths = new ArrayList<>();
-        for (DiceAnimator animator : animators) {
-            float endX = animator.getVisualX();
-            float endY = animator.getVisualY();
-            paths.add(new DicePathPlanner.PlannedPath(animator.getRotation(), 
-                0f, 0, new float[0], endX, endY, 0f, endX, endY));
-        }
-        return paths;
-    }
+    
     
     private List<float[]> collectAllDicePositions() {
         List<float[]> positions = new ArrayList<>();
@@ -199,7 +190,7 @@ public void advance(float amount) {
         
         for (int i = 0; i < count; i++) {
             DiceAnimator animator = new DiceAnimator();
-            animator.init(panel);
+            animator.init();
             DicePathPlanner.PlannedPath path = paths.get(i);
             
             animator.start(types.get(i), results.get(i), path.startX(), path.startY(), path.delay(),

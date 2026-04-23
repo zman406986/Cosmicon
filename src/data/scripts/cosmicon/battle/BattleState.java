@@ -88,8 +88,6 @@ public class BattleState {
         void onDiceRerolled(boolean isPlayer, List<Integer> newValues, List<Integer> rerolledIndices);
         void onBattleEnd(String winner);
         void onDamageResolved(int damage, int playerHp, int opponentHp);
-        void onPrismaticDiceRolled(boolean isPlayer, List<PrismaticDiceInstance> dice);
-        void onMustSelectDiceMarked(boolean isPlayer, List<PrismaticDiceInstance> mustSelect);
         void onDiceRolled(boolean isPlayer, List<DiceType> types, List<Integer> values);
         void onWeatherChange(WeatherType newWeather);
         void onDamageAnimationStart(DamageResolver.DamageResult result);
@@ -121,18 +119,9 @@ public class BattleState {
         this.damageAnimationCallback = callback;
     }
     
-    public DamageAnimationCallback getDamageAnimationCallback() {
-        return damageAnimationCallback;
-    }
-    
     public boolean hasCombo() {
         StatusEffectProcessor effects = isPlayerAttacker() ? getPlayerEffects() : getOpponentEffects();
         return effects.hasEffect(StatusEffectProcessor.StatusEffect.COMBO);
-    }
-    
-    public boolean hasPerforation() {
-        StatusEffectProcessor effects = isPlayerAttacker() ? getPlayerEffects() : getOpponentEffects();
-        return effects.shouldIgnoreDefense();
     }
 
     public BattleState() {
@@ -686,12 +675,12 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         Phase oldPhase = this.currentPhase;
         this.currentPhase = phase;
         CosmiconLogger.debug("Phase change: %s -> %s", oldPhase, phase);
-        if (isMajorPhaseTransition(oldPhase, phase)) {
+        if (isMajorPhaseTransition(phase)) {
             CosmiconLogger.info("Phase: %s -> %s", oldPhase, phase);
         }
     }
     
-    private boolean isMajorPhaseTransition(Phase oldPhase, Phase newPhase) {
+    private boolean isMajorPhaseTransition(Phase newPhase) {
         return newPhase == Phase.SELECTING_ATTACK || 
                newPhase == Phase.SELECTING_DEFENSE ||
                newPhase == Phase.RESOLVING ||
@@ -817,11 +806,6 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         pendingValueChanges.add(new ValueChangeRecord(changeType, delta, displayText, isPlayer));
     }
 
-    public void queueValueMultiplier(boolean isPlayer, String changeType, int multiplier) {
-        String displayText = "x" + multiplier;
-        pendingValueChanges.add(new ValueChangeRecord(changeType, multiplier, displayText, isPlayer));
-    }
-
     public List<ValueChangeRecord> getPendingValueChanges(boolean isPlayer) {
         List<ValueChangeRecord> result = new ArrayList<>();
         for (ValueChangeRecord record : pendingValueChanges) {
@@ -876,12 +860,6 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     public AISelectionVisualizer getAiSelectionVisualizer() {
         return aiSelectionVisualizer;
     }
-
-    public void resetAiVisualizer() {
-        if (aiSelectionVisualizer != null) {
-            aiSelectionVisualizer.reset();
-        }
-    }
     
     public void cleanup() {
         CosmiconLogger.debug("BattleState cleanup - clearing listeners and state");
@@ -904,8 +882,8 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         opponentDiceValues = null;
         opponentDiceSelected = null;
         
-        if (playerPrismaticDiceByIndex != null) playerPrismaticDiceByIndex.clear();
-        if (opponentPrismaticDiceByIndex != null) opponentPrismaticDiceByIndex.clear();
+        playerPrismaticDiceByIndex.clear();
+        opponentPrismaticDiceByIndex.clear();
         
         diceRoller = null;
         weatherController = null;
@@ -921,9 +899,7 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         playerPrismaticTriggerCount = 0;
         opponentPrismaticTriggerCount = 0;
         
-        if (aiSelectionVisualizer != null) {
-            aiSelectionVisualizer.reset();
-        }
+        aiSelectionVisualizer.reset();
         
         pendingValueChanges.clear();
         

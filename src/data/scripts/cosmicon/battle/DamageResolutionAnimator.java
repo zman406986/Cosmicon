@@ -19,7 +19,7 @@ public class DamageResolutionAnimator {
     private static final Color DAMAGE_RESULT_COLOR = FlyingNumber.DAMAGE_RESULT;
     private static final Color DEFENDER_PULSE_COLOR = new Color(80, 200, 120);
     
-    private enum Phase {
+    public enum Phase {
         IDLE,
         ICON_PREPARATION,
         ICON_CLASH,
@@ -83,9 +83,6 @@ public class DamageResolutionAnimator {
     
     public void startResolution(
             BattleState state,
-            DamageResolver.DamageResult result,
-            float attackerStartX,
-            float attackerStartY,
             float defenderTargetX,
             float defenderTargetY,
             CustomPanelAPI panel) {
@@ -191,26 +188,22 @@ public class DamageResolutionAnimator {
         phaseElapsed += amount;
         
         switch (phase) {
-            case ICON_PREPARATION -> advanceIconPreparation(amount);
-            case ICON_CLASH -> advanceIconClash(amount);
-            case ICON_IMPACT -> advanceIconImpact(amount);
-            case RESULT_FLIGHT -> advanceResultFlight(amount);
-            case IMPACT_FLASH -> advanceImpactFlash(amount);
-            case DEFENDER_PULSE -> advanceDefenderPulse(amount);
-            case POST_IMPACT_PAUSE -> advancePostImpactPause(amount);
-            case COMBO_PAUSE -> advanceComboPause(amount);
-            case COMBO_SECOND_CLASH -> advanceComboSecondClash(amount);
-            case COMBO_SECOND_IMPACT -> advanceComboSecondImpact(amount);
+            case ICON_PREPARATION -> advanceIconPreparation();
+            case ICON_CLASH -> advanceIconClash();
+            case ICON_IMPACT -> advanceIconImpact();
+            case RESULT_FLIGHT -> advanceResultFlight();
+            case IMPACT_FLASH -> advanceImpactFlash();
+            case DEFENDER_PULSE -> advanceDefenderPulse();
+            case POST_IMPACT_PAUSE -> advancePostImpactPause();
+            case COMBO_PAUSE -> advanceComboPause();
+            case COMBO_SECOND_CLASH -> advanceComboSecondClash();
+            case COMBO_SECOND_IMPACT -> advanceComboSecondImpact();
         }
         
         advanceFlyingNumbers(amount);
         
-        if (impactEffect != null) {
-            impactEffect.advance(amount);
-        }
-        if (shatterEffect != null) {
-            shatterEffect.advance(amount);
-        }
+        impactEffect.advance(amount);
+        shatterEffect.advance(amount);
     }
     
     private void advanceFlyingNumbers(float amount) {
@@ -228,7 +221,7 @@ public class DamageResolutionAnimator {
         }
     }
     
-    private void advanceIconPreparation(float amount) {
+    private void advanceIconPreparation() {
         if (phaseElapsed >= ICON_PREP_DURATION) {
             startIconClash();
             phase = Phase.ICON_CLASH;
@@ -244,7 +237,7 @@ public class DamageResolutionAnimator {
         defNumber.flyTo(centerX, centerY, ICON_CLASH_DURATION);
     }
     
-    private void advanceIconClash(float amount) {
+    private void advanceIconClash() {
         if (phaseElapsed >= ICON_CLASH_DURATION || 
             (atkNumber.hasImpacted() && defNumber.hasImpacted())) {
             
@@ -270,7 +263,7 @@ public class DamageResolutionAnimator {
         }
     }
     
-    private void advanceIconImpact(float amount) {
+    private void advanceIconImpact() {
         if (phaseElapsed >= ICON_IMPACT_DURATION) {
             phase = Phase.WAIT_FOR_IMPACT_CLICK;
             waitingForClick = true;
@@ -308,7 +301,7 @@ public class DamageResolutionAnimator {
         resultNumber.flyTo(defenderTargetX, defenderTargetY, RESULT_FLIGHT_DURATION);
     }
     
-    private void advanceResultFlight(float amount) {
+    private void advanceResultFlight() {
         if (phaseElapsed >= RESULT_FLIGHT_DURATION || resultNumber.hasImpacted()) {
             impactEffect.triggerFlash(defenderTargetX, defenderTargetY, 40f, DAMAGE_RESULT_COLOR);
             impactEffect.triggerShockwave(defenderTargetX, defenderTargetY);
@@ -322,21 +315,21 @@ public class DamageResolutionAnimator {
         }
     }
     
-    private void advanceImpactFlash(float amount) {
+    private void advanceImpactFlash() {
         if (phaseElapsed >= IMPACT_FLASH_DURATION) {
             phase = Phase.POST_IMPACT_PAUSE;
             phaseElapsed = 0f;
         }
     }
     
-    private void advanceDefenderPulse(float amount) {
+    private void advanceDefenderPulse() {
         if (phaseElapsed >= DEFENDER_PULSE_DURATION) {
             phase = Phase.POST_IMPACT_PAUSE;
             phaseElapsed = 0f;
         }
     }
     
-    private void advancePostImpactPause(float amount) {
+    private void advancePostImpactPause() {
         if (phaseElapsed >= POST_IMPACT_PAUSE_DURATION) {
             if (combo && comboDamage > 0) {
                 phase = Phase.COMBO_PAUSE;
@@ -348,7 +341,7 @@ public class DamageResolutionAnimator {
         }
     }
     
-    private void advanceComboPause(float amount) {
+    private void advanceComboPause() {
         if (phaseElapsed >= COMBO_PAUSE_DURATION) {
             comboResultNumber = new FlyingNumber();
             comboResultNumber.setValue(comboDamage);
@@ -361,7 +354,7 @@ public class DamageResolutionAnimator {
         }
     }
     
-    private void advanceComboSecondClash(float amount) {
+    private void advanceComboSecondClash() {
         if (phaseElapsed >= RESULT_FLIGHT_DURATION || 
             (comboResultNumber != null && comboResultNumber.hasImpacted())) {
             
@@ -377,15 +370,11 @@ public class DamageResolutionAnimator {
         }
     }
     
-    private void advanceComboSecondImpact(float amount) {
+    private void advanceComboSecondImpact() {
         if (phaseElapsed >= IMPACT_FLASH_DURATION) {
             phase = Phase.COMPLETE;
             complete = true;
         }
-    }
-    
-    private float easeOutQuad(float t) {
-        return 1f - (1f - t) * (1f - t);
     }
     
     public void render(float panelX, float panelY, float panelHeight, float alphaMult) {
@@ -393,15 +382,11 @@ public class DamageResolutionAnimator {
         
         renderNumbersOnIcons(panelX, panelY, panelHeight, alphaMult);
         
-        if (shatterEffect != null) {
-            shatterEffect.render(panelX, panelY, panelHeight, alphaMult);
-        }
+        shatterEffect.render(panelX, panelY, panelHeight, alphaMult);
         
         renderResultNumbers(panelX, panelY, panelHeight, alphaMult);
         
-        if (impactEffect != null) {
-            impactEffect.render(panelX, panelY, panelHeight, alphaMult);
-        }
+        impactEffect.render(panelX, panelY, panelHeight, alphaMult);
     }
     
     private void renderNumbersOnIcons(float panelX, float panelY, float panelHeight, float alphaMult) {
@@ -477,12 +462,8 @@ public class DamageResolutionAnimator {
             comboResultNumber.forceComplete();
         }
         
-        if (impactEffect != null) {
-            impactEffect.clear();
-        }
-        if (shatterEffect != null) {
-            shatterEffect.clear();
-        }
+        impactEffect.clear();
+        shatterEffect.clear();
     }
     
     public void cleanup() {
@@ -503,12 +484,8 @@ public class DamageResolutionAnimator {
             comboResultNumber = null;
         }
         
-        if (impactEffect != null) {
-            impactEffect.clear();
-        }
-        if (shatterEffect != null) {
-            shatterEffect.clear();
-        }
+        impactEffect.clear();
+        shatterEffect.clear();
         
         phase = Phase.IDLE;
         phaseElapsed = 0f;
@@ -516,20 +493,8 @@ public class DamageResolutionAnimator {
         waitingForClick = false;
     }
     
-    public int getDefenderFinalHp() {
-        return defenderFinalHp;
-    }
-    
     public boolean isPerforation() {
         return perforation;
-    }
-    
-    public int getResultValue() {
-        return resultValue;
-    }
-    
-    public int getComboDamage() {
-        return comboDamage;
     }
     
     public Phase getPhase() {
@@ -544,7 +509,4 @@ public class DamageResolutionAnimator {
         return isDraw;
     }
     
-    public boolean isAttackWins() {
-        return attackWins;
     }
-}

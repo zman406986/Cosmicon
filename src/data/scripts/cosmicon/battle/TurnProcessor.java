@@ -489,19 +489,13 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         boolean playerIsAttacker = state.isPlayerAttacker();
         if (postPrismaticAttack != prePrismaticAttack) {
             int delta = postPrismaticAttack - prePrismaticAttack;
-            if (delta != 0) {
-                boolean forPlayer = playerIsAttacker;
-                state.queueValueChange(forPlayer, "PRISMATIC", delta);
-                state.notifyValueChange(forPlayer, "PRISMATIC", prePrismaticAttack, postPrismaticAttack, delta);
-            }
+            state.queueValueChange(playerIsAttacker, "PRISMATIC", delta);
+            state.notifyValueChange(playerIsAttacker, "PRISMATIC", prePrismaticAttack, postPrismaticAttack, delta);
         }
         if (postPrismaticDefense != prePrismaticDefense) {
             int delta = postPrismaticDefense - prePrismaticDefense;
-            if (delta != 0) {
-                boolean forPlayer = !playerIsAttacker;
-                state.queueValueChange(forPlayer, "PRISMATIC", delta);
-                state.notifyValueChange(forPlayer, "PRISMATIC", prePrismaticDefense, postPrismaticDefense, delta);
-            }
+            state.queueValueChange(!playerIsAttacker, "PRISMATIC", delta);
+            state.notifyValueChange(!playerIsAttacker, "PRISMATIC", prePrismaticDefense, postPrismaticDefense, delta);
         }
 
         StatusEffectProcessor.BattleContext attackerContext = createBattleContext(state.isPlayerAttacker());

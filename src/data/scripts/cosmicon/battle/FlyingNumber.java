@@ -156,8 +156,7 @@ public class FlyingNumber {
         currentX = startX + (targetX - startX) * eased;
         currentY = startY + (targetY - startY) * eased;
         
-        float decelerationScale = 1f + 0.1f * (1f - eased);
-        scale = decelerationScale;
+        scale = 1f + 0.1f * (1f - eased);
     }
     
     private void advanceImpact() {
@@ -271,14 +270,13 @@ public class FlyingNumber {
         {
             GLStateUtil.resetBlendState();
 
-            Particle p = particle;
-            float glX = panelX + p.x;
-            float glY = CoordHelper.uiToGlY(panelY, panelHeight, p.y);
+            float glX = panelX + particle.x;
+            float glY = CoordHelper.uiToGlY(panelY, panelHeight, particle.y);
 
-            float size = 8f * p.scale;
+            float size = 8f * particle.scale;
             float halfSize = size / 2f;
 
-            float[] c = ColorHelper.toGLComponents(color, alphaMult * p.alpha);
+            float[] c = ColorHelper.toGLComponents(color, alphaMult * particle.alpha);
             GL11.glColor4f(c[0], c[1], c[2], c[3]);
             GL11.glBegin(GL11.GL_QUADS);
             GL11.glVertex2f(glX - halfSize, glY - halfSize);
@@ -301,14 +299,6 @@ public class FlyingNumber {
     
     public boolean hasImpacted() {
         return phase == Phase.IMPACT || phase == Phase.SHATTER || phase == Phase.COMPLETE;
-    }
-    
-    public float getCurrentX() {
-        return currentX;
-    }
-    
-    public float getCurrentY() {
-        return currentY;
     }
     
     public float getScale() {

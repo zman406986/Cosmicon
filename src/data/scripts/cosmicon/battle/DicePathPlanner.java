@@ -164,52 +164,11 @@ public class DicePathPlanner {
         return 1f + Math.round(normalized * 2f);
     }
     
-    
-    
-    public static List<PlannedPath> planPathsAppend(List<DiceType> types, List<Integer> results,
-                                                     float centerX, float centerY, float spacing,
-                                                     int existingCount, List<PlannedPath> existingPaths) {
-        int count = Math.min(types.size(), results.size());
-        List<PlannedPath> paths = new ArrayList<>(count);
-        
-        float totalWidth = spacing * (count - 1) + DICE_SIZE;
-        float startX = centerX - totalWidth / 2f;
-        float startY = centerY - DICE_SIZE / 2f;
-        
-        float targetStartX = centerX - (existingCount + count - 1) * spacing / 2f - DICE_SIZE / 2f;
-        
-        List<float[]> plannedEndpoints = new ArrayList<>();
-        for (PlannedPath existing : existingPaths) {
-            plannedEndpoints.add(new float[]{existing.startX, existing.startY});
-        }
-        
-        for (int i = 0; i < count; i++) {
-            float diceX = startX + i * spacing;
-            float delay = (existingCount + i) * 0.05f;
-            
-            float targetX = targetStartX + (existingCount + i) * spacing;
-            float targetY = centerY - DICE_SIZE / 2f;
-            
-            PlannedPath path = planSingleDice(existingCount + i, diceX, startY, delay, plannedEndpoints, 
-                                              existingCount + count, targetX, targetY);
-            paths.add(path);
-            
-            float endX = diceX + (float)Math.cos(Math.toRadians(path.rotation)) * path.travelDistance;
-            float endY = startY + (float)Math.sin(Math.toRadians(path.rotation)) * path.travelDistance;
-            plannedEndpoints.add(new float[]{endX, endY});
-        }
-        
-        return paths;
-    }
-    
     public static List<PlannedPath> planRerollPaths(List<Integer> indices,
                                                      List<float[]> allDicePositions) {
         List<PlannedPath> paths = new ArrayList<>();
 
-        for (int i = 0; i < indices.size(); i++)
-        {
-            int diceIndex = indices.get(i);
-            
+        for (int diceIndex : indices) {
             if (diceIndex >= allDicePositions.size()) {
                 paths.add(null);
                 continue;
@@ -220,10 +179,8 @@ public class DicePathPlanner {
             float startY = startPos[1];
 
             List<float[]> otherPositions = new ArrayList<>();
-            for (int j = 0; j < allDicePositions.size(); j++)
-            {
-                if (j != diceIndex)
-                {
+            for (int j = 0; j < allDicePositions.size(); j++) {
+                if (j != diceIndex) {
                     otherPositions.add(allDicePositions.get(j));
                 }
             }

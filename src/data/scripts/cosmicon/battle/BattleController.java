@@ -93,10 +93,6 @@ public class BattleController implements BattleState.DamageAnimationCallback {
         turnProcessor.advanceToNextTurn();
     }
 
-    public void onTogglePrismaticMode() {
-        state.togglePlayerPrismaticMode();
-    }
-
     public BattleState getState() {
         return state;
     }
@@ -107,10 +103,6 @@ public class BattleController implements BattleState.DamageAnimationCallback {
 
     public void advanceToSelectPhase() {
         turnProcessor.advanceToSelectPhase();
-    }
-
-    public void advanceToAttackPhase() {
-        turnProcessor.advanceToAttackPhase();
     }
 
     public void advanceToDefenderSelectPhase() {

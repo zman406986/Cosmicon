@@ -439,13 +439,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         opponentPurpleLabel = createCountLabel(diceX, diceStartY + 52);
         opponentBlueLabel = createCountLabel(diceX, diceStartY + 78);
 
-        float halfH = BattleRenderingUtils.PANEL_HEIGHT / 2f;
-        float iconSize = halfH * BattleRenderingUtils.ROLE_ICON_SIZE_RATIO;
-        float bottomIconCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
-        float bottomIconCenterY = (halfH - iconSize) / 2f + iconSize / 2f;
-        float topIconCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
-        float topIconCenterY = halfH + (halfH - iconSize) / 2f + iconSize / 2f;
-
         attackerValueLabel = settings.createLabel("", Fonts.INSIGNIA_LARGE);
         attackerValueLabel.setColor(ColorHelper.ATTACK_VALUE);
         attackerValueLabel.setAlignment(Alignment.MID);
@@ -494,14 +487,11 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         float opponentCardCenterX = opponentCardX + BattleRenderingUtils.CARD_WIDTH / 2f;
         float opponentCardCenterY = opponentCardY + BattleRenderingUtils.CARD_HEIGHT / 2f;
         
-        float attackerStartX = state.isPlayerAttacker() ? playerCardCenterX : opponentCardCenterX;
-        float attackerStartY = state.isPlayerAttacker() ? playerCardCenterY : opponentCardCenterY;
         float defenderTargetX = state.isPlayerAttacker() ? opponentCardCenterX : playerCardCenterX;
         float defenderTargetY = state.isPlayerAttacker() ? opponentCardCenterY : playerCardCenterY;
         
         damageAnimator = new DamageResolutionAnimator();
-        damageAnimator.startResolution(state, result, attackerStartX, attackerStartY,
-                                        defenderTargetX, defenderTargetY, panel);
+        damageAnimator.startResolution(state, defenderTargetX, defenderTargetY, panel);
     }
 
     public void updateLabelsFromState() {
@@ -629,11 +619,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         int uses = battleState.getPlayerPrismaticUses();
         prismaticUsesLabel.setText(String.valueOf(uses));
 
-        boolean playerShouldSelect = (battleState.isAttacker(true) && 
-            battleState.getCurrentPhase() == Phase.SELECTING_ATTACK) ||
-            (battleState.isDefender(true) && 
-            battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE);
-
         if (battleState.isPlayerPrismaticModeActive()) {
             prismaticUsesLabel.setColor(ColorHelper.OPPONENT_NAME);
         } else if (uses > 0) {
@@ -707,7 +692,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         prismaticRolledLabel.setOpacity(1f);
         
         float labelWidth = 60f;
-        float labelHeight = 20f;
         prismaticRolledLabel.getPosition().inTL(diceX + DiceAnimator.DICE_SIZE / 2f - labelWidth / 2f, 
                                                  diceY + DiceAnimator.DICE_SIZE + PRISMATIC_ROLLED_LABEL_OFFSET_Y);
     }
@@ -878,23 +862,13 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
     }
 
     @Override
-    public void onPrismaticDiceRolled(boolean isPlayer, List<PrismaticDiceInstance> dice) {
-        // TODO: Handle prismatic dice animation for player/opponent
-    }
-
-    @Override
-    public void onMustSelectDiceMarked(boolean isPlayer, List<PrismaticDiceInstance> mustSelect) {
-        // TODO: Handle must-select dice marking for player/opponent
-    }
-
-    @Override
     public void onDamageAnimationStart(DamageResolver.DamageResult result) {
         if (battleState == null) return;
         
         pendingDamageResult = result;
         
-        boolean hasAttackerChanges = battleState.getPendingValueChanges(battleState.isPlayerAttacker()).size() > 0;
-        boolean hasDefenderChanges = battleState.getPendingValueChanges(!battleState.isPlayerAttacker()).size() > 0;
+        boolean hasAttackerChanges = !battleState.getPendingValueChanges(battleState.isPlayerAttacker()).isEmpty();
+        boolean hasDefenderChanges = !battleState.getPendingValueChanges(!battleState.isPlayerAttacker()).isEmpty();
         
         if (hasAttackerChanges || hasDefenderChanges) {
             startValueChangeAnimations();
@@ -916,12 +890,11 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         float topIconCenterY = halfH + (halfH - iconSize) / 2f + iconSize / 2f;
         
         boolean playerIsAttacker = battleState.isPlayerAttacker();
-        boolean attackerIsBottom = playerIsAttacker;
         
-        float attackerCenterX = attackerIsBottom ? bottomIconCenterX : topIconCenterX;
-        float attackerCenterY = attackerIsBottom ? bottomIconCenterY : topIconCenterY;
-        float defenderCenterX = attackerIsBottom ? topIconCenterX : bottomIconCenterX;
-        float defenderCenterY = attackerIsBottom ? topIconCenterY : bottomIconCenterY;
+        float attackerCenterX = playerIsAttacker ? bottomIconCenterX : topIconCenterX;
+        float attackerCenterY = playerIsAttacker ? bottomIconCenterY : topIconCenterY;
+        float defenderCenterX = playerIsAttacker ? topIconCenterX : bottomIconCenterX;
+        float defenderCenterY = playerIsAttacker ? topIconCenterY : bottomIconCenterY;
         
         int attackValue = battleState.getAttackValue();
         int defenseValue = battleState.getDefenseValue();

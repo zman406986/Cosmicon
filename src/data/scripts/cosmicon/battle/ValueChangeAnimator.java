@@ -4,8 +4,6 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.lwjgl.opengl.GL11;
-
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.SettingsAPI;
 import com.fs.starfarer.api.ui.Alignment;
@@ -23,7 +21,6 @@ public class ValueChangeAnimator {
     private static final float DELTA_SHOW_DURATION = 0.3f;
     private static final float FLASH_DURATION = 0.15f;
     private static final float DELTA_FLY_DURATION = 0.4f;
-    private static final float CHANGE_DELAY = 0.1f;
     private static final float LABEL_HEIGHT = 30f;
     private static final float DELTA_START_OFFSET_Y = -20f;
     private static final float DELTA_FLY_DISTANCE = 40f;
@@ -43,7 +40,6 @@ public class ValueChangeAnimator {
     private final List<QueuedChange> changeQueue;
     private Phase phase;
     private float elapsed;
-    private float delayElapsed;
     
     private float iconCenterX;
     private float iconCenterY;
@@ -57,7 +53,6 @@ public class ValueChangeAnimator {
     
     private float deltaCurrentY;
     private float deltaAlpha;
-    private float deltaScale;
     private float flashIntensity;
     
     private boolean isAttack;
@@ -67,7 +62,6 @@ public class ValueChangeAnimator {
         changeQueue = new ArrayList<>();
         phase = Phase.IDLE;
         elapsed = 0f;
-        delayElapsed = 0f;
         labelsCreated = false;
         currentValue = 0;
         iconSize = 0f;
@@ -94,7 +88,6 @@ public class ValueChangeAnimator {
             elapsed = 0f;
             deltaCurrentY = iconCenterY + DELTA_START_OFFSET_Y;
             deltaAlpha = 0f;
-            deltaScale = 0.5f;
             flashIntensity = 0f;
             
             createLabels();
@@ -145,7 +138,6 @@ public class ValueChangeAnimator {
     private void advanceDeltaShow() {
         if (elapsed >= DELTA_SHOW_DURATION) {
             deltaAlpha = 1f;
-            deltaScale = 1f;
             elapsed = 0f;
             phase = Phase.FLASH;
             return;
@@ -154,9 +146,6 @@ public class ValueChangeAnimator {
         float progress = elapsed / DELTA_SHOW_DURATION;
         
         deltaAlpha = easeOutQuad(progress);
-        
-        float bounce = (float) Math.sin(progress * Math.PI);
-        deltaScale = 0.5f + 0.7f * bounce + 0.5f * progress;
     }
 
     private void advanceFlash() {
@@ -194,8 +183,6 @@ public class ValueChangeAnimator {
             return;
         }
         
-        delayElapsed = 0f;
-        
         QueuedChange next = changeQueue.get(0);
         deltaLabel.setText(next.deltaText);
         deltaLabel.setColor(next.color);
@@ -205,7 +192,6 @@ public class ValueChangeAnimator {
         
         deltaCurrentY = iconCenterY + DELTA_START_OFFSET_Y;
         deltaAlpha = 0f;
-        deltaScale = 0.5f;
         flashIntensity = 0f;
         
         elapsed = 0f;
@@ -270,26 +256,6 @@ public class ValueChangeAnimator {
         return currentValue;
     }
 
-    public void setCurrentValue(int value) {
-        this.currentValue = value;
-        if (totalLabel != null && labelsCreated) {
-            totalLabel.setText(String.valueOf(value));
-        }
-    }
-
-    public boolean hasQueuedChanges() {
-        return !changeQueue.isEmpty();
-    }
-
-    public void forceComplete() {
-        phase = Phase.COMPLETE;
-        elapsed = 0f;
-        changeQueue.clear();
-        if (deltaLabel != null) {
-            deltaLabel.setOpacity(0f);
-        }
-    }
-
     public void cleanup() {
         if (deltaLabel != null && panel != null) {
             panel.removeComponent((UIComponentAPI) deltaLabel);
@@ -308,12 +274,10 @@ public class ValueChangeAnimator {
         cleanup();
         phase = Phase.IDLE;
         elapsed = 0f;
-        delayElapsed = 0f;
         currentValue = 0;
         iconSize = 0f;
         deltaCurrentY = 0f;
         deltaAlpha = 0f;
-        deltaScale = 1f;
         flashIntensity = 0f;
     }
 }

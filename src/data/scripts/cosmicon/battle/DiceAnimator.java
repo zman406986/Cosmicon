@@ -2,7 +2,6 @@ package data.scripts.cosmicon.battle;
 
 import org.lwjgl.opengl.GL11;
 
-import com.fs.starfarer.api.ui.CustomPanelAPI;
 import com.fs.starfarer.api.graphics.SpriteAPI;
 
 import data.scripts.cosmicon.util.CoordHelper;
@@ -52,8 +51,6 @@ public class DiceAnimator {
     private float travelDistance;
     private float travelProgress;
     
-    private float centeringStartXOffset;
-    private float centeringStartYOffset;
     private float centeringStartX;
     private float centeringStartY;
     private float targetCenterX;
@@ -89,7 +86,7 @@ public DiceAnimator() {
         phaseElapsed = 0f;
     }
     
-    public void init(CustomPanelAPI panel) {
+    public void init() {
     }
     
 public void start(DiceType type, int finalValue, float x, float y, float delay) {
@@ -285,8 +282,6 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
             scale = 1f;
             centeringStartX = x + posXOffset;
             centeringStartY = y + posYOffset;
-            centeringStartXOffset = posXOffset;
-            centeringStartYOffset = posYOffset;
             phase = Phase.WAITING_FOR_CENTERING;
             phaseElapsed = 0f;
         }
@@ -485,15 +480,7 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
     public float getRotation() {
         return rotation;
     }
-    
-    public float getPosXOffset() {
-        return posXOffset;
-    }
-    
-    public float getPosYOffset() {
-        return posYOffset;
-    }
-    
+
     public boolean isCenteredPhase() {
         return phase == Phase.PICKUP || phase == Phase.CENTERING_TRAVEL ||
                phase == Phase.CENTERING_DROP || phase == Phase.COMPLETE ||

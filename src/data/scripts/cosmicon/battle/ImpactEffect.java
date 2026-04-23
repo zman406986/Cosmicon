@@ -47,10 +47,6 @@ public class ImpactEffect {
         this.flashActive = true;
     }
     
-    public void triggerFlash(float x, float y, float size) {
-        triggerFlash(x, y, size, new Color(255, 255, 200));
-    }
-    
     public void triggerParticles(float x, float y, int count, Color color) {
         for (int i = 0; i < count; i++) {
             Particle p = new Particle();
@@ -70,10 +66,6 @@ public class ImpactEffect {
             
             particles.add(p);
         }
-    }
-    
-    public void triggerParticles(float x, float y, int count) {
-        triggerParticles(x, y, count, new Color(255, 200, 100));
     }
     
     public void triggerShockwave(float x, float y) {
