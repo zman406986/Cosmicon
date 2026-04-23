@@ -41,9 +41,9 @@ public class DiceRollManager {
             animator.init(panel);
             DicePathPlanner.PlannedPath path = paths.get(i);
             
-            animator.start(types.get(i), results.get(i), path.startX, path.startY, path.delay,
-                           path.rotation, path.travelDistance, path.bounceCount, path.bounceHeights,
-                           path.targetCenterX, path.targetCenterY);
+            animator.start(types.get(i), results.get(i), path.startX(), path.startY(), path.delay(),
+                    path.rotation(), path.travelDistance(), path.bounceCount(), path.bounceHeights(),
+                    path.targetCenterX(), path.targetCenterY());
             animators.add(animator);
         }
     }
@@ -127,9 +127,9 @@ public void advance(float amount) {
             animator.init(panel);
             DicePathPlanner.PlannedPath path = newPaths.get(i);
             
-            animator.start(types.get(i), results.get(i), path.startX, path.startY, path.delay,
-                           path.rotation, path.travelDistance, path.bounceCount, path.bounceHeights,
-                           path.targetCenterX, path.targetCenterY);
+            animator.start(types.get(i), results.get(i), path.startX(), path.startY(), path.delay(),
+                    path.rotation(), path.travelDistance(), path.bounceCount(), path.bounceHeights(),
+                    path.targetCenterX(), path.targetCenterY());
             animators.add(animator);
         }
     }
@@ -148,9 +148,9 @@ public void advance(float amount) {
 
         DiceAnimator animator = new DiceAnimator();
         animator.init(panel);
-        animator.start(type, value, path.startX, path.startY, path.delay,
-                       path.rotation, path.travelDistance, path.bounceCount, path.bounceHeights,
-                       path.targetCenterX, path.targetCenterY);
+        animator.start(type, value, path.startX(), path.startY(), path.delay(),
+                path.rotation(), path.travelDistance(), path.bounceCount(), path.bounceHeights(),
+                path.targetCenterX(), path.targetCenterY());
         animators.add(animator);
     }
     
@@ -203,9 +203,9 @@ public void advance(float amount) {
             if (animatorIndex >= 0 && animatorIndex < animators.size()) {
                 DiceAnimator animator = animators.get(animatorIndex);
                 DicePathPlanner.PlannedPath path = rerollPaths.get(i);
-                animator.rerollWithNewPath(newValues.get(i), path.rotation, path.travelDistance,
-                                            path.bounceCount, path.bounceHeights,
-                                            path.targetCenterX, path.targetCenterY);
+                animator.rerollWithNewPath(newValues.get(i), path.rotation(), path.travelDistance(),
+                        path.bounceCount(), path.bounceHeights(),
+                        path.targetCenterX(), path.targetCenterY());
             }
         }
     }
@@ -232,9 +232,9 @@ public void advance(float amount) {
             animator.init(panel);
             DicePathPlanner.PlannedPath path = paths.get(i);
             
-            animator.start(types.get(i), results.get(i), path.startX, path.startY, path.delay,
-                           path.rotation, path.travelDistance, path.bounceCount, path.bounceHeights,
-                           path.targetCenterX, path.targetCenterY);
+            animator.start(types.get(i), results.get(i), path.startX(), path.startY(), path.delay(),
+                    path.rotation(), path.travelDistance(), path.bounceCount(), path.bounceHeights(),
+                    path.targetCenterX(), path.targetCenterY());
             opponentAnimators.add(animator);
         }
     }
@@ -254,9 +254,9 @@ public void advance(float amount) {
             if (animatorIndex >= 0 && animatorIndex < opponentAnimators.size()) {
                 DiceAnimator animator = opponentAnimators.get(animatorIndex);
                 DicePathPlanner.PlannedPath path = rerollPaths.get(i);
-                animator.rerollWithNewPath(newValues.get(i), path.rotation, path.travelDistance,
-                                            path.bounceCount, path.bounceHeights,
-                                            path.targetCenterX, path.targetCenterY);
+                animator.rerollWithNewPath(newValues.get(i), path.rotation(), path.travelDistance(),
+                        path.bounceCount(), path.bounceHeights(),
+                        path.targetCenterX(), path.targetCenterY());
             }
         }
     }

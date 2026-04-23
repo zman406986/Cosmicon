@@ -13,31 +13,10 @@ public class DicePathPlanner {
     private static final float MAX_TRAVEL_DISTANCE = 500f;
     private static final int MAX_RETRIES = 8;
     private static final float TIME_STEP = 0.05f;
-    
-    public static class PlannedPath {
-        public final float rotation;
-        public final float travelDistance;
-        public final int bounceCount;
-        public final float[] bounceHeights;
-        public final float startX;
-        public final float startY;
-        public final float delay;
-        public final float targetCenterX;
-        public final float targetCenterY;
-        
-        public PlannedPath(float rotation, float travelDistance, int bounceCount,
-                          float[] bounceHeights, float startX, float startY, float delay,
-                          float targetCenterX, float targetCenterY) {
-            this.rotation = rotation;
-            this.travelDistance = travelDistance;
-            this.bounceCount = bounceCount;
-            this.bounceHeights = bounceHeights;
-            this.startX = startX;
-            this.startY = startY;
-            this.delay = delay;
-            this.targetCenterX = targetCenterX;
-            this.targetCenterY = targetCenterY;
-        }
+
+    public record PlannedPath(float rotation, float travelDistance, int bounceCount, float[] bounceHeights,
+                              float startX, float startY, float delay, float targetCenterX, float targetCenterY)
+    {
     }
     
     public static List<PlannedPath> planPaths(List<DiceType> types, List<Integer> results,
@@ -85,7 +64,7 @@ public class DicePathPlanner {
             float endX = startX + (float)Math.cos(Math.toRadians(rotation)) * travelDistance;
             float endY = startY + (float)Math.sin(Math.toRadians(rotation)) * travelDistance;
             
-            if (!collidesWithPlannedPaths(endX, endY, plannedEndpoints, COLLISION_BUFFER)) {
+            if (collidesWithPlannedPaths(endX, endY, plannedEndpoints, COLLISION_BUFFER)) {
                 bestRotation = rotation;
                 bestTravelDistance = travelDistance;
                 foundValid = true;
@@ -120,10 +99,10 @@ public class DicePathPlanner {
             float dy = Math.abs(y - endpoint[1]);
             float minDist = DICE_SIZE + buffer;
             if (dx < minDist && dy < minDist) {
-                return true;
+                return false;
             }
         }
-        return false;
+        return true;
     }
     
     private static float[] findCollisionFreeTiming(int diceIndex, float startX, float startY,
@@ -151,9 +130,9 @@ public class DicePathPlanner {
                             MIN_TRAVEL_DISTANCE, MAX_TRAVEL_DISTANCE * 0.3f};
         for (float dist : distances) {
             dist = Math.max(MIN_TRAVEL_DISTANCE, Math.min(MAX_TRAVEL_DISTANCE, dist));
-            if (!collidesWithPlannedPaths(
-                    startX + (float)Math.cos(Math.toRadians(rotation)) * dist,
-                    startY + (float)Math.sin(Math.toRadians(rotation)) * dist,
+            if (collidesWithPlannedPaths(
+                    startX + (float) Math.cos(Math.toRadians(rotation)) * dist,
+                    startY + (float) Math.sin(Math.toRadians(rotation)) * dist,
                     plannedEndpoints, COLLISION_BUFFER)) {
                 return new float[]{baseDelay, dist};
             }
@@ -236,27 +215,29 @@ public class DicePathPlanner {
     public static List<PlannedPath> planRerollPaths(List<Integer> indices, List<Integer> results,
                                                      List<float[]> allDicePositions) {
         List<PlannedPath> paths = new ArrayList<>();
-        
-        for (int i = 0; i < indices.size(); i++) {
-            int diceIndex = indices.get(i);
+
+        for (int diceIndex : indices)
+        {
             if (diceIndex >= allDicePositions.size()) continue;
-            
+
             float[] startPos = allDicePositions.get(diceIndex);
             float startX = startPos[0];
             float startY = startPos[1];
-            
+
             float targetX = startX;
             float targetY = startY;
-            
+
             List<float[]> otherPositions = new ArrayList<>();
-            for (int j = 0; j < allDicePositions.size(); j++) {
-                if (j != diceIndex) {
+            for (int j = 0; j < allDicePositions.size(); j++)
+            {
+                if (j != diceIndex)
+                {
                     otherPositions.add(allDicePositions.get(j));
                 }
             }
-            
-            PlannedPath path = planSingleDice(diceIndex, startX, startY, 0f, otherPositions, 
-                                              allDicePositions.size(), targetX, targetY);
+
+            PlannedPath path = planSingleDice(diceIndex, startX, startY, 0f, otherPositions,
+                    allDicePositions.size(), targetX, targetY);
             paths.add(path);
         }
         
