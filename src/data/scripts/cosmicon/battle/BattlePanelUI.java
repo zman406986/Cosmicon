@@ -30,7 +30,8 @@ import data.scripts.Strings;
 import data.scripts.CosmiconConfig;
 import data.scripts.cosmicon.battle.BattleState.BattleEventListener;
 import data.scripts.cosmicon.battle.BattleState.Phase;
-import data.scripts.cosmicon.battle.DamageResolver.DamageResult;
+import data.scripts.cosmicon.battle.BattleState.TurnType;
+
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
@@ -71,10 +72,13 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
     private PrismaticDiceSelectionPopup prismaticPopup;
     private CustomPanelAPI prismaticPopupPanel;
     private boolean prismaticPopupActive;
-    private LabelAPI prismaticUsesLabel;
-    private LabelAPI prismaticFaceMappingLabel;
-    private LabelAPI prismaticEffectLabel;
-    private LabelAPI prismaticRolledLabel;
+    private LabelAPI playerPrismaticUsesLabel;
+    private LabelAPI playerPrismaticFaceMappingLabel;
+    private LabelAPI playerPrismaticEffectLabel;
+    private LabelAPI playerPrismaticRolledLabel;
+    private LabelAPI opponentPrismaticUsesLabel;
+    private LabelAPI opponentPrismaticFaceMappingLabel;
+    private LabelAPI opponentPrismaticEffectLabel;
     private LabelAPI phaseLabel;
     private LabelAPI instructionLabel;
     private LabelAPI playerHpLabel;
@@ -95,6 +99,14 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
     private LabelAPI opponentPurpleLabel;
     private LabelAPI opponentBlueLabel;
     private LabelAPI clickHintLabel;
+    private LabelAPI attackerSelectionLabel;
+    private LabelAPI attackerEffectLabel;
+    private LabelAPI defenderSelectionLabel;
+    private LabelAPI defenderEffectLabel;
+    private LabelAPI attackerConfirmedSelectionLabel;
+    private LabelAPI attackerConfirmedEffectLabel;
+    private LabelAPI attackerIconValueLabel;
+    private LabelAPI defenderIconValueLabel;
 
     private float panelX;
     private float panelY;
@@ -104,6 +116,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
     private boolean diceAnimating;
     private boolean dicePreviewActive;
     private float dicePreviewDelay;
+    private boolean waitingForClickToRoll;
+    private float opponentAutoRollDelay;
+    private static final float OPPONENT_AUTO_ROLL_DELAY = 0.8f;
 
     private boolean opponentDiceAnimating;
     private float opponentRollDelay;
@@ -112,11 +127,14 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
     private float targetRoleTransition;
     private static final float ROLE_TRANSITION_DURATION = 0.4f;
     private boolean lastPlayerWasAttacker;
+    private float cachedRotationAngle;
 
     private int lastMouseButtonState;
 
-    private float prismaticBtnX;
-    private float prismaticBtnY;
+    private float playerPrismaticBtnX;
+    private float playerPrismaticBtnY;
+    private float opponentPrismaticBtnX;
+    private float opponentPrismaticBtnY;
     private PrismaticDiceInstance pendingPrismaticInstance;
     private int pendingPrismaticAnimatorIndex = -1;
 
@@ -128,9 +146,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
     
     private ValueChangeAnimator attackerValueAnimator;
     private ValueChangeAnimator defenderValueAnimator;
-    private LabelAPI attackerValueLabel;
-    private LabelAPI defenderValueLabel;
     private boolean valueAnimationPending;
+    
+    private float preClashTimer;
+    private static final float PRE_CLASH_DELAY = 1.5f;
 
     public BattlePanelUI() {
         this.diceHitboxes = new ArrayList<>();
@@ -138,11 +157,15 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         this.roleTransitionProgress = 0f;
         this.targetRoleTransition = 0f;
         this.lastPlayerWasAttacker = true;
+        this.cachedRotationAngle = 0f;
         this.opponentDiceAnimating = false;
         this.opponentRollDelay = 0f;
         this.dicePreviewActive = false;
         this.dicePreviewDelay = 0f;
+        this.waitingForClickToRoll = false;
+        this.opponentAutoRollDelay = 0f;
         this.valueAnimationPending = false;
+        this.preClashTimer = 0f;
     }
 
     public void setBattleController(BattleController controller) {
@@ -183,6 +206,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         pendingDamageResult = null;
         battleState = null;
         battleController = null;
+        waitingForClickToRoll = false;
+        opponentAutoRollDelay = 0f;
+        preClashTimer = 0f;
     }
 
     
@@ -237,46 +263,83 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         rerollButton.setQuickMode(true);
         rerollButton.getPosition().inTL(centerX + 10f, bottomY);
 
-        float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
-        float playerCardY = BattleRenderingUtils.MARGIN;
+        float opponentCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
+        float opponentCardY = BattleRenderingUtils.MARGIN;
 
-        prismaticBtnX = playerCardX - 60f;
-        prismaticBtnY = playerCardY + 40f;
+        opponentPrismaticBtnX = opponentCardX - 60f;
+        opponentPrismaticBtnY = opponentCardY + 40f;
 
-        prismaticUsesLabel = settings.createLabel("2", Fonts.DEFAULT_SMALL);
-        prismaticUsesLabel.setColor(ColorHelper.PRISMATIC_GOLD);
-        prismaticUsesLabel.setAlignment(Alignment.MID);
-        panel.addComponent((UIComponentAPI) prismaticUsesLabel)
+        opponentPrismaticUsesLabel = settings.createLabel("2", Fonts.DEFAULT_SMALL);
+        opponentPrismaticUsesLabel.setColor(ColorHelper.PRISMATIC_GOLD);
+        opponentPrismaticUsesLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) opponentPrismaticUsesLabel)
             .setSize(40, 20)
-            .inTL(playerCardX - 55f, playerCardY + 85f);
+            .inTL(opponentCardX - 55f, opponentCardY + 85f);
 
-        prismaticFaceMappingLabel = settings.createLabel("", Fonts.DEFAULT_SMALL);
-        prismaticFaceMappingLabel.setColor(ColorHelper.PRISMATIC_GOLD);
-        prismaticFaceMappingLabel.setAlignment(Alignment.LMID);
-        panel.addComponent((UIComponentAPI) prismaticFaceMappingLabel)
+        opponentPrismaticFaceMappingLabel = settings.createLabel("", Fonts.DEFAULT_SMALL);
+        opponentPrismaticFaceMappingLabel.setColor(ColorHelper.PRISMATIC_GOLD);
+        opponentPrismaticFaceMappingLabel.setAlignment(Alignment.LMID);
+        panel.addComponent((UIComponentAPI) opponentPrismaticFaceMappingLabel)
             .setSize(180, 20)
-            .inTL(prismaticBtnX + PRISMATIC_FACE_MAPPING_OFFSET_X, prismaticBtnY);
-        prismaticFaceMappingLabel.setOpacity(0f);
+            .inTL(opponentPrismaticBtnX + PRISMATIC_FACE_MAPPING_OFFSET_X, opponentPrismaticBtnY);
+        opponentPrismaticFaceMappingLabel.setOpacity(0f);
 
-        prismaticEffectLabel = settings.createLabel("", Fonts.DEFAULT_SMALL);
-        prismaticEffectLabel.setColor(Color.LIGHT_GRAY);
-        prismaticEffectLabel.setAlignment(Alignment.LMID);
-        panel.addComponent((UIComponentAPI) prismaticEffectLabel)
+        opponentPrismaticEffectLabel = settings.createLabel("", Fonts.DEFAULT_SMALL);
+        opponentPrismaticEffectLabel.setColor(Color.LIGHT_GRAY);
+        opponentPrismaticEffectLabel.setAlignment(Alignment.LMID);
+        panel.addComponent((UIComponentAPI) opponentPrismaticEffectLabel)
             .setSize(180, 20)
-            .inTL(prismaticBtnX + PRISMATIC_FACE_MAPPING_OFFSET_X, prismaticBtnY + 20f);
-        prismaticEffectLabel.setOpacity(0f);
+            .inTL(opponentPrismaticBtnX + PRISMATIC_FACE_MAPPING_OFFSET_X, opponentPrismaticBtnY + 20f);
+        opponentPrismaticEffectLabel.setOpacity(0f);
 
-        prismaticRolledLabel = settings.createLabel("", Fonts.DEFAULT_SMALL);
-        prismaticRolledLabel.setColor(ColorHelper.PRISMATIC_BRIGHT);
-        prismaticRolledLabel.setAlignment(Alignment.MID);
-        panel.addComponent((UIComponentAPI) prismaticRolledLabel)
+        float playerCardX = BattleRenderingUtils.MARGIN;
+        float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+
+        playerPrismaticBtnX = BattleRenderingUtils.PANEL_WIDTH - opponentPrismaticBtnX - PRISMATIC_BTN_SIZE;
+        playerPrismaticBtnY = BattleRenderingUtils.PANEL_HEIGHT - opponentPrismaticBtnY - PRISMATIC_BTN_SIZE;
+
+        float playerPrismaticUsesX = BattleRenderingUtils.PANEL_WIDTH - (opponentCardX - 55f) - 40f;
+        float playerPrismaticUsesY = BattleRenderingUtils.PANEL_HEIGHT - (opponentCardY + 85f) - 20f;
+
+        playerPrismaticUsesLabel = settings.createLabel("2", Fonts.DEFAULT_SMALL);
+        playerPrismaticUsesLabel.setColor(ColorHelper.PRISMATIC_GOLD);
+        playerPrismaticUsesLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) playerPrismaticUsesLabel)
+            .setSize(40, 20)
+            .inTL(playerPrismaticUsesX, playerPrismaticUsesY);
+
+        float playerFaceMappingX = BattleRenderingUtils.PANEL_WIDTH - (opponentPrismaticBtnX + PRISMATIC_FACE_MAPPING_OFFSET_X) - 180f;
+        float playerFaceMappingY = BattleRenderingUtils.PANEL_HEIGHT - opponentPrismaticBtnY - 20f;
+
+        playerPrismaticFaceMappingLabel = settings.createLabel("", Fonts.DEFAULT_SMALL);
+        playerPrismaticFaceMappingLabel.setColor(ColorHelper.PRISMATIC_GOLD);
+        playerPrismaticFaceMappingLabel.setAlignment(Alignment.RMID);
+        panel.addComponent((UIComponentAPI) playerPrismaticFaceMappingLabel)
+            .setSize(180, 20)
+            .inTL(playerFaceMappingX, playerFaceMappingY);
+        playerPrismaticFaceMappingLabel.setOpacity(0f);
+
+        float playerEffectY = BattleRenderingUtils.PANEL_HEIGHT - (opponentPrismaticBtnY + 20f) - 20f;
+
+        playerPrismaticEffectLabel = settings.createLabel("", Fonts.DEFAULT_SMALL);
+        playerPrismaticEffectLabel.setColor(Color.LIGHT_GRAY);
+        playerPrismaticEffectLabel.setAlignment(Alignment.RMID);
+        panel.addComponent((UIComponentAPI) playerPrismaticEffectLabel)
+            .setSize(180, 20)
+            .inTL(playerFaceMappingX, playerEffectY);
+        playerPrismaticEffectLabel.setOpacity(0f);
+
+        playerPrismaticRolledLabel = settings.createLabel("", Fonts.DEFAULT_SMALL);
+        playerPrismaticRolledLabel.setColor(ColorHelper.PRISMATIC_BRIGHT);
+        playerPrismaticRolledLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) playerPrismaticRolledLabel)
             .setSize(60, 20);
-        prismaticRolledLabel.setOpacity(0f);
+        playerPrismaticRolledLabel.setOpacity(0f);
 
         TooltipMakerAPI exitTp = panel.createUIElement(btnWidth, btnHeight, false);
         exitTp.setActionListenerDelegate(this);
         panel.addUIElement(exitTp).inTL(BattleRenderingUtils.PANEL_WIDTH - btnWidth - 10f, 10f);
-        ButtonAPI exitButton = exitTp.addButton("Exit", ACTION_EXIT, btnWidth, btnHeight, 0f);
+        ButtonAPI exitButton = exitTp.addButton(Strings.get("phase.close"), ACTION_EXIT, btnWidth, btnHeight, 0f);
         exitButton.setQuickMode(true);
 
         TooltipMakerAPI abilityTp = panel.createUIElement(PASSIVE_BTN_WIDTH, PASSIVE_BTN_HEIGHT, false);
@@ -439,14 +502,14 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         opponentPurpleLabel = createCountLabel(diceX, diceStartY + 52);
         opponentBlueLabel = createCountLabel(diceX, diceStartY + 78);
 
-        attackerValueLabel = settings.createLabel("", Fonts.INSIGNIA_LARGE);
+        LabelAPI attackerValueLabel = settings.createLabel("", Fonts.INSIGNIA_LARGE);
         attackerValueLabel.setColor(ColorHelper.ATTACK_VALUE);
         attackerValueLabel.setAlignment(Alignment.MID);
         panel.addComponent((UIComponentAPI) attackerValueLabel)
             .setSize(60, 40);
         attackerValueLabel.setOpacity(0f);
 
-        defenderValueLabel = settings.createLabel("", Fonts.INSIGNIA_LARGE);
+        LabelAPI defenderValueLabel = settings.createLabel("", Fonts.INSIGNIA_LARGE);
         defenderValueLabel.setColor(ColorHelper.DEFENSE_VALUE);
         defenderValueLabel.setAlignment(Alignment.MID);
         panel.addComponent((UIComponentAPI) defenderValueLabel)
@@ -463,6 +526,78 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
             .setSize(200, 20)
             .inTL(BattleRenderingUtils.PANEL_WIDTH / 2f - 100f, BattleRenderingUtils.PANEL_HEIGHT - 30f);
         clickHintLabel.setOpacity(0f);
+
+        float halfH = BattleRenderingUtils.PANEL_HEIGHT / 2f;
+        float iconSize = halfH * BattleRenderingUtils.ROLE_ICON_SIZE_RATIO;
+        float topIconCenterY = (halfH - iconSize) / 2f + iconSize / 2f;
+        float bottomIconCenterY = halfH + (halfH - iconSize) / 2f + iconSize / 2f;
+        float centerX = BattleRenderingUtils.PANEL_WIDTH / 2f;
+        float labelWidth = 200f;
+
+        attackerSelectionLabel = settings.createLabel("", Fonts.DEFAULT_SMALL);
+        attackerSelectionLabel.setColor(ColorHelper.ATTACK_VALUE);
+        attackerSelectionLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) attackerSelectionLabel)
+            .setSize(labelWidth, 20)
+            .inTL(centerX - labelWidth / 2f, bottomIconCenterY + iconSize / 2f + 25f);
+        attackerSelectionLabel.setOpacity(0f);
+
+        attackerEffectLabel = settings.createLabel("", Fonts.DEFAULT_SMALL);
+        attackerEffectLabel.setColor(ColorHelper.PRISMATIC_GOLD);
+        attackerEffectLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) attackerEffectLabel)
+            .setSize(labelWidth, 20)
+            .inTL(centerX - labelWidth / 2f, bottomIconCenterY + iconSize / 2f + 5f);
+        attackerEffectLabel.setOpacity(0f);
+
+        defenderSelectionLabel = settings.createLabel("", Fonts.DEFAULT_SMALL);
+        defenderSelectionLabel.setColor(ColorHelper.DEFENSE_VALUE);
+        defenderSelectionLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) defenderSelectionLabel)
+            .setSize(labelWidth, 20)
+            .inTL(centerX - labelWidth / 2f, topIconCenterY - iconSize / 2f - 25f);
+        defenderSelectionLabel.setOpacity(0f);
+
+        defenderEffectLabel = settings.createLabel("", Fonts.DEFAULT_SMALL);
+        defenderEffectLabel.setColor(ColorHelper.PRISMATIC_GOLD);
+        defenderEffectLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) defenderEffectLabel)
+            .setSize(labelWidth, 20)
+            .inTL(centerX - labelWidth / 2f, topIconCenterY - iconSize / 2f - 5f);
+        defenderEffectLabel.setOpacity(0f);
+
+        float rightCenterX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH / 2f - BattleRenderingUtils.MARGIN;
+        float confirmedLabelWidth = 150f;
+        
+        attackerConfirmedSelectionLabel = settings.createLabel("", Fonts.DEFAULT_SMALL);
+        attackerConfirmedSelectionLabel.setColor(ColorHelper.ATTACK_VALUE);
+        attackerConfirmedSelectionLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) attackerConfirmedSelectionLabel)
+            .setSize(confirmedLabelWidth, 20)
+            .inTL(rightCenterX - confirmedLabelWidth / 2f, bottomIconCenterY + iconSize / 2f + 25f);
+        attackerConfirmedSelectionLabel.setOpacity(0f);
+
+        attackerConfirmedEffectLabel = settings.createLabel("", Fonts.DEFAULT_SMALL);
+        attackerConfirmedEffectLabel.setColor(ColorHelper.PRISMATIC_GOLD);
+        attackerConfirmedEffectLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) attackerConfirmedEffectLabel)
+            .setSize(confirmedLabelWidth, 20)
+            .inTL(rightCenterX - confirmedLabelWidth / 2f, bottomIconCenterY + iconSize / 2f + 5f);
+        attackerConfirmedEffectLabel.setOpacity(0f);
+        
+        attackerIconValueLabel = settings.createLabel("", Fonts.INSIGNIA_LARGE);
+        attackerIconValueLabel.setColor(ColorHelper.ATTACK_VALUE);
+        attackerIconValueLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) attackerIconValueLabel)
+            .setSize(80, 50);
+        attackerIconValueLabel.setOpacity(0f);
+        
+        defenderIconValueLabel = settings.createLabel("", Fonts.INSIGNIA_LARGE);
+        defenderIconValueLabel.setColor(ColorHelper.DEFENSE_VALUE);
+        defenderIconValueLabel.setAlignment(Alignment.MID);
+        panel.addComponent((UIComponentAPI) defenderIconValueLabel)
+            .setSize(80, 50);
+        defenderIconValueLabel.setOpacity(0f);
     }
 
     private LabelAPI createCountLabel(float x, float y) {
@@ -541,6 +676,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
             case ROLLING -> Strings.get("phase.rolling");
             case SELECTING_ATTACK -> playerAttacking ? Strings.get("phase.your_attack") : Strings.get("phase.opponent_attack");
             case SELECTING_DEFENSE -> playerAttacking ? Strings.get("phase.opponent_defense") : Strings.get("phase.your_defense");
+            case RESOLVING_PRE_CLASH -> Strings.get("phase.pre_clash");
             case RESOLVING -> Strings.get("phase.resolving");
             case WAITING_NEXT_TURN -> Strings.format("phase.turn_complete", battleState.getTurnNumber());
             case ENDED -> battleState.getWinner().equals("player") ? Strings.get("phase.victory") : Strings.get("phase.defeat");
@@ -574,6 +710,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         }
 
         updateButtons(phase);
+        updateSelectionDisplayLabels();
     }
 
     private void updateButtons(Phase phase) {
@@ -586,6 +723,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         String confirmText = switch (phase) {
             case SELECTING_ATTACK -> playerIsAttacker ? Strings.get("battle.confirm_attack") : Strings.get("phase.waiting");
             case SELECTING_DEFENSE -> playerIsAttacker ? Strings.get("phase.waiting") : Strings.get("battle.confirm_defense");
+            case RESOLVING_PRE_CLASH -> Strings.get("phase.resolving");
             case RESOLVING -> Strings.get("phase.resolving");
             case WAITING_NEXT_TURN -> Strings.get("phase.continue");
             case ENDED -> Strings.get("phase.close");
@@ -613,74 +751,394 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         updatePrismaticButton();
     }
 
+    private void updateSelectionDisplayLabels() {
+        if (battleState == null || attackerSelectionLabel == null) return;
+        
+        Phase phase = battleState.getCurrentPhase();
+        boolean inSelectionPhase = phase == Phase.SELECTING_ATTACK || phase == Phase.SELECTING_DEFENSE;
+        
+        if (!inSelectionPhase) {
+            attackerSelectionLabel.setOpacity(0f);
+            attackerEffectLabel.setOpacity(0f);
+            defenderSelectionLabel.setOpacity(0f);
+            defenderEffectLabel.setOpacity(0f);
+            return;
+        }
+        
+        boolean playerIsAttacker = battleState.isPlayerAttacker();
+        boolean attackerSelecting = phase == Phase.SELECTING_ATTACK;
+        boolean defenderSelecting = phase == Phase.SELECTING_DEFENSE;
+        
+        updateSelectionLabelPositions();
+        
+        if (attackerSelecting) {
+            boolean attackerIsPlayer = playerIsAttacker;
+            String valuesStr = battleState.getSelectedDiceValuesFormatted(attackerIsPlayer);
+            List<String> effects = battleState.getSelectedPrismaticEffectStrings(attackerIsPlayer);
+            
+            if (valuesStr.isEmpty()) {
+                attackerSelectionLabel.setText(Strings.get("battle.no_selection"));
+            } else {
+                attackerSelectionLabel.setText(Strings.format("battle.selected_values", valuesStr));
+            }
+            
+            if (!effects.isEmpty()) {
+                attackerEffectLabel.setText(String.join(" ", effects));
+            } else {
+                attackerEffectLabel.setText("");
+            }
+            
+            attackerSelectionLabel.setOpacity(1f);
+            attackerEffectLabel.setOpacity(!effects.isEmpty() ? 1f : 0f);
+            
+            defenderSelectionLabel.setOpacity(0f);
+            defenderEffectLabel.setOpacity(0f);
+        } else if (defenderSelecting) {
+            boolean defenderIsPlayer = !playerIsAttacker;
+            String valuesStr = battleState.getSelectedDiceValuesFormatted(defenderIsPlayer);
+            List<String> effects = battleState.getSelectedPrismaticEffectStrings(defenderIsPlayer);
+            
+            if (valuesStr.isEmpty()) {
+                defenderSelectionLabel.setText(Strings.get("battle.no_selection"));
+            } else {
+                defenderSelectionLabel.setText(Strings.format("battle.selected_values", valuesStr));
+            }
+            
+            if (!effects.isEmpty()) {
+                defenderEffectLabel.setText(String.join(" ", effects));
+            } else {
+                defenderEffectLabel.setText("");
+            }
+            
+            defenderSelectionLabel.setOpacity(1f);
+            defenderEffectLabel.setOpacity(!effects.isEmpty() ? 1f : 0f);
+            
+            attackerSelectionLabel.setOpacity(0f);
+            attackerEffectLabel.setOpacity(0f);
+        }
+    }
+
+    private void updateSelectionLabelPositions() {
+        if (battleState == null || attackerSelectionLabel == null) return;
+        
+        float halfH = BattleRenderingUtils.PANEL_HEIGHT / 2f;
+        float iconSize = halfH * BattleRenderingUtils.ROLE_ICON_SIZE_RATIO;
+        
+        float topIconCenterY = (halfH - iconSize) / 2f + iconSize / 2f;
+        float bottomIconCenterY = halfH + (halfH - iconSize) / 2f + iconSize / 2f;
+        
+        float centerX = BattleRenderingUtils.PANEL_WIDTH / 2f;
+        float labelWidth = 200f;
+        
+        boolean playerIsAttacker = battleState.isPlayerAttacker();
+        
+        float atkCenterY = playerIsAttacker ? bottomIconCenterY : topIconCenterY;
+        float defCenterY = playerIsAttacker ? topIconCenterY : bottomIconCenterY;
+        
+        float atkSelectionY = atkCenterY > halfH ? atkCenterY + iconSize / 2f + 25f : atkCenterY - iconSize / 2f - 25f;
+        float atkEffectY = atkCenterY > halfH ? atkCenterY + iconSize / 2f + 5f : atkCenterY - iconSize / 2f - 5f;
+        float defSelectionY = defCenterY > halfH ? defCenterY + iconSize / 2f + 25f : defCenterY - iconSize / 2f - 25f;
+        float defEffectY = defCenterY > halfH ? defCenterY + iconSize / 2f + 5f : defCenterY - iconSize / 2f - 5f;
+        
+        attackerSelectionLabel.getPosition().inTL(centerX - labelWidth / 2f, atkSelectionY);
+        attackerEffectLabel.getPosition().inTL(centerX - labelWidth / 2f, atkEffectY);
+        defenderSelectionLabel.getPosition().inTL(centerX - labelWidth / 2f, defSelectionY);
+        defenderEffectLabel.getPosition().inTL(centerX - labelWidth / 2f, defEffectY);
+    }
+
+    private void updateConfirmedSelectionLabels() {
+        if (battleState == null || attackerConfirmedSelectionLabel == null) return;
+        
+        Phase phase = battleState.getCurrentPhase();
+        
+        boolean shouldShowAttacker = phase == Phase.SELECTING_DEFENSE || 
+                             (phase == Phase.ROLLING && battleState.isDefenderRolling()) ||
+                             phase == Phase.RESOLVING_PRE_CLASH;
+        
+        boolean shouldShowDefender = phase == Phase.RESOLVING_PRE_CLASH;
+        
+        if (phase == Phase.RESOLVING) {
+            attackerConfirmedSelectionLabel.setOpacity(0f);
+            attackerConfirmedEffectLabel.setOpacity(0f);
+            defenderSelectionLabel.setOpacity(0f);
+            defenderEffectLabel.setOpacity(0f);
+            return;
+        }
+        
+        updateConfirmedLabelPositions();
+        
+        if (shouldShowAttacker) {
+            String confirmedText = battleState.getAttackerConfirmedSelectionText();
+            List<String> confirmedEffects = battleState.getAttackerConfirmedEffects();
+            
+            if (confirmedText != null && !confirmedText.isEmpty()) {
+                attackerConfirmedSelectionLabel.setText(Strings.format("battle.selected_values", confirmedText));
+                attackerConfirmedSelectionLabel.setOpacity(1f);
+                
+                if (confirmedEffects != null && !confirmedEffects.isEmpty()) {
+                    attackerConfirmedEffectLabel.setText(String.join(" ", confirmedEffects));
+                    attackerConfirmedEffectLabel.setOpacity(1f);
+                } else {
+                    attackerConfirmedEffectLabel.setText("");
+                    attackerConfirmedEffectLabel.setOpacity(0f);
+                }
+            } else {
+                attackerConfirmedSelectionLabel.setOpacity(0f);
+                attackerConfirmedEffectLabel.setOpacity(0f);
+            }
+        } else {
+            attackerConfirmedSelectionLabel.setOpacity(0f);
+            attackerConfirmedEffectLabel.setOpacity(0f);
+        }
+        
+        if (shouldShowDefender) {
+            String confirmedText = battleState.getDefenderConfirmedSelectionText();
+            List<String> confirmedEffects = battleState.getDefenderConfirmedEffects();
+            
+            if (confirmedText != null && !confirmedText.isEmpty()) {
+                defenderSelectionLabel.setText(Strings.format("battle.selected_values", confirmedText));
+                defenderSelectionLabel.setOpacity(1f);
+                
+                if (confirmedEffects != null && !confirmedEffects.isEmpty()) {
+                    defenderEffectLabel.setText(String.join(" ", confirmedEffects));
+                    defenderEffectLabel.setOpacity(1f);
+                } else {
+                    defenderEffectLabel.setText("");
+                    defenderEffectLabel.setOpacity(0f);
+                }
+            } else {
+                defenderSelectionLabel.setOpacity(0f);
+                defenderEffectLabel.setOpacity(0f);
+            }
+        } else {
+            defenderSelectionLabel.setOpacity(0f);
+            defenderEffectLabel.setOpacity(0f);
+        }
+    }
+    
+    private void updateConfirmedLabelPositions() {
+        if (battleState == null) return;
+        
+        float halfH = BattleRenderingUtils.PANEL_HEIGHT / 2f;
+        float iconSize = halfH * BattleRenderingUtils.ROLE_ICON_SIZE_RATIO;
+        
+        float topIconCenterY = (halfH - iconSize) / 2f + iconSize / 2f;
+        float bottomIconCenterY = halfH + (halfH - iconSize) / 2f + iconSize / 2f;
+        
+        boolean playerIsAttacker = battleState.isPlayerAttacker();
+        float atkCenterY = playerIsAttacker ? bottomIconCenterY : topIconCenterY;
+        float defCenterY = playerIsAttacker ? topIconCenterY : bottomIconCenterY;
+        
+        float rightX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH / 2f - BattleRenderingUtils.MARGIN;
+        float leftX = BattleRenderingUtils.CARD_WIDTH / 2f + BattleRenderingUtils.MARGIN;
+        float confirmedLabelWidth = 150f;
+        
+        float attackerX = playerIsAttacker ? rightX : leftX;
+        float defenderX = playerIsAttacker ? leftX : rightX;
+        
+        float atkSelectionY = atkCenterY > halfH ? atkCenterY + iconSize / 2f + 25f : atkCenterY - iconSize / 2f - 25f;
+        float atkEffectY = atkCenterY > halfH ? atkCenterY + iconSize / 2f + 5f : atkCenterY - iconSize / 2f - 5f;
+        float defSelectionY = defCenterY > halfH ? defCenterY + iconSize / 2f + 25f : defCenterY - iconSize / 2f - 25f;
+        float defEffectY = defCenterY > halfH ? defCenterY + iconSize / 2f + 5f : defCenterY - iconSize / 2f - 5f;
+        
+        attackerConfirmedSelectionLabel.getPosition().inTL(attackerX - confirmedLabelWidth / 2f, atkSelectionY);
+        attackerConfirmedEffectLabel.getPosition().inTL(attackerX - confirmedLabelWidth / 2f, atkEffectY);
+        
+        defenderSelectionLabel.getPosition().inTL(defenderX - confirmedLabelWidth / 2f, defSelectionY);
+        defenderEffectLabel.getPosition().inTL(defenderX - confirmedLabelWidth / 2f, defEffectY);
+    }
+    
+    private void updateIconValueLabels() {
+        if (battleState == null || attackerIconValueLabel == null || defenderIconValueLabel == null) return;
+        
+        Phase phase = battleState.getCurrentPhase();
+        
+        attackerIconValueLabel.setOpacity(0f);
+        defenderIconValueLabel.setOpacity(0f);
+        
+        if (phase == Phase.RESOLVING) return;
+        
+        float halfH = BattleRenderingUtils.PANEL_HEIGHT / 2f;
+        float centerX = BattleRenderingUtils.PANEL_WIDTH / 2f;
+        float labelW = 80f;
+        float labelH = 50f;
+        
+        boolean playerIsAttacker = battleState.isPlayerAttacker();
+        
+        float topIconCenterY = halfH / 2f;
+        float bottomIconCenterY = halfH + halfH / 2f;
+        
+        float attackerLabelY = playerIsAttacker ? bottomIconCenterY : topIconCenterY;
+        float defenderLabelY = playerIsAttacker ? topIconCenterY : bottomIconCenterY;
+        
+        attackerIconValueLabel.getPosition().inTL(centerX - labelW / 2f, attackerLabelY - labelH / 2f);
+        defenderIconValueLabel.getPosition().inTL(centerX - labelW / 2f, defenderLabelY - labelH / 2f);
+        
+        if (phase == Phase.SELECTING_ATTACK) {
+            boolean playerIsSelecting = playerIsAttacker;
+            int runningTotal = battleState.calculateSelectedSum(playerIsSelecting);
+            if (runningTotal > 0) {
+                attackerIconValueLabel.setText(String.valueOf(runningTotal));
+                attackerIconValueLabel.setOpacity(playerIsSelecting ? 1f : 0f);
+            }
+            defenderIconValueLabel.setOpacity(0f);
+            return;
+        }
+        
+        if (phase == Phase.SELECTING_DEFENSE || (phase == Phase.ROLLING && battleState.isDefenderRolling())) {
+            int attackerValue = getAttackerTotalValue();
+            attackerIconValueLabel.setText(String.valueOf(attackerValue));
+            attackerIconValueLabel.setOpacity(attackerValue > 0 ? 1f : 0f);
+            
+            if (phase == Phase.SELECTING_DEFENSE) {
+                boolean playerIsSelecting = !playerIsAttacker;
+                int runningTotal = battleState.calculateSelectedSum(playerIsSelecting);
+                if (runningTotal > 0) {
+                    defenderIconValueLabel.setText(String.valueOf(runningTotal));
+                    defenderIconValueLabel.setOpacity(playerIsSelecting ? 1f : 0f);
+                }
+            }
+            return;
+        }
+        
+        if (phase == Phase.RESOLVING_PRE_CLASH) {
+            int attackerValue = getAttackerTotalValue();
+            int defenderValue = getDefenderTotalValue();
+            
+            attackerIconValueLabel.setText(String.valueOf(attackerValue));
+            attackerIconValueLabel.setOpacity(attackerValue > 0 ? 1f : 0f);
+            defenderIconValueLabel.setText(String.valueOf(defenderValue));
+            defenderIconValueLabel.setOpacity(defenderValue > 0 ? 1f : 0f);
+        }
+    }
+    
+    private int getAttackerTotalValue() {
+        int baseValue = battleState.getAttackValue();
+        StatusEffectProcessor attackerEffects = battleState.isPlayerAttacker() 
+            ? battleState.getPlayerEffects() : battleState.getOpponentEffects();
+        int bonus = attackerEffects.calculateAttackBonus(TurnType.ATTACK);
+        int prismaticValue = battleState.getPrismaticDiceTotalValue(battleState.isPlayerAttacker());
+        return baseValue + bonus + prismaticValue;
+    }
+    
+    private int getDefenderTotalValue() {
+        int baseValue = battleState.getDefenseValue();
+        StatusEffectProcessor defenderEffects = battleState.isPlayerAttacker() 
+            ? battleState.getOpponentEffects() : battleState.getPlayerEffects();
+        int bonus = defenderEffects.calculateDefenseBonus(TurnType.DEFENSE);
+        int prismaticValue = battleState.getPrismaticDiceTotalValue(!battleState.isPlayerAttacker());
+        return baseValue + bonus + prismaticValue;
+    }
+
     private void updatePrismaticButton() {
-        if (prismaticUsesLabel == null || battleState == null) return;
+        if (playerPrismaticUsesLabel == null || battleState == null) return;
 
         int uses = battleState.getPlayerPrismaticUses();
-        prismaticUsesLabel.setText(String.valueOf(uses));
+        playerPrismaticUsesLabel.setText(String.valueOf(uses));
 
         if (battleState.isPlayerPrismaticModeActive()) {
-            prismaticUsesLabel.setColor(ColorHelper.OPPONENT_NAME);
+            playerPrismaticUsesLabel.setColor(ColorHelper.OPPONENT_NAME);
         } else if (uses > 0) {
-            prismaticUsesLabel.setColor(ColorHelper.PRISMATIC_GOLD);
+            playerPrismaticUsesLabel.setColor(ColorHelper.PRISMATIC_GOLD);
         } else {
-            prismaticUsesLabel.setColor(ColorHelper.PRISMATIC_DISABLED);
+            playerPrismaticUsesLabel.setColor(ColorHelper.PRISMATIC_DISABLED);
         }
         
         updatePrismaticFaceMappingDisplay();
+        updateOpponentPrismaticDisplay();
     }
     
     private void updatePrismaticFaceMappingDisplay() {
-        if (prismaticFaceMappingLabel == null || battleState == null) return;
+        if (playerPrismaticFaceMappingLabel == null || battleState == null) return;
         
         CharacterCard playerCard = battleState.getPlayerCard();
         if (playerCard == null) {
-            prismaticFaceMappingLabel.setOpacity(0f);
-            prismaticEffectLabel.setOpacity(0f);
+            playerPrismaticFaceMappingLabel.setOpacity(0f);
+            playerPrismaticEffectLabel.setOpacity(0f);
             return;
         }
         
         java.util.Map<String, Integer> prismaticIds = playerCard.getPrismaticDiceIds();
         if (prismaticIds == null || prismaticIds.isEmpty()) {
-            prismaticFaceMappingLabel.setOpacity(0f);
-            prismaticEffectLabel.setOpacity(0f);
+            playerPrismaticFaceMappingLabel.setOpacity(0f);
+            playerPrismaticEffectLabel.setOpacity(0f);
             return;
         }
         
         String firstDiceId = prismaticIds.keySet().iterator().next();
         PrismaticDiceType type = PrismaticDiceRegistry.get(firstDiceId);
         if (type == null) {
-            prismaticFaceMappingLabel.setOpacity(0f);
-            prismaticEffectLabel.setOpacity(0f);
+            playerPrismaticFaceMappingLabel.setOpacity(0f);
+            playerPrismaticEffectLabel.setOpacity(0f);
             return;
         }
         
         int uses = battleState.getPlayerPrismaticUses();
         if (uses <= 0) {
-            prismaticFaceMappingLabel.setOpacity(0.4f);
-            prismaticEffectLabel.setOpacity(0.4f);
+            playerPrismaticFaceMappingLabel.setOpacity(0.4f);
+            playerPrismaticEffectLabel.setOpacity(0.4f);
         } else {
-            prismaticFaceMappingLabel.setOpacity(1f);
-            prismaticEffectLabel.setOpacity(1f);
+            playerPrismaticFaceMappingLabel.setOpacity(1f);
+            playerPrismaticEffectLabel.setOpacity(1f);
         }
         
         String mappingText = PrismaticFaceDisplay.formatFaceMappingCompact(type, false);
-        prismaticFaceMappingLabel.setText(mappingText);
+        playerPrismaticFaceMappingLabel.setText(mappingText);
         
         String effectText = PrismaticFaceDisplay.getEffectDescription(type);
-        prismaticEffectLabel.setText(effectText);
+        playerPrismaticEffectLabel.setText(effectText);
+    }
+    
+    private void updateOpponentPrismaticDisplay() {
+        if (opponentPrismaticUsesLabel == null || battleState == null) return;
+        
+        int uses = battleState.getOpponentPrismaticUses();
+        opponentPrismaticUsesLabel.setText(String.valueOf(uses));
+        opponentPrismaticUsesLabel.setColor(uses > 0 ? ColorHelper.PRISMATIC_GOLD : ColorHelper.PRISMATIC_DISABLED);
+        
+        CharacterCard opponentCard = battleState.getOpponentCard();
+        if (opponentCard == null) {
+            opponentPrismaticFaceMappingLabel.setOpacity(0f);
+            opponentPrismaticEffectLabel.setOpacity(0f);
+            return;
+        }
+        
+        java.util.Map<String, Integer> prismaticIds = opponentCard.getPrismaticDiceIds();
+        if (prismaticIds == null || prismaticIds.isEmpty()) {
+            opponentPrismaticFaceMappingLabel.setOpacity(0f);
+            opponentPrismaticEffectLabel.setOpacity(0f);
+            return;
+        }
+        
+        String firstDiceId = prismaticIds.keySet().iterator().next();
+        PrismaticDiceType type = PrismaticDiceRegistry.get(firstDiceId);
+        if (type == null) {
+            opponentPrismaticFaceMappingLabel.setOpacity(0f);
+            opponentPrismaticEffectLabel.setOpacity(0f);
+            return;
+        }
+        
+        float opacity = uses > 0 ? 1f : 0.4f;
+        opponentPrismaticFaceMappingLabel.setOpacity(opacity);
+        opponentPrismaticEffectLabel.setOpacity(opacity);
+        
+        String mappingText = PrismaticFaceDisplay.formatFaceMappingCompact(type, false);
+        opponentPrismaticFaceMappingLabel.setText(mappingText);
+        
+        String effectText = PrismaticFaceDisplay.getEffectDescription(type);
+        opponentPrismaticEffectLabel.setText(effectText);
     }
     
     private void updatePrismaticRolledLabel() {
-        if (prismaticRolledLabel == null) return;
+        if (playerPrismaticRolledLabel == null) return;
         
         if (pendingPrismaticInstance == null || pendingPrismaticAnimatorIndex < 0) {
-            prismaticRolledLabel.setOpacity(0f);
+            playerPrismaticRolledLabel.setOpacity(0f);
             return;
         }
         
         if (diceRollManager == null || pendingPrismaticAnimatorIndex >= diceRollManager.getAnimatorCount()) {
-            prismaticRolledLabel.setOpacity(0f);
+            playerPrismaticRolledLabel.setOpacity(0f);
             return;
         }
         
@@ -688,17 +1146,17 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         float diceY = diceRollManager.getAnimatorVisualY(pendingPrismaticAnimatorIndex);
         
         String rolledText = PrismaticFaceDisplay.formatRolledResult(pendingPrismaticInstance);
-        prismaticRolledLabel.setText(rolledText);
-        prismaticRolledLabel.setOpacity(1f);
+        playerPrismaticRolledLabel.setText(rolledText);
+        playerPrismaticRolledLabel.setOpacity(1f);
         
         float labelWidth = 60f;
-        prismaticRolledLabel.getPosition().inTL(diceX + DiceAnimator.DICE_SIZE / 2f - labelWidth / 2f, 
+        playerPrismaticRolledLabel.getPosition().inTL(diceX + DiceAnimator.DICE_SIZE / 2f - labelWidth / 2f, 
                                                  diceY + DiceAnimator.DICE_SIZE + PRISMATIC_ROLLED_LABEL_OFFSET_Y);
     }
     
     private void clearPrismaticRolledLabel() {
-        if (prismaticRolledLabel != null) {
-            prismaticRolledLabel.setOpacity(0f);
+        if (playerPrismaticRolledLabel != null) {
+            playerPrismaticRolledLabel.setOpacity(0f);
         }
         pendingPrismaticInstance = null;
         pendingPrismaticAnimatorIndex = -1;
@@ -791,13 +1249,17 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
             clearPrismaticRolledLabel();
             
             if (diceRollManager != null) {
-                boolean isDefenderRolling = battleState.isDefenderRolling();
-                boolean showPlayerDice = isDefenderRolling != battleState.isPlayerAttacker();
-                if (showPlayerDice) {
-                    diceRollManager.clearOpponentAnimators();
-                } else {
-                    diceRollManager.clear();
-                }
+                diceRollManager.clear();
+                diceRollManager.clearOpponentAnimators();
+            }
+        }
+        
+        if (newPhase == Phase.RESOLVING_PRE_CLASH) {
+            boolean hasAttackerChanges = !battleState.getPendingValueChanges(battleState.isPlayerAttacker()).isEmpty();
+            boolean hasDefenderChanges = !battleState.getPendingValueChanges(!battleState.isPlayerAttacker()).isEmpty();
+            
+            if (hasAttackerChanges || hasDefenderChanges) {
+                startValueChangeAnimations();
             }
         }
 
@@ -844,8 +1306,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
             playerOrangeLabel.setText(String.valueOf(counts.getCount(DiceType.ORANGE_D8)));
             playerPurpleLabel.setText(String.valueOf(counts.getCount(DiceType.PURPLE_D6)));
             playerBlueLabel.setText(String.valueOf(counts.getCount(DiceType.BLUE_D4)));
-            
-            createDiceHitboxes(types);
         } else if (!isPlayer && types != null) {
             DicePoolCounts counts = DicePoolCounts.fromPool(types);
             opponentPrismaticLabel.setText(String.valueOf(counts.getCount(DiceType.PRISMATIC)));
@@ -884,10 +1344,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         float halfH = BattleRenderingUtils.PANEL_HEIGHT / 2f;
         float iconSize = halfH * BattleRenderingUtils.ROLE_ICON_SIZE_RATIO;
         
-        float bottomIconCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
-        float bottomIconCenterY = (halfH - iconSize) / 2f + iconSize / 2f;
         float topIconCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
-        float topIconCenterY = halfH + (halfH - iconSize) / 2f + iconSize / 2f;
+        float topIconCenterY = (halfH - iconSize) / 2f + iconSize / 2f;
+        float bottomIconCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
+        float bottomIconCenterY = halfH + (halfH - iconSize) / 2f + iconSize / 2f;
         
         boolean playerIsAttacker = battleState.isPlayerAttacker();
         
@@ -946,9 +1406,36 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         if (battleState == null) return;
 
         updateRoleTransition(amount);
+        updateSelectionDisplayLabels();
+        updateConfirmedSelectionLabels();
+        updateIconValueLabels();
 
         if (battleController != null) {
             battleController.advanceAiSelection(amount);
+        }
+
+        if (battleState.getCurrentPhase() == Phase.RESOLVING_PRE_CLASH) {
+            preClashTimer += amount;
+            
+            if (attackerValueAnimator != null) {
+                attackerValueAnimator.advance(amount);
+            }
+            if (defenderValueAnimator != null) {
+                defenderValueAnimator.advance(amount);
+            }
+            
+            if (preClashTimer >= PRE_CLASH_DELAY) {
+                boolean attackerComplete = attackerValueAnimator == null || attackerValueAnimator.isComplete();
+                boolean defenderComplete = defenderValueAnimator == null || defenderValueAnimator.isComplete();
+                
+                if (attackerComplete && defenderComplete) {
+                    preClashTimer = 0f;
+                    if (battleController != null) {
+                        battleController.proceedToClash();
+                    }
+                }
+            }
+            return;
         }
 
         if (diceAnimating) {
@@ -978,42 +1465,55 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
                 
                 boolean isDefenderRolling = battleState.isDefenderRolling();
                 boolean showPlayerDice = isDefenderRolling != battleState.isPlayerAttacker();
-                boolean anyDiceRolled = false;
+                boolean anyDiceStarted = false;
                 
-                CosmiconLogger.debug("[ANIM] Starting animation - isDefenderRolling=%s, showPlayerDice=%s, playerIsAttacker=%s",
+                CosmiconLogger.debug("[ANIM] Starting stationary preview - isDefenderRolling=%s, showPlayerDice=%s, playerIsAttacker=%s",
                     isDefenderRolling, showPlayerDice, battleState.isPlayerAttacker());
                 
                 if (showPlayerDice) {
                     List<DiceType> types = battleState.getPlayerDiceTypes();
                     List<Integer> values = battleState.getPlayerDiceValues();
                     if (types != null && values != null && !types.isEmpty()) {
-                        createDiceHitboxes(types);
-                        diceRollManager.startRoll(types, values, diceZoneCenterX, diceZoneCenterY);
-                        anyDiceRolled = true;
-                        CosmiconLogger.debug("[ANIM] Player dice animation started - %d dice", types.size());
+                        diceRollManager.startStationaryPreview(types, values, diceZoneCenterX, diceZoneCenterY);
+                        waitingForClickToRoll = true;
+                        anyDiceStarted = true;
+                        CosmiconLogger.debug("[ANIM] Player stationary preview started - %d dice, waiting for click", types.size());
                     }
                 } else {
                     List<DiceType> types = battleState.getOpponentDiceTypes();
                     List<Integer> values = battleState.getOpponentDiceValues();
                     if (types != null && values != null && !types.isEmpty()) {
-                        float zoneX = panelX + BattleRenderingUtils.MARGIN + BattleRenderingUtils.OPPONENT_DICE_ZONE_OFFSET_X;
-                        float zoneY = panelY + BattleRenderingUtils.MARGIN + BattleRenderingUtils.OPPONENT_DICE_ZONE_Y_OFFSET;
-                        diceRollManager.startOpponentRoll(types, values, zoneX, zoneY);
-                        anyDiceRolled = true;
-                        CosmiconLogger.debug("[ANIM] Opponent dice animation started - %d dice (opponent zone)", types.size());
+                        diceRollManager.startOpponentStationaryPreview(types, values, diceZoneCenterX, diceZoneCenterY);
+                        opponentAutoRollDelay = OPPONENT_AUTO_ROLL_DELAY;
+                        anyDiceStarted = true;
+                        CosmiconLogger.debug("[ANIM] Opponent stationary preview started - %d dice, auto-roll in %.1fs", types.size(), OPPONENT_AUTO_ROLL_DELAY);
                     }
                 }
 
-                if (anyDiceRolled) {
-                    rollAnimationDelay = DiceAnimator.getTotalDuration() + 0.1f;
-                    diceAnimating = true;
-                } else if (battleState.getCurrentPhase() == Phase.ROLLING) {
+                if (!anyDiceStarted && battleState.getCurrentPhase() == Phase.ROLLING) {
                     if (isDefenderRolling) {
                         battleController.advanceToDefenderSelectPhase();
                     } else {
                         battleController.advanceToSelectPhase();
                     }
                 }
+            }
+        }
+
+        if (waitingForClickToRoll && diceRollManager.isWaitingForRollTrigger()) {
+            if (clickHintLabel != null) {
+                clickHintLabel.setText(Strings.get("battle.click_to_roll"));
+                clickHintLabel.setOpacity(0.8f);
+            }
+        }
+
+        if (opponentAutoRollDelay > 0f) {
+            opponentAutoRollDelay -= amount;
+            if (opponentAutoRollDelay <= 0f && diceRollManager.isOpponentWaitingForRollTrigger()) {
+                diceRollManager.triggerOpponentRollFromStationary();
+                opponentDiceAnimating = true;
+                opponentRollDelay = DiceAnimator.getTotalDuration() + 0.1f;
+                CosmiconLogger.debug("[ANIM] Opponent auto-roll triggered");
             }
         }
 
@@ -1063,7 +1563,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
         if (damageAnimator != null) {
             damageAnimator.advance(amount);
             
-            if (damageAnimator.isWaitingForClick()) {
+            if (!damageAnimator.isComplete()) {
                 clickHintLabel.setText(Strings.get("battle.click_to_continue"));
                 clickHintLabel.setOpacity(0.6f);
             } else {
@@ -1113,6 +1613,13 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements ActionList
                 roleTransitionProgress += diff > 0 ? step : -step;
             }
         }
+        
+        cachedRotationAngle = getSmoothedTransition() * 180f;
+    }
+    
+    private float getSmoothedTransition() {
+        float t = roleTransitionProgress;
+        return t * t * (3f - 2f * t);
     }
 
     private boolean shouldShowOpponentDice() {
@@ -1157,7 +1664,7 @@ private void handleMouseInput() {
                 
                 if (playerShouldSelect && uses > 0) {
                     boolean insidePrismatic = CoordHelper.isInsideUiRect(panelUiX, panelUiY,
-                        prismaticBtnX, prismaticBtnY, PRISMATIC_BTN_SIZE, PRISMATIC_BTN_SIZE);
+                        playerPrismaticBtnX, playerPrismaticBtnY, PRISMATIC_BTN_SIZE, PRISMATIC_BTN_SIZE);
                     
                     if (insidePrismatic) {
                         CosmiconLogger.info("Player clicked Prismatic button via processInput");
@@ -1169,14 +1676,41 @@ private void handleMouseInput() {
             }
             
             if (battleState.getCurrentPhase() == Phase.ROLLING) {
-                CosmiconLogger.debug("Player clicked to skip dice roll animation");
-                diceRollManager.forceCompleteAll();
-                
-                boolean showPlayerDice = battleState.isDefenderRolling() != battleState.isPlayerAttacker();
-                if (showPlayerDice && diceHitboxes.isEmpty()) {
-                    List<DiceType> types = battleState.getPlayerDiceTypes();
-                    if (types != null && !types.isEmpty()) {
-                        createDiceHitboxes(types);
+                if (waitingForClickToRoll && diceRollManager.isWaitingForRollTrigger()) {
+                    CosmiconLogger.info("Player clicked to trigger dice roll");
+                    diceRollManager.triggerRollFromStationary();
+                    waitingForClickToRoll = false;
+                    diceAnimating = true;
+                    rollAnimationDelay = DiceAnimator.getTotalDuration() + 0.1f;
+                    if (clickHintLabel != null) {
+                        clickHintLabel.setOpacity(0f);
+                    }
+                } else {
+                    CosmiconLogger.debug("Player clicked to skip dice roll animation");
+                    diceRollManager.forceCompleteAll();
+                    rollAnimationDelay = 0f;
+                    dicePreviewDelay = 0f;
+                    dicePreviewActive = false;
+                    diceAnimating = false;
+                    waitingForClickToRoll = false;
+                    if (clickHintLabel != null) {
+                        clickHintLabel.setOpacity(0f);
+                    }
+                    
+                    boolean showPlayerDice = battleState.isDefenderRolling() != battleState.isPlayerAttacker();
+                    if (showPlayerDice && diceHitboxes.isEmpty()) {
+                        List<DiceType> types = battleState.getPlayerDiceTypes();
+                        if (types != null && !types.isEmpty()) {
+                            createDiceHitboxes(types);
+                        }
+                    }
+                    
+                    updatePrismaticRolledLabel();
+                    
+                    if (battleState.isDefenderRolling()) {
+                        battleController.advanceToDefenderSelectPhase();
+                    } else {
+                        battleController.advanceToSelectPhase();
                     }
                 }
                 
@@ -1184,8 +1718,8 @@ private void handleMouseInput() {
                 return;
             }
             
-            if (damageAnimator != null && damageAnimator.isWaitingForClick()) {
-                CosmiconLogger.debug("Player clicked to skip damage animation pause");
+            if (damageAnimator != null) {
+                CosmiconLogger.debug("Player clicked to skip damage animation");
                 damageAnimator.forceComplete();
                 lastMouseButtonState = currentButton;
                 return;
@@ -1221,6 +1755,7 @@ private void handleMouseInput() {
                     logDiceSelection(i);
                     battleController.onPlayerSelectDice(i);
                     updateButtons(battleState.getCurrentPhase());
+                    updateSelectionDisplayLabels();
                     break;
                 }
             }
@@ -1261,14 +1796,8 @@ private void handleMouseInput() {
                 x = diceRollManager.getAnimatorVisualX(i);
                 y = diceRollManager.getAnimatorVisualY(i);
             } else {
-                if (i == 0) {
-                    x = diceZoneCenterX - maxDiceSize / 2f;
-                } else if (i - 1 < animatorCount) {
-                    x = diceRollManager.getAnimatorVisualX(i - 1) + DICE_SPACING;
-                } else {
-                    float[] lastHb = diceHitboxes.get(i - 1);
-                    x = lastHb[0] + DICE_SPACING;
-                }
+                float totalWidth = DICE_SPACING * (count - 1) + maxDiceSize;
+                x = diceZoneCenterX - totalWidth / 2f + i * DICE_SPACING;
                 y = diceZoneCenterY - maxDiceSize / 2f;
             }
             
@@ -1293,17 +1822,20 @@ private void handleMouseInput() {
             return;
         }
         
-        float zoneX = BattleRenderingUtils.MARGIN + BattleRenderingUtils.OPPONENT_DICE_ZONE_OFFSET_X;
-        float zoneY = BattleRenderingUtils.MARGIN + BattleRenderingUtils.OPPONENT_DICE_ZONE_Y_OFFSET;
-        
-        diceRollManager.startOpponentRoll(types, values, zoneX, zoneY);
-        opponentRollDelay = DiceAnimator.getTotalDuration() + 0.1f;
-        opponentDiceAnimating = true;
+        diceRollManager.startOpponentStationaryPreview(types, values, diceZoneCenterX, diceZoneCenterY);
+        opponentAutoRollDelay = OPPONENT_AUTO_ROLL_DELAY;
     }
 
     public void triggerOpponentDiceRoll() {
-        opponentRollDelay = 0.3f;
-        opponentDiceAnimating = true;
+        if (battleState == null || diceRollManager == null) return;
+        
+        List<DiceType> types = battleState.getOpponentDiceTypes();
+        List<Integer> values = battleState.getOpponentDiceValues();
+        
+        if (types != null && values != null && !types.isEmpty()) {
+            diceRollManager.startOpponentStationaryPreview(types, values, diceZoneCenterX, diceZoneCenterY);
+            opponentAutoRollDelay = OPPONENT_AUTO_ROLL_DELAY;
+        }
     }
 
     @Override
@@ -1318,8 +1850,10 @@ private void handleMouseInput() {
 
         GLStateUtil.resetBlendState();
 
+        boolean hideRoleIcons = damageAnimator != null && damageAnimator.isIconClashActive();
+
         BattleRenderingUtils.renderBattleBackground(x, y, w, h, 
-            roleTransitionProgress, alphaMult, battleState != null);
+            cachedRotationAngle, alphaMult, battleState != null, hideRoleIcons);
 
         renderPlayerCard(x, y, alphaMult);
         renderOpponentCard(x, y, alphaMult);
@@ -1343,6 +1877,7 @@ private void handleMouseInput() {
         }
 
         renderDiceSelectionHighlights(alphaMult);
+        renderOpponentPrismaticButton(alphaMult);
         renderPrismaticButton(alphaMult);
 
         if (prismaticPopupActive && prismaticPopup != null) {
@@ -1451,7 +1986,7 @@ private void handleMouseInput() {
         if (battleState == null) return;
         
         AISelectionVisualizer viz = battleState.getAiSelectionVisualizer();
-        if (viz == null || !viz.hasStarted()) return;
+        if (viz == null || !viz.hasStarted() || viz.isRerollPhase()) return;
         
         List<Integer> visibleIndices = viz.getVisibleIndices();
         if (visibleIndices.isEmpty()) return;
@@ -1491,15 +2026,35 @@ private void handleMouseInput() {
         GLStateUtil.resetColor();
     }
 
+    private void renderOpponentPrismaticButton(float alphaMult) {
+        SpriteAPI sprite = CosmiconSprites.getPrismaticButtonSprite();
+        if (sprite == null) return;
+
+        GLStateUtil.enableTexturingWithBlend();
+
+        float renderX = panelX + opponentPrismaticBtnX;
+        float renderY = CoordHelper.uiTopLeftToGlSpriteY(panelY, BattleRenderingUtils.PANEL_HEIGHT,
+            opponentPrismaticBtnY, PRISMATIC_BTN_SIZE);
+
+        int uses = battleState.getOpponentPrismaticUses();
+        float btnAlpha = uses > 0 ? alphaMult : alphaMult * 0.4f;
+
+        sprite.setSize(PRISMATIC_BTN_SIZE, PRISMATIC_BTN_SIZE);
+        sprite.setAlphaMult(btnAlpha);
+        sprite.render(renderX, renderY);
+
+        GLStateUtil.disableTexturing();
+    }
+
     private void renderPrismaticButton(float alphaMult) {
         SpriteAPI sprite = CosmiconSprites.getPrismaticButtonSprite();
         if (sprite == null) return;
 
         GLStateUtil.enableTexturingWithBlend();
 
-        float renderX = panelX + prismaticBtnX;
+        float renderX = panelX + playerPrismaticBtnX;
         float renderY = CoordHelper.uiTopLeftToGlSpriteY(panelY, BattleRenderingUtils.PANEL_HEIGHT,
-            prismaticBtnY, PRISMATIC_BTN_SIZE);
+            playerPrismaticBtnY, PRISMATIC_BTN_SIZE);
 
         int uses = battleState.getPlayerPrismaticUses();
         boolean playerShouldSelect = (battleState.isAttacker(true) &&

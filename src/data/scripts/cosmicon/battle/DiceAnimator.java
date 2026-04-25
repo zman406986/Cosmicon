@@ -21,18 +21,19 @@ public class DiceAnimator {
     private static final float BOUNCE_DURATION = 0.3f;
     private static final float INITIAL_SCALE = 1.5f;
     private static final int FRAME_COUNT = 48;
-    private static final float MIN_TRAVEL_DISTANCE = 50f;
-    private static final float MAX_TRAVEL_DISTANCE = 333f;
+    private static final float[] TRAVEL_DISTANCES = {150f, 250f, 350f};
     private static final float FRAME_RATE_START = 96f;
     private static final float FRAME_RATE_END = 24f;
+    private static final float BASE_DURATION_PER_CYCLE = 0.8f;
     
     private static final float PICKUP_DURATION = 0.4f;
     private static final float CENTERING_TRAVEL_DURATION = 0.6f;
     private static final float CENTERING_DROP_DURATION = 0.4f;
     private static final float CENTERING_SCALE = 1.4f;
+    private static final float ROLL_PICKUP_DURATION = 0.3f;
     
-    private enum Phase { ROLLING, DROP, TRAVEL, SETTLE, REVEAL, WAITING_FOR_CENTERING, 
-                         PICKUP, CENTERING_TRAVEL, CENTERING_DROP, COMPLETE }
+    private enum Phase { STATIONARY_PREVIEW, ROLL_PICKUP, ROLLING, DROP, TRAVEL, SETTLE, REVEAL, 
+                         WAITING_FOR_CENTERING, PICKUP, CENTERING_TRAVEL, CENTERING_DROP, COMPLETE }
     
     private DiceType type;
     private int finalValue;
@@ -63,6 +64,10 @@ public class DiceAnimator {
     private float phaseElapsed;
     
     private boolean useDirectionalAnimation;
+    
+    private int stationaryFrameIndex;
+    private int stationaryResultIndex;
+    private float rollPickupStartScale;
     
     public static float getTotalDuration() {
         return TOTAL_DURATION;
@@ -148,10 +153,17 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         }
     }
     
-    public void rerollWithNewPath(int newFinalValue, float rotation, float travelDistance, 
+    public void rerollWithNewPath(int newFinalValue, float startX, float startY,
+                                   float rotation, float travelDistance, 
                                    int bounceCount, float[] bounceHeights,
                                    float targetCenterX, float targetCenterY) {
         this.finalValue = newFinalValue;
+        
+        float displaySize = type != null ? type.getDisplaySize() : DICE_SIZE;
+        float centeringOffset = (DICE_SIZE - displaySize) / 2f;
+        this.x = startX - centeringOffset;
+        this.y = startY - centeringOffset;
+        
         this.elapsed = 0f;
         this.complete = false;
         this.currentFrame = 0;
@@ -168,8 +180,45 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.useDirectionalAnimation = true;
         this.phase = Phase.DROP;
         this.scale = INITIAL_SCALE;
+        this.targetCenterX = targetCenterX - centeringOffset;
+        this.targetCenterY = targetCenterY - centeringOffset;
+    }
+    
+    public void startStationaryPreview(DiceType type, int result, float targetCenterX, float targetCenterY) {
+        this.type = type;
+        this.finalValue = result;
+        this.stationaryFrameIndex = 0;
+        if (type == DiceType.PRISMATIC) {
+            this.stationaryResultIndex = (int)(Math.random() * 6);
+        } else {
+            this.stationaryResultIndex = 1 + (int)(Math.random() * type.getMaxFace());
+        }
+        this.x = targetCenterX;
+        this.y = targetCenterY;
+        this.posXOffset = 0f;
+        this.posYOffset = 0f;
+        this.scale = 1.0f;
+        this.phase = Phase.STATIONARY_PREVIEW;
+        this.complete = false;
+        this.phaseElapsed = 0f;
+        this.elapsed = 0f;
+        this.currentFrame = 0;
+    }
+    
+    public void startRollFromStationary(float rotation, float travelDistance, int bounceCount, 
+                                         float[] bounceHeights, float delay, float targetCenterX, float targetCenterY) {
+        this.rotation = rotation;
+        this.directionRad = (float)Math.toRadians(rotation);
+        this.travelDistance = travelDistance;
+        this.bounceCount = bounceCount;
+        this.bounceHeights = bounceHeights;
         this.targetCenterX = targetCenterX;
         this.targetCenterY = targetCenterY;
+        this.rollPickupStartScale = scale;
+        this.phaseElapsed = 0f;
+        this.elapsed = -delay;
+        this.phase = Phase.ROLL_PICKUP;
+        this.useDirectionalAnimation = true;
     }
     
     public void advance(float amount) {
@@ -179,7 +228,7 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         
         if (elapsed < 0f) return;
         
-        if (useDirectionalAnimation) {
+        if (phase == Phase.STATIONARY_PREVIEW || useDirectionalAnimation) {
             advanceDirectional(amount);
         } else {
             advanceSimple();
@@ -190,6 +239,8 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         phaseElapsed += amount;
         
         switch (phase) {
+            case STATIONARY_PREVIEW -> { }
+            case ROLL_PICKUP -> advanceRollPickup();
             case DROP -> advanceDrop();
             case TRAVEL -> advanceTravel();
             case SETTLE -> advanceSettle();
@@ -199,6 +250,19 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
             case CENTERING_TRAVEL -> advanceCenteringTravel();
             case CENTERING_DROP -> advanceCenteringDrop();
             case COMPLETE -> complete = true;
+        }
+    }
+    
+    private void advanceRollPickup() {
+        currentFrame = stationaryFrameIndex;
+        float progress = Math.min(1f, phaseElapsed / ROLL_PICKUP_DURATION);
+        float eased = easeInQuad(progress);
+        scale = rollPickupStartScale + (CENTERING_SCALE - rollPickupStartScale) * eased;
+        
+        if (phaseElapsed >= ROLL_PICKUP_DURATION) {
+            scale = INITIAL_SCALE;
+            phase = Phase.DROP;
+            phaseElapsed = 0f;
         }
     }
     
@@ -244,8 +308,17 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
     }
     
     private float calculateTravelDuration() {
-        float normalized = (travelDistance - MIN_TRAVEL_DISTANCE) / (MAX_TRAVEL_DISTANCE - MIN_TRAVEL_DISTANCE);
-        return 1f + Math.round(normalized * 2f);
+        int cycleCount = getCycleCountForDistance(travelDistance);
+        return BASE_DURATION_PER_CYCLE * cycleCount;
+    }
+    
+    private int getCycleCountForDistance(float distance) {
+        for (int i = 0; i < TRAVEL_DISTANCES.length; i++) {
+            if (distance <= TRAVEL_DISTANCES[i]) {
+                return i + 1;
+            }
+        }
+        return TRAVEL_DISTANCES.length;
     }
     
     private float calculateBounceAtStart() {
@@ -381,7 +454,13 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         if (elapsed < 0f) return;
         
         SpriteAPI sprite;
-        if (type == DiceType.PRISMATIC) {
+        if (phase == Phase.STATIONARY_PREVIEW) {
+            if (type == DiceType.PRISMATIC) {
+                sprite = DiceSpriteRegistry.getPrismaticFrame(stationaryResultIndex, stationaryFrameIndex);
+            } else {
+                sprite = DiceSpriteRegistry.getFrame(type, stationaryResultIndex, stationaryFrameIndex);
+            }
+        } else if (type == DiceType.PRISMATIC) {
             sprite = DiceSpriteRegistry.getPrismaticFrame(finalValue, currentFrame);
         } else {
             sprite = DiceSpriteRegistry.getFrame(type, finalValue, currentFrame);
@@ -393,19 +472,18 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         float displaySize = getDisplaySize();
         float centeringOffset = (DICE_SIZE - displaySize) / 2f;
         
-        float renderX = panelX + x + posXOffset;
+        float renderX = panelX + x + posXOffset + centeringOffset;
         float renderY;
         
         boolean isCenteringPhase = phase == Phase.PICKUP || phase == Phase.CENTERING_TRAVEL || 
                                    phase == Phase.CENTERING_DROP;
         
         if (isCenteringPhase || phase == Phase.COMPLETE || (complete && useDirectionalAnimation)) {
-            renderX += centeringOffset;
             float glBaseY = CoordHelper.uiTopLeftToGlSpriteY(panelY, panelHeight, y + posYOffset + centeringOffset, displaySize);
             float extraHeight = displaySize * (scale - 1f);
             renderY = glBaseY - extraHeight / 2f;
         } else {
-            float glBaseY = CoordHelper.uiTopLeftToGlSpriteY(panelY, panelHeight, y + posYOffset, displaySize);
+            float glBaseY = CoordHelper.uiTopLeftToGlSpriteY(panelY, panelHeight, y + posYOffset + centeringOffset, displaySize);
             float extraHeight = displaySize * (scale - 1f);
             renderY = glBaseY - extraHeight / 2f;
         }
@@ -414,7 +492,9 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         renderX -= extraWidth / 2f;
         
         float visualRotation;
-        if (phase == Phase.WAITING_FOR_CENTERING) {
+        if (phase == Phase.STATIONARY_PREVIEW) {
+            visualRotation = 0f;
+        } else if (phase == Phase.WAITING_FOR_CENTERING) {
             visualRotation = 180f - rotation;
             if (type == DiceType.BLUE_D4) {
                 visualRotation -= 90f;
@@ -488,22 +568,18 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
     }
     
     public float getVisualX() {
-        float visualX = x + posXOffset;
-        if (isCenteredPhase()) {
-            float displaySize = getDisplaySize();
-            float centeringOffset = (DICE_SIZE - displaySize) / 2f;
-            visualX += centeringOffset;
-        }
-        return visualX;
+        float displaySize = getDisplaySize();
+        float centeringOffset = (DICE_SIZE - displaySize) / 2f;
+        return x + posXOffset + centeringOffset;
     }
     
     public float getVisualY() {
-        float visualY = y + posYOffset;
-        if (isCenteredPhase()) {
-            float displaySize = getDisplaySize();
-            float centeringOffset = (DICE_SIZE - displaySize) / 2f;
-            visualY += centeringOffset;
-        }
-        return visualY;
+        float displaySize = getDisplaySize();
+        float centeringOffset = (DICE_SIZE - displaySize) / 2f;
+        return y + posYOffset + centeringOffset;
+    }
+    
+    public boolean isStationaryPreview() {
+        return phase == Phase.STATIONARY_PREVIEW;
     }
 }

@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.lwjgl.opengl.GL11;
 
+import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.graphics.SpriteAPI;
 import com.fs.starfarer.api.util.Misc;
 
@@ -59,7 +60,7 @@ public final class BattleRenderingUtils {
     public static final float ROLE_ICON_SIZE_RATIO = 0.6f;
 
     public static void renderBattleBackground(float x, float y, float w, float h, 
-            float transitionProgress, float alphaMult, boolean showRoles) {
+            float rotationAngle, float alphaMult, boolean showRoles, boolean hideRoleIcons) {
         GLStateUtil.resetBlendState();
 
         Misc.renderQuad(x, y, w, h, COLOR_BG_DARK, alphaMult);
@@ -69,35 +70,66 @@ public final class BattleRenderingUtils {
             COLOR_BG_BOARD, alphaMult * 0.6f);
 
         if (showRoles) {
-            renderSideBackgrounds(x, y, w, h, transitionProgress, alphaMult);
-            renderRoleIconOverlay(x, y, w, h, transitionProgress, alphaMult);
+            renderSideBackgrounds(x, y, w, h, rotationAngle, alphaMult);
+            if (!hideRoleIcons) {
+                renderRoleIconOverlay(x, y, w, h, rotationAngle, alphaMult);
+            }
         }
     }
 
-    private static void renderSideBackgrounds(float x, float y, float w, float h, 
-            float transition, float alphaMult) {
-        float halfH = h / 2f;
-
-        Color bottomColor = blendSideColors(COLOR_ATTACK_SIDE, COLOR_DEFENSE_SIDE, transition);
-        Color topColor = blendSideColors(COLOR_DEFENSE_SIDE, COLOR_ATTACK_SIDE, transition);
-
-        Misc.renderQuad(x, y, w, halfH, bottomColor, alphaMult);
-        Misc.renderQuad(x, y + halfH, w, halfH, topColor, alphaMult);
+    public static void renderBattleBackground(float x, float y, float w, float h, 
+            float rotationAngle, float alphaMult, boolean showRoles) {
+        renderBattleBackground(x, y, w, h, rotationAngle, alphaMult, showRoles, false);
     }
 
-    private static Color blendSideColors(Color color1, Color color2, float t) {
-        t = Math.max(0f, Math.min(1f, t));
-        int r = (int) (color1.getRed() + (color2.getRed() - color1.getRed()) * t);
-        int g = (int) (color1.getGreen() + (color2.getGreen() - color1.getGreen()) * t);
-        int b = (int) (color1.getBlue() + (color2.getBlue() - color1.getBlue()) * t);
-        int a = (int) (color1.getAlpha() + (color2.getAlpha() - color1.getAlpha()) * t);
-        return new Color(r, g, b, a);
+    private static void setupScissor(float panelX, float panelY, float panelW, float panelH) {
+        float scale = Global.getSettings().getScreenScaleMult();
+        
+        int scissorX = Math.round(panelX * scale);
+        int scissorY = Math.round(panelY * scale);
+        int scissorW = Math.round(panelW * scale);
+        int scissorH = Math.round(panelH * scale);
+        
+        GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        GL11.glScissor(scissorX, scissorY, scissorW, scissorH);
+    }
+
+    private static void disableScissor() {
+        GL11.glDisable(GL11.GL_SCISSOR_TEST);
+    }
+
+    private static void renderSideBackgrounds(float x, float y, float w, float h, 
+            float rotationAngle, float alphaMult) {
+        float halfH = h / 2f;
+        float centerX = x + w / 2f;
+        float centerY = y + h / 2f;
+
+        float extendAmount = halfH * 0.5f;
+        float renderH = h + extendAmount * 2f;
+        float renderY = y - extendAmount;
+        float renderHalfH = renderH / 2f;
+
+        setupScissor(x, y, w, h);
+
+        GL11.glPushMatrix();
+        GL11.glTranslatef(centerX, centerY, 0f);
+        GL11.glRotatef(rotationAngle, 0f, 0f, 1f);
+        GL11.glTranslatef(-centerX, -centerY, 0f);
+
+        Misc.renderQuad(x, renderY, w, renderHalfH, COLOR_ATTACK_SIDE, alphaMult);
+        Misc.renderQuad(x, renderY + renderHalfH, w, renderHalfH, COLOR_DEFENSE_SIDE, alphaMult);
+
+        GL11.glPopMatrix();
+
+        disableScissor();
     }
 
     private static void renderRoleIconOverlay(float x, float y, float w, float h, 
-            float transition, float alphaMult) {
+            float rotationAngle, float alphaMult) {
         float halfH = h / 2f;
         float iconSize = halfH * ROLE_ICON_SIZE_RATIO;
+        float centerX = x + w / 2f;
+        float centerY = y + h / 2f;
 
         GLStateUtil.enableTexturingWithBlend();
 
@@ -109,23 +141,34 @@ public final class BattleRenderingUtils {
             return;
         }
 
-        float bottomIconAlpha = (1f - transition) * ROLE_ICON_OPACITY + transition * ROLE_ICON_OPACITY * 0.3f;
-        float topIconAlpha = transition * ROLE_ICON_OPACITY + (1f - transition) * ROLE_ICON_OPACITY * 0.3f;
+        GL11.glPushMatrix();
+        GL11.glTranslatef(centerX, centerY, 0f);
+        GL11.glRotatef(rotationAngle, 0f, 0f, 1f);
+        GL11.glTranslatef(-centerX, -centerY, 0f);
 
-        SpriteAPI bottomIcon = (1f - transition) >= 0.5f ? atkIcon : defIcon;
-        SpriteAPI topIcon = transition >= 0.5f ? atkIcon : defIcon;
+        float atkIconCenterX = centerX;
+        float atkIconCenterY = y + halfH / 2f;
+        
+        GL11.glPushMatrix();
+        GL11.glTranslatef(atkIconCenterX, atkIconCenterY, 0f);
+        GL11.glRotatef(-rotationAngle, 0f, 0f, 1f);
+        atkIcon.setSize(iconSize, iconSize);
+        atkIcon.setAlphaMult(alphaMult * ROLE_ICON_OPACITY);
+        atkIcon.render(-iconSize / 2f, -iconSize / 2f);
+        GL11.glPopMatrix();
 
-        float bottomIconX = x + (w - iconSize) / 2f;
-        float bottomIconY = y + (halfH - iconSize) / 2f;
-        bottomIcon.setSize(iconSize, iconSize);
-        bottomIcon.setAlphaMult(alphaMult * bottomIconAlpha);
-        bottomIcon.render(bottomIconX, bottomIconY);
+        float defIconCenterX = centerX;
+        float defIconCenterY = y + halfH + halfH / 2f;
+        
+        GL11.glPushMatrix();
+        GL11.glTranslatef(defIconCenterX, defIconCenterY, 0f);
+        GL11.glRotatef(-rotationAngle, 0f, 0f, 1f);
+        defIcon.setSize(iconSize, iconSize);
+        defIcon.setAlphaMult(alphaMult * ROLE_ICON_OPACITY);
+        defIcon.render(-iconSize / 2f, -iconSize / 2f);
+        GL11.glPopMatrix();
 
-        float topIconX = x + (w - iconSize) / 2f;
-        float topIconY = y + halfH + (halfH - iconSize) / 2f;
-        topIcon.setSize(iconSize, iconSize);
-        topIcon.setAlphaMult(alphaMult * topIconAlpha);
-        topIcon.render(topIconX, topIconY);
+        GL11.glPopMatrix();
 
         GLStateUtil.disableTexturing();
     }

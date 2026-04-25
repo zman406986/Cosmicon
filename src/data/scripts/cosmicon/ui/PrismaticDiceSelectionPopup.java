@@ -256,16 +256,20 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
     }
 
     private String getEffectDescription(PrismaticEffect effect) {
-        if (effect.isNone()) return "No special effect";
-        if (effect.isDoubleValue()) return "Doubles ATK/DEF value";
-        if (effect.isHealHp()) return "Heals HP equal to face value";
-        if (effect.isGainPrismaticUse()) return "Grants +1 Prismatic use";
-        if (effect.isInstantDamage()) return "Deals " + effect.getInstantDamageAmount() + " instant damage";
+        if (effect.isNone()) return Strings.get("prismatic.equip.no_effect");
+        if (effect.isDoubleValue()) return Strings.get("prismatic.equip.effect_double");
+        if (effect.isHealHp()) return Strings.get("prismatic.equip.effect_heal");
+        if (effect.isGainPrismaticUse()) return Strings.get("prismatic.equip.effect_gain_use");
+        if (effect.isInstantDamage()) return Strings.format("prismatic.equip.effect_instant_damage", effect.getInstantDamageAmount());
         if (effect.isGrantStatus()) {
             String statusName = effect.getGrantedEffect().name();
-            return "Grants " + statusName + " status";
+            String statusKey = "status." + statusName.toLowerCase();
+            try {
+                statusName = Strings.get(statusKey);
+            } catch (Exception ignored) { }
+            return Strings.format("prismatic.equip.effect_status", statusName);
         }
-        return "Special effect";
+        return Strings.get("prismatic.equip.no_effect");
     }
 
     private void updateVisibility() {

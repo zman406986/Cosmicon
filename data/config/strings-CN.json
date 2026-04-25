@@ -4,13 +4,12 @@
     },
     "menu": {
         "welcome": "欢迎来到战力党!",
-        "play": "开始游戏",
-        "help": "游戏说明",
-        "leave": "离开",
-        "submenu_title": "上骰了菜单",
         "start_game": "开始游戏",
         "character_setup": "角色设置",
-        "back": "返回"
+        "help": "游戏说明",
+        "leave": "离开",
+        "back": "返回",
+        "play": "对战"
     },
     "help": {
         "title": "=== 游戏说明 ===",
@@ -31,7 +30,11 @@
         "you_won": "你赢了！",
         "you_lost": "你输了！",
         "ability_btn": "角色能力",
-        "click_to_continue": "点击继续"
+        "click_to_continue": "点击继续",
+        "click_to_roll": "点击投骰子",
+        "selected_values": "已选择：{0}",
+        "no_selection": "选择骰子...",
+        "prismatic_effect_none": ""
     },
     "errors": {
         "market_too_small": "这个市场太小，无法进行战力党游戏。"
@@ -57,6 +60,7 @@
         "opponent_attack": "对手攻击阶段",
         "your_defense": "你的防御阶段",
         "opponent_defense": "对手防御阶段",
+        "pre_clash": "数值修正...",
         "resolving": "结算中...",
         "turn_complete": "第 {0} 回合完成",
         "victory": "胜利！",
@@ -336,6 +340,19 @@
             "composite_and_separator": " 且 ",
             "composite_or_separator": " 或 "
         },
+        "popup": {
+            "title": "选择曜彩骰",
+            "roll_button": "投掷",
+            "cancel_button": "取消",
+            "no_dice_available": "无可用曜彩骰",
+            "uses": "{0}次使用",
+            "effect_header": "效果:",
+            "confirm_roll": "确认投掷",
+            "about_to_roll": "即将投掷: {0}",
+            "dice_effect": "{0}",
+            "warning_destined": "警告: 此骰子投掷后将标记为必选!",
+            "close": "关闭"
+        },
         "face": {
             "mapping_header": "骰面:",
             "effect_header": "效果:",
@@ -366,7 +383,10 @@
         "popup_current": "当前：{0}",
         "popup_available": "可用骰子：",
         "popup_effect": "效果预览：",
-        "popup_robin_blocked": "知更鸟无法装备曜彩骰"
+        "popup_robin_blocked": "知更鸟无法装备曜彩骰",
+        "no_selection": "未选择角色",
+        "prismatic_na": "曜彩骰：不可用",
+        "passive_none": "被动：无"
     },
     "ai": {
         "decision_selected": "已选: {0}",

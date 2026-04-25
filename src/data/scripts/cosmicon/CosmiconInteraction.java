@@ -28,7 +28,6 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
     public enum State {
         MAIN_MENU,
-        PLAY_SUBMENU,
         PLAY,
         HELP
     }
@@ -64,7 +63,8 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         textPanel.addPara(Strings.get("menu.welcome"), Color.CYAN);
 
-        options.addOption(Strings.get("menu.play"), "play");
+        options.addOption(Strings.get("menu.start_game"), "start_game");
+        options.addOption(Strings.get("menu.character_setup"), "character_setup");
         options.addOption(Strings.get("menu.help"), "help");
         options.addOption(Strings.get("menu.leave"), "leave");
 
@@ -79,23 +79,15 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         switch (currentState) {
             case MAIN_MENU:
-                if ("play".equals(data)) {
-                    showPlaySubmenu();
+                if ("start_game".equals(data)) {
+                    startBattleWithSelection();
+                } else if ("character_setup".equals(data)) {
+                    showCharacterSetup();
                 } else if ("help".equals(data)) {
                     showHelp();
                 } else if ("leave".equals(data)) {
                     CosmiconMusicPlugin.stopMusic();
                     dialog.dismiss();
-                }
-                break;
-
-            case PLAY_SUBMENU:
-                if ("start_game".equals(data)) {
-                    startBattleWithSelection();
-                } else if ("character_setup".equals(data)) {
-                    showCharacterSetup();
-                } else if ("back_to_main".equals(data)) {
-                    showMenu();
                 }
                 break;
 
@@ -110,29 +102,18 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         }
     }
 
-    private void showPlaySubmenu() {
-        options.clearOptions();
-        textPanel.addPara(Strings.get("menu.submenu_title"), Color.CYAN);
-
-        options.addOption(Strings.get("menu.start_game"), "start_game");
-        options.addOption(Strings.get("menu.character_setup"), "character_setup");
-        options.addOption(Strings.get("menu.back"), "back_to_main");
-
-        setState(State.PLAY_SUBMENU);
-    }
-
     private void showCharacterSetup() {
         CharacterSetupPanelUI.CharacterSetupCallback callback = new CharacterSetupPanelUI.CharacterSetupCallback() {
             @Override
             public void onConfirm(String charId, String prismaticDiceId) {
                 CosmiconPlayerState.saveCharacter(charId);
                 CosmiconPlayerState.savePrismaticDice(prismaticDiceId);
-                showPlaySubmenu();
+                showMenu();
             }
 
             @Override
             public void onCancel() {
-                showPlaySubmenu();
+                showMenu();
             }
         };
 
@@ -142,7 +123,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
     private void startBattleWithSelection() {
         BattleDialogDelegate delegate = new BattleDialogDelegate(dialog, memoryMap, () -> {
-            showPlaySubmenu();
+            showMenu();
         });
 
         dialog.showCustomVisualDialog(

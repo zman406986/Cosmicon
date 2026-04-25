@@ -2,14 +2,26 @@ package data.scripts.cosmicon.battle;
 
 import java.awt.Color;
 
+import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.SettingsAPI;
+import com.fs.starfarer.api.graphics.SpriteAPI;
+import com.fs.starfarer.api.ui.Alignment;
 import com.fs.starfarer.api.ui.CustomPanelAPI;
+import com.fs.starfarer.api.ui.Fonts;
+import com.fs.starfarer.api.ui.LabelAPI;
+import com.fs.starfarer.api.ui.UIComponentAPI;
 
 import data.scripts.cosmicon.util.ColorHelper;
+import data.scripts.cosmicon.util.CoordHelper;
+import data.scripts.cosmicon.util.GLStateUtil;
 
 public class DamageResolutionAnimator {
     private static final float ICON_PREP_DURATION = 0.5f;
     private static final float ICON_CLASH_DURATION = 0.8f;
     private static final float ICON_IMPACT_DURATION = 0.6f;
+    private static final float WINNER_IMPACT_DURATION = 0.6f;
+    private static final float ICON_RETREAT_DURATION = 0.5f;
+    private static final float SHATTER_RESTORE_DURATION = 0.4f;
     private static final float RESULT_FLIGHT_DURATION = 0.8f;
     private static final float IMPACT_FLASH_DURATION = 0.5f;
     private static final float POST_IMPACT_PAUSE_DURATION = 1.0f;
@@ -26,6 +38,9 @@ public class DamageResolutionAnimator {
         WAIT_FOR_CLASH_CLICK,
         ICON_IMPACT,
         WAIT_FOR_IMPACT_CLICK,
+        WINNER_IMPACT,
+        ICON_RETREAT,
+        SHATTER_RESTORE,
         RESULT_FLIGHT,
         IMPACT_FLASH,
         DEFENDER_PULSE,
@@ -42,6 +57,11 @@ public class DamageResolutionAnimator {
     private FlyingNumber comboResultNumber;
     private final ImpactEffect impactEffect;
     private final IconShatterEffect shatterEffect;
+    
+    private FlyingIcon atkFlyingIcon;
+    private FlyingIcon defFlyingIcon;
+    private SpriteAPI atkRoleIcon;
+    private SpriteAPI defRoleIcon;
     
     private Phase phase;
     private float phaseElapsed;
@@ -66,9 +86,9 @@ public class DamageResolutionAnimator {
     private float defIconCenterX;
     private float defIconCenterY;
     private float iconSize;
-    
-    private int defenderFinalHp;
+
     private int comboDamage;
+    private float shatterRestoreAlpha;
     
     private CustomPanelAPI panel;
     
@@ -77,6 +97,7 @@ public class DamageResolutionAnimator {
         phaseElapsed = 0f;
         complete = false;
         waitingForClick = false;
+        shatterRestoreAlpha = 0f;
         impactEffect = new ImpactEffect();
         shatterEffect = new IconShatterEffect();
     }
@@ -99,6 +120,14 @@ public class DamageResolutionAnimator {
         
         StatusEffectProcessor attackerEffects = state.isPlayerAttacker() 
             ? state.getPlayerEffects() : state.getOpponentEffects();
+        StatusEffectProcessor defenderEffects = state.isPlayerAttacker() 
+            ? state.getOpponentEffects() : state.getPlayerEffects();
+        
+        this.attackValue += attackerEffects.calculateAttackBonus(BattleState.TurnType.ATTACK);
+        this.attackValue += state.getPrismaticDiceTotalValue(state.isPlayerAttacker());
+        
+        this.defenseValue += defenderEffects.calculateDefenseBonus(BattleState.TurnType.DEFENSE);
+        this.defenseValue += state.getPrismaticDiceTotalValue(!state.isPlayerAttacker());
         
         this.perforation = attackerEffects.shouldIgnoreDefense();
         
@@ -113,22 +142,22 @@ public class DamageResolutionAnimator {
         this.attackWins = attackValue > defenseValue;
         
         this.combo = hasCombo(state);
+        int defenderFinalHp;
         if (combo) {
             this.comboDamage = resultValue;
-            this.defenderFinalHp = Math.max(0, 
-                (state.isPlayerAttacker() ? state.getOpponentHp() : state.getPlayerHp()) 
-                - resultValue - comboDamage);
         } else {
             this.comboDamage = 0;
-            this.defenderFinalHp = Math.max(0,
-                (state.isPlayerAttacker() ? state.getOpponentHp() : state.getPlayerHp())
-                - resultValue);
         }
         
         cleanup();
         
         calculateStaticIconPositions(state);
         createFlyingNumbers();
+        
+        atkFlyingIcon.startFrom(atkIconCenterX, atkIconCenterY);
+        defFlyingIcon.startFrom(defIconCenterX, defIconCenterY);
+        atkFlyingIcon.createLabel(panel);
+        defFlyingIcon.createLabel(panel);
         
         phase = Phase.ICON_PREPARATION;
         phaseElapsed = 0f;
@@ -140,11 +169,11 @@ public class DamageResolutionAnimator {
         float halfH = BattleRenderingUtils.PANEL_HEIGHT / 2f;
         iconSize = halfH * BattleRenderingUtils.ROLE_ICON_SIZE_RATIO;
         
-        float bottomIconCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
-        float bottomIconCenterY = (halfH - iconSize) / 2f + iconSize / 2f;
-        
         float topIconCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
-        float topIconCenterY = halfH + (halfH - iconSize) / 2f + iconSize / 2f;
+        float topIconCenterY = (halfH - iconSize) / 2f + iconSize / 2f;
+        
+        float bottomIconCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
+        float bottomIconCenterY = halfH + (halfH - iconSize) / 2f + iconSize / 2f;
         
         if (state.isPlayerAttacker()) {
             atkIconCenterX = bottomIconCenterX;
@@ -178,6 +207,15 @@ public class DamageResolutionAnimator {
         
         resultNumber = new FlyingNumber();
         comboResultNumber = null;
+        
+        atkRoleIcon = CosmiconSprites.getAtkIcon();
+        defRoleIcon = CosmiconSprites.getDefIcon();
+        
+        atkFlyingIcon = new FlyingIcon(atkRoleIcon, iconSize, ColorHelper.ATTACK_VALUE);
+        atkFlyingIcon.setValue(attackValue);
+        
+        defFlyingIcon = new FlyingIcon(defRoleIcon, iconSize, ColorHelper.DEFENSE_VALUE);
+        defFlyingIcon.setValue(defenseValue);
     }
     
     public void advance(float amount) {
@@ -191,7 +229,9 @@ public class DamageResolutionAnimator {
             case ICON_PREPARATION -> advanceIconPreparation();
             case ICON_CLASH -> advanceIconClash();
             case ICON_IMPACT -> advanceIconImpact();
-            case RESULT_FLIGHT -> advanceResultFlight();
+            case WINNER_IMPACT -> advanceWinnerImpact();
+            case ICON_RETREAT -> advanceIconRetreat();
+            case SHATTER_RESTORE -> advanceShatterRestore();
             case IMPACT_FLASH -> advanceImpactFlash();
             case DEFENDER_PULSE -> advanceDefenderPulse();
             case POST_IMPACT_PAUSE -> advancePostImpactPause();
@@ -219,6 +259,12 @@ public class DamageResolutionAnimator {
         if (comboResultNumber != null) {
             comboResultNumber.advance(amount);
         }
+        if (atkFlyingIcon != null) {
+            atkFlyingIcon.advance(amount);
+        }
+        if (defFlyingIcon != null) {
+            defFlyingIcon.advance(amount);
+        }
     }
     
     private void advanceIconPreparation() {
@@ -230,16 +276,13 @@ public class DamageResolutionAnimator {
     }
     
     private void startIconClash() {
-        atkNumber.startFrom(atkIconCenterX, atkIconCenterY);
-        atkNumber.flyTo(centerX, centerY, ICON_CLASH_DURATION);
-        
-        defNumber.startFrom(defIconCenterX, defIconCenterY);
-        defNumber.flyTo(centerX, centerY, ICON_CLASH_DURATION);
+        atkFlyingIcon.flyTo(centerX, centerY, ICON_CLASH_DURATION);
+        defFlyingIcon.flyTo(centerX, centerY, ICON_CLASH_DURATION);
     }
     
     private void advanceIconClash() {
         if (phaseElapsed >= ICON_CLASH_DURATION || 
-            (atkNumber.hasImpacted() && defNumber.hasImpacted())) {
+            (atkFlyingIcon.isComplete() && defFlyingIcon.isComplete())) {
             
             phase = Phase.WAIT_FOR_CLASH_CLICK;
             waitingForClick = true;
@@ -255,11 +298,17 @@ public class DamageResolutionAnimator {
         }
         
         if (attackWins) {
-            shatterEffect.trigger(defIconCenterX, defIconCenterY, 
+            shatterEffect.trigger(centerX, centerY, 
                 ColorHelper.DEFENSE_VALUE, iconSize);
+            if (defFlyingIcon != null) {
+                defFlyingIcon.setLabelOpacity(0f);
+            }
         } else {
             shatterEffect.trigger(atkIconCenterX, atkIconCenterY, 
                 ColorHelper.ATTACK_VALUE, iconSize);
+            if (atkFlyingIcon != null) {
+                atkFlyingIcon.setLabelOpacity(0f);
+            }
         }
     }
     
@@ -272,37 +321,26 @@ public class DamageResolutionAnimator {
     }
     
     private void proceedFromImpactWait() {
-        if (attackWins && resultValue > 0) {
-            startResultFlight();
-            phase = Phase.RESULT_FLIGHT;
-        } else if (!attackWins || isDraw) {
-            if (isDraw) {
-                resultNumber.setValue(0);
-                resultNumber.setColor(DEFENDER_PULSE_COLOR);
-            } else {
-                resultNumber.setValue(resultValue);
-                resultNumber.setColor(DAMAGE_RESULT_COLOR);
-            }
-            resultNumber.startFrom(centerX, centerY);
-            phase = Phase.DEFENDER_PULSE;
+        if (attackWins) {
+            atkFlyingIcon.flyTo(defenderTargetX, defenderTargetY, WINNER_IMPACT_DURATION);
+            phase = Phase.WINNER_IMPACT;
         } else {
-            resultNumber.setValue(resultValue);
-            resultNumber.setColor(DAMAGE_RESULT_COLOR);
-            resultNumber.startFrom(centerX, centerY);
-            phase = Phase.IMPACT_FLASH;
+            if (defFlyingIcon != null) {
+                defFlyingIcon.flyTo(defIconCenterX, defIconCenterY, ICON_RETREAT_DURATION);
+            }
+            if (atkFlyingIcon != null) {
+                atkFlyingIcon.startFrom(atkIconCenterX, atkIconCenterY);
+            }
+            phase = Phase.SHATTER_RESTORE;
         }
         phaseElapsed = 0f;
     }
     
-    private void startResultFlight() {
-        resultNumber.setValue(resultValue);
-        resultNumber.setColor(DAMAGE_RESULT_COLOR);
-        resultNumber.startFrom(centerX, centerY);
-        resultNumber.flyTo(defenderTargetX, defenderTargetY, RESULT_FLIGHT_DURATION);
-    }
-    
-    private void advanceResultFlight() {
-        if (phaseElapsed >= RESULT_FLIGHT_DURATION || resultNumber.hasImpacted()) {
+    private void advanceWinnerImpact() {
+        boolean atkDone = atkFlyingIcon == null || atkFlyingIcon.isComplete();
+        boolean defDone = defFlyingIcon == null || defFlyingIcon.isComplete();
+        
+        if (phaseElapsed >= WINNER_IMPACT_DURATION || (atkDone && defDone)) {
             impactEffect.triggerFlash(defenderTargetX, defenderTargetY, 40f, DAMAGE_RESULT_COLOR);
             impactEffect.triggerShockwave(defenderTargetX, defenderTargetY);
             
@@ -310,7 +348,67 @@ public class DamageResolutionAnimator {
                 impactEffect.triggerParticles(defenderTargetX, defenderTargetY, 6, DAMAGE_RESULT_COLOR);
             }
             
-            phase = Phase.IMPACT_FLASH;
+            startResultFlight();
+            startIconRetreat();
+            phase = Phase.ICON_RETREAT;
+            phaseElapsed = 0f;
+        }
+    }
+    
+    private void startResultFlight() {
+        resultNumber.setValue(resultValue);
+        resultNumber.setColor(DAMAGE_RESULT_COLOR);
+        resultNumber.startFrom(defenderTargetX, defenderTargetY);
+        resultNumber.flyTo(defenderTargetX, defenderTargetY - 30f, RESULT_FLIGHT_DURATION);
+    }
+    
+    private void startIconRetreat() {
+        if (attackWins) {
+            if (atkFlyingIcon != null) {
+                atkFlyingIcon.flyTo(atkIconCenterX, atkIconCenterY, ICON_RETREAT_DURATION);
+            }
+        } else {
+            if (defFlyingIcon != null) {
+                defFlyingIcon.flyTo(defIconCenterX, defIconCenterY, ICON_RETREAT_DURATION);
+            }
+        }
+    }
+    
+    private void advanceIconRetreat() {
+        boolean atkDone = atkFlyingIcon == null || atkFlyingIcon.isComplete();
+        boolean defDone = defFlyingIcon == null || defFlyingIcon.isComplete();
+        
+        if (phaseElapsed >= ICON_RETREAT_DURATION || (atkDone && defDone)) {
+            phase = Phase.SHATTER_RESTORE;
+            phaseElapsed = 0f;
+        }
+    }
+    
+    private void advanceShatterRestore() {
+        float progress = Math.min(phaseElapsed / SHATTER_RESTORE_DURATION, 1f);
+        shatterRestoreAlpha = progress;
+        
+        boolean atkDone = atkFlyingIcon == null || atkFlyingIcon.isComplete();
+        boolean defDone = defFlyingIcon == null || defFlyingIcon.isComplete();
+        
+        if (phaseElapsed >= SHATTER_RESTORE_DURATION && atkDone && defDone) {
+            shatterRestoreAlpha = 1f;
+            
+            boolean atkShattered = !attackWins || isDraw;
+            if (atkShattered && atkFlyingIcon != null) {
+                atkFlyingIcon.startFrom(atkIconCenterX, atkIconCenterY);
+                atkFlyingIcon.setLabelOpacity(1f);
+            }
+            if (!atkShattered && defFlyingIcon != null) {
+                defFlyingIcon.startFrom(defIconCenterX, defIconCenterY);
+                defFlyingIcon.setLabelOpacity(1f);
+            }
+            
+            if (isDraw) {
+                resultNumber.setValue(0);
+                resultNumber.setColor(DEFENDER_PULSE_COLOR);
+            }
+            phase = Phase.POST_IMPACT_PAUSE;
             phaseElapsed = 0f;
         }
     }
@@ -394,20 +492,54 @@ public class DamageResolutionAnimator {
             phase == Phase.ICON_CLASH ||
             phase == Phase.WAIT_FOR_CLASH_CLICK ||
             phase == Phase.ICON_IMPACT ||
-            phase == Phase.WAIT_FOR_IMPACT_CLICK;
+            phase == Phase.WAIT_FOR_IMPACT_CLICK ||
+            phase == Phase.WINNER_IMPACT ||
+            phase == Phase.ICON_RETREAT ||
+            phase == Phase.SHATTER_RESTORE;
         
         if (!shouldRenderNumbers) return;
         
+        boolean duringClash = phase == Phase.ICON_PREPARATION ||
+                              phase == Phase.ICON_CLASH ||
+                              phase == Phase.WAIT_FOR_CLASH_CLICK;
+        
+        if (duringClash) {
+            if (atkFlyingIcon != null) {
+                atkFlyingIcon.render(panelX, panelY, panelHeight, alphaMult);
+                atkFlyingIcon.setLabelOpacity(alphaMult);
+            }
+            if (defFlyingIcon != null) {
+                defFlyingIcon.render(panelX, panelY, panelHeight, alphaMult);
+                defFlyingIcon.setLabelOpacity(alphaMult);
+            }
+            return;
+        }
+        
         boolean atkShattered = !attackWins || isDraw;
         boolean defShattered = attackWins;
+        boolean restoring = phase == Phase.SHATTER_RESTORE;
         
-        if (atkNumber != null && !atkShattered) {
-            atkNumber.render(panelX, panelY, panelHeight, alphaMult, panel);
+        if (atkFlyingIcon != null && (!atkShattered || restoring)) {
+            float restoreAlpha = atkShattered && restoring ? shatterRestoreAlpha : alphaMult;
+            atkFlyingIcon.render(panelX, panelY, panelHeight, restoreAlpha);
+            atkFlyingIcon.setLabelOpacity(restoreAlpha);
         }
-        
-        if (defNumber != null && !defShattered) {
-            defNumber.render(panelX, panelY, panelHeight, alphaMult, panel);
+        if (defFlyingIcon != null && (!defShattered || restoring)) {
+            float restoreAlpha = defShattered && restoring ? shatterRestoreAlpha : alphaMult;
+            defFlyingIcon.render(panelX, panelY, panelHeight, restoreAlpha);
+            defFlyingIcon.setLabelOpacity(restoreAlpha);
         }
+    }
+    
+    public boolean isIconClashActive() {
+        return phase == Phase.ICON_PREPARATION ||
+               phase == Phase.ICON_CLASH ||
+               phase == Phase.WAIT_FOR_CLASH_CLICK ||
+               phase == Phase.ICON_IMPACT ||
+               phase == Phase.WAIT_FOR_IMPACT_CLICK ||
+               phase == Phase.WINNER_IMPACT ||
+               phase == Phase.ICON_RETREAT ||
+               phase == Phase.SHATTER_RESTORE;
     }
     
     private void renderResultNumbers(float panelX, float panelY, float panelHeight, float alphaMult) {
@@ -423,7 +555,9 @@ public class DamageResolutionAnimator {
         return phase != Phase.ICON_PREPARATION && 
             phase != Phase.ICON_CLASH && 
             phase != Phase.WAIT_FOR_CLASH_CLICK &&
-            phase != Phase.ICON_IMPACT;
+            phase != Phase.ICON_IMPACT &&
+            phase != Phase.WAIT_FOR_IMPACT_CLICK &&
+            phase != Phase.WINNER_IMPACT;
     }
     
     public boolean isComplete() {
@@ -445,8 +579,29 @@ public class DamageResolutionAnimator {
             return;
         }
         
-        phase = Phase.COMPLETE;
-        complete = true;
+        if (phase == Phase.IDLE) {
+            return;
+        }
+        
+        if (phase == Phase.ICON_PREPARATION || phase == Phase.ICON_CLASH) {
+            triggerIconImpact();
+            phase = Phase.COMPLETE;
+            complete = true;
+        } else if (phase == Phase.ICON_IMPACT || phase == Phase.WINNER_IMPACT ||
+                   phase == Phase.ICON_RETREAT || phase == Phase.SHATTER_RESTORE) {
+            proceedFromImpactWait();
+            if (!attackWins || isDraw) {
+                phase = Phase.COMPLETE;
+                complete = true;
+            }
+        } else if (phase == Phase.RESULT_FLIGHT || phase == Phase.IMPACT_FLASH || 
+                   phase == Phase.DEFENDER_PULSE || phase == Phase.POST_IMPACT_PAUSE ||
+                   phase == Phase.COMBO_PAUSE || phase == Phase.COMBO_SECOND_CLASH ||
+                   phase == Phase.COMBO_SECOND_IMPACT) {
+            phase = Phase.COMPLETE;
+            complete = true;
+        }
+        
         phaseElapsed = 0f;
         
         if (atkNumber != null) {
@@ -460,6 +615,12 @@ public class DamageResolutionAnimator {
         }
         if (comboResultNumber != null) {
             comboResultNumber.forceComplete();
+        }
+        if (atkFlyingIcon != null) {
+            atkFlyingIcon.setLabelOpacity(0f);
+        }
+        if (defFlyingIcon != null) {
+            defFlyingIcon.setLabelOpacity(0f);
         }
         
         impactEffect.clear();
@@ -483,6 +644,14 @@ public class DamageResolutionAnimator {
             comboResultNumber.cleanup();
             comboResultNumber = null;
         }
+        if (atkFlyingIcon != null) {
+            atkFlyingIcon.cleanup();
+            atkFlyingIcon = null;
+        }
+        if (defFlyingIcon != null) {
+            defFlyingIcon.cleanup();
+            defFlyingIcon = null;
+        }
         
         impactEffect.clear();
         shatterEffect.clear();
@@ -491,6 +660,7 @@ public class DamageResolutionAnimator {
         phaseElapsed = 0f;
         complete = false;
         waitingForClick = false;
+        shatterRestoreAlpha = 0f;
     }
     
     public boolean isPerforation() {
@@ -509,4 +679,126 @@ public class DamageResolutionAnimator {
         return isDraw;
     }
     
+    private class FlyingIcon {
+        private float startX, startY;
+        private float targetX, targetY;
+        private float currentX, currentY;
+        private float duration;
+        private float elapsed;
+        private float size;
+        private boolean complete;
+        private SpriteAPI sprite;
+        private int value;
+        private Color color;
+        
+        private LabelAPI valueLabel;
+        private CustomPanelAPI labelPanel;
+        private boolean labelCreated;
+        
+        private static final float LABEL_HEIGHT = 30f;
+        
+        public FlyingIcon(SpriteAPI sprite, float size, Color color) {
+            this.sprite = sprite;
+            this.size = size;
+            this.color = color;
+            this.complete = false;
+            this.elapsed = 0f;
+            this.labelCreated = false;
+        }
+        
+        public void startFrom(float x, float y) {
+            this.startX = x;
+            this.startY = y;
+            this.currentX = x;
+            this.currentY = y;
+        }
+        
+        public void flyTo(float x, float y, float duration) {
+            this.targetX = x;
+            this.targetY = y;
+            this.duration = duration;
+            this.elapsed = 0f;
+            this.complete = false;
+        }
+        
+        public void setValue(int value) {
+            this.value = value;
+        }
+        
+        public void advance(float amount) {
+            if (complete) return;
+            elapsed += amount;
+            float progress = Math.min(elapsed / duration, 1f);
+            float eased = 1f - (1f - progress) * (1f - progress);
+            currentX = startX + (targetX - startX) * eased;
+            currentY = startY + (targetY - startY) * eased;
+            if (progress >= 1f) {
+                complete = true;
+            }
+            updateLabelPosition();
+        }
+        
+        public boolean isComplete() { return complete; }
+        public float getX() { return currentX; }
+        public float getY() { return currentY; }
+        public float getSize() { return size; }
+        public SpriteAPI getSprite() { return sprite; }
+        public int getValue() { return value; }
+        
+        public void createLabel(CustomPanelAPI panel) {
+            if (labelCreated || panel == null) return;
+            
+            SettingsAPI settings = Global.getSettings();
+            valueLabel = settings.createLabel(String.valueOf(value), Fonts.INSIGNIA_LARGE);
+            valueLabel.setColor(color);
+            valueLabel.setAlignment(Alignment.MID);
+            
+            float labelWidth = valueLabel.computeTextWidth(String.valueOf(value)) + 10f;
+            panel.addComponent((UIComponentAPI) valueLabel)
+                .setSize(labelWidth, LABEL_HEIGHT)
+                .inTL(currentX - labelWidth / 2f, currentY - LABEL_HEIGHT / 2f);
+            
+            labelPanel = panel;
+            labelCreated = true;
+        }
+        
+        private void updateLabelPosition() {
+            if (valueLabel != null && labelCreated) {
+                float labelWidth = valueLabel.computeTextWidth(String.valueOf(value)) + 10f;
+                ((UIComponentAPI) valueLabel).getPosition()
+                    .setSize(labelWidth, LABEL_HEIGHT)
+                    .inTL(currentX - labelWidth / 2f, currentY - LABEL_HEIGHT / 2f);
+            }
+        }
+        
+        public void setLabelOpacity(float alpha) {
+            if (valueLabel != null) {
+                valueLabel.setOpacity(alpha);
+            }
+        }
+        
+        public void cleanup() {
+            if (valueLabel != null && labelPanel != null) {
+                labelPanel.removeComponent((UIComponentAPI) valueLabel);
+            }
+            valueLabel = null;
+            labelPanel = null;
+            labelCreated = false;
+        }
+        
+        public void render(float panelX, float panelY, float panelHeight, float alphaMult) {
+            if (sprite == null) return;
+            
+            GLStateUtil.enableTexturingWithBlend();
+            
+            float glX = panelX + currentX - size / 2f;
+            float glY = CoordHelper.uiToGlY(panelY, panelHeight, currentY + size / 2f);
+            
+            sprite.setSize(size, size);
+            sprite.setAlphaMult(alphaMult);
+            sprite.render(glX, glY);
+            
+            GLStateUtil.disableTexturing();
+        }
+    }
     }

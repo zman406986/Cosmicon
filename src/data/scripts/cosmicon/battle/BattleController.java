@@ -109,6 +109,10 @@ public class BattleController implements BattleState.DamageAnimationCallback {
         turnProcessor.advanceToDefenderSelectPhase();
     }
 
+    public void proceedToClash() {
+        turnProcessor.proceedToClash();
+    }
+
     public void cleanup() {
         CosmiconLogger.info("========== BATTLE CLEANUP ==========");
         String winner = state.getWinner();

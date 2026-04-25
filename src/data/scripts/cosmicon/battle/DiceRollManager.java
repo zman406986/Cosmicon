@@ -13,6 +13,11 @@ public class DiceRollManager {
     private final List<DiceAnimator> opponentAnimators;
     private CustomPanelAPI panel;
     private boolean initialized;
+    
+    private boolean waitingForRollTrigger = false;
+    private boolean opponentWaitingForRollTrigger = false;
+    private List<DicePathPlanner.PlannedPath> pendingRollPaths;
+    private List<DicePathPlanner.PlannedPath> pendingOpponentRollPaths;
 
     public DiceRollManager() {
         this.animators = new ArrayList<>();
@@ -45,8 +50,95 @@ public class DiceRollManager {
             animators.add(animator);
         }
     }
+    
+    public void startStationaryPreview(List<DiceType> types, List<Integer> results, float centerX, float centerY) {
+        if (!initialized) return;
 
-public void advance(float amount) {
+        clear();
+        animators.clear();
+        pendingRollPaths = null;
+        waitingForRollTrigger = false;
+
+        int count = Math.min(types.size(), results.size());
+        List<DicePathPlanner.PlannedPath> paths = DicePathPlanner.planPaths(types, results, centerX, centerY, DICE_SPACING);
+        pendingRollPaths = paths;
+        
+        for (int i = 0; i < count; i++) {
+            DiceAnimator animator = new DiceAnimator();
+            animator.init();
+            DicePathPlanner.PlannedPath path = paths.get(i);
+            
+            animator.startStationaryPreview(types.get(i), results.get(i), path.targetCenterX(), path.targetCenterY());
+            animators.add(animator);
+        }
+        
+        waitingForRollTrigger = true;
+    }
+    
+    public void triggerRollFromStationary() {
+        if (!waitingForRollTrigger) return;
+        if (pendingRollPaths == null || pendingRollPaths.isEmpty()) return;
+        
+        for (int i = 0; i < animators.size() && i < pendingRollPaths.size(); i++) {
+            DiceAnimator animator = animators.get(i);
+            DicePathPlanner.PlannedPath path = pendingRollPaths.get(i);
+            
+            animator.startRollFromStationary(path.rotation(), path.travelDistance(),
+                    path.bounceCount(), path.bounceHeights(), path.delay(),
+                    path.targetCenterX(), path.targetCenterY());
+        }
+        
+        waitingForRollTrigger = false;
+    }
+    
+    public boolean isWaitingForRollTrigger() {
+        return waitingForRollTrigger;
+    }
+    
+    public void startOpponentStationaryPreview(List<DiceType> types, List<Integer> results, float centerX, float centerY) {
+        if (!initialized) return;
+
+        clearOpponentAnimators();
+        pendingOpponentRollPaths = null;
+        opponentWaitingForRollTrigger = false;
+
+        int count = Math.min(types.size(), results.size());
+        List<DicePathPlanner.PlannedPath> paths = DicePathPlanner.planPaths(types, results, centerX, centerY, DICE_SPACING);
+        pendingOpponentRollPaths = paths;
+        
+        for (int i = 0; i < count; i++) {
+            DiceAnimator animator = new DiceAnimator();
+            animator.init();
+            DicePathPlanner.PlannedPath path = paths.get(i);
+            
+            animator.startStationaryPreview(types.get(i), results.get(i), path.targetCenterX(), path.targetCenterY());
+            opponentAnimators.add(animator);
+        }
+        
+        opponentWaitingForRollTrigger = true;
+    }
+    
+    public void triggerOpponentRollFromStationary() {
+        if (!opponentWaitingForRollTrigger) return;
+        if (pendingOpponentRollPaths == null || pendingOpponentRollPaths.isEmpty()) return;
+        
+        for (int i = 0; i < opponentAnimators.size() && i < pendingOpponentRollPaths.size(); i++) {
+            DiceAnimator animator = opponentAnimators.get(i);
+            DicePathPlanner.PlannedPath path = pendingOpponentRollPaths.get(i);
+            
+            animator.startRollFromStationary(path.rotation(), path.travelDistance(),
+                    path.bounceCount(), path.bounceHeights(), path.delay(),
+                    path.targetCenterX(), path.targetCenterY());
+        }
+        
+        opponentWaitingForRollTrigger = false;
+    }
+    
+    public boolean isOpponentWaitingForRollTrigger() {
+        return opponentWaitingForRollTrigger;
+    }
+
+    public void advance(float amount) {
         for (DiceAnimator animator : animators) {
             animator.advance(amount);
         }
@@ -117,7 +209,7 @@ public void advance(float amount) {
             animators.size(), centerX, centerY, DICE_SPACING, existingPositions);
 
         DiceAnimator animator = new DiceAnimator();
-        animator.init(panel);
+        animator.init();
         animator.start(type, value, path.startX(), path.startY(), path.delay(),
                 path.rotation(), path.travelDistance(), path.bounceCount(), path.bounceHeights(),
                 path.targetCenterX(), path.targetCenterY());
@@ -153,6 +245,8 @@ public void advance(float amount) {
             animator.forceComplete();
         }
         animators.clear();
+        waitingForRollTrigger = false;
+        pendingRollPaths = null;
     }
 
     public void partialReroll(List<Integer> indices, List<Integer> newValues) {
@@ -164,7 +258,8 @@ public void advance(float amount) {
             DicePathPlanner.PlannedPath path = rerollPaths.get(i);
             if (animatorIndex >= 0 && animatorIndex < animators.size() && path != null) {
                 DiceAnimator animator = animators.get(animatorIndex);
-                animator.rerollWithNewPath(newValues.get(i), path.rotation(), path.travelDistance(),
+                animator.rerollWithNewPath(newValues.get(animatorIndex), path.startX(), path.startY(),
+                        path.rotation(), path.travelDistance(),
                         path.bounceCount(), path.bounceHeights(),
                         path.targetCenterX(), path.targetCenterY());
             }
@@ -215,7 +310,8 @@ public void advance(float amount) {
             DicePathPlanner.PlannedPath path = rerollPaths.get(i);
             if (animatorIndex >= 0 && animatorIndex < opponentAnimators.size() && path != null) {
                 DiceAnimator animator = opponentAnimators.get(animatorIndex);
-                animator.rerollWithNewPath(newValues.get(i), path.rotation(), path.travelDistance(),
+                animator.rerollWithNewPath(newValues.get(animatorIndex), path.startX(), path.startY(),
+                        path.rotation(), path.travelDistance(),
                         path.bounceCount(), path.bounceHeights(),
                         path.targetCenterX(), path.targetCenterY());
             }
@@ -241,6 +337,8 @@ public void advance(float amount) {
             animator.forceComplete();
         }
         opponentAnimators.clear();
+        opponentWaitingForRollTrigger = false;
+        pendingOpponentRollPaths = null;
     }
 
     public List<DiceAnimator> getOpponentAnimators() {

@@ -73,6 +73,7 @@ public class TurnProcessor {
     }
     
     public void executeTurn() {
+        state.clearConfirmedSelections();
         state.getPlayerEffects().resetTurnState();
         state.getOpponentEffects().resetTurnState();
         
@@ -147,20 +148,6 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
     }
     
     public void advanceToSelectPhase() {
-        if (state.getCurrentPhase() != BattleState.Phase.ROLLING) return;
-        
-        state.clearDiceSelection(true);
-        state.clearDiceSelection(false);
-        
-        state.setCurrentPhase(BattleState.Phase.SELECTING_ATTACK);
-        state.notifyPhaseChange(BattleState.Phase.SELECTING_ATTACK);
-        
-        if (!state.isPlayerAttacker()) {
-            startAiSelection();
-        }
-    }
-    
-    public void advanceToAttackPhase() {
         if (state.getCurrentPhase() != BattleState.Phase.ROLLING) return;
         
         state.clearDiceSelection(true);
@@ -385,6 +372,12 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             state.notifyValueChange(forPlayer, "LEVEL_UP", oldValue, newValue, delta);
         }
         
+        if (aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
+            state.setAttackValue(state.calculateSelectedSum(false));
+        } else if (!aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
+            state.setDefenseValue(state.calculateSelectedSum(false));
+        }
+        
         if (weatherController != null) {
             int oldAtk = state.getAttackValue();
             int oldDef = state.getDefenseValue();
@@ -404,12 +397,18 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         }
         
         if (aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
-            state.setAttackValue(state.calculateSelectedSum(false));
+            state.setAttackerConfirmedSelection(
+                state.getSelectedDiceValuesFormatted(false),
+                state.getSelectedPrismaticEffectStrings(false),
+                state.getAttackValue()
+            );
             advanceToDefensePhase();
         } else if (!aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
-            state.setDefenseValue(state.calculateSelectedSum(false));
-            state.setCurrentPhase(BattleState.Phase.RESOLVING);
-            state.notifyPhaseChange(BattleState.Phase.RESOLVING);
+            state.setDefenderConfirmedSelection(
+                state.getSelectedDiceValuesFormatted(false),
+                state.getSelectedPrismaticEffectStrings(false),
+                state.getDefenseValue()
+            );
             resolveDamage();
         }
         
@@ -441,6 +440,12 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             state.notifyValueChange(false, "LEVEL_UP", oldValue, newValue, delta);
         }
         
+        if (aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
+            state.setAttackValue(state.calculateSelectedSum(false));
+        } else if (!aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
+            state.setDefenseValue(state.calculateSelectedSum(false));
+        }
+        
         if (weatherController != null) {
             int oldAtk = state.getAttackValue();
             int oldDef = state.getDefenseValue();
@@ -463,12 +468,18 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         aiSelectionComplete = true;
         
         if (aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
-            state.setAttackValue(state.calculateSelectedSum(false));
+            state.setAttackerConfirmedSelection(
+                state.getSelectedDiceValuesFormatted(false),
+                state.getSelectedPrismaticEffectStrings(false),
+                state.getAttackValue()
+            );
             advanceToDefensePhase();
         } else if (!aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
-            state.setDefenseValue(state.calculateSelectedSum(false));
-            state.setCurrentPhase(BattleState.Phase.RESOLVING);
-            state.notifyPhaseChange(BattleState.Phase.RESOLVING);
+            state.setDefenderConfirmedSelection(
+                state.getSelectedDiceValuesFormatted(false),
+                state.getSelectedPrismaticEffectStrings(false),
+                state.getDefenseValue()
+            );
             resolveDamage();
         }
     }
@@ -497,6 +508,13 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             state.queueValueChange(!playerIsAttacker, "PRISMATIC", delta);
             state.notifyValueChange(!playerIsAttacker, "PRISMATIC", prePrismaticDefense, postPrismaticDefense, delta);
         }
+
+        state.setCurrentPhase(BattleState.Phase.RESOLVING_PRE_CLASH);
+        state.notifyPhaseChange(BattleState.Phase.RESOLVING_PRE_CLASH);
+    }
+    
+    public void proceedToClash() {
+        if (state.getCurrentPhase() != BattleState.Phase.RESOLVING_PRE_CLASH) return;
 
         StatusEffectProcessor.BattleContext attackerContext = createBattleContext(state.isPlayerAttacker());
         StatusEffectProcessor.BattleContext defenderContext = createBattleContext(!state.isPlayerAttacker());
@@ -532,6 +550,9 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
 
         PassiveEventSystem.onAttackResolution(state, state.isPlayerAttacker());
         PassiveEventSystem.onAttackResolution(state, !state.isPlayerAttacker());
+
+        state.setCurrentPhase(BattleState.Phase.RESOLVING);
+        state.notifyPhaseChange(BattleState.Phase.RESOLVING);
 
         if (damageResolver != null) {
             DamageResolver.DamageResult result = damageResolver.resolve(state);
@@ -725,6 +746,12 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             state.notifyValueChange(true, "LEVEL_UP", oldValue, newValue, delta);
         }
         
+        if (state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
+            state.setAttackValue(state.calculateSelectedSum(true));
+        } else if (!state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
+            state.setDefenseValue(state.calculateSelectedSum(true));
+        }
+        
         if (weatherController != null) {
             int oldAtk = state.getAttackValue();
             int oldDef = state.getDefenseValue();
@@ -744,12 +771,18 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         }
         
         if (state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
-            state.setAttackValue(state.calculateSelectedSum(true));
+            state.setAttackerConfirmedSelection(
+                state.getSelectedDiceValuesFormatted(true),
+                state.getSelectedPrismaticEffectStrings(true),
+                state.getAttackValue()
+            );
             advanceToDefensePhase();
         } else if (!state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
-            state.setDefenseValue(state.calculateSelectedSum(true));
-            state.setCurrentPhase(BattleState.Phase.RESOLVING);
-            state.notifyPhaseChange(BattleState.Phase.RESOLVING);
+            state.setDefenderConfirmedSelection(
+                state.getSelectedDiceValuesFormatted(true),
+                state.getSelectedPrismaticEffectStrings(true),
+                state.getDefenseValue()
+            );
             resolveDamage();
         }
     }

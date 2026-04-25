@@ -8,8 +8,10 @@ import java.util.Map;
 
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
+import data.scripts.cosmicon.prismatic.PrismaticEffect;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
 import data.scripts.cosmicon.util.CosmiconLogger;
+import data.scripts.Strings;
 
 public class BattleState {
 
@@ -17,6 +19,7 @@ public class BattleState {
         ROLLING,
         SELECTING_ATTACK,
         SELECTING_DEFENSE,
+        RESOLVING_PRE_CLASH,
         RESOLVING,
         WAITING_NEXT_TURN,
         ENDED
@@ -78,6 +81,14 @@ public class BattleState {
     private int attackValue;
     private int defenseValue;
     private String winner;
+    
+    private String attackerConfirmedSelectionText;
+    private List<String> attackerConfirmedEffects;
+    private int attackerConfirmedValue;
+    
+    private String defenderConfirmedSelectionText;
+    private List<String> defenderConfirmedEffects;
+    private int defenderConfirmedValue;
 
     private final List<BattleEventListener> listeners;
     private final AISelectionVisualizer aiSelectionVisualizer;
@@ -428,6 +439,10 @@ public class BattleState {
         return prismaticManager != null ? prismaticManager.getUses(true) : 0;
     }
 
+    public int getOpponentPrismaticUses() {
+        return prismaticManager != null ? prismaticManager.getUses(false) : 0;
+    }
+
     public boolean isPlayerPrismaticModeActive() {
         return prismaticManager != null && prismaticManager.isModeActive(true);
     }
@@ -598,17 +613,6 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         }
     }
 
-    public void togglePlayerPrismaticMode() {
-        if (currentPhase != Phase.SELECTING_ATTACK && currentPhase != Phase.SELECTING_DEFENSE) return;
-        if (getPlayerPrismaticUses() <= 0) return;
-
-        boolean playerShouldSelect = (isAttacker(true) && currentPhase == Phase.SELECTING_ATTACK) ||
-                                      (isDefender(true) && currentPhase == Phase.SELECTING_DEFENSE);
-        if (!playerShouldSelect) return;
-
-        if (prismaticManager != null) prismaticManager.toggleMode(true);
-    }
-
     
     
     public WeatherController getWeatherController() {
@@ -683,6 +687,7 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     private boolean isMajorPhaseTransition(Phase newPhase) {
         return newPhase == Phase.SELECTING_ATTACK || 
                newPhase == Phase.SELECTING_DEFENSE ||
+               newPhase == Phase.RESOLVING_PRE_CLASH ||
                newPhase == Phase.RESOLVING ||
                newPhase == Phase.WAITING_NEXT_TURN ||
                newPhase == Phase.ENDED;
@@ -729,6 +734,79 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
                 }
             }
         }
+    }
+    
+    public String getSelectedDiceValuesFormatted(boolean forPlayer) {
+        List<Integer> values = getDiceValues(forPlayer);
+        List<Boolean> selected = getDiceSelected(forPlayer);
+        if (values == null || selected == null) return "";
+        
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < values.size(); i++) {
+            if (selected.get(i)) {
+                if (sb.length() > 0) sb.append("+");
+                if (isPrismaticDiceAt(i, forPlayer)) {
+                    sb.append("*").append(values.get(i));
+                } else {
+                    sb.append(values.get(i));
+                }
+            }
+        }
+        return sb.toString();
+    }
+    
+    public List<String> getSelectedPrismaticEffectStrings(boolean forPlayer) {
+        List<String> effects = new ArrayList<>();
+        Map<Integer, PrismaticDiceInstance> prismatics = forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
+        List<Boolean> selected = getDiceSelected(forPlayer);
+        
+        if (prismatics == null || selected == null) return effects;
+        
+        for (Map.Entry<Integer, PrismaticDiceInstance> entry : prismatics.entrySet()) {
+            int idx = entry.getKey();
+            if (idx < selected.size() && selected.get(idx)) {
+                PrismaticDiceInstance dice = entry.getValue();
+                if (dice.isSpecialFace) {
+                    String effectStr = formatPrismaticEffectForDisplay(dice);
+                    if (!effectStr.isEmpty()) {
+                        effects.add(effectStr);
+                    }
+                }
+            }
+        }
+        return effects;
+    }
+    
+    private String formatPrismaticEffectForDisplay(PrismaticDiceInstance dice) {
+        if (dice == null || dice.type == null) return "";
+        
+        PrismaticEffect effect = dice.type.getEffect();
+        String diceName = dice.type.getId();
+        
+        String localizedName;
+        try {
+            localizedName = Strings.get("prismatic." + diceName + ".name");
+        } catch (Exception e) {
+            localizedName = diceName;
+        }
+        
+        if (effect.isDoubleValue()) {
+            return "x2 (" + localizedName + ")";
+        }
+        if (effect.isGrantStatus()) {
+            String statusName = Strings.get("status." + effect.getGrantedEffect().name().toLowerCase());
+            return statusName + " (" + localizedName + ")";
+        }
+        if (effect.isHealHp()) {
+            return "Heal (" + localizedName + ")";
+        }
+        if (effect.isGainPrismaticUse()) {
+            return "+1 use (" + localizedName + ")";
+        }
+        if (effect.isInstantDamage()) {
+            return "+" + effect.getInstantDamageAmount() + " dmg (" + localizedName + ")";
+        }
+        return "";
     }
     
     public void notifyPhaseChange(Phase phase) {
@@ -859,6 +937,51 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     
     public AISelectionVisualizer getAiSelectionVisualizer() {
         return aiSelectionVisualizer;
+    }
+    
+    public String getAttackerConfirmedSelectionText() {
+        return attackerConfirmedSelectionText;
+    }
+    
+    public List<String> getAttackerConfirmedEffects() {
+        return attackerConfirmedEffects;
+    }
+    
+    public int getAttackerConfirmedValue() {
+        return attackerConfirmedValue;
+    }
+    
+    public void setAttackerConfirmedSelection(String text, List<String> effects, int value) {
+        this.attackerConfirmedSelectionText = text;
+        this.attackerConfirmedEffects = effects;
+        this.attackerConfirmedValue = value;
+    }
+    
+    public String getDefenderConfirmedSelectionText() {
+        return defenderConfirmedSelectionText;
+    }
+    
+    public List<String> getDefenderConfirmedEffects() {
+        return defenderConfirmedEffects;
+    }
+    
+    public int getDefenderConfirmedValue() {
+        return defenderConfirmedValue;
+    }
+    
+    public void setDefenderConfirmedSelection(String text, List<String> effects, int value) {
+        this.defenderConfirmedSelectionText = text;
+        this.defenderConfirmedEffects = effects;
+        this.defenderConfirmedValue = value;
+    }
+    
+    public void clearConfirmedSelections() {
+        attackerConfirmedSelectionText = null;
+        attackerConfirmedEffects = null;
+        attackerConfirmedValue = 0;
+        defenderConfirmedSelectionText = null;
+        defenderConfirmedEffects = null;
+        defenderConfirmedValue = 0;
     }
     
     public void cleanup() {

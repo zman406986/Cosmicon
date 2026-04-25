@@ -249,7 +249,7 @@ public class ValueChangeAnimator {
     }
 
     public boolean isComplete() {
-        return phase == Phase.COMPLETE;
+        return phase == Phase.COMPLETE || phase == Phase.IDLE;
     }
 
     public int getCurrentValue() {

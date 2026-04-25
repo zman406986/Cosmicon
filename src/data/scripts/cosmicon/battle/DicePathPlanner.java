@@ -9,10 +9,8 @@ public class DicePathPlanner {
     private static final Random rand = new Random();
     private static final float COLLISION_BUFFER = 15f;
     private static final float DICE_SIZE = DiceAnimator.DICE_SIZE;
-    private static final float MIN_TRAVEL_DISTANCE = 50f;
-    private static final float MAX_TRAVEL_DISTANCE = 333f;
-    private static final int MAX_RETRIES = 8;
-    private static final float TIME_STEP = 0.05f;
+    private static final float[] TRAVEL_DISTANCES = {150f, 250f, 350f};
+    private static final int MAX_RETRIES = 16;
 
     public record PlannedPath(float rotation, float travelDistance, int bounceCount, float[] bounceHeights,
                               float startX, float startY, float delay, float targetCenterX, float targetCenterY)
@@ -53,13 +51,12 @@ public class DicePathPlanner {
     private static PlannedPath planSingleDice(int diceIndex, float startX, float startY, 
                                                float baseDelay, List<float[]> plannedEndpoints, 
                                                int totalDice, float targetCenterX, float targetCenterY) {
-        float bestRotation = rand.nextFloat() * 360f;
-        float bestTravelDistance = MIN_TRAVEL_DISTANCE + rand.nextFloat() * (MAX_TRAVEL_DISTANCE - MIN_TRAVEL_DISTANCE);
-        boolean foundValid = false;
+        float bestRotation = 0f;
+        float bestTravelDistance = TRAVEL_DISTANCES[0];
         
         for (int attempt = 0; attempt < MAX_RETRIES; attempt++) {
             float rotation = rand.nextFloat() * 360f;
-            float travelDistance = MIN_TRAVEL_DISTANCE + rand.nextFloat() * (MAX_TRAVEL_DISTANCE - MIN_TRAVEL_DISTANCE);
+            float travelDistance = TRAVEL_DISTANCES[rand.nextInt(TRAVEL_DISTANCES.length)];
             
             float endX = startX + (float)Math.cos(Math.toRadians(rotation)) * travelDistance;
             float endY = startY + (float)Math.sin(Math.toRadians(rotation)) * travelDistance;
@@ -67,18 +64,8 @@ public class DicePathPlanner {
             if (collidesWithPlannedPaths(endX, endY, plannedEndpoints)) {
                 bestRotation = rotation;
                 bestTravelDistance = travelDistance;
-                foundValid = true;
                 break;
             }
-        }
-        
-        float adjustedDelay = baseDelay;
-        if (!foundValid && !plannedEndpoints.isEmpty()) {
-            float travelDuration = calculateTravelDuration(bestTravelDistance);
-            float[] timing = findCollisionFreeTiming(diceIndex, startX, startY, 
-                    bestRotation, bestTravelDistance, travelDuration, plannedEndpoints, totalDice);
-            adjustedDelay = timing[0];
-            bestTravelDistance = timing[1] > 0 ? timing[1] : bestTravelDistance;
         }
         
         int bounceCount = rand.nextInt(3);
@@ -90,7 +77,7 @@ public class DicePathPlanner {
         }
         
         return new PlannedPath(bestRotation, bestTravelDistance, bounceCount, bounceHeights, 
-                               startX, startY, adjustedDelay, targetCenterX, targetCenterY);
+                               startX, startY, baseDelay, targetCenterX, targetCenterY);
     }
     
     private static boolean collidesWithPlannedPaths(float x, float y, List<float[]> endpoints) {
@@ -105,68 +92,10 @@ public class DicePathPlanner {
         return true;
     }
     
-    private static float[] findCollisionFreeTiming(int diceIndex, float startX, float startY,
-                                                    float rotation, float travelDistance, 
-                                                    float travelDuration, List<float[]> plannedEndpoints,
-                                                    int totalDice) {
-        float baseDelay = diceIndex * 0.05f;
-        float adjustedDelay;
-        
-        for (float delayOffset = 0f; delayOffset <= 0.3f; delayOffset += 0.1f) {
-            adjustedDelay = baseDelay + delayOffset;
-            if (adjustedDelay > totalDice * 0.05f + 0.5f) break;
-            
-            if (!wouldCollideDuringTravel(startX, startY, rotation, travelDistance, 
-                                          travelDuration, plannedEndpoints)) {
-                return new float[]{adjustedDelay, travelDistance};
-            }
-        }
-        
-        float[] distances = {travelDistance * 0.5f, travelDistance * 0.7f, travelDistance * 1.3f, 
-                            MIN_TRAVEL_DISTANCE, MAX_TRAVEL_DISTANCE * 0.3f};
-        for (float dist : distances) {
-            dist = Math.max(MIN_TRAVEL_DISTANCE, Math.min(MAX_TRAVEL_DISTANCE, dist));
-            if (collidesWithPlannedPaths(
-                    startX + (float) Math.cos(Math.toRadians(rotation)) * dist,
-                    startY + (float) Math.sin(Math.toRadians(rotation)) * dist,
-                    plannedEndpoints)) {
-                return new float[]{baseDelay, dist};
-            }
-        }
-        
-        return new float[]{baseDelay + 0.15f, travelDistance * 0.6f};
-    }
-    
-    private static boolean wouldCollideDuringTravel(float startX, float startY, float rotation,
-                                                      float travelDistance, 
-                                                      float travelDuration, List<float[]> plannedEndpoints) {
-        int steps = Math.max(5, (int)(travelDuration / TIME_STEP));
-        
-        for (int step = 0; step <= steps; step++) {
-            float progress = (float)step / steps;
-            float currentX = startX + (float)Math.cos(Math.toRadians(rotation)) * travelDistance * progress;
-            float currentY = startY + (float)Math.sin(Math.toRadians(rotation)) * travelDistance * progress;
-            
-            for (float[] endpoint : plannedEndpoints) {
-                float dx = Math.abs(currentX - endpoint[0]);
-                float dy = Math.abs(currentY - endpoint[1]);
-                float minDist = DICE_SIZE * 0.8f + COLLISION_BUFFER;
-                if (dx < minDist && dy < minDist) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-    
-    private static float calculateTravelDuration(float travelDistance) {
-        float normalized = (travelDistance - MIN_TRAVEL_DISTANCE) / (MAX_TRAVEL_DISTANCE - MIN_TRAVEL_DISTANCE);
-        return 1f + Math.round(normalized * 2f);
-    }
-    
     public static List<PlannedPath> planRerollPaths(List<Integer> indices,
                                                      List<float[]> allDicePositions) {
         List<PlannedPath> paths = new ArrayList<>();
+        List<float[]> plannedEndpoints = new ArrayList<>();
 
         for (int diceIndex : indices) {
             if (diceIndex >= allDicePositions.size()) {
@@ -180,13 +109,19 @@ public class DicePathPlanner {
 
             List<float[]> otherPositions = new ArrayList<>();
             for (int j = 0; j < allDicePositions.size(); j++) {
-                if (j != diceIndex) {
+                if (!indices.contains(j) && j != diceIndex) {
                     otherPositions.add(allDicePositions.get(j));
                 }
             }
+            otherPositions.addAll(plannedEndpoints);
 
-            paths.add(planSingleDice(diceIndex, startX, startY, 0f, otherPositions,
-                    allDicePositions.size(), startX, startY));
+            PlannedPath path = planSingleDice(diceIndex, startX, startY, 0f, otherPositions,
+                    allDicePositions.size(), startX, startY);
+            paths.add(path);
+
+            float endX = startX + (float)Math.cos(Math.toRadians(path.rotation())) * path.travelDistance();
+            float endY = startY + (float)Math.sin(Math.toRadians(path.rotation())) * path.travelDistance();
+            plannedEndpoints.add(new float[]{endX, endY});
         }
         
         return paths;

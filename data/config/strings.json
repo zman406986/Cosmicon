@@ -4,13 +4,12 @@
     },
     "menu": {
         "welcome": "Welcome to the Cosmicon Collective!",
-        "play": "Play Cosmicon",
-        "help": "How to Play",
-        "leave": "Leave",
-        "submenu_title": "COSMICON MENU",
         "start_game": "Start Game",
         "character_setup": "Character Setup",
-        "back": "Back"
+        "help": "How to Play",
+        "leave": "Leave",
+        "back": "Back",
+        "play": "Play"
     },
     "help": {
         "title": "=== How to Play Cosmicon ===",
@@ -31,7 +30,11 @@
         "you_won": "You Won!",
         "you_lost": "You Lost!",
         "ability_btn": "Character Ability",
-        "click_to_continue": "Click to continue"
+        "click_to_continue": "Click to continue",
+        "click_to_roll": "Click to roll dice",
+        "selected_values": "Selected: {0}",
+        "no_selection": "Select dice...",
+        "prismatic_effect_none": ""
     },
     "errors": {
         "market_too_small": "This market is too small to host Cosmicon games."
@@ -57,6 +60,7 @@
         "opponent_attack": "Opponent Attack Phase",
         "your_defense": "Your Defense Phase",
         "opponent_defense": "Opponent Defense Phase",
+        "pre_clash": "Modifications...",
         "resolving": "Resolving...",
         "turn_complete": "Turn {0} Complete",
         "victory": "Victory!",
@@ -380,6 +384,26 @@
             "confirm": "CONFIRM",
             "close": "X"
         }
+    },
+    "setup": {
+        "title": "Character Setup",
+        "selected": "Selected: {0}",
+        "prismatic": "Prismatic Dice: {0} (2 uses)",
+        "prismatic_none": "None",
+        "prismatic_robin": "Unavailable",
+        "change_dice": "Change Dice",
+        "passive": "Passive: {0}",
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "back": "Back",
+        "popup_title": "Select Prismatic Dice",
+        "popup_current": "Current: {0}",
+        "popup_available": "Available Dice:",
+        "popup_effect": "Effect Preview:",
+        "popup_robin_blocked": "Robin cannot equip prismatic dice",
+        "no_selection": "No character selected",
+        "prismatic_na": "Prismatic Dice: N/A",
+        "passive_none": "Passive: None"
     },
     "ai": {
         "decision_selected": "Selected: {0}",

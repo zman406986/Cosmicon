@@ -66,15 +66,20 @@ public class PrismaticFaceDisplay {
     }
     
     private static String getFallbackEffectDescription(PrismaticEffect effect) {
-        if (effect == null || effect.isNone()) return "";
-        if (effect.isDoubleValue()) return "Doubles ATK/DEF";
-        if (effect.isHealHp()) return "Heals HP = face value";
-        if (effect.isGainPrismaticUse()) return "+1 Prismatic use";
-        if (effect.isInstantDamage()) return "Instant " + effect.getInstantDamageAmount() + " damage";
+        if (effect == null || effect.isNone()) return Strings.get("prismatic.equip.no_effect");
+        if (effect.isDoubleValue()) return Strings.get("prismatic.equip.effect_double");
+        if (effect.isHealHp()) return Strings.get("prismatic.equip.effect_heal");
+        if (effect.isGainPrismaticUse()) return Strings.get("prismatic.equip.effect_gain_use");
+        if (effect.isInstantDamage()) return Strings.format("prismatic.equip.effect_instant_damage", effect.getInstantDamageAmount());
         if (effect.isGrantStatus()) {
-            return "Grants " + effect.getGrantedEffect().name();
+            String statusName = effect.getGrantedEffect().name();
+            String statusKey = "status." + statusName.toLowerCase();
+            try {
+                statusName = Strings.get(statusKey);
+            } catch (Exception ignored) { }
+            return Strings.format("prismatic.equip.effect_status", statusName);
         }
-        return "";
+        return Strings.get("prismatic.equip.no_effect");
     }
     
     public static int getFaceIndexFromLetter(String letter) {
