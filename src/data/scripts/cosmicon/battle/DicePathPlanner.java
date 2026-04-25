@@ -8,8 +8,8 @@ public class DicePathPlanner {
 
     private static final Random rand = new Random();
     private static final float COLLISION_BUFFER = 15f;
-    private static final float DICE_SIZE = DiceAnimator.DICE_SIZE;
-    private static final float[] TRAVEL_DISTANCES = {150f, 250f, 350f};
+    private static final float DICE_SIZE = AnimationConstants.DICE_SIZE;
+    private static final float[] TRAVEL_DISTANCES = AnimationConstants.TRAVEL_DISTANCES;
     private static final int MAX_RETRIES = 16;
 
     public record PlannedPath(float rotation, float travelDistance, int bounceCount, float[] bounceHeights,
@@ -37,7 +37,7 @@ public class DicePathPlanner {
             float targetX = targetStartX + i * spacing;
             float targetY = centerY - DICE_SIZE / 2f;
             
-            PlannedPath path = planSingleDice(i, diceX, startY, delay, plannedEndpoints, count, targetX, targetY);
+            PlannedPath path = planSingleDice(diceX, startY, delay, plannedEndpoints, targetX, targetY);
             paths.add(path);
             
             float endX = diceX + (float)Math.cos(Math.toRadians(path.rotation)) * path.travelDistance;
@@ -48,9 +48,9 @@ public class DicePathPlanner {
         return paths;
     }
     
-    private static PlannedPath planSingleDice(int diceIndex, float startX, float startY, 
+    private static PlannedPath planSingleDice(float startX, float startY, 
                                                float baseDelay, List<float[]> plannedEndpoints, 
-                                               int totalDice, float targetCenterX, float targetCenterY) {
+                                               float targetCenterX, float targetCenterY) {
         float bestRotation = 0f;
         float bestTravelDistance = TRAVEL_DISTANCES[0];
         
@@ -115,8 +115,7 @@ public class DicePathPlanner {
             }
             otherPositions.addAll(plannedEndpoints);
 
-            PlannedPath path = planSingleDice(diceIndex, startX, startY, 0f, otherPositions,
-                    allDicePositions.size(), startX, startY);
+            PlannedPath path = planSingleDice(startX, startY, 0f, otherPositions, startX, startY);
             paths.add(path);
 
             float endX = startX + (float)Math.cos(Math.toRadians(path.rotation())) * path.travelDistance();
@@ -145,7 +144,6 @@ public class DicePathPlanner {
         
         float delay = diceIndex * 0.05f;
         
-        return planSingleDice(diceIndex, startX, startY, delay, existingPositions,
-                              diceIndex + 1, targetX, targetY);
+        return planSingleDice(startX, startY, delay, existingPositions, targetX, targetY);
     }
 }

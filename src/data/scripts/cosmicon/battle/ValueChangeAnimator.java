@@ -15,6 +15,7 @@ import com.fs.starfarer.api.graphics.SpriteAPI;
 
 import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.CoordHelper;
+import data.scripts.cosmicon.util.EasingUtil;
 import data.scripts.cosmicon.util.GLStateUtil;
 
 public class ValueChangeAnimator {
@@ -145,7 +146,7 @@ public class ValueChangeAnimator {
         
         float progress = elapsed / DELTA_SHOW_DURATION;
         
-        deltaAlpha = easeOutQuad(progress);
+        deltaAlpha = EasingUtil.easeOutQuad(progress);
     }
 
     private void advanceFlash() {
@@ -168,8 +169,8 @@ public class ValueChangeAnimator {
         
         float progress = elapsed / DELTA_FLY_DURATION;
         
-        deltaCurrentY = iconCenterY + DELTA_START_OFFSET_Y - DELTA_FLY_DISTANCE * easeOutQuad(progress);
-        deltaAlpha = 1f - easeInQuad(progress);
+        deltaCurrentY = iconCenterY + DELTA_START_OFFSET_Y - DELTA_FLY_DISTANCE * EasingUtil.easeOutQuad(progress);
+        deltaAlpha = 1f - EasingUtil.easeInQuad(progress);
     }
 
     private void processNextChange() {
@@ -238,14 +239,6 @@ public class ValueChangeAnimator {
         roleIcon.render(glX, glY);
         
         GLStateUtil.disableTexturing();
-    }
-
-    private float easeOutQuad(float t) {
-        return 1f - (1f - t) * (1f - t);
-    }
-
-    private float easeInQuad(float t) {
-        return t * t;
     }
 
     public boolean isComplete() {

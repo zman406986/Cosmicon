@@ -2,8 +2,9 @@ package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.DiceType;
+import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.PassiveEvaluator;
-import data.scripts.cosmicon.util.PassiveEvaluator.PassiveResult;
+import data.scripts.cosmicon.util.PassiveResults.PassiveResult;
 import java.util.List;
 
 public class March7thAIProfile extends AbstractCharacterAIProfile {
@@ -12,7 +13,7 @@ public class March7thAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     public String getCharacterId() {
-        return "march_7th";
+        return CharacterIds.MARCH_7TH;
     }
 
     @Override
@@ -51,7 +52,7 @@ public class March7thAIProfile extends AbstractCharacterAIProfile {
             return PassiveEvaluation.notTriggered();
         }
 
-        PassiveResult result = PassiveEvaluator.evaluateForCharacter("march_7th", selectedValues, isAttacking);
+        PassiveResult result = PassiveEvaluator.evaluateForCharacter(CharacterIds.MARCH_7TH, selectedValues, isAttacking);
         int pairs = PassiveEvaluator.countPairs(selectedValues);
         
         if (pairs >= 1) {
@@ -64,14 +65,8 @@ public class March7thAIProfile extends AbstractCharacterAIProfile {
     }
 
     @Override
-    public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
-        if (selectedValues == null || selectedValues.isEmpty()) return 0f;
-        return PassiveEvaluator.countPairs(selectedValues) * INSTANT_DAMAGE_PER_PAIR;
-    }
-
-    @Override
     protected float calculatePassiveBonus(List<Integer> selectedValues) {
-        if (selectedValues == null || selectedValues.isEmpty()) return 0f;
+        if (hasValidValues(selectedValues)) return 0f;
         return PassiveEvaluator.countPairs(selectedValues) * INSTANT_DAMAGE_PER_PAIR;
     }
 }

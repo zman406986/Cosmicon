@@ -3,15 +3,12 @@ package data.scripts.cosmicon.battle;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fs.starfarer.api.ui.CustomPanelAPI;
-
 public class DiceRollManager {
 
     private static final float DICE_SPACING = 130f;
 
     private final List<DiceAnimator> animators;
     private final List<DiceAnimator> opponentAnimators;
-    private CustomPanelAPI panel;
     private boolean initialized;
     
     private boolean waitingForRollTrigger = false;
@@ -25,32 +22,10 @@ public class DiceRollManager {
         this.initialized = false;
     }
 
-    public void init(CustomPanelAPI panel) {
-        this.panel = panel;
+    public void init() {
         this.initialized = true;
     }
 
-    public void startRoll(List<DiceType> types, List<Integer> results, float centerX, float centerY) {
-        if (!initialized) return;
-
-        clear();
-        animators.clear();
-
-        int count = Math.min(types.size(), results.size());
-        List<DicePathPlanner.PlannedPath> paths = DicePathPlanner.planPaths(types, results, centerX, centerY, DICE_SPACING);
-        
-        for (int i = 0; i < count; i++) {
-            DiceAnimator animator = new DiceAnimator();
-            animator.init();
-            DicePathPlanner.PlannedPath path = paths.get(i);
-            
-            animator.start(types.get(i), results.get(i), path.startX(), path.startY(), path.delay(),
-                    path.rotation(), path.travelDistance(), path.bounceCount(), path.bounceHeights(),
-                    path.targetCenterX(), path.targetCenterY());
-            animators.add(animator);
-        }
-    }
-    
     public void startStationaryPreview(List<DiceType> types, List<Integer> results, float centerX, float centerY) {
         if (!initialized) return;
 
@@ -269,29 +244,6 @@ public class DiceRollManager {
     public void forceCompleteAll() {
         for (DiceAnimator animator : animators) {
             animator.forceComplete();
-        }
-    }
-
-    public void startOpponentRoll(List<DiceType> types, List<Integer> results, float zoneX, float zoneY) {
-        if (!initialized) return;
-
-        clearOpponentAnimators();
-
-        int count = Math.min(types.size(), results.size());
-        float centerX = zoneX + BattleRenderingUtils.OPPONENT_DICE_ZONE_W / 2f;
-        float centerY = zoneY + BattleRenderingUtils.OPPONENT_DICE_ZONE_H / 2f;
-        
-        List<DicePathPlanner.PlannedPath> paths = DicePathPlanner.planPaths(types, results, centerX, centerY, DICE_SPACING);
-        
-        for (int i = 0; i < count; i++) {
-            DiceAnimator animator = new DiceAnimator();
-            animator.init();
-            DicePathPlanner.PlannedPath path = paths.get(i);
-            
-            animator.start(types.get(i), results.get(i), path.startX(), path.startY(), path.delay(),
-                    path.rotation(), path.travelDistance(), path.bounceCount(), path.bounceHeights(),
-                    path.targetCenterX(), path.targetCenterY());
-            opponentAnimators.add(animator);
         }
     }
 

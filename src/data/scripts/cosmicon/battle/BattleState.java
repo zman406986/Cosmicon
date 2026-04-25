@@ -30,7 +30,8 @@ public class BattleState {
         DEFENSE
     }
 
-    private EffectManager effectManager;
+    private final StatusEffectProcessor playerEffects;
+    private final StatusEffectProcessor opponentEffects;
     private PrismaticManager prismaticManager;
     private WeatherController weatherController;
     private DiceRoller diceRoller;
@@ -106,18 +107,8 @@ public class BattleState {
         void onValueChange(boolean isPlayer, String changeType, int oldValue, int newValue, int delta);
     }
 
-    public static class ValueChangeRecord {
-        public final String changeType;
-        public final int delta;
-        public final String displayText;
-        public final boolean isPlayer;
-
-        public ValueChangeRecord(String changeType, int delta, String displayText, boolean isPlayer) {
-            this.changeType = changeType;
-            this.delta = delta;
-            this.displayText = displayText;
-            this.isPlayer = isPlayer;
-        }
+    public record ValueChangeRecord(String changeType, int delta, String displayText, boolean isPlayer)
+    {
     }
     
     private DamageAnimationCallback damageAnimationCallback;
@@ -145,8 +136,9 @@ public class BattleState {
         this.playerRerollsUsedThisTurn = 0;
         this.opponentRerollsUsedThisTurn = 0;
         
-        this.effectManager = new EffectManager();
-        this.prismaticManager = new PrismaticManager(effectManager);
+        this.playerEffects = new StatusEffectProcessor();
+        this.opponentEffects = new StatusEffectProcessor();
+        this.prismaticManager = new PrismaticManager(this);
         
         this.playerTotalDamageTaken = 0;
         this.opponentTotalDamageTaken = 0;
@@ -196,10 +188,6 @@ public class BattleState {
     
     public void setPrismaticManager(PrismaticManager manager) {
         this.prismaticManager = manager;
-    }
-    
-    public void setEffectManager(EffectManager manager) {
-        this.effectManager = manager;
     }
 
     public void setWeatherController(WeatherController controller) {
@@ -312,6 +300,36 @@ public class BattleState {
             map.put(index, newInstance);
         }
     }
+    
+    public List<PrismaticDiceInstance> getSelectedPrismaticDice(boolean forPlayer) {
+        List<PrismaticDiceInstance> result = new ArrayList<>();
+        Map<Integer, PrismaticDiceInstance> map = forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
+        List<Boolean> selected = getDiceSelected(forPlayer);
+        
+        for (Map.Entry<Integer, PrismaticDiceInstance> entry : map.entrySet()) {
+            int idx = entry.getKey();
+            if (idx < selected.size() && selected.get(idx)) {
+                result.add(entry.getValue());
+            }
+        }
+        return result;
+    }
+    
+    public List<PrismaticDiceInstance> getMustSelectPrismaticDice(boolean forPlayer) {
+        List<PrismaticDiceInstance> result = new ArrayList<>();
+        Map<Integer, PrismaticDiceInstance> map = forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
+        
+        for (PrismaticDiceInstance dice : map.values()) {
+            if (dice.isMustSelect()) {
+                result.add(dice);
+            }
+        }
+        return result;
+    }
+    
+    public List<PrismaticDiceInstance> getAllPrismaticDice(boolean forPlayer) {
+        return new ArrayList<>(forPlayer ? playerPrismaticDiceByIndex.values() : opponentPrismaticDiceByIndex.values());
+    }
 
     public DicePoolCounts getPlayerDicePoolCounts() {
         return playerDicePoolCounts;
@@ -330,19 +348,30 @@ public class BattleState {
     }
 
     public StatusEffectProcessor getPlayerEffects() {
-        return effectManager.getEffects(true);
+        return playerEffects;
     }
 
     public StatusEffectProcessor getOpponentEffects() {
-        return effectManager.getEffects(false);
+        return opponentEffects;
     }
 
     public StatusEffectProcessor getEffects(boolean forPlayer) {
-        return effectManager.getEffects(forPlayer);
+        return forPlayer ? playerEffects : opponentEffects;
     }
-
-    public EffectManager getEffectManager() {
-        return effectManager;
+    
+    public void applyEffect(StatusEffectProcessor.StatusEffect effect, int layers, boolean toPlayer) {
+        getEffects(toPlayer).addEffect(effect, layers);
+        CosmiconLogger.debug("Effect applied to %s (%d layers)", toPlayer ? "Player" : "Opponent", layers);
+    }
+    
+    public void resetEffectTurnState() {
+        playerEffects.resetTurnState();
+        opponentEffects.resetTurnState();
+    }
+    
+    public void clearTemporaryEffects() {
+        playerEffects.clearTemporaryEffects();
+        opponentEffects.clearTemporaryEffects();
     }
 
     public PrismaticManager getPrismaticManager() {
@@ -625,6 +654,18 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         return forPlayer ? playerCard : opponentCard;
     }
     
+    public String getCardId(boolean forPlayer) {
+        CharacterCard card = getCard(forPlayer);
+        return card != null ? card.getId() : null;
+    }
+    
+    public void modifyCardAtkLevel(boolean forPlayer, int delta) {
+        CharacterCard card = getCard(forPlayer);
+        if (card != null) {
+            card.setAtkLevel(card.getAtkLevel() + delta);
+        }
+    }
+    
     public List<Integer> getDiceValues(boolean forPlayer) {
         return forPlayer ? playerDiceValues : opponentDiceValues;
     }
@@ -744,7 +785,7 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < values.size(); i++) {
             if (selected.get(i)) {
-                if (sb.length() > 0) sb.append("+");
+                if (!sb.isEmpty()) sb.append("+");
                 if (isPrismaticDiceAt(i, forPlayer)) {
                     sb.append("*").append(values.get(i));
                 } else {
@@ -778,7 +819,7 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
     
     private String formatPrismaticEffectForDisplay(PrismaticDiceInstance dice) {
-        if (dice == null || dice.type == null) return "";
+        if (dice == null) return "";
         
         PrismaticEffect effect = dice.type.getEffect();
         String diceName = dice.type.getId();
@@ -943,13 +984,7 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         return attackerConfirmedSelectionText;
     }
     
-    public List<String> getAttackerConfirmedEffects() {
-        return attackerConfirmedEffects;
-    }
     
-    public int getAttackerConfirmedValue() {
-        return attackerConfirmedValue;
-    }
     
     public void setAttackerConfirmedSelection(String text, List<String> effects, int value) {
         this.attackerConfirmedSelectionText = text;
@@ -961,13 +996,7 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         return defenderConfirmedSelectionText;
     }
     
-    public List<String> getDefenderConfirmedEffects() {
-        return defenderConfirmedEffects;
-    }
     
-    public int getDefenderConfirmedValue() {
-        return defenderConfirmedValue;
-    }
     
     public void setDefenderConfirmedSelection(String text, List<String> effects, int value) {
         this.defenderConfirmedSelectionText = text;
@@ -989,10 +1018,8 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         
         listeners.clear();
         
-        if (effectManager != null) {
-            effectManager.clearTemporaryEffects();
-            effectManager.resetTurnState();
-        }
+        clearTemporaryEffects();
+        resetEffectTurnState();
         
         if (prismaticManager != null) {
             prismaticManager.clearState();

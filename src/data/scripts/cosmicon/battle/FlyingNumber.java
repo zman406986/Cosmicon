@@ -17,6 +17,7 @@ import com.fs.starfarer.api.ui.UIComponentAPI;
 
 import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.CoordHelper;
+import data.scripts.cosmicon.util.EasingUtil;
 import data.scripts.cosmicon.util.GLStateUtil;
 
 public class FlyingNumber {
@@ -151,7 +152,7 @@ public class FlyingNumber {
         }
         
         float progress = elapsed / flyDuration;
-        float eased = easeOutQuad(progress);
+        float eased = EasingUtil.easeOutQuad(progress);
         
         currentX = startX + (targetX - startX) * eased;
         currentY = startY + (targetY - startY) * eased;
@@ -287,10 +288,6 @@ public class FlyingNumber {
         }
         
         GLStateUtil.resetColor();
-    }
-    
-    private float easeOutQuad(float t) {
-        return 1f - (1f - t) * (1f - t);
     }
     
     public boolean isComplete() {

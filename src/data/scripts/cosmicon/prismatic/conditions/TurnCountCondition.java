@@ -1,16 +1,11 @@
 package data.scripts.cosmicon.prismatic.conditions;
 
 import data.scripts.Strings;
-import data.scripts.cosmicon.prismatic.AvailabilityCondition;
 
-public class TurnCountCondition implements AvailabilityCondition {
-    
-    private final int threshold;
-    private final boolean greaterOrEqual;
+public class TurnCountCondition extends ThresholdCondition {
     
     public TurnCountCondition(int threshold, boolean greaterOrEqual) {
-        this.threshold = threshold;
-        this.greaterOrEqual = greaterOrEqual;
+        super(threshold, greaterOrEqual);
     }
     
     public static TurnCountCondition fromTurn(int threshold) {
@@ -23,11 +18,7 @@ public class TurnCountCondition implements AvailabilityCondition {
     
     @Override
     public boolean isAvailable(ConditionContext context) {
-        if (greaterOrEqual) {
-            return context.turnNumber() >= threshold;
-        } else {
-            return context.turnNumber() <= threshold;
-        }
+        return compare(context.turnNumber());
     }
     
     @Override

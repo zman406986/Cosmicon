@@ -4,12 +4,10 @@ import com.fs.starfarer.api.Global;
 
 /**
  * Coordinate conversions for Starsector UI panels.
- * 
  * COORDINATE SYSTEMS:
  * - UI coords: Y=0 at TOP, increases DOWN (used by inTL, labels, buttons)
  * - GL coords: Y=0 at BOTTOM, increases UP (used by render, sprites, Mouse.getX/Y)
  * - Mouse coords: GL coords scaled by screenScaleMult
- * 
  * UNIFIED APPROACH:
  * Define all positions in UI coords (like inTL), use CoordHelper for conversions.
  */
@@ -52,28 +50,6 @@ public final class CoordHelper {
         float uiX = glX - panelX;
         float uiY = panelHeight - (glY - panelY);
         return new float[] { uiX, uiY };
-    }
-    
-    /**
-     * Converts mouse coordinates to panel-local UI coordinates (float input).
-     */
-    public static float[] mouseToPanelUi(float mouseX, float mouseY,
-            float panelX, float panelY, float panelHeight) {
-        float scale = getScreenScale();
-        float glX = mouseX / scale;
-        float glY = mouseY / scale;
-        
-        float uiX = glX - panelX;
-        float uiY = panelHeight - (glY - panelY);
-        return new float[] { uiX, uiY };
-    }
-    
-    /**
-     * Converts UI hitbox position to GL screen coordinates for click testing.
-     * Returns GL Y of hitbox bottom edge (where mouseY >= screenY check happens).
-     */
-    public static float uiHitboxToGlY(float panelGlY, float panelHeight, float uiTopY, float height) {
-        return panelGlY + panelHeight - uiTopY - height;
     }
     
     /**

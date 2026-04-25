@@ -20,20 +20,32 @@ public final class RerollOptimizer {
             int targetSum,
             boolean isAttacking) {
         
+        CosmiconLogger.debug("[AI_REROLL_DIAG] RerollOptimizer.optimalRerolls: currentValues=%s, diceTypes=%s", 
+            currentValues, diceTypes);
+        CosmiconLogger.debug("[AI_REROLL_DIAG] requiredSelectCount=%d, rerollsAvailable=%d, targetSum=%d, isAttacking=%s", 
+            requiredSelectCount, rerollsAvailable, targetSum, isAttacking);
+        
         if (currentValues == null || currentValues.isEmpty() || rerollsAvailable <= 0) {
+            CosmiconLogger.debug("[AI_REROLL_DIAG] optimalRerolls returning empty: currentValues=%s, rerollsAvailable=%d", 
+                currentValues, rerollsAvailable);
             return Set.of();
         }
 
         if (targetSum <= 0) {
             int expectedSum = (int) DiceProbabilityCalculator.expectedSum(diceTypes, requiredSelectCount);
             targetSum = isAttacking ? expectedSum + 3 : expectedSum;
+            CosmiconLogger.debug("[AI_REROLL_DIAG] targetSum was <=0, calculated expectedSum=%d, new targetSum=%d", 
+                expectedSum, targetSum);
         }
 
         Set<Integer> alreadySelected = findCurrentBestSelection(currentValues, requiredSelectCount, isAttacking);
         int currentSum = calculateSum(currentValues, alreadySelected);
+        
+        CosmiconLogger.debug("[AI_REROLL_DIAG] bestSelection indices=%s, currentSum=%d, targetSum=%d", 
+            alreadySelected, currentSum, targetSum);
 
         if (currentSum >= targetSum) {
-            CosmiconLogger.debug("Reroll: current sum %d meets target %d, no reroll needed", currentSum, targetSum);
+            CosmiconLogger.debug("[AI_REROLL_DIAG] currentSum %d >= targetSum %d, NO REROLL NEEDED", currentSum, targetSum);
             return Set.of();
         }
 
@@ -49,20 +61,23 @@ public final class RerollOptimizer {
         }
 
         if (candidates.isEmpty()) {
-            CosmiconLogger.debug("Reroll: no valid candidates found");
+            CosmiconLogger.debug("[AI_REROLL_DIAG] NO VALID CANDIDATES found, returning empty");
             return Set.of();
         }
 
         candidates.sort(Comparator.comparingDouble(RerollCandidate::expectedImprovement).reversed());
+        
+        CosmiconLogger.debug("[AI_REROLL_DIAG] Found %d candidates, best improvement=%.1f", 
+            candidates.size(), candidates.get(0).expectedImprovement());
 
         RerollCandidate best = candidates.get(0);
         if (best.expectedImprovement() > 0) {
-            CosmiconLogger.debug("Reroll: best indices %s, expected improvement: %.1f (current: %d, target: %d)", 
+            CosmiconLogger.debug("[AI_REROLL_DIAG] WILL REROLL: indices %s, expected improvement %.1f (current: %d, target: %d)", 
                 best.rerollIndices(), best.expectedImprovement(), currentSum, targetSum);
             return best.rerollIndices();
         }
 
-        CosmiconLogger.debug("Reroll: no positive improvement found, keeping current dice");
+        CosmiconLogger.debug("[AI_REROLL_DIAG] NO POSITIVE IMPROVEMENT: best=%.1f, keeping current dice", best.expectedImprovement());
         return Set.of();
     }
 
@@ -153,7 +168,7 @@ public final class RerollOptimizer {
         for (int i = 0; i < Math.min(maxReroll, indices.size()); i++) {
             Set<Integer> rerollSet = new HashSet<>();
             
-            for (int j = 0; j <= i && j < indices.size(); j++) {
+            for (int j = 0; j <= i; j++) {
                 int idx = indices.get(j);
                 if (!currentSelection.contains(idx)) {
                     rerollSet.add(idx);

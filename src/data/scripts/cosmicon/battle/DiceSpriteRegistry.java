@@ -7,7 +7,7 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.graphics.SpriteAPI;
 
 public class DiceSpriteRegistry {
-    private static final int FRAME_COUNT = 48;
+    private static final int FRAME_COUNT = AnimationConstants.FRAME_COUNT;
     private static final String[] PRISMATIC_FACE_LETTERS = {"A", "B", "C", "D", "E", "F"};
     
     private static final Map<String, SpriteAPI[]> cache = new HashMap<>();
@@ -76,13 +76,5 @@ public class DiceSpriteRegistry {
             return null;
         }
         return frames[frameIndex];
-    }
-    
-    public static SpriteAPI getFinalFrame(DiceType type, int result) {
-        return getFrame(type, result, FRAME_COUNT - 1);
-    }
-    
-    public static SpriteAPI getPrismaticFinalFrame(int faceIndex) {
-        return getPrismaticFrame(faceIndex, FRAME_COUNT - 1);
     }
 }

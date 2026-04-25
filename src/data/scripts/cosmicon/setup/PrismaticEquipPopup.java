@@ -9,29 +9,27 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.SettingsAPI;
 import com.fs.starfarer.api.campaign.BaseCustomUIPanelPlugin;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.ui.Alignment;
 import com.fs.starfarer.api.ui.ButtonAPI;
 import com.fs.starfarer.api.ui.CustomPanelAPI;
-import com.fs.starfarer.api.ui.Fonts;
 import com.fs.starfarer.api.ui.LabelAPI;
 import com.fs.starfarer.api.ui.PositionAPI;
 import com.fs.starfarer.api.ui.TooltipMakerAPI;
-import com.fs.starfarer.api.ui.UIComponentAPI;
 import com.fs.starfarer.api.ui.TooltipMakerAPI.ActionListenerDelegate;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
-import data.scripts.cosmicon.prismatic.PrismaticEffect;
+import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.ColorHelper;
-import data.scripts.cosmicon.util.GLStateUtil;
+import data.scripts.cosmicon.util.PopupRenderer;
+import data.scripts.cosmicon.util.PrismaticDisplayHelper;
+import data.scripts.cosmicon.util.UIComponentFactory;
 
 public class PrismaticEquipPopup extends BaseCustomUIPanelPlugin implements ActionListenerDelegate {
 
-    private static final SettingsAPI settings = Global.getSettings();
     private static final float POPUP_WIDTH = 350f;
     private static final float POPUP_HEIGHT = 450f;
     private static final float MARGIN = 15f;
@@ -49,21 +47,13 @@ public class PrismaticEquipPopup extends BaseCustomUIPanelPlugin implements Acti
     private static final String ACTION_CONFIRM = "prismatic_equip_confirm";
     private static final String ACTION_CLOSE = "prismatic_equip_close";
 
-    private String currentDiceId;
+    private final String currentDiceId;
     private String selectedDiceId;
-    private String characterId;
-    private boolean isBlockedForRobin;
+    private final boolean isBlockedForRobin;
 
     private CustomPanelAPI panel;
     private final List<PrismaticDiceType> diceTypes;
-    private LabelAPI titleLabel;
-    private LabelAPI currentLabel;
-    private LabelAPI availableLabel;
-    private LabelAPI effectPreviewHeader;
     private LabelAPI effectPreviewLabel;
-    private LabelAPI robinBlockedLabel;
-    private ButtonAPI confirmButton;
-    private ButtonAPI closeButton;
 
     private final List<ClickRegion> diceClickRegions = new ArrayList<>();
     private boolean wasMousePressed = false;
@@ -81,21 +71,16 @@ public class PrismaticEquipPopup extends BaseCustomUIPanelPlugin implements Acti
     private record ClickRegion(float x, float y, float width, float height, String diceId) {}
 
     public PrismaticEquipPopup(String characterId, String currentDiceId, PrismaticEquipCallback callback) {
-        this.characterId = characterId;
         this.currentDiceId = currentDiceId;
         this.selectedDiceId = currentDiceId;
         this.callback = callback;
         this.diceTypes = loadAllDiceTypes();
-        this.isBlockedForRobin = "robin".equals(characterId);
+        this.isBlockedForRobin = CharacterIds.ROBIN.equals(characterId);
     }
 
     private List<PrismaticDiceType> loadAllDiceTypes() {
-        List<PrismaticDiceType> types = new ArrayList<>();
         Map<String, PrismaticDiceType> all = PrismaticDiceRegistry.getAll();
-        for (PrismaticDiceType type : all.values()) {
-            types.add(type);
-        }
-        return types;
+        return new ArrayList<>(all.values());
     }
 
     public void init(CustomPanelAPI panel) {
@@ -110,66 +95,40 @@ public class PrismaticEquipPopup extends BaseCustomUIPanelPlugin implements Acti
     }
 
     private void createUIElements() {
-        titleLabel = settings.createLabel(Strings.get("prismatic.equip.title"), Fonts.INSIGNIA_LARGE);
-        titleLabel.setColor(ColorHelper.PRISMATIC_GOLD);
-        titleLabel.setAlignment(Alignment.MID);
-        panel.addComponent((UIComponentAPI) titleLabel)
-            .setSize(POPUP_WIDTH - MARGIN * 2 - BUTTON_WIDTH, 28f)
-            .inTL(MARGIN, MARGIN);
+        UIComponentFactory.createLabelLarge(panel, Strings.get("prismatic.equip.title"),
+                ColorHelper.PRISMATIC_GOLD, Alignment.MID, POPUP_WIDTH - MARGIN * 2 - BUTTON_WIDTH, 28f, MARGIN, MARGIN);
 
-        TooltipMakerAPI closeTp = panel.createUIElement(BUTTON_WIDTH, BUTTON_HEIGHT, false);
-        closeTp.setActionListenerDelegate(this);
-        panel.addUIElement(closeTp).inTL(POPUP_WIDTH - BUTTON_WIDTH - MARGIN, MARGIN);
-        closeButton = closeTp.addButton(Strings.get("prismatic.equip.close"), ACTION_CLOSE, BUTTON_WIDTH, BUTTON_HEIGHT, 0f);
+        TooltipMakerAPI closeTp = UIComponentFactory.createTooltipForButtons(panel, this, BUTTON_WIDTH, BUTTON_HEIGHT, 
+            POPUP_WIDTH - BUTTON_WIDTH - MARGIN, MARGIN);
+        ButtonAPI closeButton = closeTp.addButton(Strings.get("prismatic.equip.close"), ACTION_CLOSE, BUTTON_WIDTH, BUTTON_HEIGHT, 0f);
         closeButton.setQuickMode(true);
 
-        String currentName = getDiceDisplayName(currentDiceId);
-        currentLabel = settings.createLabel(Strings.format("prismatic.equip.current", currentName), Fonts.DEFAULT_SMALL);
-        currentLabel.setColor(ColorHelper.PRISMATIC_BRIGHT);
-        currentLabel.setAlignment(Alignment.LMID);
-        panel.addComponent((UIComponentAPI) currentLabel)
-            .setSize(POPUP_WIDTH - MARGIN * 2, 20f)
-            .inTL(MARGIN, MARGIN + 35f);
+        String currentName = PrismaticDisplayHelper.getDiceDisplayName(currentDiceId);
+        UIComponentFactory.createLabelSmall(panel, Strings.format("prismatic.equip.current", currentName),
+                ColorHelper.PRISMATIC_BRIGHT, Alignment.LMID, POPUP_WIDTH - MARGIN * 2, 20f, MARGIN, MARGIN + 35f);
 
-        availableLabel = settings.createLabel(Strings.get("prismatic.equip.available"), Fonts.DEFAULT_SMALL);
-        availableLabel.setColor(COLOR_SECTION_HEADER);
-        availableLabel.setAlignment(Alignment.LMID);
-        panel.addComponent((UIComponentAPI) availableLabel)
-            .setSize(POPUP_WIDTH - MARGIN * 2, 20f)
-            .inTL(MARGIN, MARGIN + 60f);
+        LabelAPI availableLabel = UIComponentFactory.createLabelSmall(panel, Strings.get("prismatic.equip.available"),
+                COLOR_SECTION_HEADER, Alignment.LMID, POPUP_WIDTH - MARGIN * 2, 20f, MARGIN, MARGIN + 60f);
 
         if (isBlockedForRobin) {
-            robinBlockedLabel = settings.createLabel(Strings.get("prismatic.equip.robin_blocked"), Fonts.DEFAULT_SMALL);
-            robinBlockedLabel.setColor(COLOR_ROBIN_BLOCKED);
-            robinBlockedLabel.setAlignment(Alignment.MID);
-            panel.addComponent((UIComponentAPI) robinBlockedLabel)
-                .setSize(POPUP_WIDTH - MARGIN * 2, 20f)
-                .inTL(MARGIN, MARGIN + 85f);
+            UIComponentFactory.createLabelSmall(panel, Strings.get("prismatic.equip.robin_blocked"),
+                    COLOR_ROBIN_BLOCKED, Alignment.MID, POPUP_WIDTH - MARGIN * 2, 20f, MARGIN, MARGIN + 85f);
             availableLabel.setOpacity(0f);
         } else {
             createDiceRadioList();
         }
 
         float effectY = isBlockedForRobin ? MARGIN + 110f : MARGIN + 85f + diceTypes.size() * DICE_ENTRY_HEIGHT + 10f;
-        effectPreviewHeader = settings.createLabel(Strings.get("prismatic.equip.effect_preview"), Fonts.DEFAULT_SMALL);
-        effectPreviewHeader.setColor(COLOR_SECTION_HEADER);
-        effectPreviewHeader.setAlignment(Alignment.LMID);
-        panel.addComponent((UIComponentAPI) effectPreviewHeader)
-            .setSize(POPUP_WIDTH - MARGIN * 2, 20f)
-            .inTL(MARGIN, effectY);
+        UIComponentFactory.createLabelSmall(panel, Strings.get("prismatic.equip.effect_preview"),
+                COLOR_SECTION_HEADER, Alignment.LMID, POPUP_WIDTH - MARGIN * 2, 20f, MARGIN, effectY);
 
-        effectPreviewLabel = settings.createLabel("", Fonts.DEFAULT_SMALL);
-        effectPreviewLabel.setColor(Color.LIGHT_GRAY);
-        effectPreviewLabel.setAlignment(Alignment.LMID);
-        panel.addComponent((UIComponentAPI) effectPreviewLabel)
-            .setSize(POPUP_WIDTH - MARGIN * 2, 60f)
-            .inTL(MARGIN, effectY + 20f);
+        effectPreviewLabel = UIComponentFactory.createLabelSmall(panel, "", 
+            Color.LIGHT_GRAY, Alignment.LMID, POPUP_WIDTH - MARGIN * 2, 60f, MARGIN, effectY + 20f);
 
         float buttonY = POPUP_HEIGHT - BUTTON_HEIGHT - MARGIN;
-        TooltipMakerAPI confirmTp = panel.createUIElement(BUTTON_WIDTH, BUTTON_HEIGHT, false);
-        confirmTp.setActionListenerDelegate(this);
-        panel.addUIElement(confirmTp).inTL(POPUP_WIDTH / 2f - BUTTON_WIDTH / 2f, buttonY);
-        confirmButton = confirmTp.addButton(Strings.get("prismatic.equip.confirm"), ACTION_CONFIRM, BUTTON_WIDTH, BUTTON_HEIGHT, 0f);
+        TooltipMakerAPI confirmTp = UIComponentFactory.createTooltipForButtons(panel, this, BUTTON_WIDTH, BUTTON_HEIGHT, 
+            POPUP_WIDTH / 2f - BUTTON_WIDTH / 2f, buttonY);
+        ButtonAPI confirmButton = confirmTp.addButton(Strings.get("prismatic.equip.confirm"), ACTION_CONFIRM, BUTTON_WIDTH, BUTTON_HEIGHT, 0f);
         confirmButton.setQuickMode(true);
 
         if (isBlockedForRobin) {
@@ -188,60 +147,15 @@ public class PrismaticEquipPopup extends BaseCustomUIPanelPlugin implements Acti
 
             diceClickRegions.add(new ClickRegion(MARGIN, y, POPUP_WIDTH - MARGIN * 2, DICE_ENTRY_HEIGHT, diceId));
 
-            LabelAPI diceLabel = settings.createLabel(getDiceDisplayName(diceId), Fonts.DEFAULT_SMALL);
-            diceLabel.setColor(selectedDiceId.equals(diceId) ? ColorHelper.PRISMATIC_BRIGHT : Color.WHITE);
-            diceLabel.setAlignment(Alignment.LMID);
-            panel.addComponent((UIComponentAPI) diceLabel)
-                .setSize(POPUP_WIDTH - MARGIN * 2 - RADIO_SIZE - 5f, DICE_ENTRY_HEIGHT)
-                .inTL(MARGIN + RADIO_SIZE + 5f, y);
-        }
-    }
-
-    private String getDiceDisplayName(String diceId) {
-        if (diceId == null || diceId.isEmpty()) {
-            return Strings.get("prismatic.equip.none");
-        }
-        String key = "prismatic." + diceId + ".name";
-        try {
-            return Strings.get(key);
-        } catch (Exception e) {
-            return diceId;
+            Color labelColor = selectedDiceId.equals(diceId) ? ColorHelper.PRISMATIC_BRIGHT : Color.WHITE;
+            UIComponentFactory.createLabelSmall(panel, PrismaticDisplayHelper.getDiceDisplayName(diceId), 
+                labelColor, Alignment.LMID, POPUP_WIDTH - MARGIN * 2 - RADIO_SIZE - 5f, DICE_ENTRY_HEIGHT, 
+                MARGIN + RADIO_SIZE + 5f, y);
         }
     }
 
     private String getDiceEffectDescription(String diceId) {
-        if (diceId == null || diceId.isEmpty()) {
-            return Strings.get("prismatic.equip.none_effect");
-        }
-        String key = "prismatic." + diceId + ".description";
-        try {
-            return Strings.get(key);
-        } catch (Exception e) {
-            PrismaticDiceType type = PrismaticDiceRegistry.get(diceId);
-            if (type != null) {
-                return getEffectDescriptionFromType(type);
-            }
-            return Strings.get("prismatic.equip.no_effect");
-        }
-    }
-
-    private String getEffectDescriptionFromType(PrismaticDiceType type) {
-        PrismaticEffect effect = type.getEffect();
-        if (effect.isNone()) return Strings.get("prismatic.equip.no_effect");
-        if (effect.isDoubleValue()) return Strings.get("prismatic.equip.effect_double");
-        if (effect.isHealHp()) return Strings.get("prismatic.equip.effect_heal");
-        if (effect.isGainPrismaticUse()) return Strings.get("prismatic.equip.effect_gain_use");
-        if (effect.isInstantDamage()) return Strings.format("prismatic.equip.effect_instant_damage", effect.getInstantDamageAmount());
-        if (effect.isGrantStatus()) {
-            String statusKey = "status." + effect.getGrantedEffect().name().toLowerCase();
-            try {
-                String statusName = Strings.get(statusKey);
-                return Strings.format("prismatic.equip.effect_status", statusName);
-            } catch (Exception e) {
-                return Strings.format("prismatic.equip.effect_status", effect.getGrantedEffect().name());
-            }
-        }
-        return Strings.get("prismatic.equip.no_effect");
+        return PrismaticDisplayHelper.getEffectDescriptionForDiceId(diceId);
     }
 
     private void updateEffectPreview() {
@@ -267,7 +181,7 @@ public class PrismaticEquipPopup extends BaseCustomUIPanelPlugin implements Acti
         boolean mouseDown = Mouse.isButtonDown(0);
 
         if (mouseDown && !wasMousePressed) {
-            float scale = settings.getScreenScaleMult();
+            float scale = Global.getSettings().getScreenScaleMult();
             float mouseX = Mouse.getX() / scale;
             float mouseY = Mouse.getY() / scale;
 
@@ -290,36 +204,11 @@ public class PrismaticEquipPopup extends BaseCustomUIPanelPlugin implements Acti
 
     @Override
     public void renderBelow(float alphaMult) {
-        GLStateUtil.resetBlendState();
-
-        float x = panelX;
-        float y = panelY;
-
-        float[] bg = ColorHelper.toGLComponents(COLOR_BG, alphaMult);
-        GL11.glColor4f(bg[0], bg[1], bg[2], bg[3]);
-        GL11.glBegin(GL11.GL_QUADS);
-        GL11.glVertex2f(x, y);
-        GL11.glVertex2f(x + POPUP_WIDTH, y);
-        GL11.glVertex2f(x + POPUP_WIDTH, y + POPUP_HEIGHT);
-        GL11.glVertex2f(x, y + POPUP_HEIGHT);
-        GL11.glEnd();
-
-        float[] border = ColorHelper.toGLComponents(ColorHelper.PRISMATIC_GOLD, alphaMult * 0.8f);
-        GL11.glColor4f(border[0], border[1], border[2], border[3]);
-        GL11.glLineWidth(2f);
-        GL11.glBegin(GL11.GL_LINE_LOOP);
-        GL11.glVertex2f(x, y);
-        GL11.glVertex2f(x + POPUP_WIDTH, y);
-        GL11.glVertex2f(x + POPUP_WIDTH, y + POPUP_HEIGHT);
-        GL11.glVertex2f(x, y + POPUP_HEIGHT);
-        GL11.glEnd();
+        PopupRenderer.drawPopupBackground(panelX, panelY, POPUP_WIDTH, POPUP_HEIGHT, COLOR_BG, ColorHelper.PRISMATIC_GOLD, alphaMult);
 
         if (!isBlockedForRobin) {
             renderRadioButtons(alphaMult);
         }
-
-        GLStateUtil.resetColor();
-        GL11.glLineWidth(1f);
     }
 
     private void renderRadioButtons(float alphaMult) {
@@ -365,10 +254,6 @@ public class PrismaticEquipPopup extends BaseCustomUIPanelPlugin implements Acti
                 GL11.glEnd();
             }
         }
-    }
-
-    @Override
-    public void render(float alphaMult) {
     }
 
     @Override

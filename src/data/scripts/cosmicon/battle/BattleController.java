@@ -11,17 +11,14 @@ public class BattleController implements BattleState.DamageAnimationCallback {
     private final TurnProcessor turnProcessor;
 
     public BattleController() {
-        EffectManager effectManager = new EffectManager();
         WeatherController weatherController = new WeatherController();
-        PrismaticManager prismaticManager = new PrismaticManager(effectManager);
 
         AIEngine aiEngine = new AIEngine();
         DiceRoller diceRoller = new DiceRoller(weatherController);
         DamageResolver damageResolver = new DamageResolver();
         
         this.state = new BattleState();
-        state.setEffectManager(effectManager);
-        state.setPrismaticManager(prismaticManager);
+        state.setPrismaticManager(new PrismaticManager(state));
         state.setWeatherController(weatherController);
         state.setDamageAnimationCallback(this);
         
@@ -123,6 +120,7 @@ public class BattleController implements BattleState.DamageAnimationCallback {
         }
         state.cleanup();
         DiceProbabilityCalculator.clearCache();
+        CosmiconSprites.clearCache();
         CosmiconLogger.info("====================================");
     }
 }

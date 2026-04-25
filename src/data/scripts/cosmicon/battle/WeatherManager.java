@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import data.scripts.cosmicon.util.CharacterIds;
+
 public class WeatherManager {
     
     private static final List<Integer> WEATHER_TURN_SCHEDULE = Arrays.asList(2, 4, 6, 8);
@@ -34,11 +36,11 @@ public class WeatherManager {
             WeatherType.RAINBOW, WeatherType.SEA_OF_CLOUDS, WeatherType.LUNISOLAR_LUMINANCE, WeatherType.DRY_THUNDERSTORM));
         STORY_BATTLE_WEATHERS.put("hook_true", Arrays.asList(
             WeatherType.RAINBOW, WeatherType.SEA_OF_CLOUDS, WeatherType.LUNISOLAR_LUMINANCE, WeatherType.DRY_THUNDERSTORM));
-        STORY_BATTLE_WEATHERS.put("sparxie", Arrays.asList(
+        STORY_BATTLE_WEATHERS.put(CharacterIds.SPARXIE, Arrays.asList(
             WeatherType.ACID_RAIN, WeatherType.VENOCLLOUD, WeatherType.DRIZZLE, WeatherType.TOXIC_FOG));
         STORY_BATTLE_WEATHERS.put("rappa", Arrays.asList(
             WeatherType.SCORCHING_SUN, WeatherType.RAINBOW, WeatherType.DROUGHT, WeatherType.DRY_THUNDERSTORM));
-        STORY_BATTLE_WEATHERS.put("yao_guang", Arrays.asList(
+        STORY_BATTLE_WEATHERS.put(CharacterIds.YAO_GUANG, Arrays.asList(
             WeatherType.PARHELION, WeatherType.THUNDERSTORM, WeatherType.SEA_OF_CLOUDS, WeatherType.SUNNY));
         STORY_BATTLE_WEATHERS.put("seele", Arrays.asList(
             WeatherType.FROG_RAIN, WeatherType.HIGH_TEMPERATURE, WeatherType.CREPUSCULAR_RAYS, WeatherType.SUNNY));
@@ -118,13 +120,7 @@ public class WeatherManager {
         this.currentWeather = weather;
     }
     
-    public int getCurrentTurn() {
-        return currentTurn;
-    }
     
-    public boolean isWeatherChangeTurn() {
-        return WEATHER_TURN_SCHEDULE.contains(currentTurn);
-    }
     
     public boolean isNpcDuel() {
         return false;

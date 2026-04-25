@@ -2,18 +2,10 @@ package data.scripts.cosmicon.battle;
 
 import java.awt.Color;
 
-import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.SettingsAPI;
 import com.fs.starfarer.api.graphics.SpriteAPI;
-import com.fs.starfarer.api.ui.Alignment;
 import com.fs.starfarer.api.ui.CustomPanelAPI;
-import com.fs.starfarer.api.ui.Fonts;
-import com.fs.starfarer.api.ui.LabelAPI;
-import com.fs.starfarer.api.ui.UIComponentAPI;
 
 import data.scripts.cosmicon.util.ColorHelper;
-import data.scripts.cosmicon.util.CoordHelper;
-import data.scripts.cosmicon.util.GLStateUtil;
 
 public class DamageResolutionAnimator {
     private static final float ICON_PREP_DURATION = 0.5f;
@@ -60,9 +52,7 @@ public class DamageResolutionAnimator {
     
     private FlyingIcon atkFlyingIcon;
     private FlyingIcon defFlyingIcon;
-    private SpriteAPI atkRoleIcon;
-    private SpriteAPI defRoleIcon;
-    
+
     private Phase phase;
     private float phaseElapsed;
     private boolean complete;
@@ -142,7 +132,6 @@ public class DamageResolutionAnimator {
         this.attackWins = attackValue > defenseValue;
         
         this.combo = hasCombo(state);
-        int defenderFinalHp;
         if (combo) {
             this.comboDamage = resultValue;
         } else {
@@ -207,9 +196,9 @@ public class DamageResolutionAnimator {
         
         resultNumber = new FlyingNumber();
         comboResultNumber = null;
-        
-        atkRoleIcon = CosmiconSprites.getAtkIcon();
-        defRoleIcon = CosmiconSprites.getDefIcon();
+
+        SpriteAPI atkRoleIcon = CosmiconSprites.getAtkIcon();
+        SpriteAPI defRoleIcon = CosmiconSprites.getDefIcon();
         
         atkFlyingIcon = new FlyingIcon(atkRoleIcon, iconSize, ColorHelper.ATTACK_VALUE);
         atkFlyingIcon.setValue(attackValue);
@@ -322,6 +311,7 @@ public class DamageResolutionAnimator {
     
     private void proceedFromImpactWait() {
         if (attackWins) {
+            atkFlyingIcon.setValue(resultValue);
             atkFlyingIcon.flyTo(defenderTargetX, defenderTargetY, WINNER_IMPACT_DURATION);
             phase = Phase.WINNER_IMPACT;
         } else {
@@ -385,8 +375,7 @@ public class DamageResolutionAnimator {
     }
     
     private void advanceShatterRestore() {
-        float progress = Math.min(phaseElapsed / SHATTER_RESTORE_DURATION, 1f);
-        shatterRestoreAlpha = progress;
+        shatterRestoreAlpha = Math.min(phaseElapsed / SHATTER_RESTORE_DURATION, 1f);
         
         boolean atkDone = atkFlyingIcon == null || atkFlyingIcon.isComplete();
         boolean defDone = defFlyingIcon == null || defFlyingIcon.isComplete();
@@ -671,134 +660,7 @@ public class DamageResolutionAnimator {
         return phase;
     }
     
-    public boolean isWaitingForClick() {
-        return waitingForClick;
-    }
-    
     public boolean isDraw() {
         return isDraw;
     }
-    
-    private class FlyingIcon {
-        private float startX, startY;
-        private float targetX, targetY;
-        private float currentX, currentY;
-        private float duration;
-        private float elapsed;
-        private float size;
-        private boolean complete;
-        private SpriteAPI sprite;
-        private int value;
-        private Color color;
-        
-        private LabelAPI valueLabel;
-        private CustomPanelAPI labelPanel;
-        private boolean labelCreated;
-        
-        private static final float LABEL_HEIGHT = 30f;
-        
-        public FlyingIcon(SpriteAPI sprite, float size, Color color) {
-            this.sprite = sprite;
-            this.size = size;
-            this.color = color;
-            this.complete = false;
-            this.elapsed = 0f;
-            this.labelCreated = false;
-        }
-        
-        public void startFrom(float x, float y) {
-            this.startX = x;
-            this.startY = y;
-            this.currentX = x;
-            this.currentY = y;
-        }
-        
-        public void flyTo(float x, float y, float duration) {
-            this.targetX = x;
-            this.targetY = y;
-            this.duration = duration;
-            this.elapsed = 0f;
-            this.complete = false;
-        }
-        
-        public void setValue(int value) {
-            this.value = value;
-        }
-        
-        public void advance(float amount) {
-            if (complete) return;
-            elapsed += amount;
-            float progress = Math.min(elapsed / duration, 1f);
-            float eased = 1f - (1f - progress) * (1f - progress);
-            currentX = startX + (targetX - startX) * eased;
-            currentY = startY + (targetY - startY) * eased;
-            if (progress >= 1f) {
-                complete = true;
-            }
-            updateLabelPosition();
-        }
-        
-        public boolean isComplete() { return complete; }
-        public float getX() { return currentX; }
-        public float getY() { return currentY; }
-        public float getSize() { return size; }
-        public SpriteAPI getSprite() { return sprite; }
-        public int getValue() { return value; }
-        
-        public void createLabel(CustomPanelAPI panel) {
-            if (labelCreated || panel == null) return;
-            
-            SettingsAPI settings = Global.getSettings();
-            valueLabel = settings.createLabel(String.valueOf(value), Fonts.INSIGNIA_LARGE);
-            valueLabel.setColor(color);
-            valueLabel.setAlignment(Alignment.MID);
-            
-            float labelWidth = valueLabel.computeTextWidth(String.valueOf(value)) + 10f;
-            panel.addComponent((UIComponentAPI) valueLabel)
-                .setSize(labelWidth, LABEL_HEIGHT)
-                .inTL(currentX - labelWidth / 2f, currentY - LABEL_HEIGHT / 2f);
-            
-            labelPanel = panel;
-            labelCreated = true;
-        }
-        
-        private void updateLabelPosition() {
-            if (valueLabel != null && labelCreated) {
-                float labelWidth = valueLabel.computeTextWidth(String.valueOf(value)) + 10f;
-                ((UIComponentAPI) valueLabel).getPosition()
-                    .setSize(labelWidth, LABEL_HEIGHT)
-                    .inTL(currentX - labelWidth / 2f, currentY - LABEL_HEIGHT / 2f);
-            }
-        }
-        
-        public void setLabelOpacity(float alpha) {
-            if (valueLabel != null) {
-                valueLabel.setOpacity(alpha);
-            }
-        }
-        
-        public void cleanup() {
-            if (valueLabel != null && labelPanel != null) {
-                labelPanel.removeComponent((UIComponentAPI) valueLabel);
-            }
-            valueLabel = null;
-            labelPanel = null;
-            labelCreated = false;
-        }
-        
-        public void render(float panelX, float panelY, float panelHeight, float alphaMult) {
-            if (sprite == null) return;
-            
-            GLStateUtil.enableTexturingWithBlend();
-            
-            float glX = panelX + currentX - size / 2f;
-            float glY = CoordHelper.uiToGlY(panelY, panelHeight, currentY + size / 2f);
-            
-            sprite.setSize(size, size);
-            sprite.setAlphaMult(alphaMult);
-            sprite.render(glX, glY);
-            
-            GLStateUtil.disableTexturing();
-        }
-    }
-    }
+}

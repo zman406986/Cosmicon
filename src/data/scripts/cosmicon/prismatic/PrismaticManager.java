@@ -6,20 +6,19 @@ import java.util.stream.Collectors;
 
 import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.CharacterCard;
-import data.scripts.cosmicon.battle.EffectManager;
 import data.scripts.cosmicon.prismatic.AvailabilityCondition.ConditionContext;
 import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class PrismaticManager {
     
     private final PrismaticDiceProcessor processor;
-    private final EffectManager effectManager;
+    private final BattleState battleState;
     
     private final PrismaticState playerPrismatic;
     private final PrismaticState opponentPrismatic;
     
-    public PrismaticManager(EffectManager effectManager) {
-        this.effectManager = effectManager;
+    public PrismaticManager(BattleState battleState) {
+        this.battleState = battleState;
         this.processor = new PrismaticDiceProcessor();
         this.playerPrismatic = new PrismaticState();
         this.opponentPrismatic = new PrismaticState();
@@ -51,11 +50,10 @@ public class PrismaticManager {
     }
     
     private void applyQueuedEffectsFor(BattleState state, boolean forPlayer) {
-        PrismaticState ps = getState(forPlayer);
-        List<PrismaticDiceInstance> selectedDice = ps.getSelectedDice();
+        List<PrismaticDiceInstance> selectedDice = state.getSelectedPrismaticDice(forPlayer);
         
         for (PrismaticDiceInstance dice : selectedDice) {
-            processor.applyEffect(dice, state, effectManager, forPlayer);
+            processor.applyEffect(dice, state, forPlayer);
             consumePrismaticUse(dice.type, forPlayer);
         }
     }
@@ -85,8 +83,7 @@ public class PrismaticManager {
     }
     
     public boolean hasMustSelectDiceRemaining(boolean forPlayer) {
-        PrismaticState ps = getState(forPlayer);
-        for (PrismaticDiceInstance dice : ps.getMustSelectDice()) {
+        for (PrismaticDiceInstance dice : battleState.getMustSelectPrismaticDice(forPlayer)) {
             if (!dice.isSelected()) return true;
         }
         return false;
@@ -97,12 +94,9 @@ public class PrismaticManager {
     }
     
     public int getPrismaticSelectedSum(boolean forPlayer) {
-        PrismaticState ps = getState(forPlayer);
         int sum = 0;
-        for (PrismaticDiceInstance dice : ps.getRolledDice()) {
-            if (dice.isSelected()) {
-                sum += dice.rolledFace;
-            }
+        for (PrismaticDiceInstance dice : battleState.getSelectedPrismaticDice(forPlayer)) {
+            sum += dice.rolledFace;
         }
         return sum;
     }
@@ -131,11 +125,6 @@ public class PrismaticManager {
     
     public boolean isModeActive(boolean forPlayer) {
         return getState(forPlayer).isModeActive();
-    }
-    
-    public void toggleMode(boolean forPlayer) {
-        PrismaticState ps = getState(forPlayer);
-        ps.setModeActive(!ps.isModeActive());
     }
     
     public void clearState() {

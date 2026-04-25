@@ -16,11 +16,6 @@ public class DiceRoller {
         this.weatherController = weatherController;
     }
     
-    public void rollAll(BattleState state) {
-        rollForParticipant(state, true);
-        rollForParticipant(state, false);
-    }
-    
     public void rollForAttacker(BattleState state) {
         boolean attackerIsPlayer = state.isPlayerAttacker();
         rollForParticipant(state, attackerIsPlayer);
@@ -141,8 +136,9 @@ public class DiceRoller {
             sb.append(type.name()).append("(").append(value).append(")");
         }
         int total = 0;
-        for (int i = 0; i < values.size(); i++) {
-            total += values.get(i);
+        for (Integer value : values)
+        {
+            total += value;
         }
         sb.append(" | New total: ").append(total);
         CosmiconLogger.debug(sb.toString());

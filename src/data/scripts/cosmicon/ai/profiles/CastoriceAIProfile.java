@@ -2,13 +2,14 @@ package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.DiceType;
+import data.scripts.cosmicon.util.CharacterIds;
 import java.util.List;
 
 public class CastoriceAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     public String getCharacterId() {
-        return "castorice";
+        return CharacterIds.CASTORICE;
     }
 
     @Override

@@ -6,10 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import org.lwjgl.opengl.GL11;
-
-import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.SettingsAPI;
 import com.fs.starfarer.api.campaign.BaseCustomUIPanelPlugin;
 import com.fs.starfarer.api.ui.Alignment;
 import com.fs.starfarer.api.ui.ButtonAPI;
@@ -18,7 +14,6 @@ import com.fs.starfarer.api.ui.Fonts;
 import com.fs.starfarer.api.ui.LabelAPI;
 import com.fs.starfarer.api.ui.PositionAPI;
 import com.fs.starfarer.api.ui.TooltipMakerAPI;
-import com.fs.starfarer.api.ui.UIComponentAPI;
 import com.fs.starfarer.api.ui.TooltipMakerAPI.ActionListenerDelegate;
 
 import data.scripts.Strings;
@@ -28,14 +23,14 @@ import data.scripts.cosmicon.prismatic.AvailabilityCondition.ConditionContext;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
-import data.scripts.cosmicon.prismatic.PrismaticEffect;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
 import data.scripts.cosmicon.util.ColorHelper;
-import data.scripts.cosmicon.util.GLStateUtil;
+import data.scripts.cosmicon.util.PopupRenderer;
+import data.scripts.cosmicon.util.PrismaticDisplayHelper;
+import data.scripts.cosmicon.util.UIComponentFactory;
 
 public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin implements ActionListenerDelegate {
 
-    private static final SettingsAPI settings = Global.getSettings();
     private static final float POPUP_WIDTH = 400f;
     private static final float POPUP_HEIGHT = 300f;
     private static final float DICE_ENTRY_HEIGHT = 60f;
@@ -99,61 +94,38 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
     }
 
     private void createUIElements() {
-        titleLabel = settings.createLabel(Strings.get("prismatic.popup.title"), Fonts.INSIGNIA_LARGE);
-        titleLabel.setColor(ColorHelper.PRISMATIC_GOLD);
-        titleLabel.setAlignment(Alignment.MID);
-        panel.addComponent((UIComponentAPI) titleLabel)
-            .setSize(POPUP_WIDTH - MARGIN * 2, 30f)
-            .inTL(MARGIN, MARGIN);
+        titleLabel = UIComponentFactory.createLabelLarge(panel, Strings.get("prismatic.popup.title"), 
+            ColorHelper.PRISMATIC_GOLD, Alignment.MID, POPUP_WIDTH - MARGIN * 2, 30f, MARGIN, MARGIN);
 
-        noDiceLabel = settings.createLabel(Strings.get("prismatic.popup.no_dice_available"), Fonts.DEFAULT_SMALL);
-        noDiceLabel.setColor(Color.GRAY);
-        noDiceLabel.setAlignment(Alignment.MID);
-        panel.addComponent((UIComponentAPI) noDiceLabel)
-            .setSize(POPUP_WIDTH - MARGIN * 2, 20f)
-            .inTL(MARGIN, POPUP_HEIGHT / 2f - 10f);
-        noDiceLabel.setOpacity(0f);
+        noDiceLabel = UIComponentFactory.createLabelWithOpacity(panel, Strings.get("prismatic.popup.no_dice_available"), 
+            Fonts.DEFAULT_SMALL, Color.GRAY, Alignment.MID, POPUP_WIDTH - MARGIN * 2, 20f, 
+            MARGIN, POPUP_HEIGHT / 2f - 10f, 0f);
 
-        TooltipMakerAPI closeTp = panel.createUIElement(BUTTON_WIDTH, BUTTON_HEIGHT, false);
-        closeTp.setActionListenerDelegate(this);
-        panel.addUIElement(closeTp).inTL(POPUP_WIDTH - BUTTON_WIDTH - MARGIN, POPUP_HEIGHT - BUTTON_HEIGHT - MARGIN);
+        TooltipMakerAPI closeTp = UIComponentFactory.createTooltipForButtons(panel, this, BUTTON_WIDTH, BUTTON_HEIGHT, 
+            POPUP_WIDTH - BUTTON_WIDTH - MARGIN, POPUP_HEIGHT - BUTTON_HEIGHT - MARGIN);
         closeButton = closeTp.addButton(Strings.get("prismatic.popup.close"), "close", BUTTON_WIDTH, BUTTON_HEIGHT, 0f);
         closeButton.setQuickMode(true);
 
-        confirmTitleLabel = settings.createLabel("", Fonts.INSIGNIA_LARGE);
-        confirmTitleLabel.setColor(ColorHelper.PRISMATIC_GOLD);
-        confirmTitleLabel.setAlignment(Alignment.MID);
-        panel.addComponent((UIComponentAPI) confirmTitleLabel)
-            .setSize(POPUP_WIDTH - MARGIN * 2, 30f)
-            .inTL(MARGIN, POPUP_HEIGHT / 2f - 60f);
-        confirmTitleLabel.setOpacity(0f);
+        confirmTitleLabel = UIComponentFactory.createLabelWithOpacity(panel, "", 
+            Fonts.INSIGNIA_LARGE, ColorHelper.PRISMATIC_GOLD, Alignment.MID, POPUP_WIDTH - MARGIN * 2, 30f, 
+            MARGIN, POPUP_HEIGHT / 2f - 60f, 0f);
 
-        confirmEffectLabel = settings.createLabel("", Fonts.DEFAULT_SMALL);
-        confirmEffectLabel.setColor(Color.WHITE);
-        confirmEffectLabel.setAlignment(Alignment.MID);
-        panel.addComponent((UIComponentAPI) confirmEffectLabel)
-            .setSize(POPUP_WIDTH - MARGIN * 2, 40f)
-            .inTL(MARGIN, POPUP_HEIGHT / 2f - 20f);
-        confirmEffectLabel.setOpacity(0f);
+        confirmEffectLabel = UIComponentFactory.createLabelWithOpacity(panel, "", 
+            Fonts.DEFAULT_SMALL, Color.WHITE, Alignment.MID, POPUP_WIDTH - MARGIN * 2, 40f, 
+            MARGIN, POPUP_HEIGHT / 2f - 20f, 0f);
 
-        warningLabel = settings.createLabel("", Fonts.DEFAULT_SMALL);
-        warningLabel.setColor(new Color(255, 100, 100));
-        warningLabel.setAlignment(Alignment.MID);
-        panel.addComponent((UIComponentAPI) warningLabel)
-            .setSize(POPUP_WIDTH - MARGIN * 2, 20f)
-            .inTL(MARGIN, POPUP_HEIGHT / 2f + 30f);
-        warningLabel.setOpacity(0f);
+        warningLabel = UIComponentFactory.createLabelWithOpacity(panel, "", 
+            Fonts.DEFAULT_SMALL, new Color(255, 100, 100), Alignment.MID, POPUP_WIDTH - MARGIN * 2, 20f, 
+            MARGIN, POPUP_HEIGHT / 2f + 30f, 0f);
 
-        TooltipMakerAPI confirmTp = panel.createUIElement(BUTTON_WIDTH + 10f, BUTTON_HEIGHT, false);
-        confirmTp.setActionListenerDelegate(this);
-        panel.addUIElement(confirmTp).inTL(POPUP_WIDTH / 2f - BUTTON_WIDTH - 20f, POPUP_HEIGHT - BUTTON_HEIGHT - MARGIN);
+        TooltipMakerAPI confirmTp = UIComponentFactory.createTooltipForButtons(panel, this, BUTTON_WIDTH + 10f, BUTTON_HEIGHT, 
+            POPUP_WIDTH / 2f - BUTTON_WIDTH - 20f, POPUP_HEIGHT - BUTTON_HEIGHT - MARGIN);
         cancelButton = confirmTp.addButton(Strings.get("prismatic.popup.cancel_button"), "cancel_confirm", BUTTON_WIDTH, BUTTON_HEIGHT, 0f);
         cancelButton.setQuickMode(true);
         cancelButton.setOpacity(0f);
 
-        TooltipMakerAPI rollTp = panel.createUIElement(BUTTON_WIDTH + 10f, BUTTON_HEIGHT, false);
-        rollTp.setActionListenerDelegate(this);
-        panel.addUIElement(rollTp).inTL(POPUP_WIDTH / 2f + 10f, POPUP_HEIGHT - BUTTON_HEIGHT - MARGIN);
+        TooltipMakerAPI rollTp = UIComponentFactory.createTooltipForButtons(panel, this, BUTTON_WIDTH + 10f, BUTTON_HEIGHT, 
+            POPUP_WIDTH / 2f + 10f, POPUP_HEIGHT - BUTTON_HEIGHT - MARGIN);
         confirmButton = rollTp.addButton(Strings.get("prismatic.popup.confirm_roll"), "confirm_roll", BUTTON_WIDTH, BUTTON_HEIGHT, 0f);
         confirmButton.setQuickMode(true);
         confirmButton.setOpacity(0f);
@@ -186,29 +158,14 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
             diceEntry.type = type;
             diceEntry.uses = uses;
 
-            diceEntry.nameLabel = settings.createLabel(getDiceName(type), Fonts.DEFAULT_SMALL);
-            diceEntry.nameLabel.setColor(ColorHelper.PRISMATIC_BRIGHT);
-            diceEntry.nameLabel.setAlignment(Alignment.LMID);
-            panel.addComponent((UIComponentAPI) diceEntry.nameLabel)
-                .setSize(POPUP_WIDTH - BUTTON_WIDTH - MARGIN * 3, 20f)
-                .inTL(MARGIN, yOffset);
-            diceEntry.nameLabel.setOpacity(1f);
+            diceEntry.nameLabel = UIComponentFactory.createLabelSmall(panel, PrismaticDisplayHelper.getDiceDisplayName(type), 
+                ColorHelper.PRISMATIC_BRIGHT, Alignment.LMID, POPUP_WIDTH - BUTTON_WIDTH - MARGIN * 3, 20f, MARGIN, yOffset);
 
-            diceEntry.effectLabel = settings.createLabel(getDiceEffect(type), Fonts.DEFAULT_SMALL);
-            diceEntry.effectLabel.setColor(Color.LIGHT_GRAY);
-            diceEntry.effectLabel.setAlignment(Alignment.LMID);
-            panel.addComponent((UIComponentAPI) diceEntry.effectLabel)
-                .setSize(POPUP_WIDTH - BUTTON_WIDTH - MARGIN * 3, 20f)
-                .inTL(MARGIN, yOffset + 20f);
-            diceEntry.effectLabel.setOpacity(1f);
+            diceEntry.effectLabel = UIComponentFactory.createLabelSmall(panel, PrismaticDisplayHelper.getEffectDescription(type), 
+                Color.LIGHT_GRAY, Alignment.LMID, POPUP_WIDTH - BUTTON_WIDTH - MARGIN * 3, 20f, MARGIN, yOffset + 20f);
 
-            diceEntry.usesLabel = settings.createLabel(Strings.format("prismatic.popup.uses", uses), Fonts.DEFAULT_SMALL);
-            diceEntry.usesLabel.setColor(ColorHelper.PRISMATIC_GOLD);
-            diceEntry.usesLabel.setAlignment(Alignment.RMID);
-            panel.addComponent((UIComponentAPI) diceEntry.usesLabel)
-                .setSize(60f, 20f)
-                .inTL(POPUP_WIDTH - BUTTON_WIDTH - MARGIN * 2 - 70f, yOffset);
-            diceEntry.usesLabel.setOpacity(1f);
+            diceEntry.usesLabel = UIComponentFactory.createLabelSmall(panel, Strings.format("prismatic.popup.uses", uses), 
+                ColorHelper.PRISMATIC_GOLD, Alignment.RMID, 60f, 20f, POPUP_WIDTH - BUTTON_WIDTH - MARGIN * 2 - 70f, yOffset);
 
             diceEntry.rollButton = diceTp.addButton(Strings.get("prismatic.popup.roll_button"), "roll_" + diceId, BUTTON_WIDTH, BUTTON_HEIGHT, 0f);
             diceEntry.rollButton.setQuickMode(true);
@@ -234,42 +191,6 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
         Map<Integer, Integer> history = battleState.getPlayerFaceSelectionHistory();
 
         return new ConditionContext(hp, maxHp, turnNumber, turnType, dmgTaken, history);
-    }
-
-    private String getDiceName(PrismaticDiceType type) {
-        String key = "prismatic." + type.getId() + ".name";
-        try {
-            return Strings.get(key);
-        } catch (Exception e) {
-            return type.getId();
-        }
-    }
-
-    private String getDiceEffect(PrismaticDiceType type) {
-        String key = "prismatic." + type.getId() + ".description";
-        try {
-            return Strings.get(key);
-        } catch (Exception e) {
-            PrismaticEffect effect = type.getEffect();
-            return getEffectDescription(effect);
-        }
-    }
-
-    private String getEffectDescription(PrismaticEffect effect) {
-        if (effect.isNone()) return Strings.get("prismatic.equip.no_effect");
-        if (effect.isDoubleValue()) return Strings.get("prismatic.equip.effect_double");
-        if (effect.isHealHp()) return Strings.get("prismatic.equip.effect_heal");
-        if (effect.isGainPrismaticUse()) return Strings.get("prismatic.equip.effect_gain_use");
-        if (effect.isInstantDamage()) return Strings.format("prismatic.equip.effect_instant_damage", effect.getInstantDamageAmount());
-        if (effect.isGrantStatus()) {
-            String statusName = effect.getGrantedEffect().name();
-            String statusKey = "status." + statusName.toLowerCase();
-            try {
-                statusName = Strings.get(statusKey);
-            } catch (Exception ignored) { }
-            return Strings.format("prismatic.equip.effect_status", statusName);
-        }
-        return Strings.get("prismatic.equip.no_effect");
     }
 
     private void updateVisibility() {
@@ -333,10 +254,10 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
         Random random = new Random();
         rolledInstance = PrismaticDiceInstance.roll(type, false, random);
 
-        String diceName = getDiceName(type);
+        String diceName = PrismaticDisplayHelper.getDiceDisplayName(type);
         confirmTitleLabel.setText(Strings.format("prismatic.popup.about_to_roll", diceName));
 
-        String effectText = Strings.get("prismatic.popup.effect_header") + " " + getDiceEffect(type);
+        String effectText = Strings.get("prismatic.popup.effect_header") + " " + PrismaticDisplayHelper.getEffectDescription(type);
         confirmEffectLabel.setText(effectText);
 
         if (isRolledFaceSpecial()) {
@@ -368,30 +289,6 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
 
     @Override
     public void renderBelow(float alphaMult) {
-        GLStateUtil.resetBlendState();
-
-        float x = panelX;
-        float y = panelY;
-
-        float[] bg = ColorHelper.toGLComponents(new Color(40, 35, 25, 230), alphaMult);
-        GL11.glColor4f(bg[0], bg[1], bg[2], bg[3]);
-        GL11.glBegin(GL11.GL_QUADS);
-        GL11.glVertex2f(x, y);
-        GL11.glVertex2f(x + POPUP_WIDTH, y);
-        GL11.glVertex2f(x + POPUP_WIDTH, y + POPUP_HEIGHT);
-        GL11.glVertex2f(x, y + POPUP_HEIGHT);
-        GL11.glEnd();
-
-        float[] border = ColorHelper.toGLComponents(ColorHelper.PRISMATIC_GOLD, alphaMult * 0.8f);
-        GL11.glColor4f(border[0], border[1], border[2], border[3]);
-        GL11.glLineWidth(2f);
-        GL11.glBegin(GL11.GL_LINE_LOOP);
-        GL11.glVertex2f(x, y);
-        GL11.glVertex2f(x + POPUP_WIDTH, y);
-        GL11.glVertex2f(x + POPUP_WIDTH, y + POPUP_HEIGHT);
-        GL11.glVertex2f(x, y + POPUP_HEIGHT);
-        GL11.glEnd();
-
-        GLStateUtil.resetColor();
+        PopupRenderer.drawPopupBackground(panelX, panelY, POPUP_WIDTH, POPUP_HEIGHT, new Color(40, 35, 25, 230), ColorHelper.PRISMATIC_GOLD, alphaMult);
     }
 }

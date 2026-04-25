@@ -7,7 +7,7 @@ import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.battle.BattleState.TurnType;
 import data.scripts.cosmicon.character.PassiveEventSystem;
 import data.scripts.cosmicon.util.PassiveEvaluator;
-import data.scripts.cosmicon.util.PassiveEvaluator.PassiveResult;
+import data.scripts.cosmicon.util.PassiveResults.PassiveResult;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -97,9 +97,15 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         int baseRerolls = state.isPlayerAttacker() ? CosmiconConfig.DEFAULT_REROLLS : 0;
         int opponentBaseRerolls = state.isPlayerAttacker() ? 0 : CosmiconConfig.DEFAULT_REROLLS;
         
+        CosmiconLogger.debug("[AI_REROLL_DIAG] executeTurn: isPlayerAttacker=%s, baseRerolls=%d, opponentBaseRerolls=%d", 
+            state.isPlayerAttacker(), baseRerolls, opponentBaseRerolls);
+        
         if (weatherController != null) {
             weatherController.applyRerollPhase(state, state.isPlayerAttacker() ? baseRerolls : opponentBaseRerolls);
         }
+        
+        CosmiconLogger.debug("[AI_REROLL_DIAG] After weather: playerRerolls=%d, opponentRerolls=%d", 
+            state.getRemainingRerolls(true), state.getRemainingRerolls(false));
         
         if (state.isPlayerAttacker()) {
             state.setRemainingRerolls(true, baseRerolls);
@@ -108,6 +114,9 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             state.setRemainingRerolls(true, 0);
             state.setRemainingRerolls(false, opponentBaseRerolls);
         }
+        
+        CosmiconLogger.debug("[AI_REROLL_DIAG] After base assignment: playerRerolls=%d, opponentRerolls=%d", 
+            state.getRemainingRerolls(true), state.getRemainingRerolls(false));
         
         TurnType playerTurnType = state.isPlayerAttacker() ? TurnType.ATTACK : TurnType.DEFENSE;
         TurnType opponentTurnType = state.isPlayerAttacker() ? TurnType.DEFENSE : TurnType.ATTACK;
@@ -123,12 +132,19 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         
         int playerRerollBonus = playerContext.getRerollCount();
         int opponentRerollBonus = opponentContext.getRerollCount();
+        
+        CosmiconLogger.debug("[AI_REROLL_DIAG] BEFORE_ROLL bonuses: playerRerollBonus=%d, opponentRerollBonus=%d", 
+            playerRerollBonus, opponentRerollBonus);
+        
         if (playerRerollBonus != 0) {
             state.setRemainingRerolls(true, state.getRemainingRerolls(true) + playerRerollBonus);
         }
         if (opponentRerollBonus != 0) {
             state.setRemainingRerolls(false, state.getRemainingRerolls(false) + opponentRerollBonus);
         }
+        
+        CosmiconLogger.debug("[AI_REROLL_DIAG] FINAL rerolls after bonuses: playerRerolls=%d, opponentRerolls=%d", 
+            state.getRemainingRerolls(true), state.getRemainingRerolls(false));
         
         state.setCurrentPhase(BattleState.Phase.ROLLING);
         
@@ -195,8 +211,14 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
     
     private void startAiSelection() {
         int aiRerolls = state.getRemainingRerolls(false);
+        CosmiconLogger.debug("[AI_REROLL_DIAG] startAiSelection: aiRerolls=%d, isPlayerAttacker=%s, phase=%s", 
+            aiRerolls, state.isPlayerAttacker(), state.getCurrentPhase());
+        CosmiconLogger.debug("[AI_REROLL_DIAG] opponentDiceValues=%s, opponentDiceTypes=%s", 
+            state.getOpponentDiceValues(), state.getOpponentDiceTypes());
+        
         if (aiRerolls > 0 && aiEngine != null) {
             List<Integer> rerollIndices = aiEngine.planReroll(state, false);
+            CosmiconLogger.debug("[AI_REROLL_DIAG] planReroll returned: %s (size=%d)", rerollIndices, rerollIndices.size());
             aiPlannedIndices = rerollIndices;
             if (!rerollIndices.isEmpty()) {
                 aiVisualPhase = AIVisualPhase.REROLL_PLANNING;
@@ -607,8 +629,7 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         
         if (result.selfThornsDamage() > 0) {
             state.applyDamageTo(playerIsAttacker, result.selfThornsDamage());
-            StatusEffectProcessor attackerEffects = playerIsAttacker ? state.getPlayerEffects() : state.getOpponentEffects();
-            attackerEffects.removeEffect(StatusEffectProcessor.StatusEffect.THORNS);
+            state.getEffects(playerIsAttacker).removeEffect(StatusEffectProcessor.StatusEffect.THORNS);
         }
         
         if (result.overloadSelfDamage() > 0) {
@@ -815,7 +836,7 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             (state.getPlayerCard() != null ? state.getPlayerCard().getMaxHp() : currentHp) :
             (state.getOpponentCard() != null ? state.getOpponentCard().getMaxHp() : currentHp);
         
-        StatusEffectProcessor effects = (forPlayer ? state.getPlayerEffects() : state.getOpponentEffects());
+        StatusEffectProcessor effects = state.getEffects(forPlayer);
         int currentToughness = effects.getLayers(StatusEffect.TOUGHNESS);
         
         PassiveResult result = PassiveEvaluator.evaluateForCharacter(

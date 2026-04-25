@@ -16,12 +16,10 @@ import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.ui.Alignment;
 import com.fs.starfarer.api.ui.ButtonAPI;
 import com.fs.starfarer.api.ui.CustomPanelAPI;
-import com.fs.starfarer.api.ui.Fonts;
 import com.fs.starfarer.api.ui.LabelAPI;
 import com.fs.starfarer.api.ui.PositionAPI;
 import com.fs.starfarer.api.ui.TooltipMakerAPI;
 import com.fs.starfarer.api.ui.TooltipMakerAPI.ActionListenerDelegate;
-import com.fs.starfarer.api.ui.UIComponentAPI;
 import com.fs.starfarer.api.util.Misc;
 
 import data.scripts.Strings;
@@ -31,6 +29,7 @@ import data.scripts.cosmicon.battle.CosmiconSprites;
 import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.CoordHelper;
 import data.scripts.cosmicon.util.GLStateUtil;
+import data.scripts.cosmicon.util.UIComponentFactory;
 import data.scripts.cosmicon.state.CosmiconPlayerState;
 
 public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements ActionListenerDelegate {
@@ -126,16 +125,12 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     }
 
     private void createHeaderLabels() {
-        LabelAPI titleLabel = Global.getSettings().createLabel(
-            Strings.get("menu.play") + " - " + Strings.get("menu.character_setup"), Fonts.DEFAULT_SMALL);
-        titleLabel.setColor(COLOR_HEADER);
-        titleLabel.setAlignment(Alignment.LMID);
-        panel.addComponent((UIComponentAPI) titleLabel).inTL(MARGIN, MARGIN)
-            .setSize(PANEL_WIDTH - MARGIN * 2 - BUTTON_WIDTH, HEADER_HEIGHT);
+        UIComponentFactory.createLabelSmall(panel, 
+            Strings.get("menu.play") + " - " + Strings.get("menu.character_setup"), 
+            COLOR_HEADER, Alignment.LMID, PANEL_WIDTH - MARGIN * 2 - BUTTON_WIDTH, HEADER_HEIGHT, MARGIN, MARGIN);
 
-        TooltipMakerAPI backTp = panel.createUIElement(BUTTON_WIDTH + 20f, HEADER_HEIGHT, false);
-        backTp.setActionListenerDelegate(this);
-        panel.addUIElement(backTp).inTL(PANEL_WIDTH - BUTTON_WIDTH - MARGIN - 20f, MARGIN);
+        TooltipMakerAPI backTp = UIComponentFactory.createTooltipForButtons(panel, this, BUTTON_WIDTH + 20f, HEADER_HEIGHT, 
+            PANEL_WIDTH - BUTTON_WIDTH - MARGIN - 20f, MARGIN);
         ButtonAPI backButton = backTp.addButton(Strings.get("menu.back"), ACTION_BACK, BUTTON_WIDTH, HEADER_HEIGHT - 5f, 0f);
         backButton.setQuickMode(true);
         backButton.getPosition().inTL(0, 0);
@@ -144,36 +139,23 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private void createSelectionBarLabels() {
         float barY = MARGIN + HEADER_HEIGHT + 10f;
 
-        selectedNameLabel = Global.getSettings().createLabel("", Fonts.DEFAULT_SMALL);
-        selectedNameLabel.setColor(COLOR_SELECTED);
-        selectedNameLabel.setAlignment(Alignment.LMID);
-        panel.addComponent((UIComponentAPI) selectedNameLabel).inTL(MARGIN, barY)
-            .setSize(PANEL_WIDTH - MARGIN * 2 - BUTTON_WIDTH - 100f, SELECTION_BAR_HEIGHT);
+        selectedNameLabel = UIComponentFactory.createLabelSmall(panel, "", 
+            COLOR_SELECTED, Alignment.LMID, PANEL_WIDTH - MARGIN * 2 - BUTTON_WIDTH - 100f, SELECTION_BAR_HEIGHT, MARGIN, barY);
 
-        prismaticLabel = Global.getSettings().createLabel("", Fonts.DEFAULT_SMALL);
-        prismaticLabel.setColor(ColorHelper.PRISMATIC_GOLD);
-        prismaticLabel.setAlignment(Alignment.LMID);
-        panel.addComponent((UIComponentAPI) prismaticLabel).inTL(MARGIN + 250f, barY + 5f)
-            .setSize(200f, SELECTION_BAR_HEIGHT);
+        prismaticLabel = UIComponentFactory.createLabelSmall(panel, "", 
+            ColorHelper.PRISMATIC_GOLD, Alignment.LMID, 200f, SELECTION_BAR_HEIGHT, MARGIN + 250f, barY + 5f);
     }
 
     private void createInfoPanelLabels() {
         float infoPanelStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 20f;
-        float infoPanelHeight = PANEL_HEIGHT - infoPanelStartY - BUTTON_AREA_HEIGHT - 20f;
 
         float passiveY = infoPanelStartY + 40f;
-        passiveLabel = Global.getSettings().createLabel("", Fonts.DEFAULT_SMALL);
-        passiveLabel.setColor(COLOR_TEXT);
-        passiveLabel.setAlignment(Alignment.LMID);
-        panel.addComponent((UIComponentAPI) passiveLabel).inTL(INFO_PANEL_X + 10f, passiveY)
-            .setSize(INFO_PANEL_WIDTH - 20f, 60f);
+        passiveLabel = UIComponentFactory.createLabelSmall(panel, "", 
+            COLOR_TEXT, Alignment.LMID, INFO_PANEL_WIDTH - 20f, 60f, INFO_PANEL_X + 10f, passiveY);
 
         float prismaticEffectY = passiveY + 80f;
-        prismaticEffectLabel = Global.getSettings().createLabel("", Fonts.DEFAULT_SMALL);
-        prismaticEffectLabel.setColor(ColorHelper.PRISMATIC_GOLD);
-        prismaticEffectLabel.setAlignment(Alignment.LMID);
-        panel.addComponent((UIComponentAPI) prismaticEffectLabel).inTL(INFO_PANEL_X + 10f, prismaticEffectY)
-            .setSize(INFO_PANEL_WIDTH - 20f, 60f);
+        prismaticEffectLabel = UIComponentFactory.createLabelSmall(panel, "", 
+            ColorHelper.PRISMATIC_GOLD, Alignment.LMID, INFO_PANEL_WIDTH - 20f, 60f, INFO_PANEL_X + 10f, prismaticEffectY);
     }
 
     private void createButtons() {
@@ -363,18 +345,16 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
     private void renderInfoPanel(float panelX, float panelY, float alphaMult) {
         float infoPanelStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 20f;
-        float infoPanelHeight = PANEL_HEIGHT - infoPanelStartY - BUTTON_AREA_HEIGHT - 20f;
+        float borderH = PANEL_HEIGHT - infoPanelStartY - BUTTON_AREA_HEIGHT - 20f;
 
         GLStateUtil.resetBlendState();
-        float glInfoPanelY = CoordHelper.uiToGlY(panelY, PANEL_HEIGHT, infoPanelStartY + infoPanelHeight);
-        Misc.renderQuad(panelX + INFO_PANEL_X, glInfoPanelY,
-            INFO_PANEL_WIDTH, infoPanelHeight,
+        float borderY = CoordHelper.uiToGlY(panelY, PANEL_HEIGHT, infoPanelStartY + borderH);
+        Misc.renderQuad(panelX + INFO_PANEL_X, borderY,
+            INFO_PANEL_WIDTH, borderH,
             COLOR_INFO_PANEL_BG, alphaMult);
 
         float borderX = panelX + INFO_PANEL_X;
-        float borderY = glInfoPanelY;
         float borderW = INFO_PANEL_WIDTH;
-        float borderH = infoPanelHeight;
         float[] c = ColorHelper.toGLComponents(COLOR_SECTION_HEADER, alphaMult * 0.8f);
         GL11.glColor4f(c[0], c[1], c[2], c[3]);
         GL11.glLineWidth(1.5f);
@@ -446,13 +426,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                     callbacks.dismissDialog();
                 }
             }
-            case ACTION_CANCEL -> {
-                if (callback != null) {
-                    callback.onCancel();
-                }
-                callbacks.dismissDialog();
-            }
-            case ACTION_BACK -> {
+            case ACTION_CANCEL, ACTION_BACK -> {
                 if (callback != null) {
                     callback.onCancel();
                 }

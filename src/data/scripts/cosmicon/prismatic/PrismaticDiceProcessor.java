@@ -1,13 +1,12 @@
 package data.scripts.cosmicon.prismatic;
 
 import data.scripts.cosmicon.battle.BattleState;
-import data.scripts.cosmicon.battle.EffectManager;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class PrismaticDiceProcessor {
     
-    public void applyEffect(PrismaticDiceInstance dice, BattleState state, EffectManager effectManager, boolean forPlayer) {
+    public void applyEffect(PrismaticDiceInstance dice, BattleState state, boolean forPlayer) {
         if (!dice.shouldTriggerEffect()) return;
         
         PrismaticEffect effect = dice.getEffect();
@@ -26,7 +25,7 @@ public class PrismaticDiceProcessor {
         if (effect.isGrantStatus()) {
             StatusEffect statusEffect = effect.getGrantedEffect();
             int layers = effect.calculateLayers(dice.rolledFace);
-            effectManager.applyEffect(statusEffect, layers, forPlayer);
+            state.applyEffect(statusEffect, layers, forPlayer);
             CosmiconLogger.debug("Prismatic effect applied: %s x%d to %s", 
                 statusEffect.name(), layers, forPlayer ? "Player" : "Opponent");
             return;
@@ -52,13 +51,6 @@ public class PrismaticDiceProcessor {
             state.applyDamageTo(!forPlayer, damage);
             CosmiconLogger.debug("Prismatic effect applied: InstantDamage %d to %s", 
                 damage, forPlayer ? "Opponent" : "Player");
-        }
-    }
-    
-    public void checkDestinedDice(PrismaticDiceInstance dice) {
-        PrismaticEffect effect = dice.getEffect();
-        if (effect.isGrantStatus() && effect.getGrantedEffect() == StatusEffect.DESTINED) {
-            dice.setMustSelect(true);
         }
     }
 }

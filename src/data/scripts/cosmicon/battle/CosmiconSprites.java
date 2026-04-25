@@ -7,6 +7,8 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.SettingsAPI;
 import com.fs.starfarer.api.graphics.SpriteAPI;
 
+import data.scripts.cosmicon.util.CharacterIds;
+
 public final class CosmiconSprites {
     private static final SettingsAPI settings = Global.getSettings();
     private static final Map<String, SpriteAPI> portraitCache = new HashMap<>();
@@ -25,20 +27,20 @@ public final class CosmiconSprites {
 
     private static final Map<String, String> PORTRAIT_KEYS = new HashMap<>();
     static {
-        PORTRAIT_KEYS.put("acheron", "portrait_acheron");
-        PORTRAIT_KEYS.put("aventurine", "portrait_aventurine");
-        PORTRAIT_KEYS.put("castorice", "portrait_castorice");
-        PORTRAIT_KEYS.put("cyrene", "portrait_cyrene");
-        PORTRAIT_KEYS.put("dan_heng", "portrait_dan_heng");
-        PORTRAIT_KEYS.put("firefly", "portrait_firefly");
-        PORTRAIT_KEYS.put("hyacine", "portrait_hyacine");
-        PORTRAIT_KEYS.put("kafka", "portrait_kafka");
-        PORTRAIT_KEYS.put("march_7th", "portrait_march_7th");
-        PORTRAIT_KEYS.put("phainon", "portrait_phainon");
-        PORTRAIT_KEYS.put("robin", "portrait_robin");
-        PORTRAIT_KEYS.put("sparxie", "portrait_sparxie");
-        PORTRAIT_KEYS.put("the_herta", "portrait_the_herta");
-        PORTRAIT_KEYS.put("yao_guang", "portrait_yao_guang");
+        PORTRAIT_KEYS.put(CharacterIds.ACHERON, "portrait_acheron");
+        PORTRAIT_KEYS.put(CharacterIds.AVENTURINE, "portrait_aventurine");
+        PORTRAIT_KEYS.put(CharacterIds.CASTORICE, "portrait_castorice");
+        PORTRAIT_KEYS.put(CharacterIds.CYRENE, "portrait_cyrene");
+        PORTRAIT_KEYS.put(CharacterIds.DAN_HENG, "portrait_dan_heng");
+        PORTRAIT_KEYS.put(CharacterIds.FIREFLY, "portrait_firefly");
+        PORTRAIT_KEYS.put(CharacterIds.HYACINE, "portrait_hyacine");
+        PORTRAIT_KEYS.put(CharacterIds.KAFKA, "portrait_kafka");
+        PORTRAIT_KEYS.put(CharacterIds.MARCH_7TH, "portrait_march_7th");
+        PORTRAIT_KEYS.put(CharacterIds.PHAINON, "portrait_phainon");
+        PORTRAIT_KEYS.put(CharacterIds.ROBIN, "portrait_robin");
+        PORTRAIT_KEYS.put(CharacterIds.SPARXIE, "portrait_sparxie");
+        PORTRAIT_KEYS.put(CharacterIds.THE_HERTA, "portrait_the_herta");
+        PORTRAIT_KEYS.put(CharacterIds.YAO_GUANG, "portrait_yao_guang");
     }
 
     public static void load() {
@@ -48,7 +50,6 @@ public final class CosmiconSprites {
             diceD4Sprite = settings.getSprite("cosmicon_dice", "d4");
             diceD6Sprite = settings.getSprite("cosmicon_dice", "d6");
             diceD8Sprite = settings.getSprite("cosmicon_dice", "d8");
-            SpriteAPI diceD12Sprite = settings.getSprite("cosmicon_dice", "d12");
             prismaticDiceSprite = settings.getSprite("cosmicon_dice", "prismatic");
             prismaticButtonSprite = settings.getSprite("cosmicon_dice", "prismatic_btn");
             atkIconSprite = settings.getSprite("cosmicon_cards", "atk_icon");

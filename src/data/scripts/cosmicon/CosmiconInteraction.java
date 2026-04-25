@@ -79,15 +79,16 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         switch (currentState) {
             case MAIN_MENU:
-                if ("start_game".equals(data)) {
-                    startBattleWithSelection();
-                } else if ("character_setup".equals(data)) {
-                    showCharacterSetup();
-                } else if ("help".equals(data)) {
-                    showHelp();
-                } else if ("leave".equals(data)) {
-                    CosmiconMusicPlugin.stopMusic();
-                    dialog.dismiss();
+                switch (data)
+                {
+                    case "start_game" -> startBattleWithSelection();
+                    case "character_setup" -> showCharacterSetup();
+                    case "help" -> showHelp();
+                    case "leave" ->
+                    {
+                        CosmiconMusicPlugin.stopMusic();
+                        dialog.dismiss();
+                    }
                 }
                 break;
 
@@ -122,9 +123,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     }
 
     private void startBattleWithSelection() {
-        BattleDialogDelegate delegate = new BattleDialogDelegate(dialog, memoryMap, () -> {
-            showMenu();
-        });
+        BattleDialogDelegate delegate = new BattleDialogDelegate(dialog, memoryMap, this::showMenu);
 
         dialog.showCustomVisualDialog(
             BattleRenderingUtils.PANEL_WIDTH,

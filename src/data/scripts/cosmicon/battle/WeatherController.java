@@ -73,10 +73,16 @@ public class WeatherController {
                 }
             }
             case STORM -> {
-                state.getPlayerCard().setAtkLevel(state.getPlayerCard().getAtkLevel() + 1);
-                state.getPlayerCard().setDefLevel(state.getPlayerCard().getDefLevel() + 1);
-                state.getOpponentCard().setAtkLevel(state.getOpponentCard().getAtkLevel() + 1);
-                state.getOpponentCard().setDefLevel(state.getOpponentCard().getDefLevel() + 1);
+                state.modifyCardAtkLevel(true, 1);
+                CharacterCard playerCard = state.getPlayerCard();
+                if (playerCard != null) {
+                    playerCard.setDefLevel(playerCard.getDefLevel() + 1);
+                }
+                state.modifyCardAtkLevel(false, 1);
+                CharacterCard opponentCard = state.getOpponentCard();
+                if (opponentCard != null) {
+                    opponentCard.setDefLevel(opponentCard.getDefLevel() + 1);
+                }
             }
             default -> {}
         }
@@ -121,15 +127,13 @@ public class WeatherController {
                 if (isAttacker) {
                     boolean allOdd = checkAllOddValues(values, selected);
                     if (allOdd) {
-                        StatusEffectProcessor effects = isPlayer ? state.getPlayerEffects() : state.getOpponentEffects();
-                        effects.addEffect(StatusEffect.STRENGTH, 3);
+                        state.getEffects(isPlayer).addEffect(StatusEffect.STRENGTH, 3);
                     }
                 }
             }
             case RAINBOW -> {
                 if (isAttacker && sum <= 10) {
-                    StatusEffectProcessor effects = isPlayer ? state.getPlayerEffects() : state.getOpponentEffects();
-                    effects.addEffect(StatusEffect.PERFORATION, 1);
+                    state.getEffects(isPlayer).addEffect(StatusEffect.PERFORATION, 1);
                 }
             }
             case LUNISOLAR_LUMINANCE -> {
@@ -162,8 +166,7 @@ public class WeatherController {
                     int attackerHp = isPlayer ? state.getPlayerHp() : state.getOpponentHp();
                     int defenderHp = isPlayer ? state.getOpponentHp() : state.getPlayerHp();
                     if (attackerHp < defenderHp) {
-                        StatusEffectProcessor effects = isPlayer ? state.getPlayerEffects() : state.getOpponentEffects();
-                        effects.addEffect(StatusEffect.COMBO, 1);
+                        state.getEffects(isPlayer).addEffect(StatusEffect.COMBO, 1);
                     }
                 }
             }
@@ -179,8 +182,7 @@ public class WeatherController {
             case DRIZZLE -> {
                 boolean hasSix = checkContainsValue(values, selected, 6);
                 if (hasSix) {
-                    StatusEffectProcessor effects = isPlayer ? state.getPlayerEffects() : state.getOpponentEffects();
-                    effects.removeEffect(StatusEffect.POISON);
+                    state.getEffects(isPlayer).removeEffect(StatusEffect.POISON);
                     CosmiconLogger.debug("DRIZZLE: Removed POISON from %s (rolled a 6)", isPlayer ? "Player" : "Opponent");
                 }
             }
@@ -253,17 +255,18 @@ public class WeatherController {
     public void applyRerollThornsEffect(BattleState state, boolean isPlayer) {
         WeatherType weather = getCurrentWeather();
         if (weather == WeatherType.PARHELION) {
-            StatusEffectProcessor effects = isPlayer ? state.getPlayerEffects() : state.getOpponentEffects();
-            effects.addEffect(StatusEffect.THORNS, 2);
+            state.getEffects(isPlayer).addEffect(StatusEffect.THORNS, 2);
         }
     }
     
     public void applyRerollGlidingEffect(BattleState state, boolean isPlayer) {
         WeatherType weather = getCurrentWeather();
         if (weather == WeatherType.THUNDERSTORM) {
-            CharacterCard card = isPlayer ? state.getPlayerCard() : state.getOpponentCard();
-            card.setAtkLevel(card.getAtkLevel() + 2);
-            card.setDefLevel(card.getDefLevel() + 2);
+            state.modifyCardAtkLevel(isPlayer, 2);
+            CharacterCard card = state.getCard(isPlayer);
+            if (card != null) {
+                card.setDefLevel(card.getDefLevel() + 2);
+            }
         }
     }
     

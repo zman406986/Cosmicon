@@ -7,7 +7,7 @@ public class AISelectionVisualizer {
     
     private static final float DEFAULT_DELAY_PER_DICE = 0.15f;
     
-    private List<Integer> plannedIndices;
+    private final List<Integer> plannedIndices;
     private int currentRevealIndex;
     private float revealTimer;
     private float delayPerDice;
@@ -68,13 +68,6 @@ public class AISelectionVisualizer {
         return visible;
     }
     
-    /**
-     * Returns all planned indices (for rendering positions).
-     */
-    public List<Integer> getAllPlannedIndices() {
-        return new ArrayList<>(plannedIndices);
-    }
-    
     public boolean isComplete() {
         return complete;
     }
@@ -85,22 +78,5 @@ public class AISelectionVisualizer {
     
     public boolean isRerollPhase() {
         return isRerollPhase;
-    }
-    
-    public int getTotalCount() {
-        return plannedIndices.size();
-    }
-    
-    public int getRevealedCount() {
-        return Math.min(currentRevealIndex, plannedIndices.size());
-    }
-    
-    public void setDelayPerDice(float delay) {
-        this.delayPerDice = delay;
-    }
-    
-    public void forceComplete() {
-        currentRevealIndex = plannedIndices.size();
-        complete = true;
     }
 }

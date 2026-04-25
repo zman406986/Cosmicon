@@ -2,15 +2,16 @@ package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.DiceType;
+import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.PassiveEvaluator;
-import data.scripts.cosmicon.util.PassiveEvaluator.PassiveResult;
+import data.scripts.cosmicon.util.PassiveResults.PassiveResult;
 import java.util.List;
 
 public class PhainonAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     public String getCharacterId() {
-        return "phainon";
+        return CharacterIds.PHAINON;
     }
 
     @Override
@@ -34,7 +35,7 @@ public class PhainonAIProfile extends AbstractCharacterAIProfile {
             return PassiveEvaluation.notTriggered();
         }
         
-        PassiveResult result = PassiveEvaluator.evaluateForCharacter("phainon", selectedValues, isAttacking);
+        PassiveResult result = PassiveEvaluator.evaluateForCharacter(CharacterIds.PHAINON, selectedValues, isAttacking);
         return PassiveEvaluator.toPassiveEvaluation(result, 
             PassiveEvaluator.allSame(selectedValues) ? Strings.get("character.phainon.passive_desc") : "");
     }

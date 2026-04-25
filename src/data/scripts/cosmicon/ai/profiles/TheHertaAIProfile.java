@@ -2,13 +2,14 @@ package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.DiceType;
+import data.scripts.cosmicon.util.CharacterIds;
 import java.util.List;
 
 public class TheHertaAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     public String getCharacterId() {
-        return "the_herta";
+        return CharacterIds.THE_HERTA;
     }
 
     @Override

@@ -63,9 +63,8 @@ public final class DiceProbabilityCalculator {
     public static float expectedValue(DiceType type) {
         return switch (type) {
             case BLUE_D4 -> 2.5f;
-            case PURPLE_D6 -> 3.5f;
+            case PURPLE_D6, PRISMATIC -> 3.5f;
             case ORANGE_D8 -> 4.5f;
-            case PRISMATIC -> 3.5f;
         };
     }
 
@@ -75,20 +74,6 @@ public final class DiceProbabilityCalculator {
         float probability = 1.0f / maxFace;
         for (int i = 1; i <= maxFace; i++) {
             pmf[i] = probability;
-        }
-        return pmf;
-    }
-
-    public static float[] getSingleDicePMF(int[] customFaces) {
-        if (customFaces == null || customFaces.length == 0) return new float[0];
-        int maxFace = 0;
-        for (int face : customFaces) {
-            maxFace = Math.max(maxFace, face);
-        }
-        float[] pmf = new float[maxFace + 1];
-        float probability = 1.0f / customFaces.length;
-        for (int face : customFaces) {
-            pmf[face] += probability;
         }
         return pmf;
     }

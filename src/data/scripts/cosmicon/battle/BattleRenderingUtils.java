@@ -77,11 +77,6 @@ public final class BattleRenderingUtils {
         }
     }
 
-    public static void renderBattleBackground(float x, float y, float w, float h, 
-            float rotationAngle, float alphaMult, boolean showRoles) {
-        renderBattleBackground(x, y, w, h, rotationAngle, alphaMult, showRoles, false);
-    }
-
     private static void setupScissor(float panelX, float panelY, float panelW, float panelH) {
         float scale = Global.getSettings().getScreenScaleMult();
         
@@ -128,7 +123,7 @@ public final class BattleRenderingUtils {
             float rotationAngle, float alphaMult) {
         float halfH = h / 2f;
         float iconSize = halfH * ROLE_ICON_SIZE_RATIO;
-        float centerX = x + w / 2f;
+        float defIconCenterX = x + w / 2f;
         float centerY = y + h / 2f;
 
         GLStateUtil.enableTexturingWithBlend();
@@ -142,22 +137,20 @@ public final class BattleRenderingUtils {
         }
 
         GL11.glPushMatrix();
-        GL11.glTranslatef(centerX, centerY, 0f);
+        GL11.glTranslatef(defIconCenterX, centerY, 0f);
         GL11.glRotatef(rotationAngle, 0f, 0f, 1f);
-        GL11.glTranslatef(-centerX, -centerY, 0f);
+        GL11.glTranslatef(-defIconCenterX, -centerY, 0f);
 
-        float atkIconCenterX = centerX;
         float atkIconCenterY = y + halfH / 2f;
         
         GL11.glPushMatrix();
-        GL11.glTranslatef(atkIconCenterX, atkIconCenterY, 0f);
+        GL11.glTranslatef(defIconCenterX, atkIconCenterY, 0f);
         GL11.glRotatef(-rotationAngle, 0f, 0f, 1f);
         atkIcon.setSize(iconSize, iconSize);
         atkIcon.setAlphaMult(alphaMult * ROLE_ICON_OPACITY);
         atkIcon.render(-iconSize / 2f, -iconSize / 2f);
         GL11.glPopMatrix();
 
-        float defIconCenterX = centerX;
         float defIconCenterY = y + halfH + halfH / 2f;
         
         GL11.glPushMatrix();

@@ -3,7 +3,7 @@ package data.scripts.cosmicon.ai.profiles;
 import data.scripts.cosmicon.ai.CharacterAIProfile;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.util.PassiveEvaluator;
-import data.scripts.cosmicon.util.PassiveEvaluator.PassiveResult;
+import data.scripts.cosmicon.util.PassiveResults.PassiveResult;
 import java.util.List;
 
 public abstract class AbstractCharacterAIProfile implements CharacterAIProfile {
@@ -19,24 +19,27 @@ public abstract class AbstractCharacterAIProfile implements CharacterAIProfile {
     }
 
     @Override
-    public boolean isAttackPassive()
-    {
+    public boolean isAttackPassive() {
         return CharacterAIProfile.super.isAttackPassive();
+    }
+
+    protected boolean hasValidValues(List<Integer> selectedValues) {
+        return selectedValues == null || selectedValues.isEmpty();
     }
 
     @Override
     public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
-        if (!isAttacking || selectedValues == null || selectedValues.isEmpty()) {
+        if (hasValidValues(selectedValues)) {
             return PassiveEvaluation.notTriggered();
         }
-        
+
         PassiveResult result = PassiveEvaluator.evaluateForCharacter(getCharacterId(), selectedValues, isAttacking);
         return PassiveEvaluator.toPassiveEvaluation(result, getPassiveDescription(selectedValues));
     }
 
     @Override
     public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
-        if (!isAttacking) return 0f;
+        if (hasValidValues(selectedValues)) return 0f;
         return calculatePassiveBonus(selectedValues);
     }
 

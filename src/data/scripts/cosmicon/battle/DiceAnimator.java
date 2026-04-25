@@ -5,11 +5,10 @@ import org.lwjgl.opengl.GL11;
 import com.fs.starfarer.api.graphics.SpriteAPI;
 
 import data.scripts.cosmicon.util.CoordHelper;
+import data.scripts.cosmicon.util.EasingUtil;
 import data.scripts.cosmicon.util.GLStateUtil;
 
 public class DiceAnimator {
-    public static final float DICE_SIZE = 80f;
-    
     private static final float ROLL_DURATION = 6.0f;
     private static final float SETTLE_DURATION = 0.15f;
     private static final float REVEAL_DURATION = 0.1f;
@@ -18,13 +17,9 @@ public class DiceAnimator {
     private static final float SCALE_BOUNCE = 0.08f;
     
     private static final float DROP_DURATION = 0.4f;
-    private static final float BOUNCE_DURATION = 0.3f;
     private static final float INITIAL_SCALE = 1.5f;
-    private static final int FRAME_COUNT = 48;
-    private static final float[] TRAVEL_DISTANCES = {150f, 250f, 350f};
-    private static final float FRAME_RATE_START = 96f;
-    private static final float FRAME_RATE_END = 24f;
-    private static final float BASE_DURATION_PER_CYCLE = 0.8f;
+    private static final float[] TRAVEL_DISTANCES = AnimationConstants.TRAVEL_DISTANCES;
+    private static final float BASE_DURATION_PER_CYCLE = AnimationConstants.BASE_DURATION_PER_CYCLE;
     
     private static final float PICKUP_DURATION = 0.4f;
     private static final float CENTERING_TRAVEL_DURATION = 0.6f;
@@ -74,7 +69,7 @@ public class DiceAnimator {
     }
     
     public float getDisplaySize() {
-        return type != null ? type.getDisplaySize() : DICE_SIZE;
+        return type != null ? type.getDisplaySize() : AnimationConstants.DICE_SIZE;
     }
     
 public DiceAnimator() {
@@ -159,8 +154,8 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
                                    float targetCenterX, float targetCenterY) {
         this.finalValue = newFinalValue;
         
-        float displaySize = type != null ? type.getDisplaySize() : DICE_SIZE;
-        float centeringOffset = (DICE_SIZE - displaySize) / 2f;
+        float displaySize = type != null ? type.getDisplaySize() : AnimationConstants.DICE_SIZE;
+        float centeringOffset = (AnimationConstants.DICE_SIZE - displaySize) / 2f;
         this.x = startX - centeringOffset;
         this.y = startY - centeringOffset;
         
@@ -239,13 +234,12 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         phaseElapsed += amount;
         
         switch (phase) {
-            case STATIONARY_PREVIEW -> { }
+            case STATIONARY_PREVIEW, WAITING_FOR_CENTERING -> { }
             case ROLL_PICKUP -> advanceRollPickup();
             case DROP -> advanceDrop();
             case TRAVEL -> advanceTravel();
             case SETTLE -> advanceSettle();
             case REVEAL -> advanceReveal();
-            case WAITING_FOR_CENTERING -> { }
             case PICKUP -> advancePickup();
             case CENTERING_TRAVEL -> advanceCenteringTravel();
             case CENTERING_DROP -> advanceCenteringDrop();
@@ -256,7 +250,7 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
     private void advanceRollPickup() {
         currentFrame = stationaryFrameIndex;
         float progress = Math.min(1f, phaseElapsed / ROLL_PICKUP_DURATION);
-        float eased = easeInQuad(progress);
+        float eased = EasingUtil.easeInQuad(progress);
         scale = rollPickupStartScale + (CENTERING_SCALE - rollPickupStartScale) * eased;
         
         if (phaseElapsed >= ROLL_PICKUP_DURATION) {
@@ -268,7 +262,7 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
     
     private void advanceDrop() {
         scale = INITIAL_SCALE - (0.5f * phaseElapsed / DROP_DURATION);
-        currentFrame = (int)(phaseElapsed * 12f) % FRAME_COUNT;
+        currentFrame = (int)(phaseElapsed * 12f) % AnimationConstants.FRAME_COUNT;
         
         if (phaseElapsed >= DROP_DURATION) {
             scale = 1f;
@@ -282,7 +276,7 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         travelProgress = Math.min(1f, phaseElapsed / travelDuration);
         
         float frameIndex = calculateFrameIndexWithSlowdown(travelDuration);
-        currentFrame = (int)frameIndex % FRAME_COUNT;
+        currentFrame = (int)frameIndex % AnimationConstants.FRAME_COUNT;
         
         posXOffset = (float)Math.cos(directionRad) * travelDistance * travelProgress;
         posYOffset = (float)Math.sin(directionRad) * travelDistance * travelProgress;
@@ -291,7 +285,7 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         
         if (phaseElapsed >= travelDuration) {
             travelProgress = 1.0f;
-            currentFrame = FRAME_COUNT - 1;
+            currentFrame = AnimationConstants.FRAME_COUNT - 1;
             posXOffset = (float)Math.cos(directionRad) * travelDistance;
             posYOffset = (float)Math.sin(directionRad) * travelDistance;
             scale = 1f;
@@ -302,8 +296,8 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
     
     private float calculateFrameIndexWithSlowdown(float travelDuration) {
         float progress = phaseElapsed / travelDuration;
-        float currentFrameRate = FRAME_RATE_START - (FRAME_RATE_START - FRAME_RATE_END) * progress;
-        float avgFrameRate = (FRAME_RATE_START + currentFrameRate) / 2f;
+        float currentFrameRate = AnimationConstants.FRAME_RATE_START - (AnimationConstants.FRAME_RATE_START - AnimationConstants.FRAME_RATE_END) * progress;
+        float avgFrameRate = (AnimationConstants.FRAME_RATE_START + currentFrameRate) / 2f;
         return phaseElapsed * avgFrameRate;
     }
     
@@ -324,20 +318,20 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
     private float calculateBounceAtStart() {
         if (bounceCount == 0) return 1f;
         
-        float bounceTotalTime = bounceCount * BOUNCE_DURATION;
+        float bounceTotalTime = bounceCount * AnimationConstants.BOUNCE_DURATION;
         if (phaseElapsed >= bounceTotalTime) return 1f;
         
-        int bounceIndex = (int)(phaseElapsed / BOUNCE_DURATION);
+        int bounceIndex = (int)(phaseElapsed / AnimationConstants.BOUNCE_DURATION);
         if (bounceIndex >= bounceHeights.length) return 1f;
         
-        float bounceLocalTime = phaseElapsed - bounceIndex * BOUNCE_DURATION;
-        float bounceProgress = bounceLocalTime / BOUNCE_DURATION;
+        float bounceLocalTime = phaseElapsed - bounceIndex * AnimationConstants.BOUNCE_DURATION;
+        float bounceProgress = bounceLocalTime / AnimationConstants.BOUNCE_DURATION;
         float bounceHeight = bounceHeights[bounceIndex];
         return 1f + (bounceHeight - 1f) * (float)Math.sin(bounceProgress * Math.PI);
     }
     
     private void advanceSettle() {
-        currentFrame = 47;
+        currentFrame = AnimationConstants.FRAME_COUNT - 1;
         scale = 1f;
         
         if (phaseElapsed >= SETTLE_DURATION) {
@@ -347,7 +341,7 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
     }
     
     private void advanceReveal() {
-        currentFrame = 47;
+        currentFrame = AnimationConstants.FRAME_COUNT - 1;
         float revealProgress = phaseElapsed / REVEAL_DURATION;
         scale = 1f + SCALE_BOUNCE * (float)Math.sin(revealProgress * Math.PI);
         
@@ -361,10 +355,10 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
     }
     
     private void advancePickup() {
-        currentFrame = 47;
+        currentFrame = AnimationConstants.FRAME_COUNT - 1;
         float progress = phaseElapsed / PICKUP_DURATION;
         progress = Math.min(1f, progress);
-        float eased = easeOutQuad(progress);
+        float eased = EasingUtil.easeOutQuad(progress);
         scale = 1f + (CENTERING_SCALE - 1f) * eased;
         
         if (phaseElapsed >= PICKUP_DURATION) {
@@ -375,10 +369,10 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
     }
     
     private void advanceCenteringTravel() {
-        currentFrame = 47;
+        currentFrame = AnimationConstants.FRAME_COUNT - 1;
         float progress = phaseElapsed / CENTERING_TRAVEL_DURATION;
         progress = Math.min(1f, progress);
-        float eased = easeInOutQuad(progress);
+        float eased = EasingUtil.easeInOutQuad(progress);
         
         float currentX = centeringStartX + (targetCenterX - centeringStartX) * eased;
         float currentY = centeringStartY + (targetCenterY - centeringStartY) * eased;
@@ -400,7 +394,7 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         currentFrame = 0;
         float progress = phaseElapsed / CENTERING_DROP_DURATION;
         progress = Math.min(1f, progress);
-        float eased = easeInQuad(progress);
+        float eased = EasingUtil.easeInQuad(progress);
         scale = CENTERING_SCALE - (CENTERING_SCALE - 1f) * eased;
         
         if (phaseElapsed >= CENTERING_DROP_DURATION) {
@@ -414,30 +408,18 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         }
     }
     
-    private float easeOutQuad(float t) {
-        return 1f - (1f - t) * (1f - t);
-    }
-    
-    private float easeInQuad(float t) {
-        return t * t;
-    }
-    
-    private float easeInOutQuad(float t) {
-        return t < 0.5f ? 2f * t * t : 1f - (1f - t) * (1f - t) * 2f;
-    }
-    
     private void advanceSimple() {
         float returnStartTime = ROLL_DURATION + SETTLE_DURATION + REVEAL_DURATION;
         
         if (elapsed < ROLL_DURATION) {
             float rollProgress = elapsed / ROLL_DURATION;
-            currentFrame = (int)(rollProgress * 6f * FRAME_COUNT) % FRAME_COUNT;
+            currentFrame = (int)(rollProgress * 6f * AnimationConstants.FRAME_COUNT) % AnimationConstants.FRAME_COUNT;
             scale = 1f;
         } else if (elapsed < ROLL_DURATION + SETTLE_DURATION) {
-            currentFrame = 47;
+            currentFrame = AnimationConstants.FRAME_COUNT - 1;
             scale = 1f;
         } else if (elapsed < returnStartTime) {
-            currentFrame = 47;
+            currentFrame = AnimationConstants.FRAME_COUNT - 1;
             float revealProgress = (elapsed - ROLL_DURATION - SETTLE_DURATION) / REVEAL_DURATION;
             scale = 1f + SCALE_BOUNCE * (float)Math.sin(revealProgress * Math.PI);
         } else if (elapsed < TOTAL_DURATION) {
@@ -470,27 +452,29 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         GLStateUtil.resetBlendState();
         
         float displaySize = getDisplaySize();
-        float centeringOffset = (DICE_SIZE - displaySize) / 2f;
+        float centeringOffset = (AnimationConstants.DICE_SIZE - displaySize) / 2f;
         
         float renderX = panelX + x + posXOffset + centeringOffset;
         float renderY;
         
         boolean isCenteringPhase = phase == Phase.PICKUP || phase == Phase.CENTERING_TRAVEL || 
                                    phase == Phase.CENTERING_DROP;
-        
-        if (isCenteringPhase || phase == Phase.COMPLETE || (complete && useDirectionalAnimation)) {
-            float glBaseY = CoordHelper.uiTopLeftToGlSpriteY(panelY, panelHeight, y + posYOffset + centeringOffset, displaySize);
-            float extraHeight = displaySize * (scale - 1f);
-            renderY = glBaseY - extraHeight / 2f;
-        } else {
-            float glBaseY = CoordHelper.uiTopLeftToGlSpriteY(panelY, panelHeight, y + posYOffset + centeringOffset, displaySize);
-            float extraHeight = displaySize * (scale - 1f);
-            renderY = glBaseY - extraHeight / 2f;
-        }
-        
+
+        float glBaseY = CoordHelper.uiTopLeftToGlSpriteY(panelY, panelHeight, y + posYOffset + centeringOffset, displaySize);
+        float extraHeight = displaySize * (scale - 1f);
+        renderY = glBaseY - extraHeight / 2f;
+
         float extraWidth = displaySize * (scale - 1f);
         renderX -= extraWidth / 2f;
+
+        float visualRotation = getVisualRotation(isCenteringPhase);
+        DiceSpriteRenderer.render(sprite, renderX, renderY, alphaMult, scale, displaySize, visualRotation);
         
+        GL11.glColor4f(1f, 1f, 1f, 1f);
+    }
+
+    private float getVisualRotation(boolean isCenteringPhase)
+    {
         float visualRotation;
         if (phase == Phase.STATIONARY_PREVIEW) {
             visualRotation = 0f;
@@ -509,11 +493,9 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
                 visualRotation -= 90f;
             }
         }
-        DiceSpriteRenderer.render(sprite, renderX, renderY, alphaMult, scale, displaySize, visualRotation);
-        
-        GL11.glColor4f(1f, 1f, 1f, 1f);
+        return visualRotation;
     }
-    
+
     public boolean isComplete() {
         return complete;
     }
@@ -560,26 +542,16 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
     public float getRotation() {
         return rotation;
     }
-
-    public boolean isCenteredPhase() {
-        return phase == Phase.PICKUP || phase == Phase.CENTERING_TRAVEL ||
-               phase == Phase.CENTERING_DROP || phase == Phase.COMPLETE ||
-               (complete && useDirectionalAnimation);
-    }
     
     public float getVisualX() {
         float displaySize = getDisplaySize();
-        float centeringOffset = (DICE_SIZE - displaySize) / 2f;
+        float centeringOffset = (AnimationConstants.DICE_SIZE - displaySize) / 2f;
         return x + posXOffset + centeringOffset;
     }
     
     public float getVisualY() {
         float displaySize = getDisplaySize();
-        float centeringOffset = (DICE_SIZE - displaySize) / 2f;
+        float centeringOffset = (AnimationConstants.DICE_SIZE - displaySize) / 2f;
         return y + posYOffset + centeringOffset;
-    }
-    
-    public boolean isStationaryPreview() {
-        return phase == Phase.STATIONARY_PREVIEW;
     }
 }

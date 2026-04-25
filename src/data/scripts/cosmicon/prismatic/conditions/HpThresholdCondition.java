@@ -1,15 +1,13 @@
 package data.scripts.cosmicon.prismatic.conditions;
 
 import data.scripts.Strings;
-import data.scripts.cosmicon.prismatic.AvailabilityCondition;
 
-public class HpThresholdCondition implements AvailabilityCondition {
+public class HpThresholdCondition extends ThresholdCondition {
     
-    private final int threshold;
     private final boolean lessOrEqual;
     
     public HpThresholdCondition(int threshold, boolean lessOrEqual) {
-        this.threshold = threshold;
+        super(threshold, !lessOrEqual);
         this.lessOrEqual = lessOrEqual;
     }
     
@@ -19,11 +17,7 @@ public class HpThresholdCondition implements AvailabilityCondition {
     
     @Override
     public boolean isAvailable(ConditionContext context) {
-        if (lessOrEqual) {
-            return context.currentHp() <= threshold;
-        } else {
-            return context.currentHp() >= threshold;
-        }
+        return compare(context.currentHp());
     }
     
     @Override

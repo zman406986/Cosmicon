@@ -1,6 +1,7 @@
 package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
+import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.PassiveEvaluator;
 import java.util.List;
 
@@ -8,7 +9,7 @@ public class AcheronAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     public String getCharacterId() {
-        return "acheron";
+        return CharacterIds.ACHERON;
     }
 
     @Override

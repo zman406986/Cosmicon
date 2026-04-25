@@ -2,8 +2,9 @@ package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.DiceType;
+import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.PassiveEvaluator;
-import data.scripts.cosmicon.util.PassiveEvaluator.PassiveResult;
+import data.scripts.cosmicon.util.PassiveResults.PassiveResult;
 import java.util.List;
 
 public class SparxieAIProfile extends AbstractCharacterAIProfile {
@@ -12,7 +13,7 @@ public class SparxieAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     public String getCharacterId() {
-        return "sparxie";
+        return CharacterIds.SPARXIE;
     }
 
     @Override
@@ -26,26 +27,8 @@ public class SparxieAIProfile extends AbstractCharacterAIProfile {
     }
 
     @Override
-    public float getRiskTolerance()
-    {
-        return super.getRiskTolerance();
-    }
-
-    @Override
-    public int getTargetThreshold(boolean isAttacking)
-    {
-        return super.getTargetThreshold(isAttacking);
-    }
-
-    @Override
     public boolean isDefensePassive() {
         return true;
-    }
-
-    @Override
-    public boolean isAttackPassive()
-    {
-        return super.isAttackPassive();
     }
 
     @Override
@@ -54,7 +37,7 @@ public class SparxieAIProfile extends AbstractCharacterAIProfile {
             return PassiveEvaluation.notTriggered();
         }
 
-        PassiveResult result = PassiveEvaluator.evaluateForCharacter("sparxie", selectedValues, isAttacking);
+        PassiveResult result = PassiveEvaluator.evaluateForCharacter(CharacterIds.SPARXIE, selectedValues, isAttacking);
 
         if (PassiveEvaluator.hasIdenticalNumbers(selectedValues)) {
             return PassiveEvaluator.toPassiveEvaluation(result,
@@ -65,14 +48,8 @@ public class SparxieAIProfile extends AbstractCharacterAIProfile {
     }
 
     @Override
-    public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
-        if (selectedValues == null || selectedValues.isEmpty()) return 0f;
-        return PassiveEvaluator.hasIdenticalNumbers(selectedValues) ? HACK_BONUS_VALUE : 0f;
-    }
-
-    @Override
     protected float calculatePassiveBonus(List<Integer> selectedValues) {
-        if (selectedValues == null || selectedValues.isEmpty()) return 0f;
+        if (hasValidValues(selectedValues)) return 0f;
         return PassiveEvaluator.hasIdenticalNumbers(selectedValues) ? HACK_BONUS_VALUE : 0f;
     }
 }

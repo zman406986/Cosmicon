@@ -6,10 +6,8 @@ import com.fs.starfarer.api.ui.CustomPanelAPI;
 public class CharacterSetupDialogDelegate implements com.fs.starfarer.api.campaign.CustomVisualDialogDelegate {
     
     private final CharacterSetupPanelUI panelUI;
-    private final CharacterSetupPanelUI.CharacterSetupCallback callback;
-    
+
     public CharacterSetupDialogDelegate(CharacterSetupPanelUI.CharacterSetupCallback callback) {
-        this.callback = callback;
         this.panelUI = new CharacterSetupPanelUI(callback);
     }
     

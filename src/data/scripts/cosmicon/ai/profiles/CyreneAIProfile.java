@@ -2,6 +2,7 @@ package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.DiceType;
+import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.PassiveEvaluator;
 import java.util.List;
 
@@ -9,7 +10,7 @@ public class CyreneAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     public String getCharacterId() {
-        return "cyrene";
+        return CharacterIds.CYRENE;
     }
 
     @Override
@@ -45,27 +46,19 @@ public class CyreneAIProfile extends AbstractCharacterAIProfile {
             Strings.format("character.cyrene.passive_progress", sum));
     }
 
-    @Override
-    public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
-        if (selectedValues == null || selectedValues.isEmpty()) return 0f;
-        
-        int sum = PassiveEvaluator.sumOfValues(selectedValues);
-        return calculateCumulativeBonus(sum);
-    }
-
     private float calculateCumulativeBonus(int turnValue) {
         float bonus = turnValue * 0.5f;
-        
+
         if (turnValue >= 20) {
             bonus += 10f;
         }
-        
+
         return bonus;
     }
 
     @Override
     protected float calculatePassiveBonus(List<Integer> selectedValues) {
-        if (selectedValues == null || selectedValues.isEmpty()) return 0f;
+        if (hasValidValues(selectedValues)) return 0f;
         int sum = PassiveEvaluator.sumOfValues(selectedValues);
         return calculateCumulativeBonus(sum);
     }
