@@ -10,7 +10,7 @@ import data.scripts.cosmicon.util.CoordHelper;
 import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class BattleInputHandler {
-    private static final float DICE_SPACING = 130f;
+    private static final float DICE_SPACING = 70f;
     private static final float DICE_CLICK_PADDING = 5f;
     private static final float PRISMATIC_BTN_SIZE = 40f;
 
@@ -210,30 +210,32 @@ public class BattleInputHandler {
     public void createDiceHitboxes(List<DiceType> types) {
         diceHitboxes.clear();
         int count = types.size();
-        float maxDiceSize = 80f;
+        float maxDiceSize = AnimationConstants.DICE_SIZE;
         float hbSize = maxDiceSize + DICE_CLICK_PADDING * 2;
 
         int animatorCount = diceRollManager.getAnimatorCount();
 
         for (int i = 0; i < count; i++) {
-            float x, y;
+            float slotX, slotY;
 
             if (i < animatorCount) {
-                x = diceRollManager.getAnimatorVisualX(i);
-                y = diceRollManager.getAnimatorVisualY(i);
+                slotX = diceRollManager.getAnimatorTargetSlotX(i);
+                slotY = diceRollManager.getAnimatorTargetSlotY(i);
             } else {
                 float totalWidth = DICE_SPACING * (count - 1) + maxDiceSize;
-                x = diceZoneCenterX - totalWidth / 2f + i * DICE_SPACING;
-                y = diceZoneCenterY - maxDiceSize / 2f;
+                slotX = diceZoneCenterX - totalWidth / 2f + i * DICE_SPACING;
+                slotY = diceZoneCenterY - maxDiceSize / 2f;
             }
 
-            if (x < 0 || y < 0) {
+            if (slotX < 0 || slotY < 0) {
                 float totalWidth = DICE_SPACING * (count - 1) + maxDiceSize;
-                x = diceZoneCenterX - totalWidth / 2f + i * DICE_SPACING;
-                y = diceZoneCenterY - maxDiceSize / 2f;
+                slotX = diceZoneCenterX - totalWidth / 2f + i * DICE_SPACING;
+                slotY = diceZoneCenterY - maxDiceSize / 2f;
             }
 
-            diceHitboxes.add(new float[]{x, y, hbSize, hbSize});
+            float hbX = slotX - DICE_CLICK_PADDING;
+            float hbY = slotY - DICE_CLICK_PADDING;
+            diceHitboxes.add(new float[]{hbX, hbY, hbSize, hbSize});
         }
     }
 

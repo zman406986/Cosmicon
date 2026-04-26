@@ -77,6 +77,16 @@ public class TurnProcessor {
         state.getPlayerEffects().resetTurnState();
         state.getOpponentEffects().resetTurnState();
         
+        aiVisualPhase = AIVisualPhase.NONE;
+        aiSelectionComplete = false;
+        aiPlannedIndices = null;
+        aiPhaseTimer = 0f;
+        
+        AISelectionVisualizer viz = state.getAiSelectionVisualizer();
+        if (viz != null) {
+            viz.reset();
+        }
+        
         if (weatherController != null) {
             weatherController.applyStartOfTurn(state);
         }

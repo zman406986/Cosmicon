@@ -193,15 +193,46 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         if (newPhase == Phase.ROLLING) {
             rollAnimationDelay = 0.3f;
             diceAnimating = true;
+            dicePreviewActive = false;
+            dicePreviewDelay = 0f;
+            opponentDiceAnimating = false;
+            opponentRollDelay = 0f;
+            opponentAutoRollDelay = 0f;
+            preClashTimer = 0f;
+            valueAnimationPending = false;
+            damageAnimationPending = false;
+            pendingDamageResult = null;
+            
+            inputHandler.setWaitingForClickToRoll(false);
+            
             labels.clearPrismaticRolledLabel();
 
             if (diceRollManager != null) {
                 diceRollManager.clear();
                 diceRollManager.clearOpponentAnimators();
             }
+            
+            if (damageAnimator != null) {
+                damageAnimator.cleanup();
+                damageAnimator = null;
+                inputHandler.setDamageAnimator(null);
+            }
+            
+            ValueChangeAnimator attackerAnimator = labels.getAttackerValueAnimator();
+            ValueChangeAnimator defenderAnimator = labels.getDefenderValueAnimator();
+            if (attackerAnimator != null) {
+                attackerAnimator.reset();
+            }
+            if (defenderAnimator != null) {
+                defenderAnimator.reset();
+            }
+            
+            labels.hideClickHint();
         }
 
         if (newPhase == Phase.RESOLVING_PRE_CLASH) {
+            preClashTimer = 0f;
+            
             boolean hasAttackerChanges = !battleState.getPendingValueChanges(battleState.isPlayerAttacker()).isEmpty();
             boolean hasDefenderChanges = !battleState.getPendingValueChanges(!battleState.isPlayerAttacker()).isEmpty();
 
@@ -733,8 +764,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         for (int i = 0; i < Math.min(selected.size(), diceHitboxes.size()); i++) {
             if (selected.get(i)) {
                 float[] hb = diceHitboxes.get(i);
-                float hx = panelX + hb[0];
-                float hy = CoordHelper.uiToGlY(panelY, BattleRenderingUtils.PANEL_HEIGHT, hb[1] + hb[3] - diceClickPadding * 2);
+                float hx = panelX + hb[0] + diceClickPadding;
+                float hy = CoordHelper.uiToGlY(panelY, BattleRenderingUtils.PANEL_HEIGHT, hb[1] + diceClickPadding);
                 float hw = hb[2] - diceClickPadding * 2;
                 float hh = hb[3] - diceClickPadding * 2;
 

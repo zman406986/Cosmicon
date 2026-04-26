@@ -275,7 +275,7 @@ public class BattleState {
         Map<Integer, PrismaticDiceInstance> map = forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
         
         types.add(DiceType.PRISMATIC);
-        values.add(dice.faceIndex);
+        values.add(dice.rolledFace);
         selected.add(false);
         map.put(types.size() - 1, dice);
     }

@@ -7,7 +7,7 @@ import data.scripts.cosmicon.battle.DicePathPlanner.PlannedPath;
 
 public class DiceRollManager {
 
-    private static final float DICE_SPACING = 130f;
+    private static final float DICE_SPACING = 70f;
 
     private final List<DiceAnimator> animators;
     private final List<DiceAnimator> opponentAnimators;
@@ -367,5 +367,25 @@ public class DiceRollManager {
 
     public int getAnimatorCount() {
         return animators.size();
+    }
+    
+    public float getAnimatorTargetVisualX(int index) {
+        if (index < 0 || index >= animators.size()) return -1f;
+        return animators.get(index).getTargetVisualX();
+    }
+    
+    public float getAnimatorTargetVisualY(int index) {
+        if (index < 0 || index >= animators.size()) return -1f;
+        return animators.get(index).getTargetVisualY();
+    }
+    
+    public float getAnimatorTargetSlotX(int index) {
+        if (index < 0 || index >= animators.size()) return -1f;
+        return animators.get(index).getTargetSlotX();
+    }
+    
+    public float getAnimatorTargetSlotY(int index) {
+        if (index < 0 || index >= animators.size()) return -1f;
+        return animators.get(index).getTargetSlotY();
     }
 }

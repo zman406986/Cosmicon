@@ -108,7 +108,14 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.posXOffset = 0f;
         this.posYOffset = 0f;
         this.useDirectionalAnimation = false;
+        this.rotation = 0f;
+        this.directionRad = 0f;
+        this.travelDistance = 0f;
+        this.travelProgress = 0f;
+        this.bounceCount = 0;
+        this.bounceHeights = new float[0];
         this.phase = Phase.ROLLING;
+        this.phaseElapsed = 0f;
     }
     
     public void start(DiceType type, int finalValue, float x, float y, float delay,
@@ -205,6 +212,13 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.phaseElapsed = 0f;
         this.elapsed = 0f;
         this.currentFrame = 0;
+        this.useDirectionalAnimation = false;
+        this.rotation = 0f;
+        this.directionRad = 0f;
+        this.travelDistance = 0f;
+        this.travelProgress = 0f;
+        this.bounceCount = 0;
+        this.bounceHeights = new float[0];
     }
     
     public void startRollFromStationary(float rotation, float travelDistance, int bounceCount, 
@@ -665,5 +679,25 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         float displaySize = getDisplaySize();
         float centeringOffset = (AnimationConstants.DICE_SIZE - displaySize) / 2f;
         return y + posYOffset + centeringOffset;
+    }
+    
+    public float getTargetVisualX() {
+        float displaySize = getDisplaySize();
+        float centeringOffset = (AnimationConstants.DICE_SIZE - displaySize) / 2f;
+        return targetCenterX + centeringOffset;
+    }
+    
+    public float getTargetVisualY() {
+        float displaySize = getDisplaySize();
+        float centeringOffset = (AnimationConstants.DICE_SIZE - displaySize) / 2f;
+        return targetCenterY + centeringOffset;
+    }
+    
+    public float getTargetSlotX() {
+        return targetCenterX;
+    }
+    
+    public float getTargetSlotY() {
+        return targetCenterY;
     }
 }
