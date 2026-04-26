@@ -2,6 +2,14 @@
 
 ## Prismatic Dice / 曜彩骰
 
+> **Version Explanation / 版本说明**:
+> - **Dice Faces (Default)**: The standard version that characters start with. Used by character cards in Card Index.
+> - **Dice Faces (True)**: An upgraded/DLC version with improved face values. Some dice may have different special face indices (* markers) between versions.
+> 
+> **版本解释**:
+> - **骰面 (默认)**: 角色初始使用的标准版本。卡牌图鉴中的角色使用此版本。
+> - **骰面 (真)**: 升级版/DLC版本，拥有更好的骰面数值。部分骰子的特殊骰面（*标记）在两个版本间可能不同。
+
 Detailed information only applies to faces with *. / 详细信息仅适用于带有*的骰面。
 
 | Name / 名称                  | Dice Faces (Default) / 骰面 (默认) | Dice Faces (True) / 骰面 (真) | Use Conditions in Match / 对局中使用条件                                                             | Detailed Information / 详细信息                                                                                                                                                                                                                                                                             |

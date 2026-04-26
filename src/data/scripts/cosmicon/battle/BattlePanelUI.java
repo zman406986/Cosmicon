@@ -628,9 +628,13 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         boolean vizActive = viz != null && viz.hasStarted();
 
+        boolean isDefenderRolling = battleState.isDefenderRolling();
+        boolean isOpponentTurn = isDefenderRolling == battleState.isPlayerAttacker();
+
         boolean opponentRolling = phase == BattleState.Phase.ROLLING &&
                                   diceRollManager != null &&
-                                  diceRollManager.hasOpponentAnimators();
+                                  isOpponentTurn &&
+                                  (diceRollManager.hasOpponentAnimators() || diceRollManager.isOpponentWaitingForRollTrigger());
 
         return aiIsSelecting || vizActive || opponentRolling;
     }

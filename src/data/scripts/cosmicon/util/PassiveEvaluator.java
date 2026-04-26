@@ -113,5 +113,9 @@ public class PassiveEvaluator {
         if (result.hasPerforation()) {
             effects.addEffect(StatusEffect.PERFORATION, 1);
         }
+        
+        if (result.getPendingDefLevelBoost() > 0) {
+            state.setPendingDefLevelBoost(forPlayer, result.getPendingDefLevelBoost());
+        }
     }
 }

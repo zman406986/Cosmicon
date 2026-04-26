@@ -8,8 +8,7 @@
             "d4": "graphics/cosmicon/Dice/Dice_D4.png",
             "d6": "graphics/cosmicon/Dice/Dice_D6.png",
             "d8": "graphics/cosmicon/Dice/Dice_D8.png",
-            "d12": "graphics/cosmicon/Dice/Dice_D12.png",
-            "prismatic": "graphics/cosmicon/Dice/Dice_Pristmatic.png",
+            "prismatic": "graphics/cosmicon/Dice/Dice_Prismatic.png",
             "prismatic_btn": "graphics/cosmicon/Icons/Prismatic_Icon.png"
         },
         "cosmicon_dice_frames": {

@@ -190,6 +190,9 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
     private void advanceToDefensePhase() {
         state.setDefenderRolling(true);
         
+        PassiveEventSystem.onStartOfDefenseTurn(state, true);
+        PassiveEventSystem.onStartOfDefenseTurn(state, false);
+        
         if (diceRoller != null) {
             diceRoller.rollForDefender(state);
         }
@@ -546,6 +549,33 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             state.isPlayerAttacker() ? defenderTurnType : attackerTurnType,
             state.isPlayerAttacker() ? defenderContext : attackerContext);
         
+        if (state.getPlayerEffects().hasEffect(StatusEffect.HACK)) {
+            CosmiconLogger.debug("HACK triggered for player");
+            StatusEffectProcessor.BattleContext targetContext = state.isPlayerAttacker() ? defenderContext : attackerContext;
+            if (targetContext.applyHackToSelectedDice()) {
+                boolean targetIsPlayer = !state.isPlayerAttacker();
+                state.setDiceValues(targetIsPlayer, targetContext.getDiceValues());
+                if (targetIsPlayer == state.isPlayerAttacker()) {
+                    state.setAttackValue(state.calculateSelectedSum(targetIsPlayer));
+                } else {
+                    state.setDefenseValue(state.calculateSelectedSum(targetIsPlayer));
+                }
+            }
+        }
+        if (state.getOpponentEffects().hasEffect(StatusEffect.HACK)) {
+            CosmiconLogger.debug("HACK triggered for opponent");
+            StatusEffectProcessor.BattleContext targetContext = state.isPlayerAttacker() ? attackerContext : defenderContext;
+            if (targetContext.applyHackToSelectedDice()) {
+                boolean targetIsPlayer = state.isPlayerAttacker();
+                state.setDiceValues(targetIsPlayer, targetContext.getDiceValues());
+                if (targetIsPlayer == state.isPlayerAttacker()) {
+                    state.setAttackValue(state.calculateSelectedSum(targetIsPlayer));
+                } else {
+                    state.setDefenseValue(state.calculateSelectedSum(targetIsPlayer));
+                }
+            }
+        }
+        
         int attackerInstantDamage = attackerContext.getInstantDamageToOpponent();
         int defenderInstantDamage = defenderContext.getInstantDamageToOpponent();
         
@@ -588,7 +618,7 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         state.notifyDamageAnimationComplete();
     }
     
-    private void applyDamageResult(DamageResolver.DamageResult result) {
+private void applyDamageResult(DamageResolver.DamageResult result) {
         int damage = result.damageToDefender();
         boolean playerIsAttacker = state.isPlayerAttacker();
         boolean defenderIsPlayer = !playerIsAttacker;
@@ -612,6 +642,8 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             if (instantDamageToAttacker > 0) {
                 state.applyDamageTo(playerIsAttacker, instantDamageToAttacker);
             }
+            
+            PassiveEventSystem.onDefenseFail(state, defenderIsPlayer);
         }
         
         if (result.thornsDamage() > 0) {
@@ -635,6 +667,14 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             state.applyDamageTo(defenderIsPlayer, result.instantDamage());
         }
         
+        if (result.reflectDamage() > 0) {
+            state.applyDamageTo(playerIsAttacker, result.reflectDamage());
+        }
+        
+        applyComboAttack(playerIsAttacker, defenderIsPlayer);
+        
+        PassiveEventSystem.onAttackResolved(state, playerIsAttacker, result.perforationSuccessful(), damage);
+        
         state.notifyDamageResolved(damage, state.getPlayerHp(), state.getOpponentHp());
         
         if (state.getPlayerHp() <= 0 || state.getOpponentHp() <= 0) {
@@ -644,6 +684,48 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             state.notifyPhaseChange(BattleState.Phase.WAITING_NEXT_TURN);
         }
     }
+    
+    private void applyComboAttack(boolean playerIsAttacker, boolean defenderIsPlayer) {
+        StatusEffectProcessor attackerEffects = state.getEffects(playerIsAttacker);
+        
+        if (!attackerEffects.hasEffect(StatusEffect.COMBO)) {
+            return;
+        }
+        
+        int attackValue = state.getAttackValue();
+        int modifiedAttack = attackValue + attackerEffects.calculateAttackBonus(TurnType.ATTACK);
+        
+        StatusEffectProcessor defenderEffects = state.getEffects(defenderIsPlayer);
+        int comboDamage = modifiedAttack;
+        
+        if (defenderEffects.isForcefieldActive() && comboDamage > 0) {
+            int forcefieldLayers = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.FORCEFIELD);
+            comboDamage = Math.max(1, comboDamage - forcefieldLayers);
+        }
+        
+        attackerEffects.removeEffect(StatusEffect.COMBO);
+        
+        if (comboDamage > 0) {
+            state.applyDamageTo(defenderIsPlayer, comboDamage);
+            
+            CosmiconLogger.info("COMBO attack: %d damage (Attack=%d, modified=%d, Forcefield reduction=%d)",
+                comboDamage, attackValue, modifiedAttack, 
+                defenderEffects.isForcefieldActive() ? defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.FORCEFIELD) : 0);
+            
+            int reflectDamage = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.REFLECT);
+            if (reflectDamage > 0) {
+                state.applyDamageTo(playerIsAttacker, reflectDamage);
+                CosmiconLogger.debug("COMBO reflect: %d damage to attacker", reflectDamage);
+            }
+            
+            int instantDamageToAttacker = PassiveEventSystem.onDamageTaken(state, defenderIsPlayer, comboDamage);
+            if (instantDamageToAttacker > 0) {
+                state.applyDamageTo(playerIsAttacker, instantDamageToAttacker);
+            }
+            
+            PassiveEventSystem.onDefenseFail(state, defenderIsPlayer);
+        }
+}
     
     public void advanceToNextTurn() {
         if (state.getCurrentPhase() != BattleState.Phase.WAITING_NEXT_TURN) return;
@@ -682,6 +764,9 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
                 state.getOpponentEffects().addEffect(StatusEffectProcessor.StatusEffect.TOUGHNESS, 3);
             }
         }
+        
+        PassiveEventSystem.onEndOfDefenseTurn(state, true);
+        PassiveEventSystem.onEndOfDefenseTurn(state, false);
         
         state.incrementTurnNumber();
         state.swapAttackerDefender();

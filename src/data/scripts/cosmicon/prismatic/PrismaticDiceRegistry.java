@@ -87,11 +87,11 @@ public final class PrismaticDiceRegistry {
     }
     
     private static PrismaticDiceType createDestiny() {
-        Set<Integer> allSpecial = allIndices();
-        return PrismaticDiceType.createWithSpecialFaces(
+        return PrismaticDiceType.createWithVersions(
             "destiny",
+            new int[]{1, 3, 3, 6, 6, 12},
             new int[]{1, 3, 3, 12, 12, 16},
-            allSpecial,
+            allIndices(),
             PrismaticEffect.grantStatus(StatusEffect.DESTINED, 1),
             AlwaysAvailableCondition.INSTANCE
         );
@@ -110,7 +110,7 @@ public final class PrismaticDiceRegistry {
         return PrismaticDiceType.createWithSpecialFaces(
             "doctors_advice",
             new int[]{1, 2, 3, 4, 6, 6},
-            indices(0, 1, 2, 3),
+            allIndices(),
             PrismaticEffect.healHp(),
             AlwaysAvailableCondition.INSTANCE
         );
@@ -120,7 +120,7 @@ public final class PrismaticDiceRegistry {
         return PrismaticDiceType.createWithSpecialFaces(
             "last_words",
             new int[]{4, 5, 5, 1, 2, 4},
-            indices(3, 4),
+            indices(3, 4, 5),
             PrismaticEffect.doubleValue(),
             HpThresholdCondition.atOrBelow(8)
         );
@@ -178,10 +178,12 @@ public final class PrismaticDiceRegistry {
     }
     
     private static PrismaticDiceType createOath() {
-        return PrismaticDiceType.createWithSpecialFaces(
+        return PrismaticDiceType.createWithVersionsAndSpecialFaces(
             "oath",
+            new int[]{6, 6, 6, 4, 4, 6},
             new int[]{8, 8, 4, 4, 6, 6},
             indices(3, 4, 5),
+            indices(2, 3, 4, 5),
             PrismaticEffect.grantStatus(StatusEffect.UNYIELDING, 1),
             ActionTypeCondition.defenseOnly()
         );
@@ -244,19 +246,23 @@ public final class PrismaticDiceRegistry {
     }
     
     private static PrismaticDiceType createGambler() {
-        return PrismaticDiceType.create(
+        return PrismaticDiceType.createWithVersions(
             "gambler",
+            new int[]{1, 1, 4, 6, 8, 10},
             new int[]{1, 1, 6, 8, 10, 12},
+            Set.of(),
             PrismaticEffect.none(),
             TurnCountCondition.untilTurn(4)
         );
     }
     
     private static PrismaticDiceType createMagicBullet() {
-        return PrismaticDiceType.createWithSpecialFaces(
+        return PrismaticDiceType.createWithVersionsAndSpecialFaces(
             "magic_bullet",
+            new int[]{1, 3, 5, 7, 3, 5},
             new int[]{3, 5, 7, 3, 5, 7},
             indices(4, 5),
+            indices(3, 4, 5),
             PrismaticEffect.instantDamage(3),
             AlwaysAvailableCondition.INSTANCE
         );

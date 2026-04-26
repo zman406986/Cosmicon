@@ -55,7 +55,6 @@ public class CharacterPassives {
         if (!isAttacking || values == null || values.isEmpty()) return;
         if (hasTwoPairs(values)) {
             result.addGrantedEffect(StatusEffect.COMBO, 1);
-            result.addAttackBonus(15);
         }
         if (maxHp > 0 && currentHp == maxHp) {
             result.addAttackBonus(5);
@@ -66,7 +65,6 @@ public class CharacterPassives {
         if (!isAttacking || values == null || values.isEmpty()) return;
         if (allDiceEqualFour(values)) {
             result.setPerforation(true);
-            result.addAttackBonus(20);
         }
     }
 
@@ -80,7 +78,6 @@ public class CharacterPassives {
         if (!isAttacking || values == null || values.isEmpty()) return;
         if (allEven(values)) {
             result.addGrantedEffect(StatusEffect.LEVEL_UP, 1);
-            result.addAttackBonus(10);
         }
     }
 
@@ -105,19 +102,17 @@ public class CharacterPassives {
     private static void evaluateDanHengPT(PassiveResult result, List<Integer> values, boolean isAttacking) {
         if (!isAttacking || values == null || values.isEmpty()) return;
         if (sumAtLeast(values, 18)) {
-            result.addGrantedEffect(StatusEffect.COUNTER, 1);
-            result.addDefenseBonus(10);
+            result.setPendingDefLevelBoost(3);
         }
     }
 
     private static void evaluatePhainon(PassiveResult result, List<Integer> values, boolean isAttacking) {
         if (values == null || values.isEmpty()) return;
         if (isAttacking) {
-            result.addGrantedEffect(StatusEffect.SIPHON, 1);
+            result.addGrantedEffect(StatusEffect.SIPHON, 50);
         } else {
             if (allSame(values)) {
                 result.addGrantedEffect(StatusEffect.UNYIELDING, 1);
-                result.addDefenseBonus(50);
             }
         }
     }
@@ -206,6 +201,56 @@ public class CharacterPassives {
                 for (PrismaticDiceType type : PrismaticDiceRegistry.getAll().values()) {
                     state.addPrismaticUseByType(type, forPlayer, 1);
                 }
+            }
+        }
+    }
+
+    public static void onPerforationSuccess(String characterId, BattleState state, boolean attackerIsPlayer) {
+        if (characterId == null) return;
+        
+        if (ACHERON.equals(characterId)) {
+            state.modifyCardAtkLevel(attackerIsPlayer, 1);
+        }
+    }
+
+    public static void onStartOfDefenseTurn(String characterId, BattleState state, boolean forPlayer) {
+        if (characterId == null) return;
+        
+        int pendingBoost = state.getPendingDefLevelBoost(forPlayer);
+        if (pendingBoost > 0) {
+            var card = state.getCard(forPlayer);
+            if (card != null) {
+                int originalDefLevel = card.getDefLevel();
+                state.setOriginalDefLevel(forPlayer, originalDefLevel);
+                card.setDefLevel(originalDefLevel + pendingBoost);
+            }
+            state.getEffects(forPlayer).addEffect(StatusEffect.COUNTER, 1);
+            state.clearPendingDefLevelBoost(forPlayer);
+        }
+    }
+
+    public static void onEndOfDefenseTurn(String characterId, BattleState state, boolean forPlayer) {
+        if (characterId == null) return;
+        
+        int originalDefLevel = state.getOriginalDefLevel(forPlayer);
+        if (originalDefLevel > 0) {
+            var card = state.getCard(forPlayer);
+            if (card != null) {
+                card.setDefLevel(originalDefLevel);
+            }
+            state.setOriginalDefLevel(forPlayer, 0);
+        }
+    }
+
+    public static void onDefenseFail(String characterId, BattleState state, boolean defenderIsPlayer) {
+        if (characterId == null) return;
+        
+        if (KAFKA.equals(characterId)) {
+            boolean opponentIsPlayer = !defenderIsPlayer;
+            var opponentEffects = state.getEffects(opponentIsPlayer);
+            int currentPoison = opponentEffects.getLayers(StatusEffect.POISON);
+            if (currentPoison > 0) {
+                opponentEffects.setEffect(StatusEffect.POISON, currentPoison - 1);
             }
         }
     }

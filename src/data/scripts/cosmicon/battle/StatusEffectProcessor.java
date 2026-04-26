@@ -153,20 +153,16 @@ public class StatusEffectProcessor {
     }
 
     private void processAfterRoll(TurnType turnType, BattleContext context) {
-        if (hasEffect(StatusEffect.HACK) && turnType == TurnType.ATTACK) {
-            context.applyHack();
-        }
-
-        if (hasEffect(StatusEffect.ARISE) && turnType == TurnType.ATTACK) {
-            context.applyArise();
-        }
-
         if (hasEffect(StatusEffect.DESTINED)) {
             context.markDestinedDice();
         }
     }
 
     private void processAfterSelect(BattleContext context) {
+        if (hasEffect(StatusEffect.ARISE)) {
+            context.applyArise();
+        }
+
         if (hasEffect(StatusEffect.LEVEL_UP)) {
             int layers = getLayers(StatusEffect.LEVEL_UP);
             context.applyLevelUp(layers);
@@ -287,7 +283,8 @@ public class StatusEffectProcessor {
 
     public int calculateSiphonHeal(int damage) {
         if (hasEffect(StatusEffect.SIPHON) && damage > 0) {
-            return getLayers(StatusEffect.SIPHON);
+            int percentage = getLayers(StatusEffect.SIPHON);
+            return (int)(damage * percentage / 100.0f);
         }
         return 0;
     }
@@ -340,6 +337,11 @@ public class StatusEffectProcessor {
             }
         }
 
+        public void setDiceSelected(List<Boolean> selected) {
+            diceSelected.clear();
+            diceSelected.addAll(selected);
+        }
+
         public int getCurrentHp() {
             return currentHp;
         }
@@ -364,18 +366,21 @@ public class StatusEffectProcessor {
             return diceValues;
         }
 
-        public void applyHack() {
+        public boolean applyHackToSelectedDice() {
             int maxIndex = -1;
             int maxValue = -1;
             for (int i = 0; i < diceValues.size(); i++) {
-                if (!diceIsPrismatic.get(i) && diceValues.get(i) > maxValue) {
+                if (diceSelected.get(i) && !diceIsPrismatic.get(i) && diceValues.get(i) > maxValue) {
                     maxValue = diceValues.get(i);
                     maxIndex = i;
                 }
             }
             if (maxIndex >= 0) {
+                CosmiconLogger.debug("HACK: Transformed highest dice %d to 2", maxValue);
                 diceValues.set(maxIndex, 2);
+                return true;
             }
+            return false;
         }
 
         public void applyArise() {
@@ -383,7 +388,7 @@ public class StatusEffectProcessor {
             int minValue = Integer.MAX_VALUE;
             int minMaxFace = 0;
             for (int i = 0; i < diceValues.size(); i++) {
-                if (!diceIsPrismatic.get(i) && diceValues.get(i) < minValue) {
+                if (diceSelected.get(i) && !diceIsPrismatic.get(i) && diceValues.get(i) < minValue) {
                     minValue = diceValues.get(i);
                     minIndex = i;
                     minMaxFace = getDiceMaxFace(i);

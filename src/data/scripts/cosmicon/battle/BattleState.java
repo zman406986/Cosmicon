@@ -60,6 +60,11 @@ public class BattleState {
     private int playerPrismaticTriggerCount;
     private int opponentPrismaticTriggerCount;
 
+    private int playerPendingDefLevelBoost;
+    private int opponentPendingDefLevelBoost;
+    private int playerOriginalDefLevel;
+    private int opponentOriginalDefLevel;
+
     private int playerRemainingRerolls;
     private int opponentRemainingRerolls;
     private int playerRerollsUsedThisTurn;
@@ -147,6 +152,10 @@ public class BattleState {
         this.opponentPrismaticDiceByIndex = new HashMap<>();
         this.aiSelectionVisualizer = new AISelectionVisualizer();
         this.pendingValueChanges = new ArrayList<>();
+        this.playerPendingDefLevelBoost = 0;
+        this.opponentPendingDefLevelBoost = 0;
+        this.playerOriginalDefLevel = 0;
+        this.opponentOriginalDefLevel = 0;
     }
 
     
@@ -252,6 +261,7 @@ public class BattleState {
         
         if (values != null && selected != null) {
             context.setDiceValues(values, isPrismatic);
+            context.setDiceSelected(selected);
         }
         
         return context;
@@ -901,7 +911,35 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
             opponentCyreneThresholdMet = met;
         }
     }
-    
+
+    public int getPendingDefLevelBoost(boolean forPlayer) {
+        return forPlayer ? playerPendingDefLevelBoost : opponentPendingDefLevelBoost;
+    }
+
+    public void setPendingDefLevelBoost(boolean forPlayer, int boost) {
+        if (forPlayer) {
+            playerPendingDefLevelBoost = boost;
+        } else {
+            opponentPendingDefLevelBoost = boost;
+        }
+    }
+
+    public void clearPendingDefLevelBoost(boolean forPlayer) {
+        setPendingDefLevelBoost(forPlayer, 0);
+    }
+
+    public int getOriginalDefLevel(boolean forPlayer) {
+        return forPlayer ? playerOriginalDefLevel : opponentOriginalDefLevel;
+    }
+
+    public void setOriginalDefLevel(boolean forPlayer, int level) {
+        if (forPlayer) {
+            playerOriginalDefLevel = level;
+        } else {
+            opponentOriginalDefLevel = level;
+        }
+    }
+
     public void recordTurnAtkDef(boolean forPlayer) {
         int value = forPlayer 
             ? (playerIsAttacker ? attackValue : defenseValue)
@@ -973,6 +1011,10 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         opponentTotalDamageTaken = 0;
         playerPrismaticTriggerCount = 0;
         opponentPrismaticTriggerCount = 0;
+        playerPendingDefLevelBoost = 0;
+        opponentPendingDefLevelBoost = 0;
+        playerOriginalDefLevel = 0;
+        opponentOriginalDefLevel = 0;
         
         aiSelectionVisualizer.reset();
         

@@ -26,9 +26,13 @@ public class DamageResolver {
         modifiedAttack += attackerPrismaticValue;
         modifiedDefense += defenderPrismaticValue;
         
+        int prePerforationDefense = modifiedDefense;
+        
         if (attackerEffects.shouldIgnoreDefense()) {
             modifiedDefense = 0;
         }
+        
+        boolean perforationSuccessful = attackerEffects.shouldIgnoreDefense() && prePerforationDefense > 0;
         
         int damage = Math.max(0, modifiedAttack - modifiedDefense);
         
@@ -76,7 +80,8 @@ public class DamageResolver {
             overloadSelfDamage,
             siphonHeal + weatherSiphon,
             reflectDamage,
-            instantDamage
+            instantDamage,
+            perforationSuccessful
         );
         
         logDamageResolution(state, attackValue, defenseValue, modifiedAttack, modifiedDefense,
@@ -86,7 +91,8 @@ public class DamageResolver {
     }
 
     public record DamageResult(int damageToDefender, int thornsDamage, int selfThornsDamage, int counterDamage, 
-                               int overloadSelfDamage, int siphonHeal, int reflectDamage, int instantDamage)
+                               int overloadSelfDamage, int siphonHeal, int reflectDamage, int instantDamage,
+                               boolean perforationSuccessful)
     {
     }
     

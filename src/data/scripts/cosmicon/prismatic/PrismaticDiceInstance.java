@@ -17,7 +17,7 @@ public class PrismaticDiceInstance {
         this.isTrueVersion = isTrueVersion;
         this.rolledFace = rolledFace;
         this.faceIndex = faceIndex;
-        this.isSpecialFace = type.isSpecialFace(faceIndex);
+        this.isSpecialFace = type.isSpecialFace(faceIndex, isTrueVersion);
         this.selected = false;
         this.mustSelect = false;
     }

@@ -2,6 +2,10 @@
 
 ## Cards / 卡牌
 
+> **Note / 说明**: Character cards use the **Default** version of their assigned Prismatic Dice. The **True** version is an upgraded variant with better face values, available through DLC content or special unlock conditions.
+> 
+> **注**: 角色卡牌使用其曜彩骰的**默认版本**。**真版本**为升级版本，拥有更好的骰面数值，需通过DLC内容或特殊解锁条件获得。
+
 ### Three-Star / 三星
 
 | Name / 名称                           | HP / 生命值 | Dice (Default) / 骰子 (默认)                                                                               | ATK Level / 攻击等级 | DEF Level / 防御等级 | Passive / 被动                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Source / 来源             |

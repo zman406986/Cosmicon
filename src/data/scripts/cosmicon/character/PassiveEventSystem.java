@@ -19,6 +19,20 @@ public final class PassiveEventSystem {
         CharacterPassives.onStartOfAttackTurn(characterId, state, forPlayer);
     }
 
+    public static void onStartOfDefenseTurn(BattleState state, boolean forPlayer) {
+        String characterId = state.getCardId(forPlayer);
+        if (characterId == null || isAttacker(state, forPlayer)) return;
+
+        CharacterPassives.onStartOfDefenseTurn(characterId, state, forPlayer);
+    }
+
+    public static void onEndOfDefenseTurn(BattleState state, boolean forPlayer) {
+        String characterId = state.getCardId(forPlayer);
+        if (characterId == null) return;
+
+        CharacterPassives.onEndOfDefenseTurn(characterId, state, forPlayer);
+    }
+
     public static void onRerollCompleted(BattleState state, boolean forPlayer) {
         String characterId = state.getCardId(forPlayer);
         if (characterId == null || isAttacker(state, forPlayer)) return;
@@ -31,6 +45,15 @@ public final class PassiveEventSystem {
         if (characterId == null || isAttacker(state, forPlayer)) return;
 
         CharacterPassives.onAttackResolution(characterId, state, forPlayer);
+    }
+
+    public static void onAttackResolved(BattleState state, boolean attackerIsPlayer, boolean perforationSuccessful, int damage) {
+        if (!perforationSuccessful || damage <= 0) return;
+        
+        String characterId = state.getCardId(attackerIsPlayer);
+        if (characterId == null) return;
+        
+        CharacterPassives.onPerforationSuccess(characterId, state, attackerIsPlayer);
     }
 
     public static int onDamageTaken(BattleState state, boolean defenderIsPlayer, int damage) {
@@ -86,7 +109,17 @@ public final class PassiveEventSystem {
         }
     }
 
+    public static void onDefenseFail(BattleState state, boolean defenderIsPlayer) {
+        String characterId = state.getCardId(defenderIsPlayer);
+        if (characterId == null) return;
+        CharacterPassives.onDefenseFail(characterId, state, defenderIsPlayer);
+    }
+
     private static boolean isAttacker(BattleState state, boolean forPlayer) {
         return state.isPlayerAttacker() != forPlayer;
+    }
+
+    private static boolean isDefender(BattleState state, boolean forPlayer) {
+        return state.isPlayerAttacker() == forPlayer;
     }
 }

@@ -9,31 +9,33 @@ public class PrismaticDiceType {
     private final String id;
     private final int[] defaultFaces;
     private final int[] trueFaces;
-    private final Set<Integer> specialFaceIndices;
+    private final Set<Integer> defaultSpecialIndices;
+    private final Set<Integer> trueSpecialIndices;
     private final PrismaticEffect effect;
     private final AvailabilityCondition condition;
 
     private PrismaticDiceType(String id, int[] defaultFaces, int[] trueFaces,
-                              Set<Integer> specialIndices, PrismaticEffect effect,
-                              AvailabilityCondition condition) {
+                              Set<Integer> defaultSpecialIndices, Set<Integer> trueSpecialIndices,
+                              PrismaticEffect effect, AvailabilityCondition condition) {
         this.id = id;
         this.defaultFaces = defaultFaces.clone();
         this.trueFaces = trueFaces != null ? trueFaces.clone() : null;
-        this.specialFaceIndices = specialIndices;
+        this.defaultSpecialIndices = defaultSpecialIndices;
+        this.trueSpecialIndices = trueSpecialIndices != null ? trueSpecialIndices : defaultSpecialIndices;
         this.effect = effect;
         this.condition = condition;
     }
     
     public static PrismaticDiceType create(String id, int[] faces,
                                            PrismaticEffect effect, AvailabilityCondition condition) {
-        return new PrismaticDiceType(id, faces, null, new HashSet<>(), effect, condition);
+        return new PrismaticDiceType(id, faces, null, new HashSet<>(), null, effect, condition);
     }
     
     public static PrismaticDiceType createWithSpecialFaces(String id,
                                                            int[] faces, Set<Integer> specialIndices,
                                                            PrismaticEffect effect,
                                                            AvailabilityCondition condition) {
-        return new PrismaticDiceType(id, faces, null, specialIndices, effect, condition);
+        return new PrismaticDiceType(id, faces, null, specialIndices, null, effect, condition);
     }
     
     public static PrismaticDiceType createWithVersions(String id,
@@ -41,7 +43,16 @@ public class PrismaticDiceType {
                                                        Set<Integer> specialIndices,
                                                        PrismaticEffect effect,
                                                        AvailabilityCondition condition) {
-        return new PrismaticDiceType(id, defaultFaces, trueFaces, specialIndices, effect, condition);
+        return new PrismaticDiceType(id, defaultFaces, trueFaces, specialIndices, null, effect, condition);
+    }
+    
+    public static PrismaticDiceType createWithVersionsAndSpecialFaces(String id,
+                                                                       int[] defaultFaces, int[] trueFaces,
+                                                                       Set<Integer> defaultSpecialIndices,
+                                                                       Set<Integer> trueSpecialIndices,
+                                                                       PrismaticEffect effect,
+                                                                       AvailabilityCondition condition) {
+        return new PrismaticDiceType(id, defaultFaces, trueFaces, defaultSpecialIndices, trueSpecialIndices, effect, condition);
     }
     
     public String getId() {
@@ -55,8 +66,9 @@ public class PrismaticDiceType {
         return defaultFaces.clone();
     }
     
-    public boolean isSpecialFace(int index) {
-        return specialFaceIndices.contains(index);
+    public boolean isSpecialFace(int index, boolean useTrueVersion) {
+        Set<Integer> indices = useTrueVersion && trueSpecialIndices != null ? trueSpecialIndices : defaultSpecialIndices;
+        return indices.contains(index);
     }
     
     public PrismaticEffect getEffect() {

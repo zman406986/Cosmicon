@@ -32,7 +32,7 @@ public class PrismaticFaceDisplay {
         int[] faces = type.getFaces(useTrueVersion);
         
         for (int i = 0; i < faces.length && i < FACE_LETTERS.length; i++) {
-            boolean isSpecial = type.isSpecialFace(i);
+            boolean isSpecial = type.isSpecialFace(i, useTrueVersion);
             results.add(formatSingleFace(i, faces[i], isSpecial));
         }
         

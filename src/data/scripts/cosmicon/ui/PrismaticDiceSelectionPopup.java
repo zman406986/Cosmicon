@@ -217,7 +217,7 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
 
     private boolean isRolledFaceSpecial() {
         if (selectedType == null || rolledInstance == null) return false;
-        return selectedType.isSpecialFace(rolledInstance.faceIndex);
+        return selectedType.isSpecialFace(rolledInstance.faceIndex, rolledInstance.isTrueVersion);
     }
 
     @Override
