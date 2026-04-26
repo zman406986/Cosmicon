@@ -16,7 +16,7 @@ import data.scripts.CosmiconConfig;
 import data.scripts.cosmicon.battle.BattleState.BattleEventListener;
 import data.scripts.cosmicon.battle.BattleState.Phase;
 import data.scripts.cosmicon.util.ColorHelper;
-import data.scripts.cosmicon.util.CoordHelper;
+import data.scripts.cosmicon.util.UnifiedCoord;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.util.GLStateUtil;
 
@@ -138,6 +138,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         this.diceRollManager = new DiceRollManager();
         diceRollManager.init();
+        diceRollManager.setBattleState(battleState);
 
         PositionAPI pos = panel.getPosition();
         panelX = pos.getX();
@@ -671,53 +672,61 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         float w = pos.getWidth();
         float h = pos.getHeight();
 
-        GLStateUtil.resetBlendState();
+        UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(x, y, w, h));
 
-        boolean hideRoleIcons = damageAnimator != null && damageAnimator.isIconClashActive();
+        try {
+            GLStateUtil.resetBlendState();
 
-        BattleRenderingUtils.renderBattleBackground(x, y, w, h,
-            cachedRotationAngle, alphaMult, battleState != null, hideRoleIcons);
+            boolean hideRoleIcons = damageAnimator != null && damageAnimator.isIconClashActive();
 
-        renderPlayerCard(x, y, alphaMult);
-        renderOpponentCard(x, y, alphaMult);
-        renderDiceZone(x, y, alphaMult);
+            BattleRenderingUtils.renderBattleBackground(x, y, w, h,
+                cachedRotationAngle, alphaMult, battleState != null, hideRoleIcons);
 
-        ValueChangeAnimator attackerAnimator = labels.getAttackerValueAnimator();
-        ValueChangeAnimator defenderAnimator = labels.getDefenderValueAnimator();
+            renderPlayerCard(alphaMult);
+            renderOpponentCard(alphaMult);
+            renderDiceZone(x, y, alphaMult);
 
-        if (attackerAnimator != null && !attackerAnimator.isComplete()) {
-            attackerAnimator.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+            ValueChangeAnimator attackerAnimator = labels.getAttackerValueAnimator();
+            ValueChangeAnimator defenderAnimator = labels.getDefenderValueAnimator();
+
+            if (attackerAnimator != null && !attackerAnimator.isComplete()) {
+                attackerAnimator.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+            }
+            if (defenderAnimator != null && !defenderAnimator.isComplete()) {
+                defenderAnimator.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+            }
+
+            diceRollManager.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+
+            if (damageAnimator != null && !damageAnimator.isComplete()) {
+                damageAnimator.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+            }
+
+            if (shouldShowOpponentDice()) {
+                renderOpponentDiceZone(alphaMult);
+            }
+
+            renderDiceSelectionHighlights(alphaMult);
+            renderOpponentPrismaticButton(alphaMult);
+            renderPrismaticButton(alphaMult);
+
+            if (buttons.isPrismaticPopupActive() && buttons.getPrismaticPopup() != null) {
+                buttons.getPrismaticPopup().renderBelow(alphaMult);
+            }
+
+            GLStateUtil.resetColor();
+        } finally {
+            UnifiedCoord.clearCurrent();
         }
-        if (defenderAnimator != null && !defenderAnimator.isComplete()) {
-            defenderAnimator.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
-        }
-
-        diceRollManager.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
-
-        if (damageAnimator != null && !damageAnimator.isComplete()) {
-            damageAnimator.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
-        }
-
-        if (shouldShowOpponentDice()) {
-            renderOpponentDiceZone(alphaMult);
-        }
-
-        renderDiceSelectionHighlights(alphaMult);
-        renderOpponentPrismaticButton(alphaMult);
-        renderPrismaticButton(alphaMult);
-
-        if (buttons.isPrismaticPopupActive() && buttons.getPrismaticPopup() != null) {
-            buttons.getPrismaticPopup().renderBelow(alphaMult);
-        }
-
-        GLStateUtil.resetColor();
     }
 
-    private void renderPlayerCard(float panelX, float panelY, float alphaMult) {
-        float cardX = panelX + BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
-        float cardY = CoordHelper.uiTopLeftToGlSpriteY(panelY, BattleRenderingUtils.PANEL_HEIGHT,
-            BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN,
-            BattleRenderingUtils.CARD_HEIGHT);
+    private void renderPlayerCard(float alphaMult) {
+        float cardUiX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
+        float cardUiY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        UnifiedCoord cardPos = new UnifiedCoord(cardUiX, cardUiY);
+
+        float cardX = cardPos.glX();
+        float cardY = cardPos.glSpriteY(BattleRenderingUtils.CARD_HEIGHT);
 
         if (battleState != null) {
             CharacterCard card = battleState.getPlayerCard();
@@ -734,10 +743,11 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         }
     }
 
-    private void renderOpponentCard(float panelX, float panelY, float alphaMult) {
-        float cardX = panelX + BattleRenderingUtils.MARGIN;
-        float cardY = CoordHelper.uiTopLeftToGlSpriteY(panelY, BattleRenderingUtils.PANEL_HEIGHT,
-            BattleRenderingUtils.MARGIN, BattleRenderingUtils.CARD_HEIGHT);
+    private void renderOpponentCard(float alphaMult) {
+        UnifiedCoord cardPos = new UnifiedCoord(BattleRenderingUtils.MARGIN, BattleRenderingUtils.MARGIN);
+
+        float cardX = cardPos.glX();
+        float cardY = cardPos.glSpriteY(BattleRenderingUtils.CARD_HEIGHT);
 
         if (battleState != null) {
             CharacterCard card = battleState.getOpponentCard();
@@ -785,9 +795,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                 DiceAnimator animator = animators.get(i);
                 if (animator != null) {
                     float diceSize = animator.getDisplaySize();
-                    float diceX = panelX + animator.getVisualX();
-                    float diceY = CoordHelper.uiToGlY(panelY, BattleRenderingUtils.PANEL_HEIGHT,
-                        animator.getVisualY() + diceSize);
+                    UnifiedCoord dicePos = new UnifiedCoord(animator.getVisualX(), animator.getVisualY()).bottomLeft(diceSize);
+
+                    float diceX = dicePos.glX();
+                    float diceY = dicePos.glY();
 
                     GL11.glBegin(GL11.GL_LINE_LOOP);
                     GL11.glVertex2f(diceX, diceY);
@@ -840,9 +851,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                 DiceAnimator animator = opponentAnimators.get(idx);
                 if (animator != null) {
                     float diceSize = animator.getDisplaySize();
-                    float diceX = panelX + animator.getVisualX();
-                    float diceY = CoordHelper.uiToGlY(panelY, BattleRenderingUtils.PANEL_HEIGHT,
-                        animator.getVisualY() + diceSize);
+                    UnifiedCoord dicePos = new UnifiedCoord(animator.getVisualX(), animator.getVisualY()).bottomLeft(diceSize);
+
+                    float diceX = dicePos.glX();
+                    float diceY = dicePos.glY();
 
                     GL11.glBegin(GL11.GL_LINE_LOOP);
                     GL11.glVertex2f(diceX, diceY);
@@ -863,9 +875,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         GLStateUtil.enableTexturingWithBlend();
 
-        float renderX = panelX + opponentPrismaticBtnX;
-        float renderY = CoordHelper.uiTopLeftToGlSpriteY(panelY, BattleRenderingUtils.PANEL_HEIGHT,
-            opponentPrismaticBtnY, PRISMATIC_BTN_SIZE);
+        UnifiedCoord btnPos = new UnifiedCoord(opponentPrismaticBtnX, opponentPrismaticBtnY);
+        float renderX = btnPos.glX();
+        float renderY = btnPos.glSpriteY(PRISMATIC_BTN_SIZE);
 
         int uses = battleState.getOpponentPrismaticUses();
         float btnAlpha = uses > 0 ? alphaMult : alphaMult * 0.4f;
@@ -883,9 +895,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         GLStateUtil.enableTexturingWithBlend();
 
-        float renderX = panelX + buttons.getPlayerPrismaticBtnX();
-        float renderY = CoordHelper.uiTopLeftToGlSpriteY(panelY, BattleRenderingUtils.PANEL_HEIGHT,
-            buttons.getPlayerPrismaticBtnY(), PRISMATIC_BTN_SIZE);
+        UnifiedCoord btnPos = new UnifiedCoord(buttons.getPlayerPrismaticBtnX(), buttons.getPlayerPrismaticBtnY());
+        float renderX = btnPos.glX();
+        float renderY = btnPos.glSpriteY(PRISMATIC_BTN_SIZE);
 
         int uses = battleState.getPlayerPrismaticUses();
         boolean playerShouldSelect = (battleState.isAttacker(true) &&

@@ -14,9 +14,9 @@ import com.fs.starfarer.api.ui.UIComponentAPI;
 import com.fs.starfarer.api.graphics.SpriteAPI;
 
 import data.scripts.cosmicon.util.ColorHelper;
-import data.scripts.cosmicon.util.CoordHelper;
 import data.scripts.cosmicon.util.EasingUtil;
 import data.scripts.cosmicon.util.GLStateUtil;
+import data.scripts.cosmicon.util.UnifiedCoord;
 
 public class ValueChangeAnimator {
     private static final float DELTA_SHOW_DURATION = 0.3f;
@@ -222,15 +222,29 @@ public class ValueChangeAnimator {
         if (phase == Phase.IDLE) return;
         
         if (phase != Phase.COMPLETE && flashIntensity > 0f && roleIcon != null) {
-            renderIconFlash(panelX, panelY, panelHeight, alphaMult);
+            // Use existing context if available, otherwise create one
+            UnifiedCoord.PanelContext existingCtx = UnifiedCoord.getCurrentOrNull();
+            boolean needsContextCleanup = existingCtx == null;
+            
+            if (needsContextCleanup) {
+                UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(panelX, panelY, 0, panelHeight));
+            }
+            try {
+                renderIconFlash(alphaMult);
+            } finally {
+                if (needsContextCleanup) {
+                    UnifiedCoord.clearCurrent();
+                }
+            }
         }
     }
 
-    private void renderIconFlash(float panelX, float panelY, float panelHeight, float alphaMult) {
+    private void renderIconFlash(float alphaMult) {
         GLStateUtil.enableTexturingWithBlend();
         
-        float glX = panelX + iconCenterX - iconSize / 2f;
-        float glY = CoordHelper.uiToGlY(panelY, panelHeight, iconCenterY + iconSize / 2f);
+        UnifiedCoord pos = new UnifiedCoord(iconCenterX - iconSize / 2f, iconCenterY - iconSize / 2f);
+        float glX = pos.glX();
+        float glY = pos.glSpriteY(iconSize);
         
         roleIcon.setSize(iconSize, iconSize);
         float baseAlpha = BattleRenderingUtils.ROLE_ICON_OPACITY;

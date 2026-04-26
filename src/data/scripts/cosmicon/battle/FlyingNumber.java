@@ -16,9 +16,9 @@ import com.fs.starfarer.api.ui.LabelAPI;
 import com.fs.starfarer.api.ui.UIComponentAPI;
 
 import data.scripts.cosmicon.util.ColorHelper;
-import data.scripts.cosmicon.util.CoordHelper;
 import data.scripts.cosmicon.util.EasingUtil;
 import data.scripts.cosmicon.util.GLStateUtil;
+import data.scripts.cosmicon.util.UnifiedCoord;
 
 public class FlyingNumber {
     public static final Color DAMAGE_RESULT = new Color(255, 200, 50);
@@ -217,7 +217,20 @@ public class FlyingNumber {
         }
         
         if (phase == Phase.SHATTER) {
-            renderShatterParticles(panelX, panelY, panelHeight, alphaMult);
+            // Use existing context if available, otherwise create one
+            UnifiedCoord.PanelContext existingCtx = UnifiedCoord.getCurrentOrNull();
+            boolean needsContextCleanup = existingCtx == null;
+            
+            if (needsContextCleanup) {
+                UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(panelX, panelY, 0, panelHeight));
+            }
+            try {
+                renderShatterParticles(alphaMult);
+            } finally {
+                if (needsContextCleanup) {
+                    UnifiedCoord.clearCurrent();
+                }
+            }
         }
     }
     
@@ -266,13 +279,14 @@ public class FlyingNumber {
         }
     }
     
-    private void renderShatterParticles(float panelX, float panelY, float panelHeight, float alphaMult) {
+    private void renderShatterParticles(float alphaMult) {
         for (Particle particle : particles)
         {
             GLStateUtil.resetBlendState();
 
-            float glX = panelX + particle.x;
-            float glY = CoordHelper.uiToGlY(panelY, panelHeight, particle.y);
+            UnifiedCoord pos = new UnifiedCoord(particle.x, particle.y);
+            float glX = pos.glX();
+            float glY = pos.glY();
 
             float size = 8f * particle.scale;
             float halfSize = size / 2f;

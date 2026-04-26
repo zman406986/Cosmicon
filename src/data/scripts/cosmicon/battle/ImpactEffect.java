@@ -7,8 +7,8 @@ import java.util.List;
 import org.lwjgl.opengl.GL11;
 
 import data.scripts.cosmicon.util.ColorHelper;
-import data.scripts.cosmicon.util.CoordHelper;
 import data.scripts.cosmicon.util.GLStateUtil;
+import data.scripts.cosmicon.util.UnifiedCoord;
 
 public class ImpactEffect {
     private static final float FLASH_DURATION = 0.15f;
@@ -109,12 +109,25 @@ public class ImpactEffect {
     }
     
     public void render(float panelX, float panelY, float panelHeight, float alphaMult) {
-        renderFlash(panelX, panelY, panelHeight, alphaMult);
-        renderParticles(panelX, panelY, panelHeight, alphaMult);
-        renderShockwave(panelX, panelY, panelHeight, alphaMult);
+        // Use existing context if available, otherwise create one
+        UnifiedCoord.PanelContext existingCtx = UnifiedCoord.getCurrentOrNull();
+        boolean needsContextCleanup = existingCtx == null;
+        
+        if (needsContextCleanup) {
+            UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(panelX, panelY, 0, panelHeight));
+        }
+        try {
+            renderFlash(alphaMult);
+            renderParticles(alphaMult);
+            renderShockwave(alphaMult);
+        } finally {
+            if (needsContextCleanup) {
+                UnifiedCoord.clearCurrent();
+            }
+        }
     }
     
-    private void renderFlash(float panelX, float panelY, float panelHeight, float alphaMult) {
+    private void renderFlash(float alphaMult) {
         if (!flashActive) return;
         
         GLStateUtil.resetBlendState();
@@ -124,8 +137,9 @@ public class ImpactEffect {
         float currentSize = flashSize * (0.3f + 0.7f * scaleProgress);
         float alpha = (1f - progress) * 0.8f * alphaMult;
         
-        float glX = panelX + flashX;
-        float glY = CoordHelper.uiToGlY(panelY, panelHeight, flashY);
+        UnifiedCoord pos = new UnifiedCoord(flashX, flashY);
+        float glX = pos.glX();
+        float glY = pos.glY();
         
         float[] c = ColorHelper.toGLComponents(flashColor, alpha);
         GL11.glColor4f(c[0], c[1], c[2], c[3]);
@@ -145,7 +159,7 @@ public class ImpactEffect {
         GLStateUtil.resetColor();
     }
     
-    private void renderParticles(float panelX, float panelY, float panelHeight, float alphaMult) {
+    private void renderParticles(float alphaMult) {
         if (particles.isEmpty()) return;
         
         GLStateUtil.resetBlendState();
@@ -153,8 +167,9 @@ public class ImpactEffect {
         for (Particle p : particles) {
             GLStateUtil.resetBlendState();
             
-            float glX = panelX + p.x;
-            float glY = CoordHelper.uiToGlY(panelY, panelHeight, p.y);
+            UnifiedCoord pos = new UnifiedCoord(p.x, p.y);
+            float glX = pos.glX();
+            float glY = pos.glY();
             
             float[] c = ColorHelper.toGLComponents(p.color, p.alpha * alphaMult);
             GL11.glColor4f(c[0], c[1], c[2], c[3]);
@@ -172,7 +187,7 @@ public class ImpactEffect {
         GLStateUtil.resetColor();
     }
     
-    private void renderShockwave(float panelX, float panelY, float panelHeight, float alphaMult) {
+    private void renderShockwave(float alphaMult) {
         if (!shockwaveActive) return;
         
         GLStateUtil.resetBlendState();
@@ -181,8 +196,9 @@ public class ImpactEffect {
         float currentRadius = SHOCKWAVE_MAX_RADIUS * progress;
         float alpha = (1f - progress) * 0.5f * alphaMult;
         
-        float glX = panelX + shockwaveX;
-        float glY = CoordHelper.uiToGlY(panelY, panelHeight, shockwaveY);
+        UnifiedCoord pos = new UnifiedCoord(shockwaveX, shockwaveY);
+        float glX = pos.glX();
+        float glY = pos.glY();
         
         GL11.glLineWidth(2f);
         float[] c = ColorHelper.toGLComponents(new Color(255, 255, 255), alpha);

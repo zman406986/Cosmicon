@@ -27,6 +27,7 @@ import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.PopupRenderer;
 import data.scripts.cosmicon.util.PrismaticDisplayHelper;
 import data.scripts.cosmicon.util.UIComponentFactory;
+import data.scripts.cosmicon.util.UnifiedCoord;
 
 public class PrismaticEquipPopup extends BaseCustomUIPanelPlugin implements ActionListenerDelegate {
 
@@ -181,16 +182,12 @@ public class PrismaticEquipPopup extends BaseCustomUIPanelPlugin implements Acti
         boolean mouseDown = Mouse.isButtonDown(0);
 
         if (mouseDown && !wasMousePressed) {
-            float scale = Global.getSettings().getScreenScaleMult();
-            float mouseX = Mouse.getX() / scale;
-            float mouseY = Mouse.getY() / scale;
+            // Use explicit context to not interfere with parent's thread-local context
+            UnifiedCoord.PanelContext popupCtx = new UnifiedCoord.PanelContext(panelX, panelY, POPUP_WIDTH, POPUP_HEIGHT);
+            UnifiedCoord mousePosWithCtx = UnifiedCoord.fromMouse(popupCtx);
 
             for (ClickRegion region : diceClickRegions) {
-                float screenX = panelX + region.x;
-                float screenY = panelY + POPUP_HEIGHT - region.y - region.height;
-
-                if (mouseX >= screenX && mouseX <= screenX + region.width &&
-                    mouseY >= screenY && mouseY <= screenY + region.height) {
+                if (mousePosWithCtx.isInsideRect(region.x, region.y, region.width, region.height)) {
                     selectedDiceId = region.diceId;
                     updateEffectPreview();
                     Global.getSoundPlayer().playUISound("ui_button_pressed", 1f, 0.5f);
@@ -204,21 +201,25 @@ public class PrismaticEquipPopup extends BaseCustomUIPanelPlugin implements Acti
 
     @Override
     public void renderBelow(float alphaMult) {
+        // Use explicit context to not interfere with parent's thread-local context
+        UnifiedCoord.PanelContext popupCtx = new UnifiedCoord.PanelContext(panelX, panelY, POPUP_WIDTH, POPUP_HEIGHT);
+        
         PopupRenderer.drawPopupBackground(panelX, panelY, POPUP_WIDTH, POPUP_HEIGHT, COLOR_BG, ColorHelper.PRISMATIC_GOLD, alphaMult);
 
         if (!isBlockedForRobin) {
-            renderRadioButtons(alphaMult);
+            renderRadioButtons(alphaMult, popupCtx);
         }
     }
 
-    private void renderRadioButtons(float alphaMult) {
+    private void renderRadioButtons(float alphaMult, UnifiedCoord.PanelContext ctx) {
         float startY = MARGIN + 85f;
 
         for (int i = 0; i < diceTypes.size(); i++) {
             String diceId = diceTypes.get(i).getId();
             float y = startY + i * DICE_ENTRY_HEIGHT;
 
-            float screenY = panelY + POPUP_HEIGHT - y - RADIO_SIZE;
+            UnifiedCoord radioPos = new UnifiedCoord(MARGIN, y, ctx);
+            float screenY = radioPos.glSpriteY(RADIO_SIZE);
 
             boolean isSelected = selectedDiceId.equals(diceId);
             Color radioColor = isSelected ? COLOR_RADIO_SELECTED : COLOR_RADIO_UNSELECTED;

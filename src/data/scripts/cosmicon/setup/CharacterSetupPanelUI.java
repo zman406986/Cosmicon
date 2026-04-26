@@ -27,7 +27,7 @@ import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.CharacterRegistry;
 import data.scripts.cosmicon.battle.CosmiconSprites;
 import data.scripts.cosmicon.util.ColorHelper;
-import data.scripts.cosmicon.util.CoordHelper;
+import data.scripts.cosmicon.util.UnifiedCoord;
 import data.scripts.cosmicon.util.GLStateUtil;
 import data.scripts.cosmicon.util.UIComponentFactory;
 import data.scripts.cosmicon.state.CosmiconPlayerState;
@@ -248,23 +248,28 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         float panelX = pos.getX();
         float panelY = pos.getY();
 
+        UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(panelX, panelY, PANEL_WIDTH, PANEL_HEIGHT));
+
         Misc.renderQuad(panelX, panelY, PANEL_WIDTH, PANEL_HEIGHT, COLOR_BG_DARK, alphaMult);
 
         float galleryStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 15f;
         float galleryHeight = PANEL_HEIGHT - galleryStartY - BUTTON_AREA_HEIGHT - 20f;
         float galleryWidth = INFO_PANEL_X - MARGIN - 10f;
 
-        Misc.renderQuad(panelX + MARGIN - 5f, panelY + PANEL_HEIGHT - galleryStartY - galleryHeight - 5f,
+        UnifiedCoord galleryBgPos = new UnifiedCoord(MARGIN - 5f, galleryStartY - 5f);
+        Misc.renderQuad(galleryBgPos.glX(), galleryBgPos.glSpriteY(galleryHeight + 10f),
             galleryWidth + 10f, galleryHeight + 10f,
             new Color(35, 40, 50, 180), alphaMult * 0.7f);
 
-        renderCardBoxes(panelX, panelY, galleryStartY, alphaMult);
-        renderInfoPanel(panelX, panelY, alphaMult);
+        renderCardBoxes(galleryStartY, alphaMult);
+        renderInfoPanel(alphaMult);
+
+        UnifiedCoord.clearCurrent();
 
         updateLabels();
     }
 
-    private void renderCardBoxes(float panelX, float panelY, float startY, float alphaMult) {
+    private void renderCardBoxes(float startY, float alphaMult) {
         clickRegions.clear();
 
         for (int i = 0; i < characters.size(); i++) {
@@ -277,14 +282,16 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
             clickRegions.add(new ClickRegion(boxX, boxY, CARD_WIDTH, CARD_HEIGHT, i));
 
-            float glY = CoordHelper.uiToGlY(panelY, PANEL_HEIGHT, boxY + CARD_HEIGHT);
+            UnifiedCoord cardPos = new UnifiedCoord(boxX, boxY);
+            float cardGlX = cardPos.glX();
+            float cardGlY = cardPos.glSpriteY(CARD_HEIGHT);
 
             boolean isSelected = (i == selectedIndex);
             Color borderColor = isSelected ? COLOR_SELECTED : COLOR_UNSELECTED;
 
-            Misc.renderQuad(panelX + boxX, glY, CARD_WIDTH, CARD_HEIGHT, COLOR_BOX_BG, alphaMult * 0.9f);
+            Misc.renderQuad(cardGlX, cardGlY, CARD_WIDTH, CARD_HEIGHT, COLOR_BOX_BG, alphaMult * 0.9f);
 
-            drawBorder(panelX + boxX, glY, borderColor, alphaMult, isSelected);
+            drawBorder(cardGlX, cardGlY, borderColor, alphaMult, isSelected);
 
             GLStateUtil.enableTexturing();
 
@@ -293,14 +300,14 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             if (portrait != null) {
                 float portraitW = CARD_WIDTH * 0.95f;
                 float portraitH = CARD_HEIGHT * 0.95f;
-                float centerX = panelX + boxX + CARD_WIDTH / 2f;
-                float centerY = glY + CARD_HEIGHT / 2f;
+                float centerX = cardGlX + CARD_WIDTH / 2f;
+                float centerY = cardPos.glCenterY(CARD_HEIGHT / 2f);
                 portrait.setSize(portraitW, portraitH);
                 portrait.setAlphaMult(alphaMult * (isSelected ? 1f : 0.85f));
                 portrait.renderAtCenter(centerX, centerY);
             }
 
-            renderPrismaticBadge(panelX + boxX, glY + CARD_HEIGHT, card, alphaMult);
+            renderPrismaticBadge(cardGlX, cardGlY + CARD_HEIGHT, card, alphaMult);
 
             GLStateUtil.disableTexturing();
         }
@@ -343,26 +350,27 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         GLStateUtil.disableTexturing();
     }
 
-    private void renderInfoPanel(float panelX, float panelY, float alphaMult) {
+    private void renderInfoPanel(float alphaMult) {
         float infoPanelStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 20f;
         float borderH = PANEL_HEIGHT - infoPanelStartY - BUTTON_AREA_HEIGHT - 20f;
 
         GLStateUtil.resetBlendState();
-        float borderY = CoordHelper.uiToGlY(panelY, PANEL_HEIGHT, infoPanelStartY + borderH);
-        Misc.renderQuad(panelX + INFO_PANEL_X, borderY,
+        UnifiedCoord infoPos = new UnifiedCoord(INFO_PANEL_X, infoPanelStartY);
+        float glY = infoPos.glSpriteY(borderH);
+        Misc.renderQuad(infoPos.glX(), glY,
             INFO_PANEL_WIDTH, borderH,
             COLOR_INFO_PANEL_BG, alphaMult);
 
-        float borderX = panelX + INFO_PANEL_X;
+        float borderX = infoPos.glX();
         float borderW = INFO_PANEL_WIDTH;
         float[] c = ColorHelper.toGLComponents(COLOR_SECTION_HEADER, alphaMult * 0.8f);
         GL11.glColor4f(c[0], c[1], c[2], c[3]);
         GL11.glLineWidth(1.5f);
         GL11.glBegin(GL11.GL_LINE_LOOP);
-        GL11.glVertex2f(borderX, borderY);
-        GL11.glVertex2f(borderX + borderW, borderY);
-        GL11.glVertex2f(borderX + borderW, borderY + borderH);
-        GL11.glVertex2f(borderX, borderY + borderH);
+        GL11.glVertex2f(borderX, glY);
+        GL11.glVertex2f(borderX + borderW, glY);
+        GL11.glVertex2f(borderX + borderW, glY + borderH);
+        GL11.glVertex2f(borderX, glY + borderH);
         GL11.glEnd();
         GLStateUtil.resetColor();
     }
@@ -372,20 +380,20 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         if (mouseDown && !wasMousePressed) {
             PositionAPI pos = panel.getPosition();
-            float[] uiCoords = CoordHelper.mouseToPanelUi(
-                Mouse.getX(), Mouse.getY(),
-                pos.getX(), pos.getY(), PANEL_HEIGHT
-            );
-            float uiX = uiCoords[0];
-            float uiY = uiCoords[1];
+            UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(
+                pos.getX(), pos.getY(), PANEL_WIDTH, PANEL_HEIGHT));
+            
+            UnifiedCoord mousePos = UnifiedCoord.fromMouse();
 
             for (ClickRegion region : clickRegions) {
-                if (CoordHelper.isInsideUiRect(uiX, uiY, region.boxX, region.boxY, region.width, region.height)) {
+                if (mousePos.isInsideRect(region.boxX, region.boxY, region.width, region.height)) {
                     handleSelection(region.index);
                     Global.getSoundPlayer().playUISound("ui_button_pressed", 1f, 0.6f);
                     break;
                 }
             }
+
+            UnifiedCoord.clearCurrent();
         }
 
         wasMousePressed = mouseDown;

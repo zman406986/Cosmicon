@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import data.scripts.cosmicon.battle.DicePathPlanner.PlannedPath;
+import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 
 public class DiceRollManager {
 
@@ -12,6 +13,7 @@ public class DiceRollManager {
     private final List<DiceAnimator> animators;
     private final List<DiceAnimator> opponentAnimators;
     private boolean initialized;
+    private BattleState battleState;
     
     private boolean waitingForRollTrigger = false;
     private boolean opponentWaitingForRollTrigger = false;
@@ -28,6 +30,10 @@ public class DiceRollManager {
 
     public void init() {
         this.initialized = true;
+    }
+    
+    public void setBattleState(BattleState state) {
+        this.battleState = state;
     }
 
     public void startStationaryPreview(List<DiceType> types, List<Integer> results, float centerX, float centerY) {
@@ -198,7 +204,7 @@ public class DiceRollManager {
 
     public void render(float panelX, float panelY, float panelHeight, float alphaMult) {
         for (DiceAnimator animator : animators) {
-            animator.render(panelX, panelY, panelHeight, alphaMult);
+            animator.render(panelX, panelY, BattleRenderingUtils.PANEL_WIDTH, panelHeight, alphaMult);
         }
     }
 
@@ -289,7 +295,16 @@ public class DiceRollManager {
             PlannedPath path = rerollPaths.get(i);
             if (animatorIndex >= 0 && animatorIndex < animators.size() && path != null) {
                 DiceAnimator animator = animators.get(animatorIndex);
-                animator.rerollWithNewPath(newValues.get(animatorIndex), path.startX(), path.startY(),
+                int rerollValue = newValues.get(animatorIndex);
+                
+                if (battleState != null && battleState.isPrismaticDiceAt(animatorIndex, true)) {
+                    PrismaticDiceInstance prismatic = battleState.getPrismaticDiceAt(animatorIndex, true);
+                    if (prismatic != null) {
+                        rerollValue = prismatic.faceIndex;
+                    }
+                }
+                
+                animator.rerollWithNewPath(rerollValue, path.startX(), path.startY(),
                         path.rotation(), path.travelDistance(),
                         path.bounceCount(), path.bounceHeights(),
                         path.targetCenterX(), path.targetCenterY());
@@ -305,7 +320,7 @@ public class DiceRollManager {
 
     public void renderOpponentDice(float panelX, float panelY, float alphaMult) {
         for (DiceAnimator animator : opponentAnimators) {
-            animator.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+            animator.render(panelX, panelY, BattleRenderingUtils.PANEL_WIDTH, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
         }
     }
 
@@ -318,7 +333,16 @@ public class DiceRollManager {
             PlannedPath path = rerollPaths.get(i);
             if (animatorIndex >= 0 && animatorIndex < opponentAnimators.size() && path != null) {
                 DiceAnimator animator = opponentAnimators.get(animatorIndex);
-                animator.rerollWithNewPath(newValues.get(animatorIndex), path.startX(), path.startY(),
+                int rerollValue = newValues.get(animatorIndex);
+                
+                if (battleState != null && battleState.isPrismaticDiceAt(animatorIndex, false)) {
+                    PrismaticDiceInstance prismatic = battleState.getPrismaticDiceAt(animatorIndex, false);
+                    if (prismatic != null) {
+                        rerollValue = prismatic.faceIndex;
+                    }
+                }
+                
+                animator.rerollWithNewPath(rerollValue, path.startX(), path.startY(),
                         path.rotation(), path.travelDistance(),
                         path.bounceCount(), path.bounceHeights(),
                         path.targetCenterX(), path.targetCenterY());

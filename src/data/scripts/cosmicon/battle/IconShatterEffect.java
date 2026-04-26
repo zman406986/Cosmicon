@@ -7,8 +7,8 @@ import java.util.List;
 import org.lwjgl.opengl.GL11;
 
 import data.scripts.cosmicon.util.ColorHelper;
-import data.scripts.cosmicon.util.CoordHelper;
 import data.scripts.cosmicon.util.GLStateUtil;
+import data.scripts.cosmicon.util.UnifiedCoord;
 
 public class IconShatterEffect {
     private static final float SHATTER_DURATION = 0.5f;
@@ -79,41 +79,55 @@ public class IconShatterEffect {
     public void render(float panelX, float panelY, float panelHeight, float alphaMult) {
         if (particles.isEmpty()) return;
         
-        GLStateUtil.resetBlendState();
+        // Use existing context if available, otherwise create one
+        UnifiedCoord.PanelContext existingCtx = UnifiedCoord.getCurrentOrNull();
+        boolean needsContextCleanup = existingCtx == null;
         
-        for (ShatterParticle p : particles) {
+        if (needsContextCleanup) {
+            UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(panelX, panelY, 0, panelHeight));
+        }
+        try {
             GLStateUtil.resetBlendState();
             
-            float glX = panelX + p.x;
-            float glY = CoordHelper.uiToGlY(panelY, panelHeight, p.y);
-            
-            float[] c = ColorHelper.toGLComponents(p.color, p.alpha * alphaMult);
-            GL11.glColor4f(c[0], c[1], c[2], c[3]);
-            
-            float halfSize = p.scale / 2f;
-            float radians = (float)Math.toRadians(p.rotation);
-            float cos = (float)Math.cos(radians);
-            float sin = (float)Math.sin(radians);
-            
-            float[] corners = {
-                -halfSize, -halfSize,
-                halfSize, -halfSize,
-                halfSize, halfSize,
-                -halfSize, halfSize
-            };
-            
-            GL11.glBegin(GL11.GL_QUADS);
-            for (int i = 0; i < 4; i++) {
-                float localX = corners[i * 2];
-                float localY = corners[i * 2 + 1];
-                float rotatedX = localX * cos - localY * sin;
-                float rotatedY = localX * sin + localY * cos;
-                GL11.glVertex2f(glX + rotatedX, glY + rotatedY);
+            for (ShatterParticle p : particles) {
+                GLStateUtil.resetBlendState();
+                
+                UnifiedCoord pos = new UnifiedCoord(p.x, p.y);
+                float glX = pos.glX();
+                float glY = pos.glY();
+                
+                float[] c = ColorHelper.toGLComponents(p.color, p.alpha * alphaMult);
+                GL11.glColor4f(c[0], c[1], c[2], c[3]);
+                
+                float halfSize = p.scale / 2f;
+                float radians = (float)Math.toRadians(p.rotation);
+                float cos = (float)Math.cos(radians);
+                float sin = (float)Math.sin(radians);
+                
+                float[] corners = {
+                    -halfSize, -halfSize,
+                    halfSize, -halfSize,
+                    halfSize, halfSize,
+                    -halfSize, halfSize
+                };
+                
+                GL11.glBegin(GL11.GL_QUADS);
+                for (int i = 0; i < 4; i++) {
+                    float localX = corners[i * 2];
+                    float localY = corners[i * 2 + 1];
+                    float rotatedX = localX * cos - localY * sin;
+                    float rotatedY = localX * sin + localY * cos;
+                    GL11.glVertex2f(glX + rotatedX, glY + rotatedY);
+                }
+                GL11.glEnd();
             }
-            GL11.glEnd();
+            
+            GLStateUtil.resetColor();
+        } finally {
+            if (needsContextCleanup) {
+                UnifiedCoord.clearCurrent();
+            }
         }
-        
-        GLStateUtil.resetColor();
     }
     
     public boolean isComplete() {

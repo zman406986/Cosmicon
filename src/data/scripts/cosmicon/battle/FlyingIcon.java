@@ -11,7 +11,7 @@ import com.fs.starfarer.api.ui.Fonts;
 import com.fs.starfarer.api.ui.LabelAPI;
 import com.fs.starfarer.api.ui.UIComponentAPI;
 
-import data.scripts.cosmicon.util.CoordHelper;
+import data.scripts.cosmicon.util.UnifiedCoord;
 import data.scripts.cosmicon.util.EasingUtil;
 import data.scripts.cosmicon.util.GLStateUtil;
 
@@ -132,15 +132,30 @@ public class FlyingIcon {
     public void render(float panelX, float panelY, float panelHeight, float alphaMult) {
         if (sprite == null) return;
         
-        GLStateUtil.enableTexturingWithBlend();
+        // Use existing context if available, otherwise create one
+        UnifiedCoord.PanelContext existingCtx = UnifiedCoord.getCurrentOrNull();
+        boolean needsContextCleanup = existingCtx == null;
         
-        float glX = panelX + currentX - size / 2f;
-        float glY = CoordHelper.uiToGlY(panelY, panelHeight, currentY + size / 2f);
+        if (needsContextCleanup) {
+            UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(panelX, panelY, 0f, panelHeight));
+        }
         
-        sprite.setSize(size, size);
-        sprite.setAlphaMult(alphaMult);
-        sprite.render(glX, glY);
-        
-        GLStateUtil.disableTexturing();
+        try {
+            GLStateUtil.enableTexturingWithBlend();
+            
+            float uiX = currentX - size / 2f;
+            float uiY = currentY + size / 2f;
+            UnifiedCoord pos = new UnifiedCoord(uiX, uiY);
+            
+            sprite.setSize(size, size);
+            sprite.setAlphaMult(alphaMult);
+            sprite.render(pos.glX(), pos.glY());
+            
+            GLStateUtil.disableTexturing();
+        } finally {
+            if (needsContextCleanup) {
+                UnifiedCoord.clearCurrent();
+            }
+        }
     }
 }

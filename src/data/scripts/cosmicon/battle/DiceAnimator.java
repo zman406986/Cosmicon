@@ -4,7 +4,7 @@ import org.lwjgl.opengl.GL11;
 
 import com.fs.starfarer.api.graphics.SpriteAPI;
 
-import data.scripts.cosmicon.util.CoordHelper;
+import data.scripts.cosmicon.util.UnifiedCoord;
 import data.scripts.cosmicon.util.EasingUtil;
 import data.scripts.cosmicon.util.GLStateUtil;
 
@@ -543,7 +543,7 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         }
     }
     
-    public void render(float panelX, float panelY, float panelHeight, float alphaMult) {
+    public void render(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
         if (elapsed < 0f) return;
         
         SpriteAPI sprite;
@@ -566,23 +566,33 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         float displaySize = getDisplaySize();
         float centeringOffset = (AnimationConstants.DICE_SIZE - displaySize) / 2f;
         
-        float renderX = panelX + x + posXOffset + centeringOffset;
-        float renderY;
-        
         boolean isSettledPhase = phase == Phase.PICKUP || phase == Phase.CENTERING_TRAVEL || 
                                   phase == Phase.CENTERING_DROP ||
                                   phase == Phase.SCATTER_PICKUP || phase == Phase.SCATTER_TRAVEL ||
                                   phase == Phase.SCATTER_DROP;
-
-        float glBaseY = CoordHelper.uiTopLeftToGlSpriteY(panelY, panelHeight, y + posYOffset + centeringOffset, displaySize);
-        float extraHeight = displaySize * (scale - 1f);
-        renderY = glBaseY - extraHeight / 2f;
-
-        float extraWidth = displaySize * (scale - 1f);
-        renderX -= extraWidth / 2f;
-
-        float visualRotation = getVisualRotation(isSettledPhase);
-        DiceSpriteRenderer.render(sprite, renderX, renderY, alphaMult, scale, displaySize, visualRotation);
+        
+        // Use existing context if available (parent already set it), otherwise create one
+        UnifiedCoord.PanelContext existingCtx = UnifiedCoord.getCurrentOrNull();
+        boolean needsContextCleanup = existingCtx == null;
+        
+        if (needsContextCleanup) {
+            UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(panelX, panelY, panelWidth, panelHeight));
+        }
+        try {
+            UnifiedCoord dicePos = new UnifiedCoord(x + posXOffset + centeringOffset, y + posYOffset + centeringOffset);
+            
+            float extraHeight = displaySize * (scale - 1f);
+            float extraWidth = displaySize * (scale - 1f);
+            float renderX = dicePos.glX() - extraWidth / 2f;
+            float renderY = dicePos.glSpriteY(displaySize) - extraHeight / 2f;
+            
+            float visualRotation = getVisualRotation(isSettledPhase);
+            DiceSpriteRenderer.render(sprite, renderX, renderY, alphaMult, scale, displaySize, visualRotation);
+        } finally {
+            if (needsContextCleanup) {
+                UnifiedCoord.clearCurrent();
+            }
+        }
         
         GL11.glColor4f(1f, 1f, 1f, 1f);
     }
