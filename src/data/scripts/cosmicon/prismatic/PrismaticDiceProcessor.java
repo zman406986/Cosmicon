@@ -7,7 +7,7 @@ import data.scripts.cosmicon.util.CosmiconLogger;
 public class PrismaticDiceProcessor {
     
     public void applyEffect(PrismaticDiceInstance dice, BattleState state, boolean forPlayer) {
-        if (!dice.shouldTriggerEffect()) return;
+        if (!dice.isSpecialFace) return;
         
         PrismaticEffect effect = dice.getEffect();
         

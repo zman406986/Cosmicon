@@ -20,16 +20,19 @@ public class DamageResolutionAnimator {
     private static final float COMBO_PAUSE_DURATION = 0.5f;
     private static final float DEFENDER_PULSE_DURATION = 0.4f;
     
+    private static final float ATK_ROTATION_TO_TOP_LEFT = -90f;
+    private static final float ATK_ROTATION_TO_BOTTOM_RIGHT = 90f;
+    
     private static final Color DAMAGE_RESULT_COLOR = FlyingNumber.DAMAGE_RESULT;
     private static final Color DEFENDER_PULSE_COLOR = new Color(80, 200, 120);
+    
+    private boolean playerAttacker;
     
     public enum Phase {
         IDLE,
         ICON_PREPARATION,
         ICON_CLASH,
-        WAIT_FOR_CLASH_CLICK,
         ICON_IMPACT,
-        WAIT_FOR_IMPACT_CLICK,
         WINNER_IMPACT,
         ICON_RETREAT,
         SHATTER_RESTORE,
@@ -56,7 +59,6 @@ public class DamageResolutionAnimator {
     private Phase phase;
     private float phaseElapsed;
     private boolean complete;
-    private boolean waitingForClick;
     
     private int attackValue;
     private int defenseValue;
@@ -86,7 +88,6 @@ public class DamageResolutionAnimator {
         phase = Phase.IDLE;
         phaseElapsed = 0f;
         complete = false;
-        waitingForClick = false;
         shatterRestoreAlpha = 0f;
         impactEffect = new ImpactEffect();
         shatterEffect = new IconShatterEffect();
@@ -104,6 +105,8 @@ public class DamageResolutionAnimator {
         
         this.centerX = BattleRenderingUtils.PANEL_WIDTH / 2f;
         this.centerY = BattleRenderingUtils.PANEL_HEIGHT / 2f;
+        
+        this.playerAttacker = state.isPlayerAttacker();
         
         this.attackValue = state.getAttackValue();
         this.defenseValue = state.getDefenseValue();
@@ -148,10 +151,12 @@ public class DamageResolutionAnimator {
         atkFlyingIcon.createLabel(panel);
         defFlyingIcon.createLabel(panel);
         
+        atkFlyingIcon.flyTo(centerX, centerY, ICON_CLASH_DURATION);
+        defFlyingIcon.flyTo(centerX, centerY, ICON_CLASH_DURATION);
+        
         phase = Phase.ICON_PREPARATION;
         phaseElapsed = 0f;
         complete = false;
-        waitingForClick = false;
     }
     
     private void calculateStaticIconPositions(BattleState state) {
@@ -202,6 +207,7 @@ public class DamageResolutionAnimator {
         
         atkFlyingIcon = new FlyingIcon(atkRoleIcon, iconSize, ColorHelper.ATTACK_VALUE);
         atkFlyingIcon.setValue(attackValue);
+        atkFlyingIcon.setTargetRotation(playerAttacker ? ATK_ROTATION_TO_BOTTOM_RIGHT : ATK_ROTATION_TO_TOP_LEFT);
         
         defFlyingIcon = new FlyingIcon(defRoleIcon, iconSize, ColorHelper.DEFENSE_VALUE);
         defFlyingIcon.setValue(defenseValue);
@@ -209,8 +215,6 @@ public class DamageResolutionAnimator {
     
     public void advance(float amount) {
         if (phase == Phase.IDLE || phase == Phase.COMPLETE) return;
-        
-        if (waitingForClick) return;
         
         phaseElapsed += amount;
         
@@ -257,24 +261,33 @@ public class DamageResolutionAnimator {
     }
     
     private void advanceIconPreparation() {
-        if (phaseElapsed >= ICON_PREP_DURATION) {
-            startIconClash();
+        boolean atkReady = atkFlyingIcon == null || atkFlyingIcon.isReady();
+        boolean defReady = defFlyingIcon == null || defFlyingIcon.isReady();
+        
+        if (atkReady && defReady) {
             phase = Phase.ICON_CLASH;
             phaseElapsed = 0f;
+            startIconClash();
         }
     }
     
     private void startIconClash() {
-        atkFlyingIcon.flyTo(centerX, centerY, ICON_CLASH_DURATION);
-        defFlyingIcon.flyTo(centerX, centerY, ICON_CLASH_DURATION);
+        if (atkFlyingIcon != null) {
+            atkFlyingIcon.startFlight();
+        }
+        if (defFlyingIcon != null) {
+            defFlyingIcon.startFlight();
+        }
     }
     
     private void advanceIconClash() {
-        if (phaseElapsed >= ICON_CLASH_DURATION || 
-            (atkFlyingIcon.isComplete() && defFlyingIcon.isComplete())) {
+        boolean atkDone = atkFlyingIcon == null || atkFlyingIcon.isComplete();
+        boolean defDone = defFlyingIcon == null || defFlyingIcon.isComplete();
+        
+        if (phaseElapsed >= ICON_CLASH_DURATION || (atkDone && defDone)) {
             
-            phase = Phase.WAIT_FOR_CLASH_CLICK;
-            waitingForClick = true;
+            triggerIconImpact();
+            phase = Phase.ICON_IMPACT;
             phaseElapsed = 0f;
         }
     }
@@ -293,7 +306,7 @@ public class DamageResolutionAnimator {
                 defFlyingIcon.setLabelOpacity(0f);
             }
         } else {
-            shatterEffect.trigger(atkIconCenterX, atkIconCenterY, 
+            shatterEffect.trigger(centerX, centerY, 
                 ColorHelper.ATTACK_VALUE, iconSize);
             if (atkFlyingIcon != null) {
                 atkFlyingIcon.setLabelOpacity(0f);
@@ -303,8 +316,7 @@ public class DamageResolutionAnimator {
     
     private void advanceIconImpact() {
         if (phaseElapsed >= ICON_IMPACT_DURATION) {
-            phase = Phase.WAIT_FOR_IMPACT_CLICK;
-            waitingForClick = true;
+            proceedFromImpactWait();
             phaseElapsed = 0f;
         }
     }
@@ -312,14 +324,14 @@ public class DamageResolutionAnimator {
     private void proceedFromImpactWait() {
         if (attackWins) {
             atkFlyingIcon.setValue(resultValue);
-            atkFlyingIcon.flyTo(defenderTargetX, defenderTargetY, WINNER_IMPACT_DURATION);
+            atkFlyingIcon.flyDirectTo(defenderTargetX, defenderTargetY, WINNER_IMPACT_DURATION);
             phase = Phase.WINNER_IMPACT;
         } else {
             if (defFlyingIcon != null) {
-                defFlyingIcon.flyTo(defIconCenterX, defIconCenterY, ICON_RETREAT_DURATION);
+                defFlyingIcon.flyDirectTo(defIconCenterX, defIconCenterY, ICON_RETREAT_DURATION);
             }
             if (atkFlyingIcon != null) {
-                atkFlyingIcon.startFrom(atkIconCenterX, atkIconCenterY);
+                atkFlyingIcon.flyDirectTo(atkIconCenterX, atkIconCenterY, ICON_RETREAT_DURATION);
             }
             phase = Phase.SHATTER_RESTORE;
         }
@@ -355,11 +367,12 @@ public class DamageResolutionAnimator {
     private void startIconRetreat() {
         if (attackWins) {
             if (atkFlyingIcon != null) {
-                atkFlyingIcon.flyTo(atkIconCenterX, atkIconCenterY, ICON_RETREAT_DURATION);
+                atkFlyingIcon.setTargetRotation(0f);
+                atkFlyingIcon.flyDirectTo(atkIconCenterX, atkIconCenterY, ICON_RETREAT_DURATION);
             }
         } else {
             if (defFlyingIcon != null) {
-                defFlyingIcon.flyTo(defIconCenterX, defIconCenterY, ICON_RETREAT_DURATION);
+                defFlyingIcon.flyDirectTo(defIconCenterX, defIconCenterY, ICON_RETREAT_DURATION);
             }
         }
     }
@@ -385,11 +398,10 @@ public class DamageResolutionAnimator {
             
             boolean atkShattered = !attackWins || isDraw;
             if (atkShattered && atkFlyingIcon != null) {
-                atkFlyingIcon.startFrom(atkIconCenterX, atkIconCenterY);
+                atkFlyingIcon.setRotation(0f);
                 atkFlyingIcon.setLabelOpacity(1f);
             }
             if (!atkShattered && defFlyingIcon != null) {
-                defFlyingIcon.startFrom(defIconCenterX, defIconCenterY);
                 defFlyingIcon.setLabelOpacity(1f);
             }
             
@@ -479,9 +491,7 @@ public class DamageResolutionAnimator {
     private void renderNumbersOnIcons(float panelX, float panelY, float panelHeight, float alphaMult) {
         boolean shouldRenderNumbers = phase == Phase.ICON_PREPARATION ||
             phase == Phase.ICON_CLASH ||
-            phase == Phase.WAIT_FOR_CLASH_CLICK ||
             phase == Phase.ICON_IMPACT ||
-            phase == Phase.WAIT_FOR_IMPACT_CLICK ||
             phase == Phase.WINNER_IMPACT ||
             phase == Phase.ICON_RETREAT ||
             phase == Phase.SHATTER_RESTORE;
@@ -490,7 +500,7 @@ public class DamageResolutionAnimator {
         
         boolean duringClash = phase == Phase.ICON_PREPARATION ||
                               phase == Phase.ICON_CLASH ||
-                              phase == Phase.WAIT_FOR_CLASH_CLICK;
+                              phase == Phase.ICON_IMPACT;
         
         if (duringClash) {
             if (atkFlyingIcon != null) {
@@ -523,9 +533,7 @@ public class DamageResolutionAnimator {
     public boolean isIconClashActive() {
         return phase == Phase.ICON_PREPARATION ||
                phase == Phase.ICON_CLASH ||
-               phase == Phase.WAIT_FOR_CLASH_CLICK ||
                phase == Phase.ICON_IMPACT ||
-               phase == Phase.WAIT_FOR_IMPACT_CLICK ||
                phase == Phase.WINNER_IMPACT ||
                phase == Phase.ICON_RETREAT ||
                phase == Phase.SHATTER_RESTORE;
@@ -543,9 +551,7 @@ public class DamageResolutionAnimator {
     private boolean shouldRenderResultNumber() {
         return phase != Phase.ICON_PREPARATION && 
             phase != Phase.ICON_CLASH && 
-            phase != Phase.WAIT_FOR_CLASH_CLICK &&
             phase != Phase.ICON_IMPACT &&
-            phase != Phase.WAIT_FOR_IMPACT_CLICK &&
             phase != Phase.WINNER_IMPACT;
     }
     
@@ -554,20 +560,6 @@ public class DamageResolutionAnimator {
     }
     
     public void forceComplete() {
-        waitingForClick = false;
-        
-        if (phase == Phase.WAIT_FOR_CLASH_CLICK) {
-            triggerIconImpact();
-            phase = Phase.ICON_IMPACT;
-            phaseElapsed = 0f;
-            return;
-        }
-        
-        if (phase == Phase.WAIT_FOR_IMPACT_CLICK) {
-            proceedFromImpactWait();
-            return;
-        }
-        
         if (phase == Phase.IDLE) {
             return;
         }
@@ -648,7 +640,6 @@ public class DamageResolutionAnimator {
         phase = Phase.IDLE;
         phaseElapsed = 0f;
         complete = false;
-        waitingForClick = false;
         shatterRestoreAlpha = 0f;
     }
     

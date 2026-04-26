@@ -22,7 +22,7 @@ public class ValueChangeAnimator {
     private static final float DELTA_SHOW_DURATION = 0.3f;
     private static final float FLASH_DURATION = 0.15f;
     private static final float DELTA_FLY_DURATION = 0.4f;
-    private static final float LABEL_HEIGHT = 30f;
+    private static final float LABEL_HEIGHT = 35f;
     private static final float DELTA_START_OFFSET_Y = -20f;
     private static final float DELTA_FLY_DISTANCE = 40f;
 
@@ -101,7 +101,7 @@ public class ValueChangeAnimator {
         SettingsAPI settings = Global.getSettings();
         
         QueuedChange current = changeQueue.get(0);
-        deltaLabel = settings.createLabel(current.deltaText, Fonts.INSIGNIA_LARGE);
+        deltaLabel = settings.createLabel(current.deltaText, Fonts.INSIGNIA_VERY_LARGE);
         deltaLabel.setColor(current.color);
         deltaLabel.setAlignment(Alignment.MID);
         
@@ -110,7 +110,7 @@ public class ValueChangeAnimator {
             .setSize(deltaWidth, LABEL_HEIGHT)
             .inTL(iconCenterX - deltaWidth / 2f, deltaCurrentY - LABEL_HEIGHT / 2f);
         
-        totalLabel = settings.createLabel(String.valueOf(currentValue), Fonts.INSIGNIA_LARGE);
+        totalLabel = settings.createLabel(String.valueOf(currentValue), Fonts.INSIGNIA_VERY_LARGE);
         totalLabel.setColor(isAttack ? ColorHelper.ATTACK_VALUE : ColorHelper.DEFENSE_VALUE);
         totalLabel.setAlignment(Alignment.MID);
         

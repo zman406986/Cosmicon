@@ -188,6 +188,8 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
     }
     
     private void advanceToDefensePhase() {
+        state.notifyTransitionToDefenderRoll();
+        
         state.setDefenderRolling(true);
         
         PassiveEventSystem.onStartOfDefenseTurn(state, true);

@@ -116,20 +116,27 @@ public class StatusEffectProcessor {
         int totalDamage = 0;
 
         switch (phase) {
-            case START_OF_TURN -> totalDamage += processStartOfTurn();
+            case START_OF_TURN -> totalDamage += processStartOfTurn(turnType, context);
             case BEFORE_ROLL -> processBeforeRoll(turnType, context);
-            case AFTER_ROLL -> processAfterRoll(turnType, context);
+            case AFTER_ROLL -> processAfterRoll(context);
             case AFTER_SELECT -> processAfterSelect(context);
             case BEFORE_RESOLUTION -> totalDamage += processBeforeResolution(context);
-            case AFTER_RESOLUTION -> processAfterResolution(turnType, context);
             case END_OF_TURN -> totalDamage += processEndOfTurn();
-            case BEFORE_SELECT -> {}
+            case BEFORE_SELECT, AFTER_RESOLUTION -> {}
         }
 
         return totalDamage;
     }
 
-    private int processStartOfTurn() {
+    private int processStartOfTurn(TurnType turnType, BattleContext context) {
+        if (turnType == TurnType.ATTACK && hasEffect(StatusEffect.LAST_STAND)) {
+            lastStandHpReduction = context.getCurrentHp() - 1;
+            context.setCurrentHp(1);
+            effects.remove(StatusEffect.LAST_STAND);
+            durations.remove(StatusEffect.LAST_STAND);
+            CosmiconLogger.debug("LAST_STAND: HP reduced from %d to 1, bonus = %d", 
+                lastStandHpReduction + 1, lastStandHpReduction);
+        }
         return 0;
     }
 
@@ -152,7 +159,7 @@ public class StatusEffectProcessor {
         }
     }
 
-    private void processAfterRoll(TurnType turnType, BattleContext context) {
+    private void processAfterRoll(BattleContext context) {
         if (hasEffect(StatusEffect.DESTINED)) {
             context.markDestinedDice();
         }
@@ -193,19 +200,6 @@ public class StatusEffectProcessor {
         }
 
         return damage;
-    }
-
-    private void processAfterResolution(TurnType turnType, BattleContext context) {
-        if (hasEffect(StatusEffect.LAST_STAND)) {
-            lastStandHpReduction = context.getCurrentHp() - 1;
-            context.setCurrentHp(1);
-            effects.remove(StatusEffect.LAST_STAND);
-            durations.remove(StatusEffect.LAST_STAND);
-        }
-
-        if (hasEffect(StatusEffect.UNYIELDING) && context.getCurrentHp() <= 0) {
-            context.setCurrentHp(1);
-        }
     }
 
     private int processEndOfTurn() {
@@ -256,7 +250,7 @@ public class StatusEffectProcessor {
                 bonus += getLayers(StatusEffect.OVERLOAD);
             }
 
-            if (hasEffect(StatusEffect.LAST_STAND) && lastStandHpReduction > 0) {
+            if (lastStandHpReduction > 0) {
                 bonus += lastStandHpReduction;
             }
         }

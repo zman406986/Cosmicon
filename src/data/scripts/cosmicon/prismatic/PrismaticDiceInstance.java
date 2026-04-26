@@ -8,7 +8,6 @@ public class PrismaticDiceInstance {
     public final int faceIndex;
     public final boolean isSpecialFace;
     
-    private boolean selected;
     private boolean mustSelect;
     
     public PrismaticDiceInstance(PrismaticDiceType type, boolean isTrueVersion,
@@ -18,7 +17,6 @@ public class PrismaticDiceInstance {
         this.rolledFace = rolledFace;
         this.faceIndex = faceIndex;
         this.isSpecialFace = type.isSpecialFace(faceIndex, isTrueVersion);
-        this.selected = false;
         this.mustSelect = false;
     }
     
@@ -34,24 +32,12 @@ public class PrismaticDiceInstance {
         return roll(type, isTrueVersion, new java.util.Random());
     }
     
-    public boolean isSelected() {
-        return selected;
-    }
-    
-    public void setSelected(boolean selected) {
-        this.selected = selected;
-    }
-    
     public boolean isMustSelect() {
         return mustSelect;
     }
     
     public void setMustSelect(boolean mustSelect) {
         this.mustSelect = mustSelect;
-    }
-    
-    public boolean shouldTriggerEffect() {
-        return isSpecialFace && selected;
     }
     
     public PrismaticEffect getEffect() {
@@ -61,6 +47,6 @@ public class PrismaticDiceInstance {
     @Override
     public String toString() {
         return "PrismaticDice[" + type.getId() + ":" + rolledFace + 
-               (isSpecialFace ? "*" : "") + (selected ? " (selected)" : "") + "]";
+               (isSpecialFace ? "*" : "") + "]";
     }
 }

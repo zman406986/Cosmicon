@@ -195,19 +195,11 @@ public final class RerollOptimizer {
         
         int currentSum = calculateSum(currentValues, currentSelection);
         
-        float expectedNewSum = currentSum;
-        for (int idx : rerollIndices) {
-            if (currentSelection.contains(idx)) {
-                expectedNewSum -= currentValues.get(idx);
-                expectedNewSum += DiceProbabilityCalculator.expectedValue(diceTypes.get(idx));
-            } else {
-                Set<Integer> newSelection = findOptimalSelectionAfterReroll(
-                    currentValues, rerollIndices, currentSelection, requiredCount);
-                
-                expectedNewSum = calculateExpectedSumAfterReroll(currentValues, diceTypes, rerollIndices, newSelection);
-            }
-        }
-
+        Set<Integer> newSelection = findOptimalSelectionAfterReroll(
+            currentValues, diceTypes, rerollIndices, currentSelection, requiredCount);
+        
+        float expectedNewSum = calculateExpectedSumAfterReroll(currentValues, diceTypes, rerollIndices, newSelection);
+        
         float improvement = expectedNewSum - currentSum;
         
         if (expectedNewSum >= targetSum && currentSum < targetSum) {
@@ -219,6 +211,7 @@ public final class RerollOptimizer {
 
     private static Set<Integer> findOptimalSelectionAfterReroll(
             List<Integer> currentValues,
+            List<DiceType> diceTypes,
             Set<Integer> rerollIndices,
             Set<Integer> currentSelection,
             int required) {
@@ -232,7 +225,8 @@ public final class RerollOptimizer {
         }
         
         for (int idx : rerollIndices) {
-            candidates.add(new RerolledDieValue(idx, 0, true));
+            int expectedVal = (int) DiceProbabilityCalculator.expectedValue(diceTypes.get(idx));
+            candidates.add(new RerolledDieValue(idx, expectedVal, true));
         }
 
         candidates.sort(Comparator.comparingInt(RerolledDieValue::value).reversed());
@@ -245,16 +239,16 @@ public final class RerollOptimizer {
         return newSelection;
     }
 
-    private static int calculateExpectedSumAfterReroll(
+    private static float calculateExpectedSumAfterReroll(
             List<Integer> currentValues,
             List<DiceType> diceTypes,
             Set<Integer> rerollIndices,
             Set<Integer> newSelection) {
         
-        int sum = 0;
+        float sum = 0;
         for (int idx : newSelection) {
             if (rerollIndices.contains(idx)) {
-                sum += (int) DiceProbabilityCalculator.expectedValue(diceTypes.get(idx));
+                sum += DiceProbabilityCalculator.expectedValue(diceTypes.get(idx));
             } else {
                 sum += currentValues.get(idx);
             }

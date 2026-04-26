@@ -145,7 +145,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         panelY = pos.getY();
         diceZoneCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
         diceZoneCenterY = BattleRenderingUtils.PANEL_HEIGHT / 2f - 40f;
-        opponentDiceZoneCenterX = BattleRenderingUtils.MARGIN + BattleRenderingUtils.OPPONENT_DICE_ZONE_OFFSET_X + BattleRenderingUtils.OPPONENT_DICE_ZONE_W / 2f;
+        opponentDiceZoneCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
         opponentDiceZoneCenterY = BattleRenderingUtils.MARGIN + BattleRenderingUtils.OPPONENT_DICE_ZONE_Y_OFFSET + BattleRenderingUtils.OPPONENT_DICE_ZONE_H / 2f;
 
         labels = new BattleUILabels();
@@ -289,6 +289,30 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         
         if (!isPlayer && types != null) {
             triggerOpponentDiceRoll();
+        }
+    }
+    
+    @Override
+    public void onTransitionToDefenderRoll() {
+        if (diceRollManager != null) {
+            diceRollManager.clear();
+            diceRollManager.clearOpponentAnimators();
+        }
+        
+        diceAnimating = true;
+        rollAnimationDelay = 0f;
+        dicePreviewActive = false;
+        dicePreviewDelay = 0f;
+        opponentDiceAnimating = false;
+        opponentRollDelay = 0f;
+        opponentAutoRollDelay = 0f;
+        
+        inputHandler.setWaitingForClickToRoll(false);
+        inputHandler.createDiceHitboxes(new ArrayList<>());
+        
+        boolean defenderIsPlayer = !battleState.isPlayerAttacker();
+        if (!defenderIsPlayer) {
+            opponentAutoRollDelay = OPPONENT_AUTO_ROLL_DELAY;
         }
     }
 
@@ -656,6 +680,11 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
     public void triggerOpponentDiceRoll() {
         if (battleState == null || diceRollManager == null) return;
+        
+        if (diceRollManager.hasOpponentAnimators() || 
+            diceRollManager.isOpponentWaitingForRollTrigger()) {
+            return;
+        }
 
         List<DiceType> types = battleState.getOpponentDiceTypes();
         List<Integer> values = battleState.getOpponentDiceValues();
