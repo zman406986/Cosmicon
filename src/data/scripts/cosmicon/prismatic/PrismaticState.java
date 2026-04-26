@@ -7,14 +7,12 @@ import java.util.Map;
 public class PrismaticState {
     private int uses;
     private final Map<PrismaticDiceType, Integer> usesByType;
-    private boolean modeActive;
     private boolean doubleValueActive;
     private int instantDamage;
     
     public PrismaticState() {
         this.uses = 2;
         this.usesByType = new HashMap<>();
-        this.modeActive = false;
         this.doubleValueActive = false;
         this.instantDamage = 0;
     }
@@ -38,9 +36,6 @@ public class PrismaticState {
         usesByType.merge(type, 1, Integer::sum);
     }
     
-    public boolean isModeActive() { return modeActive; }
-    public void setModeActive(boolean active) { this.modeActive = active; }
-    
     public boolean isDoubleValueActive() { return doubleValueActive; }
     public void setDoubleValueActive(boolean active) { 
         this.doubleValueActive = active;
@@ -57,7 +52,6 @@ public class PrismaticState {
     
     public void reset() {
         clear();
-        modeActive = false;
-        CosmiconLogger.debug("Prismatic state fully reset (mode deactivated)");
+        CosmiconLogger.debug("Prismatic state fully reset");
     }
 }

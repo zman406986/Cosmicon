@@ -18,7 +18,6 @@ import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.UIComponentFactory;
 
 public class BattleUILabels {
-    private static final float PRISMATIC_FACE_MAPPING_OFFSET_X = 55f;
     private static final float PRISMATIC_ROLLED_LABEL_OFFSET_Y = 20f;
 
     private LabelAPI phaseLabel;
@@ -237,39 +236,37 @@ public class BattleUILabels {
     }
 
     private void createPrismaticLabels() {
-        float opponentCardX = BattleRenderingUtils.MARGIN;
-        float opponentCardY = BattleRenderingUtils.MARGIN;
-
         opponentPrismaticUsesLabel = UIComponentFactory.createLabelSmall(panel, "2", 
-            ColorHelper.PRISMATIC_GOLD, Alignment.MID, 40f, 20f, opponentCardX - 55f, opponentCardY + 85f);
+            ColorHelper.PRISMATIC_GOLD, Alignment.MID, 40f, 20f, opponentPrismaticBtnX - 50f, opponentPrismaticBtnY + 25f);
 
+        float opponentPrismaticDescX = opponentPrismaticBtnX - 290f;
         opponentPrismaticFaceMappingLabel = UIComponentFactory.createLabel(panel, "", 
-            Fonts.DEFAULT_SMALL, ColorHelper.PRISMATIC_GOLD, Alignment.LMID, 180f, 20f,
-            opponentPrismaticBtnX + PRISMATIC_FACE_MAPPING_OFFSET_X, opponentPrismaticBtnY);
+            Fonts.DEFAULT_SMALL, ColorHelper.PRISMATIC_GOLD, Alignment.LMID, 280f, 20f,
+            opponentPrismaticDescX, opponentPrismaticBtnY);
         opponentPrismaticFaceMappingLabel.setOpacity(0f);
 
         opponentPrismaticEffectLabel = UIComponentFactory.createLabelSmall(panel, "", 
-            Color.LIGHT_GRAY, Alignment.LMID, 180f, 20f,
-            opponentPrismaticBtnX + PRISMATIC_FACE_MAPPING_OFFSET_X, opponentPrismaticBtnY + 20f);
+            Color.LIGHT_GRAY, Alignment.LMID, 280f, 20f,
+            opponentPrismaticDescX, opponentPrismaticBtnY + 20f);
         opponentPrismaticEffectLabel.setOpacity(0f);
 
-        float playerPrismaticUsesX = BattleRenderingUtils.PANEL_WIDTH - (opponentCardX - 55f) - 40f;
-        float playerPrismaticUsesY = BattleRenderingUtils.PANEL_HEIGHT - (opponentCardY + 85f) - 20f;
+        float playerPrismaticUsesX = BattleRenderingUtils.MARGIN + 110f;
+        float playerPrismaticUsesY = BattleRenderingUtils.PANEL_HEIGHT - 115f;
 
         playerPrismaticUsesLabel = UIComponentFactory.createLabelSmall(panel, "2", 
             ColorHelper.PRISMATIC_GOLD, Alignment.MID, 40f, 20f, playerPrismaticUsesX, playerPrismaticUsesY);
 
-        float playerFaceMappingX = BattleRenderingUtils.PANEL_WIDTH - (opponentPrismaticBtnX + PRISMATIC_FACE_MAPPING_OFFSET_X) - 180f;
-        float playerFaceMappingY = BattleRenderingUtils.PANEL_HEIGHT - opponentPrismaticBtnY - 20f;
+        float playerPrismaticDescX = BattleRenderingUtils.MARGIN + 130f;
+        float playerFaceMappingY = BattleRenderingUtils.PANEL_HEIGHT - 100f;
 
         playerPrismaticFaceMappingLabel = UIComponentFactory.createLabelSmall(panel, "", 
-            ColorHelper.PRISMATIC_GOLD, Alignment.RMID, 180f, 20f, playerFaceMappingX, playerFaceMappingY);
+            ColorHelper.PRISMATIC_GOLD, Alignment.LMID, 280f, 20f, playerPrismaticDescX, playerFaceMappingY);
         playerPrismaticFaceMappingLabel.setOpacity(0f);
 
-        float playerEffectY = BattleRenderingUtils.PANEL_HEIGHT - (opponentPrismaticBtnY + 20f) - 20f;
+        float playerEffectY = playerFaceMappingY + 20f;
 
         playerPrismaticEffectLabel = UIComponentFactory.createLabelSmall(panel, "", 
-            Color.LIGHT_GRAY, Alignment.RMID, 180f, 20f, playerFaceMappingX, playerEffectY);
+            Color.LIGHT_GRAY, Alignment.LMID, 280f, 20f, playerPrismaticDescX, playerEffectY);
         playerPrismaticEffectLabel.setOpacity(0f);
 
         playerPrismaticRolledLabel = UIComponentFactory.createLabel(panel, "", 
@@ -351,6 +348,10 @@ public class BattleUILabels {
                 int remaining = battleState.getRemainingRerolls();
                 String rerollHint = remaining > 0 ? Strings.format("phase.reroll_hint", remaining) : "";
                 instructionText = Strings.format("phase.select_dice", required) + rerollHint;
+                String valuesStr = battleState.getSelectedDiceValuesFormatted(true);
+                if (valuesStr != null && !valuesStr.isEmpty()) {
+                    instructionText = instructionText + "  " + Strings.format("battle.selected_values", valuesStr);
+                }
             } else {
                 instructionText = Strings.get("phase.opponent_selecting");
             }
@@ -371,66 +372,10 @@ public class BattleUILabels {
     public void updateSelectionDisplayLabels() {
         if (battleState == null || attackerSelectionLabel == null) return;
 
-        Phase phase = battleState.getCurrentPhase();
-        boolean inSelectionPhase = phase == Phase.SELECTING_ATTACK || phase == Phase.SELECTING_DEFENSE;
-
-        if (!inSelectionPhase) {
-            attackerSelectionLabel.setOpacity(0f);
-            attackerEffectLabel.setOpacity(0f);
-            defenderSelectionLabel.setOpacity(0f);
-            defenderEffectLabel.setOpacity(0f);
-            return;
-        }
-
-        boolean attackerIsPlayer = battleState.isPlayerAttacker();
-        boolean attackerSelecting = phase == Phase.SELECTING_ATTACK;
-
-        updateSelectionLabelPositions();
-
-        if (attackerSelecting) {
-            String valuesStr = battleState.getSelectedDiceValuesFormatted(attackerIsPlayer);
-            List<String> effects = battleState.getSelectedPrismaticEffectStrings(attackerIsPlayer);
-
-            if (valuesStr.isEmpty()) {
-                attackerSelectionLabel.setText(Strings.get("battle.no_selection"));
-            } else {
-                attackerSelectionLabel.setText(Strings.format("battle.selected_values", valuesStr));
-            }
-
-            if (!effects.isEmpty()) {
-                attackerEffectLabel.setText(String.join(" ", effects));
-            } else {
-                attackerEffectLabel.setText("");
-            }
-
-            attackerSelectionLabel.setOpacity(1f);
-            attackerEffectLabel.setOpacity(!effects.isEmpty() ? 1f : 0f);
-
-            defenderSelectionLabel.setOpacity(0f);
-            defenderEffectLabel.setOpacity(0f);
-        } else {
-            boolean defenderIsPlayer = !attackerIsPlayer;
-            String valuesStr = battleState.getSelectedDiceValuesFormatted(defenderIsPlayer);
-            List<String> effects = battleState.getSelectedPrismaticEffectStrings(defenderIsPlayer);
-
-            if (valuesStr.isEmpty()) {
-                defenderSelectionLabel.setText(Strings.get("battle.no_selection"));
-            } else {
-                defenderSelectionLabel.setText(Strings.format("battle.selected_values", valuesStr));
-            }
-
-            if (!effects.isEmpty()) {
-                defenderEffectLabel.setText(String.join(" ", effects));
-            } else {
-                defenderEffectLabel.setText("");
-            }
-
-            defenderSelectionLabel.setOpacity(1f);
-            defenderEffectLabel.setOpacity(!effects.isEmpty() ? 1f : 0f);
-
-            attackerSelectionLabel.setOpacity(0f);
-            attackerEffectLabel.setOpacity(0f);
-        }
+        attackerSelectionLabel.setOpacity(0f);
+        attackerEffectLabel.setOpacity(0f);
+        defenderSelectionLabel.setOpacity(0f);
+        defenderEffectLabel.setOpacity(0f);
     }
 
     private void updateSelectionLabelPositions() {
@@ -634,9 +579,7 @@ public class BattleUILabels {
         int uses = battleState.getPlayerPrismaticUses();
         playerPrismaticUsesLabel.setText(String.valueOf(uses));
 
-        if (battleState.isPlayerPrismaticModeActive()) {
-            playerPrismaticUsesLabel.setColor(ColorHelper.OPPONENT_NAME);
-        } else if (uses > 0) {
+        if (uses > 0) {
             playerPrismaticUsesLabel.setColor(ColorHelper.PRISMATIC_GOLD);
         } else {
             playerPrismaticUsesLabel.setColor(ColorHelper.PRISMATIC_DISABLED);

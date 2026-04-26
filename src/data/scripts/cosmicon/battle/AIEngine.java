@@ -1,12 +1,12 @@
 package data.scripts.cosmicon.battle;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 import data.scripts.cosmicon.ai.CosmiconAICore;
 import data.scripts.cosmicon.ai.CosmiconAICore.AIDecision;
-import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class AIEngine {
@@ -35,9 +35,7 @@ public class AIEngine {
         
         List<Boolean> selected = state.getDiceSelected(forPlayer);
         if (selected != null) {
-            for (int i = 0; i < selected.size(); i++) {
-                selected.set(i, false);
-            }
+            Collections.fill(selected, false);
         }
         
         for (int idx : decision.getSelectedIndicesList()) {

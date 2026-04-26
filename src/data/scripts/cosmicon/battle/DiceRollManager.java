@@ -3,6 +3,8 @@ package data.scripts.cosmicon.battle;
 import java.util.ArrayList;
 import java.util.List;
 
+import data.scripts.cosmicon.battle.DicePathPlanner.PlannedPath;
+
 public class DiceRollManager {
 
     private static final float DICE_SPACING = 130f;
@@ -13,8 +15,10 @@ public class DiceRollManager {
     
     private boolean waitingForRollTrigger = false;
     private boolean opponentWaitingForRollTrigger = false;
-    private List<DicePathPlanner.PlannedPath> pendingRollPaths;
-    private List<DicePathPlanner.PlannedPath> pendingOpponentRollPaths;
+    private List<PlannedPath> pendingRollPaths;
+    private List<PlannedPath> pendingOpponentRollPaths;
+    private float[][] pendingScatterDestinations;
+    private float[][] pendingOpponentScatterDestinations;
 
     public DiceRollManager() {
         this.animators = new ArrayList<>();
@@ -32,16 +36,31 @@ public class DiceRollManager {
         clear();
         animators.clear();
         pendingRollPaths = null;
+        pendingScatterDestinations = null;
         waitingForRollTrigger = false;
 
         int count = Math.min(types.size(), results.size());
-        List<DicePathPlanner.PlannedPath> paths = DicePathPlanner.planPaths(types, results, centerX, centerY, DICE_SPACING);
-        pendingRollPaths = paths;
+        List<PlannedPath> gridPaths = DicePathPlanner.planPaths(types, results, centerX, centerY, DICE_SPACING);
+        
+        float panelW = BattleRenderingUtils.PANEL_WIDTH;
+        float panelH = BattleRenderingUtils.PANEL_HEIGHT;
+        float[][] scatters = DicePathPlanner.planScatterDestinations(count, panelW, panelH);
+        pendingScatterDestinations = scatters;
+        
+        float[] targetXs = new float[count];
+        float[] targetYs = new float[count];
+        for (int i = 0; i < count; i++) {
+            targetXs[i] = gridPaths.get(i).targetCenterX();
+            targetYs[i] = gridPaths.get(i).targetCenterY();
+        }
+        List<PlannedPath> travelPaths = DicePathPlanner.planTravelPaths(
+            scatters, targetXs, targetYs, panelW, panelH);
+        pendingRollPaths = travelPaths;
         
         for (int i = 0; i < count; i++) {
             DiceAnimator animator = new DiceAnimator();
             animator.init();
-            DicePathPlanner.PlannedPath path = paths.get(i);
+            PlannedPath path = gridPaths.get(i);
             
             animator.startStationaryPreview(types.get(i), results.get(i), path.targetCenterX(), path.targetCenterY());
             animators.add(animator);
@@ -53,14 +72,17 @@ public class DiceRollManager {
     public void triggerRollFromStationary() {
         if (!waitingForRollTrigger) return;
         if (pendingRollPaths == null || pendingRollPaths.isEmpty()) return;
+        if (pendingScatterDestinations == null) return;
         
         for (int i = 0; i < animators.size() && i < pendingRollPaths.size(); i++) {
             DiceAnimator animator = animators.get(i);
-            DicePathPlanner.PlannedPath path = pendingRollPaths.get(i);
+            PlannedPath path = pendingRollPaths.get(i);
+            float scatterX = pendingScatterDestinations[i][0];
+            float scatterY = pendingScatterDestinations[i][1];
             
-            animator.startRollFromStationary(path.rotation(), path.travelDistance(),
-                    path.bounceCount(), path.bounceHeights(), path.delay(),
-                    path.targetCenterX(), path.targetCenterY());
+            animator.startScatterFromPreview(scatterX, scatterY, path.delay(),
+                    path.rotation(), path.travelDistance(),
+                    path.bounceCount(), path.bounceHeights());
         }
         
         waitingForRollTrigger = false;
@@ -75,16 +97,31 @@ public class DiceRollManager {
 
         clearOpponentAnimators();
         pendingOpponentRollPaths = null;
+        pendingOpponentScatterDestinations = null;
         opponentWaitingForRollTrigger = false;
 
         int count = Math.min(types.size(), results.size());
-        List<DicePathPlanner.PlannedPath> paths = DicePathPlanner.planPaths(types, results, centerX, centerY, DICE_SPACING);
-        pendingOpponentRollPaths = paths;
+        List<PlannedPath> gridPaths = DicePathPlanner.planPaths(types, results, centerX, centerY, DICE_SPACING);
+        
+        float panelW = BattleRenderingUtils.PANEL_WIDTH;
+        float panelH = BattleRenderingUtils.PANEL_HEIGHT;
+        float[][] scatters = DicePathPlanner.planScatterDestinations(count, panelW, panelH);
+        pendingOpponentScatterDestinations = scatters;
+        
+        float[] targetXs = new float[count];
+        float[] targetYs = new float[count];
+        for (int i = 0; i < count; i++) {
+            targetXs[i] = gridPaths.get(i).targetCenterX();
+            targetYs[i] = gridPaths.get(i).targetCenterY();
+        }
+        List<PlannedPath> travelPaths = DicePathPlanner.planTravelPaths(
+            scatters, targetXs, targetYs, panelW, panelH);
+        pendingOpponentRollPaths = travelPaths;
         
         for (int i = 0; i < count; i++) {
             DiceAnimator animator = new DiceAnimator();
             animator.init();
-            DicePathPlanner.PlannedPath path = paths.get(i);
+            PlannedPath path = gridPaths.get(i);
             
             animator.startStationaryPreview(types.get(i), results.get(i), path.targetCenterX(), path.targetCenterY());
             opponentAnimators.add(animator);
@@ -96,14 +133,17 @@ public class DiceRollManager {
     public void triggerOpponentRollFromStationary() {
         if (!opponentWaitingForRollTrigger) return;
         if (pendingOpponentRollPaths == null || pendingOpponentRollPaths.isEmpty()) return;
+        if (pendingOpponentScatterDestinations == null) return;
         
         for (int i = 0; i < opponentAnimators.size() && i < pendingOpponentRollPaths.size(); i++) {
             DiceAnimator animator = opponentAnimators.get(i);
-            DicePathPlanner.PlannedPath path = pendingOpponentRollPaths.get(i);
+            PlannedPath path = pendingOpponentRollPaths.get(i);
+            float scatterX = pendingOpponentScatterDestinations[i][0];
+            float scatterY = pendingOpponentScatterDestinations[i][1];
             
-            animator.startRollFromStationary(path.rotation(), path.travelDistance(),
-                    path.bounceCount(), path.bounceHeights(), path.delay(),
-                    path.targetCenterX(), path.targetCenterY());
+            animator.startScatterFromPreview(scatterX, scatterY, path.delay(),
+                    path.rotation(), path.travelDistance(),
+                    path.bounceCount(), path.bounceHeights());
         }
         
         opponentWaitingForRollTrigger = false;
@@ -180,14 +220,30 @@ public class DiceRollManager {
         if (!initialized) return;
 
         List<float[]> existingPositions = collectAllDicePositions();
-        DicePathPlanner.PlannedPath path = DicePathPlanner.planSinglePrismaticPath(
+        PlannedPath prismaticPath = DicePathPlanner.planSinglePrismaticPath(
             animators.size(), centerX, centerY, DICE_SPACING, existingPositions);
+        
+        float panelW = BattleRenderingUtils.PANEL_WIDTH;
+        float panelH = BattleRenderingUtils.PANEL_HEIGHT;
+        
+        float[][] scatterDest = DicePathPlanner.planScatterDestinations(1, panelW, panelH);
+        float scatterX = scatterDest[0][0];
+        float scatterY = scatterDest[0][1];
+        
+        float[][] singlePos = new float[][]{{scatterX, scatterY}};
+        float[] targetXs = new float[]{prismaticPath.targetCenterX()};
+        float[] targetYs = new float[]{prismaticPath.targetCenterY()};
+        List<PlannedPath> travelPaths = DicePathPlanner.planTravelPaths(
+            singlePos, targetXs, targetYs, panelW, panelH);
+        PlannedPath travelPath = travelPaths.get(0);
 
         DiceAnimator animator = new DiceAnimator();
         animator.init();
-        animator.start(type, value, path.startX(), path.startY(), path.delay(),
-                path.rotation(), path.travelDistance(), path.bounceCount(), path.bounceHeights(),
-                path.targetCenterX(), path.targetCenterY());
+        animator.startWithScatter(type, value, prismaticPath.startX(), prismaticPath.startY(),
+                scatterX, scatterY, prismaticPath.delay(),
+                travelPath.rotation(), travelPath.travelDistance(),
+                travelPath.bounceCount(), travelPath.bounceHeights(),
+                prismaticPath.targetCenterX(), prismaticPath.targetCenterY());
         animators.add(animator);
     }
     
@@ -222,15 +278,16 @@ public class DiceRollManager {
         animators.clear();
         waitingForRollTrigger = false;
         pendingRollPaths = null;
+        pendingScatterDestinations = null;
     }
 
     public void partialReroll(List<Integer> indices, List<Integer> newValues) {
         List<float[]> allPositions = collectAllDicePositions();
-        List<DicePathPlanner.PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, allPositions);
+        List<PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, allPositions);
         
         for (int i = 0; i < indices.size(); i++) {
             int animatorIndex = indices.get(i);
-            DicePathPlanner.PlannedPath path = rerollPaths.get(i);
+            PlannedPath path = rerollPaths.get(i);
             if (animatorIndex >= 0 && animatorIndex < animators.size() && path != null) {
                 DiceAnimator animator = animators.get(animatorIndex);
                 animator.rerollWithNewPath(newValues.get(animatorIndex), path.startX(), path.startY(),
@@ -255,11 +312,11 @@ public class DiceRollManager {
 
     public void rerollOpponentDice(List<Integer> indices, List<Integer> newValues) {
         List<float[]> allPositions = collectAllOpponentDicePositions();
-        List<DicePathPlanner.PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, allPositions);
+        List<PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, allPositions);
         
         for (int i = 0; i < indices.size(); i++) {
             int animatorIndex = indices.get(i);
-            DicePathPlanner.PlannedPath path = rerollPaths.get(i);
+            PlannedPath path = rerollPaths.get(i);
             if (animatorIndex >= 0 && animatorIndex < opponentAnimators.size() && path != null) {
                 DiceAnimator animator = opponentAnimators.get(animatorIndex);
                 animator.rerollWithNewPath(newValues.get(animatorIndex), path.startX(), path.startY(),
@@ -291,6 +348,7 @@ public class DiceRollManager {
         opponentAnimators.clear();
         opponentWaitingForRollTrigger = false;
         pendingOpponentRollPaths = null;
+        pendingOpponentScatterDestinations = null;
     }
 
     public List<DiceAnimator> getOpponentAnimators() {

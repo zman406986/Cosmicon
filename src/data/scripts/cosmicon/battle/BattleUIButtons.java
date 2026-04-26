@@ -144,8 +144,8 @@ public class BattleUIButtons implements ActionListenerDelegate {
             }
         }, TooltipLocation.LEFT, false);
 
-        playerPrismaticBtnX = BattleRenderingUtils.PANEL_WIDTH - opponentPrismaticBtnX - 40f;
-        playerPrismaticBtnY = BattleRenderingUtils.PANEL_HEIGHT - opponentPrismaticBtnY - 40f;
+        playerPrismaticBtnX = BattleRenderingUtils.MARGIN + 60f;
+        playerPrismaticBtnY = BattleRenderingUtils.PANEL_HEIGHT - 100f;
 
         buttonsCreated = true;
     }

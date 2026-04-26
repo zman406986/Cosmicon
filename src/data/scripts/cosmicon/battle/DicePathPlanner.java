@@ -11,6 +11,9 @@ public class DicePathPlanner {
     private static final float DICE_SIZE = AnimationConstants.DICE_SIZE;
     private static final float[] TRAVEL_DISTANCES = AnimationConstants.TRAVEL_DISTANCES;
     private static final int MAX_RETRIES = 16;
+    private static final int SCATTER_MAX_RETRIES = 8;
+    private static final int SCATTER_FULL_RESET_LIMIT = 4;
+    private static final float SCATTER_MARGIN = AnimationConstants.SCATTER_PANEL_EDGE_MARGIN;
 
     public record PlannedPath(float rotation, float travelDistance, int bounceCount, float[] bounceHeights,
                               float startX, float startY, float delay, float targetCenterX, float targetCenterY)
@@ -51,6 +54,14 @@ public class DicePathPlanner {
     private static PlannedPath planSingleDice(float startX, float startY, 
                                                float baseDelay, List<float[]> plannedEndpoints, 
                                                float targetCenterX, float targetCenterY) {
+        return planSingleDice(startX, startY, baseDelay, plannedEndpoints,
+            targetCenterX, targetCenterY, Float.MAX_VALUE, Float.MAX_VALUE);
+    }
+    
+    private static PlannedPath planSingleDice(float startX, float startY, 
+                                               float baseDelay, List<float[]> plannedEndpoints, 
+                                               float targetCenterX, float targetCenterY,
+                                               float panelW, float panelH) {
         float bestRotation = 0f;
         float bestTravelDistance = TRAVEL_DISTANCES[0];
         
@@ -60,6 +71,8 @@ public class DicePathPlanner {
             
             float endX = startX + (float)Math.cos(Math.toRadians(rotation)) * travelDistance;
             float endY = startY + (float)Math.sin(Math.toRadians(rotation)) * travelDistance;
+            
+            if (!isWithinPanelBounds(endX, endY, panelW, panelH)) continue;
             
             if (collidesWithPlannedPaths(endX, endY, plannedEndpoints)) {
                 bestRotation = rotation;
@@ -90,6 +103,73 @@ public class DicePathPlanner {
             }
         }
         return true;
+    }
+    
+    private static boolean isWithinPanelBounds(float x, float y, float panelW, float panelH) {
+        return x >= SCATTER_MARGIN && x <= panelW - SCATTER_MARGIN
+            && y >= SCATTER_MARGIN && y <= panelH - SCATTER_MARGIN;
+    }
+    
+    public static float[][] planScatterDestinations(int count, float panelW, float panelH) {
+        float[][] destinations = new float[count][2];
+        List<float[]> placedDestinations = new ArrayList<>();
+        
+        for (int fullReset = 0; fullReset < SCATTER_FULL_RESET_LIMIT; fullReset++) {
+            placedDestinations.clear();
+            boolean allPlaced = true;
+            
+            for (int i = 0; i < count; i++) {
+                boolean placed = false;
+                for (int attempt = 0; attempt < SCATTER_MAX_RETRIES; attempt++) {
+                    float sx = SCATTER_MARGIN + rand.nextFloat() * (panelW - 2f * SCATTER_MARGIN);
+                    float sy = SCATTER_MARGIN + rand.nextFloat() * (panelH - 2f * SCATTER_MARGIN);
+                    
+                    if (collidesWithPlannedPaths(sx, sy, placedDestinations)) {
+                        destinations[i][0] = sx;
+                        destinations[i][1] = sy;
+                        placedDestinations.add(new float[]{sx, sy});
+                        placed = true;
+                        break;
+                    }
+                }
+                if (!placed) {
+                    allPlaced = false;
+                    break;
+                }
+            }
+            if (allPlaced) return destinations;
+        }
+        
+        float spacing = (panelW - 2f * SCATTER_MARGIN) / Math.max(count, 1);
+        float startX = SCATTER_MARGIN + spacing / 2f;
+        float y = panelH / 2f;
+        for (int i = 0; i < count; i++) {
+            destinations[i][0] = Math.min(startX + i * spacing, panelW - SCATTER_MARGIN);
+            destinations[i][1] = y;
+        }
+        return destinations;
+    }
+    
+    public static List<PlannedPath> planTravelPaths(float[][] startPositions,
+            float[] targetCenterXs, float[] targetCenterYs, float panelW, float panelH) {
+        int count = startPositions.length;
+        List<PlannedPath> paths = new ArrayList<>(count);
+        List<float[]> plannedEndpoints = new ArrayList<>();
+        
+        for (int i = 0; i < count; i++) {
+            float startX = startPositions[i][0];
+            float startY = startPositions[i][1];
+            float delay = i * 0.05f;
+            
+            PlannedPath path = planSingleDice(startX, startY, delay, plannedEndpoints,
+                targetCenterXs[i], targetCenterYs[i], panelW, panelH);
+            paths.add(path);
+            
+            float endX = startX + (float)Math.cos(Math.toRadians(path.rotation())) * path.travelDistance();
+            float endY = startY + (float)Math.sin(Math.toRadians(path.rotation())) * path.travelDistance();
+            plannedEndpoints.add(new float[]{endX, endY});
+        }
+        return paths;
     }
     
     public static List<PlannedPath> planRerollPaths(List<Integer> indices,

@@ -154,7 +154,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             opponentPrismaticBtnX, opponentPrismaticBtnY);
         buttons.init(panel, callbacks, battleController, battleState, diceRollManager, labels,
             inputHandler, diceZoneCenterX, diceZoneCenterY);
-        inputHandler.init(panel, battleController, battleState, diceRollManager, labels, buttons,
+        inputHandler.init(battleController, battleState, diceRollManager, labels, buttons,
             diceZoneCenterX, diceZoneCenterY);
 
         if (battleState != null) {

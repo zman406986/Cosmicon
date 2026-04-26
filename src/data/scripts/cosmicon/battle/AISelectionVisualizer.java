@@ -10,7 +10,7 @@ public class AISelectionVisualizer {
     private final List<Integer> plannedIndices;
     private int currentRevealIndex;
     private float revealTimer;
-    private float delayPerDice;
+    private final float delayPerDice;
     private boolean isRerollPhase;
     private boolean complete;
     private boolean started;

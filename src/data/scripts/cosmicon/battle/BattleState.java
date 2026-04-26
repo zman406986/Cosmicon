@@ -84,12 +84,8 @@ public class BattleState {
     private String winner;
     
     private String attackerConfirmedSelectionText;
-    private List<String> attackerConfirmedEffects;
-    private int attackerConfirmedValue;
     
     private String defenderConfirmedSelectionText;
-    private List<String> defenderConfirmedEffects;
-    private int defenderConfirmedValue;
 
     private final List<BattleEventListener> listeners;
     private final AISelectionVisualizer aiSelectionVisualizer;
@@ -327,10 +323,6 @@ public class BattleState {
         return result;
     }
     
-    public List<PrismaticDiceInstance> getAllPrismaticDice(boolean forPlayer) {
-        return new ArrayList<>(forPlayer ? playerPrismaticDiceByIndex.values() : opponentPrismaticDiceByIndex.values());
-    }
-
     public DicePoolCounts getPlayerDicePoolCounts() {
         return playerDicePoolCounts;
     }
@@ -472,12 +464,6 @@ public class BattleState {
         return prismaticManager != null ? prismaticManager.getUses(false) : 0;
     }
 
-    public boolean isPlayerPrismaticModeActive() {
-        return prismaticManager != null && prismaticManager.isModeActive(true);
-    }
-    
-    
-    
     public void addPrismaticUse(PrismaticDiceType type, boolean isPlayer) {
         if (prismaticManager != null) prismaticManager.addPrismaticUse(type, isPlayer);
     }
@@ -986,10 +972,8 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     
     
     
-    public void setAttackerConfirmedSelection(String text, List<String> effects, int value) {
+    public void setAttackerConfirmedSelection(String text) {
         this.attackerConfirmedSelectionText = text;
-        this.attackerConfirmedEffects = effects;
-        this.attackerConfirmedValue = value;
     }
     
     public String getDefenderConfirmedSelectionText() {
@@ -998,19 +982,13 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     
     
     
-    public void setDefenderConfirmedSelection(String text, List<String> effects, int value) {
+    public void setDefenderConfirmedSelection(String text) {
         this.defenderConfirmedSelectionText = text;
-        this.defenderConfirmedEffects = effects;
-        this.defenderConfirmedValue = value;
     }
     
     public void clearConfirmedSelections() {
         attackerConfirmedSelectionText = null;
-        attackerConfirmedEffects = null;
-        attackerConfirmedValue = 0;
         defenderConfirmedSelectionText = null;
-        defenderConfirmedEffects = null;
-        defenderConfirmedValue = 0;
     }
     
     public void cleanup() {

@@ -123,10 +123,6 @@ public class PrismaticManager {
         getState(forPlayer).addInstantDamage(amount);
     }
     
-    public boolean isModeActive(boolean forPlayer) {
-        return getState(forPlayer).isModeActive();
-    }
-    
     public void clearState() {
         playerPrismatic.clear();
         opponentPrismatic.clear();

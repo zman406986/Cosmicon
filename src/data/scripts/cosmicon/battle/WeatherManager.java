@@ -126,19 +126,4 @@ public class WeatherManager {
         return false;
     }
     
-    public boolean isStoryBattle() {
-        return isStoryBattle;
-    }
-    
-    public String getStoryBattleId() {
-        return storyBattleId;
-    }
-    
-    public static List<String> getAvailableStoryBattles() {
-        return new ArrayList<>(STORY_BATTLE_WEATHERS.keySet());
-    }
-    
-    public static List<WeatherType> getStoryBattleWeather(String battleId) {
-        return STORY_BATTLE_WEATHERS.getOrDefault(battleId.toLowerCase(), Collections.emptyList());
-    }
 }

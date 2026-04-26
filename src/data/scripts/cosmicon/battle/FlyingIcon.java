@@ -69,7 +69,7 @@ public class FlyingIcon {
     }
     
     public void advance(float amount) {
-        if (complete) return;
+        if (complete || duration <= 0f) return;
         elapsed += amount;
         float progress = Math.min(elapsed / duration, 1f);
         float eased = EasingUtil.easeOutQuad(progress);

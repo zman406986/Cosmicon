@@ -15,6 +15,8 @@ public class AnimationConstants {
     
     public static final float BOUNCE_DURATION = 0.3f;
     
+    public static final float SCATTER_PANEL_EDGE_MARGIN = 57.5f;
+    
     private AnimationConstants() {
     }
 }

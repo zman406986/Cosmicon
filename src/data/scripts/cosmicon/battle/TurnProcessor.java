@@ -419,18 +419,10 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         }
         
         if (aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
-            state.setAttackerConfirmedSelection(
-                state.getSelectedDiceValuesFormatted(false),
-                state.getSelectedPrismaticEffectStrings(false),
-                state.getAttackValue()
-            );
+            state.setAttackerConfirmedSelection(state.getSelectedDiceValuesFormatted(false));
             advanceToDefensePhase();
         } else if (!aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
-            state.setDefenderConfirmedSelection(
-                state.getSelectedDiceValuesFormatted(false),
-                state.getSelectedPrismaticEffectStrings(false),
-                state.getDefenseValue()
-            );
+            state.setDefenderConfirmedSelection(state.getSelectedDiceValuesFormatted(false));
             resolveDamage();
         }
         
@@ -490,18 +482,11 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         aiSelectionComplete = true;
         
         if (aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
-            state.setAttackerConfirmedSelection(
-                state.getSelectedDiceValuesFormatted(false),
-                state.getSelectedPrismaticEffectStrings(false),
-                state.getAttackValue()
-            );
+            state.setAttackerConfirmedSelection(state.getSelectedDiceValuesFormatted(false));
             advanceToDefensePhase();
         } else if (!aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
-            state.setDefenderConfirmedSelection(
-                state.getSelectedDiceValuesFormatted(false),
-                state.getSelectedPrismaticEffectStrings(false),
-                state.getDefenseValue()
-            );
+            state.setDefenderConfirmedSelection(state.getSelectedDiceValuesFormatted(false));
+            weatherController.applyDefenderSelectionPhase(state);
             resolveDamage();
         }
     }
@@ -792,18 +777,11 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         }
         
         if (state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
-            state.setAttackerConfirmedSelection(
-                state.getSelectedDiceValuesFormatted(true),
-                state.getSelectedPrismaticEffectStrings(true),
-                state.getAttackValue()
-            );
+            state.setAttackerConfirmedSelection(state.getSelectedDiceValuesFormatted(true));
             advanceToDefensePhase();
         } else if (!state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
-            state.setDefenderConfirmedSelection(
-                state.getSelectedDiceValuesFormatted(true),
-                state.getSelectedPrismaticEffectStrings(true),
-                state.getDefenseValue()
-            );
+            state.setDefenderConfirmedSelection(state.getSelectedDiceValuesFormatted(true));
+            weatherController.applyDefenderSelectionPhase(state);
             resolveDamage();
         }
     }

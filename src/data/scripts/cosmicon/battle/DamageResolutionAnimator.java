@@ -509,12 +509,12 @@ public class DamageResolutionAnimator {
         boolean restoring = phase == Phase.SHATTER_RESTORE;
         
         if (atkFlyingIcon != null && (!atkShattered || restoring)) {
-            float restoreAlpha = atkShattered && restoring ? shatterRestoreAlpha : alphaMult;
+            float restoreAlpha = atkShattered ? shatterRestoreAlpha : alphaMult;
             atkFlyingIcon.render(panelX, panelY, panelHeight, restoreAlpha);
             atkFlyingIcon.setLabelOpacity(restoreAlpha);
         }
         if (defFlyingIcon != null && (!defShattered || restoring)) {
-            float restoreAlpha = defShattered && restoring ? shatterRestoreAlpha : alphaMult;
+            float restoreAlpha = defShattered ? shatterRestoreAlpha : alphaMult;
             defFlyingIcon.render(panelX, panelY, panelHeight, restoreAlpha);
             defFlyingIcon.setLabelOpacity(restoreAlpha);
         }

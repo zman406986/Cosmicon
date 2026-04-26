@@ -4,8 +4,6 @@ import java.util.List;
 
 import org.lwjgl.input.Mouse;
 
-import com.fs.starfarer.api.ui.CustomPanelAPI;
-
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleState.Phase;
 import data.scripts.cosmicon.util.CoordHelper;
@@ -39,7 +37,7 @@ public class BattleInputHandler {
         this.waitingForClickToRoll = false;
     }
 
-    public void init(CustomPanelAPI panel, BattleController controller, BattleState state,
+    public void init(BattleController controller, BattleState state,
             DiceRollManager diceRollManager, BattleUILabels labels, BattleUIButtons buttons,
             float diceZoneCenterX, float diceZoneCenterY) {
         this.battleController = controller;
