@@ -114,6 +114,12 @@ public class BattleInputHandler {
                 }
             }
 
+            if (buttons.isPrismaticPopupActive()) {
+                lastMouseButtonState = currentButton;
+                UnifiedCoord.clearCurrent();
+                return;
+            }
+
             if (battleState.getCurrentPhase() == Phase.ROLLING) {
                 if (waitingForClickToRoll && diceRollManager.isWaitingForRollTrigger()) {
                     CosmiconLogger.info("Player clicked to trigger dice roll");

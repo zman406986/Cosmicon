@@ -306,6 +306,10 @@ public class BattleState {
         }
     }
     
+    public Map<Integer, PrismaticDiceInstance> getPrismaticDiceMap(boolean forPlayer) {
+        return forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
+    }
+    
     public List<PrismaticDiceInstance> getSelectedPrismaticDice(boolean forPlayer) {
         List<PrismaticDiceInstance> result = new ArrayList<>();
         Map<Integer, PrismaticDiceInstance> map = forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
@@ -525,6 +529,17 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         recordDamageTaken(damage, isPlayer);
         
         int newHp = isPlayer ? playerHp : opponentHp;
+        
+        if (newHp <= 0 && getEffects(isPlayer).hasEffect(StatusEffectProcessor.StatusEffect.UNYIELDING)) {
+            newHp = 1;
+            if (isPlayer) {
+                playerHp = 1;
+            } else {
+                opponentHp = 1;
+            }
+            CosmiconLogger.info("%s: UNYIELDING prevented death (HP: 1)", characterName);
+        }
+        
         int maxHp = isPlayer ? 
             (playerCard != null ? playerCard.getMaxHp() : oldHp) : 
             (opponentCard != null ? opponentCard.getMaxHp() : oldHp);

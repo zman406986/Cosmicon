@@ -235,10 +235,10 @@ public class BattleUILabels {
             rightCenterX - confirmedLabelWidth / 2f, bottomIconCenterY + iconSize / 2f + 5f, 0f);
 
         attackerIconValueLabel = UIComponentFactory.createLabelWithOpacity(panel, "", 
-            Fonts.INSIGNIA_LARGE, ColorHelper.ATTACK_VALUE, Alignment.MID, 80f, 50f, 0f, 0f, 0f);
+            Fonts.INSIGNIA_VERY_LARGE, ColorHelper.ATTACK_VALUE, Alignment.MID, 80f, 35f, 0f, 0f, 0f);
 
         defenderIconValueLabel = UIComponentFactory.createLabelWithOpacity(panel, "", 
-            Fonts.INSIGNIA_LARGE, ColorHelper.DEFENSE_VALUE, Alignment.MID, 80f, 50f, 0f, 0f, 0f);
+            Fonts.INSIGNIA_VERY_LARGE, ColorHelper.DEFENSE_VALUE, Alignment.MID, 80f, 35f, 0f, 0f, 0f);
     }
 
     private void createPrismaticLabels() {
@@ -494,7 +494,7 @@ public class BattleUILabels {
         float halfH = BattleRenderingUtils.PANEL_HEIGHT / 2f;
         float centerX = BattleRenderingUtils.PANEL_WIDTH / 2f;
         float labelW = 80f;
-        float labelH = 50f;
+        float labelH = 35f;
 
         boolean playerIsSelecting = battleState.isPlayerAttacker();
 

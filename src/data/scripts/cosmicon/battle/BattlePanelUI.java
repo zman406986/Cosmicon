@@ -145,7 +145,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         panelY = pos.getY();
         diceZoneCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
         diceZoneCenterY = BattleRenderingUtils.PANEL_HEIGHT / 2f - 40f;
-        opponentDiceZoneCenterX = BattleRenderingUtils.MARGIN + BattleRenderingUtils.OPPONENT_DICE_ZONE_OFFSET_X + BattleRenderingUtils.OPPONENT_DICE_ZONE_W / 2f;
+        opponentDiceZoneCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
         opponentDiceZoneCenterY = BattleRenderingUtils.MARGIN + BattleRenderingUtils.OPPONENT_DICE_ZONE_Y_OFFSET + BattleRenderingUtils.OPPONENT_DICE_ZONE_H / 2f;
 
         labels = new BattleUILabels();

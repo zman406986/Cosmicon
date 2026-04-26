@@ -33,10 +33,6 @@ public class PassiveResults {
             this.attackBonus += bonus;
         }
 
-        public void addDefenseBonus(int bonus) {
-            this.defenseBonus += bonus;
-        }
-
         public void setPerforation(boolean perforation) {
             this.perforation = perforation;
         }

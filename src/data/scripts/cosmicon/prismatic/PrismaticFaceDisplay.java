@@ -9,10 +9,6 @@ public class PrismaticFaceDisplay {
     
     private static final String[] FACE_LETTERS = {"A", "B", "C", "D", "E", "F"};
     
-    public static String[] getFaceLetters() {
-        return FACE_LETTERS.clone();
-    }
-    
     public static String formatSingleFace(int faceIndex, int faceValue, boolean isSpecial) {
         if (faceIndex < 0 || faceIndex >= FACE_LETTERS.length) return "";
         String letter = FACE_LETTERS[faceIndex];
@@ -80,19 +76,5 @@ public class PrismaticFaceDisplay {
             return Strings.format("prismatic.equip.effect_status", statusName);
         }
         return Strings.get("prismatic.equip.no_effect");
-    }
-    
-    public static int getFaceIndexFromLetter(String letter) {
-        for (int i = 0; i < FACE_LETTERS.length; i++) {
-            if (FACE_LETTERS[i].equalsIgnoreCase(letter)) return i;
-        }
-        return -1;
-    }
-    
-    public static String getLetterFromFaceIndex(int faceIndex) {
-        if (faceIndex >= 0 && faceIndex < FACE_LETTERS.length) {
-            return FACE_LETTERS[faceIndex];
-        }
-        return "";
     }
 }

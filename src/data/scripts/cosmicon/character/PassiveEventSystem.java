@@ -118,8 +118,4 @@ public final class PassiveEventSystem {
     private static boolean isAttacker(BattleState state, boolean forPlayer) {
         return state.isPlayerAttacker() != forPlayer;
     }
-
-    private static boolean isDefender(BattleState state, boolean forPlayer) {
-        return state.isPlayerAttacker() == forPlayer;
-    }
 }

@@ -29,7 +29,7 @@ public class FlyingNumber {
     private static final int SHATTER_MIN_PARTICLES = 8;
     private static final int SHATTER_MAX_PARTICLES = 12;
     private static final float SHATTER_SPEED = 60f;
-    private static final float LABEL_HEIGHT = 30f;
+    private static final float LABEL_HEIGHT = 35f;
     
     private enum Phase { WAITING, FLYING, IMPACT, SHATTER, COMPLETE }
     
@@ -238,7 +238,7 @@ public class FlyingNumber {
         if (labelCreated) return;
         
         SettingsAPI settings = Global.getSettings();
-        label = settings.createLabel(displayText, Fonts.INSIGNIA_LARGE);
+        label = settings.createLabel(displayText, Fonts.INSIGNIA_VERY_LARGE);
         label.setColor(color);
         label.setAlignment(Alignment.MID);
         

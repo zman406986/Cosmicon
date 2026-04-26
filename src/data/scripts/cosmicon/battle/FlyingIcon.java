@@ -2,6 +2,8 @@ package data.scripts.cosmicon.battle;
 
 import java.awt.Color;
 
+import org.lwjgl.opengl.GL11;
+
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.SettingsAPI;
 import com.fs.starfarer.api.graphics.SpriteAPI;
@@ -16,28 +18,39 @@ import data.scripts.cosmicon.util.EasingUtil;
 import data.scripts.cosmicon.util.GLStateUtil;
 
 public class FlyingIcon {
+    private static final float PULLBACK_DISTANCE = 40f;
+    private static final float PULLBACK_DURATION = 0.4f;
+    private static final float LABEL_HEIGHT = 35f;
+    private static final float ROTATION_DURATION = 0.25f;
+    
+    private enum FlyPhase { IDLE, ROTATING, PULLBACK, FLYING, COMPLETE }
+    
     private float startX, startY;
+    private float pullbackX, pullbackY;
     private float targetX, targetY;
     private float currentX, currentY;
-    private float duration;
+    private float flyDuration;
     private float elapsed;
     private final float size;
-    private boolean complete;
+    private FlyPhase flyPhase;
     private final SpriteAPI sprite;
     private int value;
     private final Color color;
+    
+    private float currentRotation = 0f;
+    private float targetRotation = 0f;
+    private float rotationElapsed = 0f;
+    private float originalRotation = 0f;
     
     private LabelAPI valueLabel;
     private CustomPanelAPI labelPanel;
     private boolean labelCreated;
     
-    private static final float LABEL_HEIGHT = 30f;
-    
     public FlyingIcon(SpriteAPI sprite, float size, Color color) {
         this.sprite = sprite;
         this.size = size;
         this.color = color;
-        this.complete = false;
+        this.flyPhase = FlyPhase.IDLE;
         this.elapsed = 0f;
         this.labelCreated = false;
     }
@@ -47,14 +60,43 @@ public class FlyingIcon {
         this.startY = y;
         this.currentX = x;
         this.currentY = y;
+        this.originalRotation = currentRotation;
+    }
+    
+    public void setTargetRotation(float rotation) {
+        this.targetRotation = rotation;
+    }
+    
+    public float getRotation() {
+        return currentRotation;
+    }
+    
+    public void setRotation(float rotation) {
+        this.currentRotation = rotation;
     }
     
     public void flyTo(float x, float y, float duration) {
+        float dx = x - currentX;
+        float dy = y - currentY;
+        float dist = (float) Math.sqrt(dx * dx + dy * dy);
+        if (dist > 0f) {
+            pullbackX = currentX - (dx / dist) * PULLBACK_DISTANCE;
+            pullbackY = currentY - (dy / dist) * PULLBACK_DISTANCE;
+        } else {
+            pullbackX = currentX;
+            pullbackY = currentY;
+        }
         this.targetX = x;
         this.targetY = y;
-        this.duration = duration;
+        this.flyDuration = duration;
         this.elapsed = 0f;
-        this.complete = false;
+        this.rotationElapsed = 0f;
+        
+        if (Math.abs(targetRotation - currentRotation) > 0.5f) {
+            flyPhase = FlyPhase.ROTATING;
+        } else {
+            flyPhase = FlyPhase.PULLBACK;
+        }
     }
     
     public void setValue(int value) {
@@ -69,19 +111,68 @@ public class FlyingIcon {
     }
     
     public void advance(float amount) {
-        if (complete || duration <= 0f) return;
-        elapsed += amount;
-        float progress = Math.min(elapsed / duration, 1f);
-        float eased = EasingUtil.easeOutQuad(progress);
-        currentX = startX + (targetX - startX) * eased;
-        currentY = startY + (targetY - startY) * eased;
-        if (progress >= 1f) {
-            complete = true;
+        if (flyPhase == FlyPhase.COMPLETE || flyPhase == FlyPhase.IDLE) return;
+        
+        switch (flyPhase) {
+            case ROTATING -> advanceRotation(amount);
+            case PULLBACK -> {
+                elapsed += amount;
+                advancePullback();
+            }
+            case FLYING -> {
+                elapsed += amount;
+                advanceFlying();
+            }
         }
+        
         updateLabelPosition();
     }
     
-    public boolean isComplete() { return complete; }
+    private void advanceRotation(float amount) {
+        rotationElapsed += amount;
+        
+        if (rotationElapsed >= ROTATION_DURATION) {
+            currentRotation = targetRotation;
+            elapsed = 0f;
+            flyPhase = FlyPhase.PULLBACK;
+            return;
+        }
+        
+        float progress = rotationElapsed / ROTATION_DURATION;
+        float eased = EasingUtil.easeOutQuad(progress);
+        currentRotation = originalRotation + (targetRotation - originalRotation) * eased;
+    }
+    
+    private void advancePullback() {
+        if (elapsed >= PULLBACK_DURATION) {
+            currentX = pullbackX;
+            currentY = pullbackY;
+            elapsed = 0f;
+            flyPhase = FlyPhase.FLYING;
+            return;
+        }
+        
+        float progress = elapsed / PULLBACK_DURATION;
+        float eased = EasingUtil.easeInQuad(progress);
+        currentX = startX + (pullbackX - startX) * eased;
+        currentY = startY + (pullbackY - startY) * eased;
+    }
+    
+    private void advanceFlying() {
+        if (elapsed >= flyDuration) {
+            currentX = targetX;
+            currentY = targetY;
+            flyPhase = FlyPhase.COMPLETE;
+            return;
+        }
+        
+        float progress = elapsed / flyDuration;
+        float eased = EasingUtil.easeOutQuad(progress);
+        currentX = pullbackX + (targetX - pullbackX) * eased;
+        currentY = pullbackY + (targetY - pullbackY) * eased;
+    }
+    
+    public boolean isComplete() { return flyPhase == FlyPhase.COMPLETE; }
     public float getX() { return currentX; }
     public float getY() { return currentY; }
     public float getSize() { return size; }
@@ -92,7 +183,7 @@ public class FlyingIcon {
         if (labelCreated || panel == null) return;
         
         SettingsAPI settings = Global.getSettings();
-        valueLabel = settings.createLabel(String.valueOf(value), Fonts.INSIGNIA_LARGE);
+        valueLabel = settings.createLabel(String.valueOf(value), Fonts.INSIGNIA_VERY_LARGE);
         valueLabel.setColor(color);
         valueLabel.setAlignment(Alignment.MID);
         
@@ -132,7 +223,6 @@ public class FlyingIcon {
     public void render(float panelX, float panelY, float panelHeight, float alphaMult) {
         if (sprite == null) return;
         
-        // Use existing context if available, otherwise create one
         UnifiedCoord.PanelContext existingCtx = UnifiedCoord.getCurrentOrNull();
         boolean needsContextCleanup = existingCtx == null;
         
@@ -146,10 +236,36 @@ public class FlyingIcon {
             float uiX = currentX - size / 2f;
             float uiY = currentY + size / 2f;
             UnifiedCoord pos = new UnifiedCoord(uiX, uiY);
+            float glX = pos.glX();
+            float glY = pos.glY();
             
             sprite.setSize(size, size);
             sprite.setAlphaMult(alphaMult);
-            sprite.render(pos.glX(), pos.glY());
+            
+            if (Math.abs(currentRotation) > 0.5f) {
+                float halfSize = size / 2f;
+                GL11.glPushMatrix();
+                GL11.glTranslatef(glX + halfSize, glY + halfSize, 0f);
+                GL11.glRotatef(currentRotation, 0f, 0f, 1f);
+                GL11.glTranslatef(-halfSize, -halfSize, 0f);
+                sprite.bindTexture();
+                GL11.glColor4f(1f, 1f, 1f, alphaMult);
+                
+                GL11.glBegin(GL11.GL_QUADS);
+                GL11.glTexCoord2f(0f, 0f);
+                GL11.glVertex2f(0f, 0f);
+                GL11.glTexCoord2f(1f, 0f);
+                GL11.glVertex2f(size, 0f);
+                GL11.glTexCoord2f(1f, 1f);
+                GL11.glVertex2f(size, size);
+                GL11.glTexCoord2f(0f, 1f);
+                GL11.glVertex2f(0f, size);
+                GL11.glEnd();
+                
+                GL11.glPopMatrix();
+            } else {
+                sprite.render(glX, glY);
+            }
             
             GLStateUtil.disableTexturing();
         } finally {

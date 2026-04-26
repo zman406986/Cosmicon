@@ -83,8 +83,14 @@ public class PrismaticManager {
     }
     
     public boolean hasMustSelectDiceRemaining(boolean forPlayer) {
-        for (PrismaticDiceInstance dice : battleState.getMustSelectPrismaticDice(forPlayer)) {
-            if (!dice.isSelected()) return true;
+        Map<Integer, PrismaticDiceInstance> map = battleState.getPrismaticDiceMap(forPlayer);
+        List<Boolean> selected = battleState.getDiceSelected(forPlayer);
+        
+        for (Map.Entry<Integer, PrismaticDiceInstance> entry : map.entrySet()) {
+            int idx = entry.getKey();
+            if (entry.getValue().isMustSelect() && idx < selected.size() && !selected.get(idx)) {
+                return true;
+            }
         }
         return false;
     }
