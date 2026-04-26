@@ -221,29 +221,15 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.bounceHeights = new float[0];
     }
     
-    public void startRollFromStationary(float rotation, float travelDistance, int bounceCount, 
-                                          float[] bounceHeights, float delay, float targetCenterX, float targetCenterY) {
-        this.rotation = rotation;
-        this.directionRad = (float)Math.toRadians(rotation);
-        this.travelDistance = travelDistance;
-        this.bounceCount = bounceCount;
-        this.bounceHeights = bounceHeights;
-        this.targetCenterX = targetCenterX;
-        this.targetCenterY = targetCenterY;
-        this.rollPickupStartScale = scale;
-        this.phaseElapsed = 0f;
-        this.elapsed = -delay;
-        this.phase = Phase.ROLL_PICKUP;
-        this.useDirectionalAnimation = true;
-    }
+    
     
     public void startScatterFromPreview(float scatterX, float scatterY, float delay,
                                          float rotation, float travelDistance, int bounceCount,
-                                         float[] bounceHeights) {
+                                         float[] bounceHeights, float targetCenterX, float targetCenterY) {
         this.scatterTargetX = scatterX;
         this.scatterTargetY = scatterY;
-        this.targetCenterX = x;
-        this.targetCenterY = y;
+        this.targetCenterX = targetCenterX;
+        this.targetCenterY = targetCenterY;
         this.rotation = rotation;
         this.directionRad = (float)Math.toRadians(rotation);
         this.travelDistance = travelDistance;
@@ -256,14 +242,16 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.useDirectionalAnimation = true;
     }
     
-    public void startWithScatter(DiceType type, int finalValue, float startX, float startY,
-                                  float scatterX, float scatterY, float delay,
-                                  float rotation, float travelDistance, int bounceCount,
-                                  float[] bounceHeights, float targetCenterX, float targetCenterY) {
+    
+    
+    public void startFromScatterPosition(DiceType type, int finalValue,
+                                          float scatterX, float scatterY, float delay,
+                                          float rotation, float travelDistance, int bounceCount,
+                                          float[] bounceHeights, float targetCenterX, float targetCenterY) {
         this.type = type;
         this.finalValue = finalValue;
-        this.x = startX;
-        this.y = startY;
+        this.x = scatterX;
+        this.y = scatterY;
         this.scatterTargetX = scatterX;
         this.scatterTargetY = scatterY;
         this.targetCenterX = targetCenterX;
@@ -278,9 +266,9 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.travelDistance = travelDistance;
         this.bounceCount = bounceCount;
         this.bounceHeights = bounceHeights;
-        this.phase = Phase.SCATTER_PICKUP;
+        this.phase = Phase.DROP;
         this.phaseElapsed = 0f;
-        this.scale = 1f;
+        this.scale = INITIAL_SCALE;
         this.useDirectionalAnimation = true;
         this.stationaryFrameIndex = 0;
         if (type == DiceType.PRISMATIC) {
@@ -681,17 +669,7 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         return y + posYOffset + centeringOffset;
     }
     
-    public float getTargetVisualX() {
-        float displaySize = getDisplaySize();
-        float centeringOffset = (AnimationConstants.DICE_SIZE - displaySize) / 2f;
-        return targetCenterX + centeringOffset;
-    }
     
-    public float getTargetVisualY() {
-        float displaySize = getDisplaySize();
-        float centeringOffset = (AnimationConstants.DICE_SIZE - displaySize) / 2f;
-        return targetCenterY + centeringOffset;
-    }
     
     public float getTargetSlotX() {
         return targetCenterX;

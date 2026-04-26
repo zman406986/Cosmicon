@@ -8,7 +8,6 @@ import java.util.Map;
 
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
-import data.scripts.cosmicon.prismatic.PrismaticEffect;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.Strings;
@@ -505,8 +504,8 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     public void applyDamageTo(boolean isPlayer, int damage) {
         int oldHp = isPlayer ? playerHp : opponentHp;
         String characterName = isPlayer ? 
-            (playerCard != null ? playerCard.getName() : "Player") : 
-            (opponentCard != null ? opponentCard.getName() : "Opponent");
+            (playerCard != null ? playerCard.getName() : Strings.get("battle.player")) : 
+            (opponentCard != null ? opponentCard.getName() : Strings.get("battle.opponent"));
         
         if (isPlayer) {
             playerHp = Math.max(0, playerHp - damage);
@@ -531,8 +530,8 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         int maxHp = card != null ? card.getMaxHp() : Integer.MAX_VALUE;
         int oldHp = isPlayer ? playerHp : opponentHp;
         String characterName = isPlayer ? 
-            (playerCard != null ? playerCard.getName() : "Player") : 
-            (opponentCard != null ? opponentCard.getName() : "Opponent");
+            (playerCard != null ? playerCard.getName() : Strings.get("battle.player")) : 
+            (opponentCard != null ? opponentCard.getName() : Strings.get("battle.opponent"));
         
         if (isPlayer) {
             playerHp = Math.min(playerHp + heal, maxHp);
@@ -782,59 +781,7 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         return sb.toString();
     }
     
-    public List<String> getSelectedPrismaticEffectStrings(boolean forPlayer) {
-        List<String> effects = new ArrayList<>();
-        Map<Integer, PrismaticDiceInstance> prismatics = forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
-        List<Boolean> selected = getDiceSelected(forPlayer);
-        
-        if (prismatics == null || selected == null) return effects;
-        
-        for (Map.Entry<Integer, PrismaticDiceInstance> entry : prismatics.entrySet()) {
-            int idx = entry.getKey();
-            if (idx < selected.size() && selected.get(idx)) {
-                PrismaticDiceInstance dice = entry.getValue();
-                if (dice.isSpecialFace) {
-                    String effectStr = formatPrismaticEffectForDisplay(dice);
-                    if (!effectStr.isEmpty()) {
-                        effects.add(effectStr);
-                    }
-                }
-            }
-        }
-        return effects;
-    }
     
-    private String formatPrismaticEffectForDisplay(PrismaticDiceInstance dice) {
-        if (dice == null) return "";
-        
-        PrismaticEffect effect = dice.type.getEffect();
-        String diceName = dice.type.getId();
-        
-        String localizedName;
-        try {
-            localizedName = Strings.get("prismatic." + diceName + ".name");
-        } catch (Exception e) {
-            localizedName = diceName;
-        }
-        
-        if (effect.isDoubleValue()) {
-            return "x2 (" + localizedName + ")";
-        }
-        if (effect.isGrantStatus()) {
-            String statusName = Strings.get("status." + effect.getGrantedEffect().name().toLowerCase());
-            return statusName + " (" + localizedName + ")";
-        }
-        if (effect.isHealHp()) {
-            return "Heal (" + localizedName + ")";
-        }
-        if (effect.isGainPrismaticUse()) {
-            return "+1 use (" + localizedName + ")";
-        }
-        if (effect.isInstantDamage()) {
-            return "+" + effect.getInstantDamageAmount() + " dmg (" + localizedName + ")";
-        }
-        return "";
-    }
     
     public void notifyPhaseChange(Phase phase) {
         for (BattleEventListener listener : listeners) {

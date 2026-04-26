@@ -10,8 +10,8 @@ import data.scripts.cosmicon.util.CoordHelper;
 import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class BattleInputHandler {
-    private static final float DICE_SPACING = 70f;
-    private static final float DICE_CLICK_PADDING = 5f;
+    private static final float DICE_SPACING = 90f;
+    private static final float DICE_CLICK_PADDING = 1f;
     private static final float PRISMATIC_BTN_SIZE = 40f;
 
     private BattleController battleController;
@@ -239,9 +239,7 @@ public class BattleInputHandler {
         }
     }
 
-    public List<float[]> getDiceHitboxes() {
-        return diceHitboxes;
-    }
+    
 
     public void updateClickHintForRoll() {
         if (waitingForClickToRoll && diceRollManager.isWaitingForRollTrigger()) {

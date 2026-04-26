@@ -40,6 +40,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     private float panelY;
     private float diceZoneCenterX;
     private float diceZoneCenterY;
+    private float opponentDiceZoneCenterX;
+    private float opponentDiceZoneCenterY;
     private float rollAnimationDelay;
     private boolean diceAnimating;
     private boolean dicePreviewActive;
@@ -142,6 +144,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         panelY = pos.getY();
         diceZoneCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
         diceZoneCenterY = BattleRenderingUtils.PANEL_HEIGHT / 2f - 40f;
+        opponentDiceZoneCenterX = BattleRenderingUtils.MARGIN + BattleRenderingUtils.OPPONENT_DICE_ZONE_OFFSET_X + BattleRenderingUtils.OPPONENT_DICE_ZONE_W / 2f;
+        opponentDiceZoneCenterY = BattleRenderingUtils.MARGIN + BattleRenderingUtils.OPPONENT_DICE_ZONE_Y_OFFSET + BattleRenderingUtils.OPPONENT_DICE_ZONE_H / 2f;
 
         labels = new BattleUILabels();
         buttons = new BattleUIButtons();
@@ -151,7 +155,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         opponentPrismaticBtnX = opponentCardX - 60f;
         opponentPrismaticBtnY = opponentCardY + 40f;
         labels.init(panel, battleState, diceRollManager,
-            opponentPrismaticBtnX, opponentPrismaticBtnY);
+            opponentPrismaticBtnX, opponentPrismaticBtnY,
+            BattleRenderingUtils.MARGIN + 60f, BattleRenderingUtils.PANEL_HEIGHT - 100f);
         buttons.init(panel, callbacks, battleController, battleState, diceRollManager, labels,
             inputHandler, diceZoneCenterX, diceZoneCenterY);
         inputHandler.init(battleController, battleState, diceRollManager, labels, buttons,
@@ -384,6 +389,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         labels.updateSelectionDisplayLabels();
         labels.updateConfirmedSelectionLabels();
         labels.updateIconValueLabels();
+        updatePrismaticClickHint();
 
         if (battleController != null) {
             battleController.advanceAiSelection(amount);
@@ -463,7 +469,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                     List<DiceType> types = battleState.getOpponentDiceTypes();
                     List<Integer> values = battleState.getOpponentDiceValues();
                     if (types != null && values != null && !types.isEmpty()) {
-                        diceRollManager.startOpponentStationaryPreview(types, values, diceZoneCenterX, diceZoneCenterY);
+                        diceRollManager.startOpponentStationaryPreview(types, values, opponentDiceZoneCenterX, opponentDiceZoneCenterY);
                         opponentAutoRollDelay = OPPONENT_AUTO_ROLL_DELAY;
                         anyDiceStarted = true;
                         CosmiconLogger.debug("[ANIM] Opponent stationary preview started - %d dice, auto-roll in %.1fs", types.size(), OPPONENT_AUTO_ROLL_DELAY);
@@ -597,6 +603,19 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         return t * t * (3f - 2f * t);
     }
 
+    private void updatePrismaticClickHint() {
+        if (battleState == null) return;
+
+        int uses = battleState.getPlayerPrismaticUses();
+        boolean playerShouldSelect = (battleState.isAttacker(true) &&
+            battleState.getCurrentPhase() == Phase.SELECTING_ATTACK) ||
+            (battleState.isDefender(true) &&
+            battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE);
+        boolean prismaticEnabled = uses > 0 && playerShouldSelect && !buttons.isPrismaticPopupActive();
+
+        labels.updatePrismaticClickHint(prismaticEnabled);
+    }
+
     private boolean shouldShowOpponentDice() {
         if (battleState == null) return false;
 
@@ -626,7 +645,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             return;
         }
 
-        diceRollManager.startOpponentStationaryPreview(types, values, diceZoneCenterX, diceZoneCenterY);
+        diceRollManager.startOpponentStationaryPreview(types, values, opponentDiceZoneCenterX, opponentDiceZoneCenterY);
         opponentAutoRollDelay = OPPONENT_AUTO_ROLL_DELAY;
     }
 
@@ -637,7 +656,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         List<Integer> values = battleState.getOpponentDiceValues();
 
         if (types != null && values != null && !types.isEmpty()) {
-            diceRollManager.startOpponentStationaryPreview(types, values, diceZoneCenterX, diceZoneCenterY);
+            diceRollManager.startOpponentStationaryPreview(types, values, opponentDiceZoneCenterX, opponentDiceZoneCenterY);
             opponentAutoRollDelay = OPPONENT_AUTO_ROLL_DELAY;
         }
     }
@@ -752,29 +771,31 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         List<Boolean> selected = battleState.getPlayerDiceSelected();
         if (selected == null) return;
 
+        List<DiceAnimator> animators = diceRollManager.getAnimators();
+        if (animators == null || animators.isEmpty()) return;
+
         GLStateUtil.resetBlendState();
 
         float[] c = ColorHelper.toGLComponents(ColorHelper.SELECTION_HIGHLIGHT, alphaMult);
         GL11.glColor4f(c[0], c[1], c[2], c[3]);
         GL11.glLineWidth(3f);
 
-        List<float[]> diceHitboxes = inputHandler.getDiceHitboxes();
-        float diceClickPadding = 5f;
-
-        for (int i = 0; i < Math.min(selected.size(), diceHitboxes.size()); i++) {
+        for (int i = 0; i < Math.min(selected.size(), animators.size()); i++) {
             if (selected.get(i)) {
-                float[] hb = diceHitboxes.get(i);
-                float hx = panelX + hb[0] + diceClickPadding;
-                float hy = CoordHelper.uiToGlY(panelY, BattleRenderingUtils.PANEL_HEIGHT, hb[1] + diceClickPadding);
-                float hw = hb[2] - diceClickPadding * 2;
-                float hh = hb[3] - diceClickPadding * 2;
+                DiceAnimator animator = animators.get(i);
+                if (animator != null) {
+                    float diceSize = animator.getDisplaySize();
+                    float diceX = panelX + animator.getVisualX();
+                    float diceY = CoordHelper.uiToGlY(panelY, BattleRenderingUtils.PANEL_HEIGHT,
+                        animator.getVisualY() + diceSize);
 
-                GL11.glBegin(GL11.GL_LINE_LOOP);
-                GL11.glVertex2f(hx, hy);
-                GL11.glVertex2f(hx + hw, hy);
-                GL11.glVertex2f(hx + hw, hy + hh);
-                GL11.glVertex2f(hx, hy + hh);
-                GL11.glEnd();
+                    GL11.glBegin(GL11.GL_LINE_LOOP);
+                    GL11.glVertex2f(diceX, diceY);
+                    GL11.glVertex2f(diceX + diceSize, diceY);
+                    GL11.glVertex2f(diceX + diceSize, diceY + diceSize);
+                    GL11.glVertex2f(diceX, diceY + diceSize);
+                    GL11.glEnd();
+                }
             }
         }
 

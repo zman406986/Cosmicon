@@ -32,6 +32,7 @@
         "ability_btn": "Character Ability",
         "click_to_continue": "Click to continue",
         "click_to_roll": "Click to roll dice",
+        "prismatic_click_hint": "click icon to use",
         "selected_values": "Selected: {0}",
         "no_selection": "Select dice...",
         "prismatic_effect_none": ""

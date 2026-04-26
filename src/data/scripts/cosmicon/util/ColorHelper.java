@@ -11,6 +11,7 @@ public final class ColorHelper {
     public static final Color PRISMATIC_GOLD = new Color(255, 215, 0);
     public static final Color PRISMATIC_BRIGHT = new Color(255, 255, 150);
     public static final Color PRISMATIC_DISABLED = new Color(128, 128, 128);
+    public static final Color PRISMATIC_HINT_ENABLED = new Color(100, 255, 100);
 
     public static final Color PHASE_LABEL = new Color(255, 220, 100);
 

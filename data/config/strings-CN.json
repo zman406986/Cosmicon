@@ -32,6 +32,7 @@
         "ability_btn": "角色能力",
         "click_to_continue": "点击继续",
         "click_to_roll": "点击投骰子",
+        "prismatic_click_hint": "点击图标使用",
         "selected_values": "已选择：{0}",
         "no_selection": "选择骰子...",
         "prismatic_effect_none": ""
@@ -366,6 +367,23 @@
             "special_marker": "*",
             "no_dice": "无曜彩骰",
             "separator": " "
+        },
+        "equip": {
+            "title": "选择曜彩骰",
+            "current": "当前：{0}",
+            "available": "可用骰子：",
+            "none": "无",
+            "none_effect": "未装备骰子",
+            "no_effect": "无特殊效果",
+            "effect_preview": "效果预览：",
+            "effect_double": "攻击值/防御值翻倍",
+            "effect_heal": "治愈等同于点数的生命值",
+            "effect_gain_use": "获得+1次曜彩骰使用次数",
+            "effect_instant_damage": "造成{0}点瞬伤",
+            "effect_status": "获得{0}状态",
+            "robin_blocked": "知更鸟无法装备曜彩骰",
+            "confirm": "确认",
+            "close": "关闭"
         }
     },
     "setup": {

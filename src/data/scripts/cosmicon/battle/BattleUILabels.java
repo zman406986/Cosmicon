@@ -55,12 +55,15 @@ public class BattleUILabels {
     private LabelAPI opponentPrismaticUsesLabel;
     private LabelAPI opponentPrismaticFaceMappingLabel;
     private LabelAPI opponentPrismaticEffectLabel;
+    private LabelAPI playerPrismaticClickHintLabel;
 
     private ValueChangeAnimator attackerValueAnimator;
     private ValueChangeAnimator defenderValueAnimator;
 
     private float opponentPrismaticBtnX;
     private float opponentPrismaticBtnY;
+    private float playerPrismaticBtnX;
+    private float playerPrismaticBtnY;
 
     private CustomPanelAPI panel;
     private BattleState battleState;
@@ -70,12 +73,15 @@ public class BattleUILabels {
     private DiceRollManager diceRollManager;
 
     public void init(CustomPanelAPI panel, BattleState battleState, DiceRollManager diceRollManager,
-            float opponentPrismaticBtnX, float opponentPrismaticBtnY) {
+            float opponentPrismaticBtnX, float opponentPrismaticBtnY,
+            float playerPrismaticBtnX, float playerPrismaticBtnY) {
         this.panel = panel;
         this.battleState = battleState;
         this.diceRollManager = diceRollManager;
         this.opponentPrismaticBtnX = opponentPrismaticBtnX;
         this.opponentPrismaticBtnY = opponentPrismaticBtnY;
+        this.playerPrismaticBtnX = playerPrismaticBtnX;
+        this.playerPrismaticBtnY = playerPrismaticBtnY;
         
         createLabels();
         createValueAnimators();
@@ -272,6 +278,15 @@ public class BattleUILabels {
         playerPrismaticRolledLabel = UIComponentFactory.createLabel(panel, "", 
             Fonts.DEFAULT_SMALL, ColorHelper.PRISMATIC_BRIGHT, Alignment.MID, 60f, 20f, 0f, 0f);
         playerPrismaticRolledLabel.setOpacity(0f);
+
+        float hintLabelWidth = 110f;
+        float hintLabelX = playerPrismaticBtnX - hintLabelWidth - 5f;
+        float hintLabelY = playerPrismaticBtnY + 10f;
+        playerPrismaticClickHintLabel = UIComponentFactory.createLabelSmall(panel,
+            Strings.get("battle.prismatic_click_hint"),
+            ColorHelper.PRISMATIC_HINT_ENABLED, Alignment.RMID, hintLabelWidth, 20f,
+            hintLabelX, hintLabelY);
+        playerPrismaticClickHintLabel.setOpacity(0f);
     }
 
     private void createClickHintLabel() {
@@ -378,33 +393,7 @@ public class BattleUILabels {
         defenderEffectLabel.setOpacity(0f);
     }
 
-    private void updateSelectionLabelPositions() {
-        if (battleState == null || attackerSelectionLabel == null) return;
-
-        float halfH = BattleRenderingUtils.PANEL_HEIGHT / 2f;
-        float iconSize = halfH * BattleRenderingUtils.ROLE_ICON_SIZE_RATIO;
-
-        float topIconCenterY = (halfH - iconSize) / 2f + iconSize / 2f;
-        float bottomIconCenterY = halfH + (halfH - iconSize) / 2f + iconSize / 2f;
-
-        float centerX = BattleRenderingUtils.PANEL_WIDTH / 2f;
-        float labelWidth = 200f;
-
-        boolean playerIsAttacker = battleState.isPlayerAttacker();
-
-        float atkCenterY = playerIsAttacker ? bottomIconCenterY : topIconCenterY;
-        float defCenterY = playerIsAttacker ? topIconCenterY : bottomIconCenterY;
-
-        float atkSelectionY = atkCenterY > halfH ? atkCenterY + iconSize / 2f + 25f : atkCenterY - iconSize / 2f - 25f;
-        float atkEffectY = atkCenterY > halfH ? atkCenterY + iconSize / 2f + 5f : atkCenterY - iconSize / 2f - 5f;
-        float defSelectionY = defCenterY > halfH ? defCenterY + iconSize / 2f + 25f : defCenterY - iconSize / 2f - 25f;
-        float defEffectY = defCenterY > halfH ? defCenterY + iconSize / 2f + 5f : defCenterY - iconSize / 2f - 5f;
-
-        attackerSelectionLabel.getPosition().inTL(centerX - labelWidth / 2f, atkSelectionY);
-        attackerEffectLabel.getPosition().inTL(centerX - labelWidth / 2f, atkEffectY);
-        defenderSelectionLabel.getPosition().inTL(centerX - labelWidth / 2f, defSelectionY);
-        defenderEffectLabel.getPosition().inTL(centerX - labelWidth / 2f, defEffectY);
-    }
+    
 
     public void updateConfirmedSelectionLabels() {
         if (battleState == null || attackerConfirmedSelectionLabel == null) return;
@@ -735,6 +724,18 @@ public class BattleUILabels {
     public void hideClickHint() {
         if (clickHintLabel != null) {
             clickHintLabel.setOpacity(0f);
+        }
+    }
+
+    public void updatePrismaticClickHint(boolean enabled) {
+        if (playerPrismaticClickHintLabel != null) {
+            if (enabled) {
+                playerPrismaticClickHintLabel.setColor(ColorHelper.PRISMATIC_HINT_ENABLED);
+                playerPrismaticClickHintLabel.setOpacity(1f);
+            } else {
+                playerPrismaticClickHintLabel.setColor(ColorHelper.PRISMATIC_DISABLED);
+                playerPrismaticClickHintLabel.setOpacity(0.4f);
+            }
         }
     }
 
