@@ -91,7 +91,9 @@
         "tactics": "Tactics",
         "awakening": "Awakening",
         "heal": "Heal",
-        "reflect": "Reflect"
+        "reflect": "Reflect",
+        "instant_damage": "Instant Damage",
+        "yao_guang_rerolls": "Yao Guang Rerolls"
     },
     "weather_category": {
         "safeguard": "Safeguard",

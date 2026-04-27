@@ -1,6 +1,7 @@
 package data.scripts.cosmicon.ai;
 
 import data.scripts.cosmicon.ai.profiles.CharacterProfileRegistry;
+import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import java.util.*;
@@ -53,6 +54,23 @@ public final class CosmiconAICore {
         
         Set<Integer> result = RerollOptimizer.optimalRerolls(diceValues, diceTypes, requiredCount, rerollsAvailable, targetSum, isAttacking);
         CosmiconLogger.debug("AI reroll recommendation: indices %s, role: %s, target: %d", 
+            result, isAttacking ? "attacker" : "defender", targetSum);
+        return result;
+    }
+
+    public static Set<Integer> recommendRerolls(
+            List<Integer> diceValues,
+            List<DiceType> diceTypes,
+            int requiredCount,
+            int rerollsAvailable,
+            boolean isAttacking,
+            int targetSum,
+            BattleState state,
+            boolean forPlayer) {
+        
+        Set<Integer> result = RerollOptimizer.optimalRerolls(
+            diceValues, diceTypes, requiredCount, rerollsAvailable, targetSum, isAttacking, state, forPlayer);
+        CosmiconLogger.debug("AI reroll recommendation (with prismatic): indices %s, role: %s, target: %d", 
             result, isAttacking ? "attacker" : "defender", targetSum);
         return result;
     }

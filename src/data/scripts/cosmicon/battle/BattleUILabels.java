@@ -1,6 +1,7 @@
 package data.scripts.cosmicon.battle;
 
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fs.starfarer.api.ui.Alignment;
@@ -56,6 +57,10 @@ public class BattleUILabels {
     private LabelAPI opponentPrismaticFaceMappingLabel;
     private LabelAPI opponentPrismaticEffectLabel;
     private LabelAPI playerPrismaticClickHintLabel;
+
+    private List<LabelAPI> playerStatusLabels;
+    private List<LabelAPI> opponentStatusLabels;
+    private static final int MAX_STATUS_EFFECTS = 12;
 
     private ValueChangeAnimator attackerValueAnimator;
     private ValueChangeAnimator defenderValueAnimator;
@@ -141,6 +146,35 @@ public class BattleUILabels {
         createSelectionLabels();
         createPrismaticLabels();
         createClickHintLabel();
+        createStatusEffectLabels();
+    }
+
+    private void createStatusEffectLabels() {
+        playerStatusLabels = new ArrayList<>();
+        opponentStatusLabels = new ArrayList<>();
+
+        float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
+        float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        float playerBoxX = playerCardX - BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
+
+        float opponentCardX = BattleRenderingUtils.MARGIN;
+        float opponentCardY = BattleRenderingUtils.MARGIN;
+        float opponentBoxX = opponentCardX + BattleRenderingUtils.CARD_WIDTH + 20f;
+
+        for (int i = 0; i < MAX_STATUS_EFFECTS; i++) {
+            float yOffset = i * 20f;
+            LabelAPI playerLabel = UIComponentFactory.createLabelSmall(panel, "",
+                Color.WHITE, Alignment.LMID, BattleRenderingUtils.STATUS_BOX_WIDTH - 20f, 18f,
+                playerBoxX + BattleRenderingUtils.STATUS_BOX_PADDING, playerCardY + BattleRenderingUtils.STATUS_BOX_PADDING + yOffset);
+            playerLabel.setOpacity(0f);
+            playerStatusLabels.add(playerLabel);
+
+            LabelAPI opponentLabel = UIComponentFactory.createLabelSmall(panel, "",
+                Color.WHITE, Alignment.LMID, BattleRenderingUtils.STATUS_BOX_WIDTH - 20f, 18f,
+                opponentBoxX + BattleRenderingUtils.STATUS_BOX_PADDING, opponentCardY + BattleRenderingUtils.STATUS_BOX_PADDING + yOffset);
+            opponentLabel.setOpacity(0f);
+            opponentStatusLabels.add(opponentLabel);
+        }
     }
 
     private void createAtkDefLabels() {
@@ -243,9 +277,9 @@ public class BattleUILabels {
 
     private void createPrismaticLabels() {
         opponentPrismaticUsesLabel = UIComponentFactory.createLabelSmall(panel, "2", 
-            ColorHelper.PRISMATIC_GOLD, Alignment.MID, 40f, 20f, opponentPrismaticBtnX - 50f, opponentPrismaticBtnY + 25f);
+            ColorHelper.PRISMATIC_GOLD, Alignment.MID, 40f, 20f, opponentPrismaticBtnX + 50f, opponentPrismaticBtnY + 25f);
 
-        float opponentPrismaticDescX = opponentPrismaticBtnX - 290f;
+        float opponentPrismaticDescX = opponentPrismaticBtnX + 50f;
         opponentPrismaticFaceMappingLabel = UIComponentFactory.createLabel(panel, "", 
             Fonts.DEFAULT_SMALL, ColorHelper.PRISMATIC_GOLD, Alignment.LMID, 280f, 20f,
             opponentPrismaticDescX, opponentPrismaticBtnY);
@@ -298,6 +332,53 @@ public class BattleUILabels {
     private void createValueAnimators() {
         attackerValueAnimator = new ValueChangeAnimator();
         defenderValueAnimator = new ValueChangeAnimator();
+    }
+
+    public void updateStatusEffectLabels() {
+        if (battleState == null || playerStatusLabels == null || opponentStatusLabels == null) return;
+
+        StatusEffectProcessor playerEffects = battleState.getPlayerEffects();
+        StatusEffectProcessor opponentEffects = battleState.getOpponentEffects();
+
+        int playerIdx = 0;
+        for (StatusEffectProcessor.StatusEffect effect : StatusEffectProcessor.StatusEffect.values()) {
+            if (playerIdx >= playerStatusLabels.size()) break;
+            int layers = playerEffects.getLayers(effect);
+            if (layers > 0) {
+                LabelAPI label = playerStatusLabels.get(playerIdx);
+                int duration = playerEffects.getDuration(effect);
+                String effectName = Strings.get("status." + effect.name().toLowerCase());
+                String text = duration < StatusEffectProcessor.PERMANENT_DURATION
+                    ? String.format("%s (%d, %d turns)", effectName, layers, duration)
+                    : String.format("%s (%d)", effectName, layers);
+                label.setText(text);
+                label.setOpacity(1f);
+                playerIdx++;
+            }
+        }
+        for (int i = playerIdx; i < playerStatusLabels.size(); i++) {
+            playerStatusLabels.get(i).setOpacity(0f);
+        }
+
+        int opponentIdx = 0;
+        for (StatusEffectProcessor.StatusEffect effect : StatusEffectProcessor.StatusEffect.values()) {
+            if (opponentIdx >= opponentStatusLabels.size()) break;
+            int layers = opponentEffects.getLayers(effect);
+            if (layers > 0) {
+                LabelAPI label = opponentStatusLabels.get(opponentIdx);
+                int duration = opponentEffects.getDuration(effect);
+                String effectName = Strings.get("status." + effect.name().toLowerCase());
+                String text = duration < StatusEffectProcessor.PERMANENT_DURATION
+                    ? String.format("%s (%d, %d turns)", effectName, layers, duration)
+                    : String.format("%s (%d)", effectName, layers);
+                label.setText(text);
+                label.setOpacity(1f);
+                opponentIdx++;
+            }
+        }
+        for (int i = opponentIdx; i < opponentStatusLabels.size(); i++) {
+            opponentStatusLabels.get(i).setOpacity(0f);
+        }
     }
 
     public void updateLabelsFromState() {

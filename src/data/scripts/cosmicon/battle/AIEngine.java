@@ -109,7 +109,7 @@ public class AIEngine {
         
         Set<Integer> rerollIndices = CosmiconAICore.recommendRerolls(
             diceValues, diceTypes, requiredCount, rerollsAvailable,
-            isAttacking, 0);
+            isAttacking, 0, state, forPlayer);
         
         return new ArrayList<>(rerollIndices);
     }

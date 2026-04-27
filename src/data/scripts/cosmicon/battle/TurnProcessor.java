@@ -2,7 +2,6 @@ package data.scripts.cosmicon.battle;
 
 import data.scripts.CosmiconConfig;
 import data.scripts.cosmicon.util.CosmiconLogger;
-import data.scripts.cosmicon.ai.AIPrismaticSelector;
 import data.scripts.cosmicon.ai.AIPrismaticSelector.PrismaticDecision;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.Phase;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
@@ -232,7 +231,7 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         CosmiconLogger.debug("[AI_REROLL_DIAG] opponentDiceValues=%s, opponentDiceTypes=%s", 
             state.getOpponentDiceValues(), state.getOpponentDiceTypes());
         
-        PrismaticDecision prismDecision = AIPrismaticSelector.selectPrismaticDice(state, false);
+        PrismaticDecision prismDecision = aiEngine.planPrismaticUse(state, false);
         if (prismDecision != null && prismDecision.shouldUse()) {
             state.addPrismaticDiceToPool(prismDecision.instance(), false);
             CosmiconLogger.debug("AI added prismatic dice: %s with score %.1f", 

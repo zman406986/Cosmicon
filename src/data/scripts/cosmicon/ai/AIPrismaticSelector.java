@@ -5,7 +5,6 @@ import java.util.List;
 
 import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.CharacterCard;
-import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
@@ -41,10 +40,6 @@ public class AIPrismaticSelector {
         }
 
         return bestDecision;
-    }
-
-    public static float evaluatePrismaticValue(PrismaticDiceType type, BattleState state, boolean isAttacking) {
-        return evaluatePrismaticValue(type, state, isAttacking, 0, true);
     }
 
     private static float evaluatePrismaticValue(PrismaticDiceType type, BattleState state, 

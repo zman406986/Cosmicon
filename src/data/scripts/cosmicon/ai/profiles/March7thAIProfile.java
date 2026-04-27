@@ -27,6 +27,11 @@ public class March7thAIProfile extends AbstractCharacterAIProfile {
     }
 
     @Override
+    public boolean prefersPairs() {
+        return true;
+    }
+
+    @Override
     public float getRiskTolerance() {
         return 0.6f;
     }

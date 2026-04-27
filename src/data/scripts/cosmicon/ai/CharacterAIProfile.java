@@ -39,6 +39,10 @@ public interface CharacterAIProfile {
         return 0f;
     }
 
+    default boolean prefersPairs() {
+        return false;
+    }
+
     record PassiveEvaluation(boolean triggered, float triggerProbability, float bonusValue, String description)
     {
 

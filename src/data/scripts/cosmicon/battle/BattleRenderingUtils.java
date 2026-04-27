@@ -36,6 +36,10 @@ public final class BattleRenderingUtils {
     public static final float PORTRAIT_DISPLAY_H = CARD_HEIGHT * PORTRAIT_SCALE;
 
     public static final float MARGIN = 20f;
+    public static final float STATUS_BOX_WIDTH = 300f;
+    public static final float STATUS_BOX_PADDING = 15f;
+    public static final Color COLOR_STATUS_BG = new Color(30, 35, 45, 220);
+    public static final Color COLOR_STATUS_BORDER = new Color(70, 75, 90);
     public static final float OPPONENT_DICE_ZONE_OFFSET_X = 30f;
     public static final float OPPONENT_DICE_ZONE_Y_OFFSET = 80f;
     public static final float OPPONENT_DICE_ZONE_W = 350f;
@@ -194,7 +198,7 @@ public final class BattleRenderingUtils {
             frame.render(x, y);
         }
 
-        renderDicePoolIcons(x, y, card.getDicePool(), alphaMult);
+        renderDicePoolIcons(x, y, alphaMult);
 
         GLStateUtil.disableTexturing();
 
@@ -223,7 +227,7 @@ public final class BattleRenderingUtils {
         GLStateUtil.resetColor();
     }
 
-    public static void renderDicePoolIcons(float cardX, float cardY, List<DiceType> pool, float alphaMult) {
+    public static void renderDicePoolIcons(float cardX, float cardY, float alphaMult) {
         GLStateUtil.enableTexturingWithBlend();
 
         float startX = cardX + CARD_WIDTH - DICE_POOL_RIGHT_MARGIN - DICE_ICON_SIZE;
@@ -290,6 +294,41 @@ public final class BattleRenderingUtils {
             GL11.glVertex2f(x + radius + (float) Math.cos(angle) * radius, y + h - radius + (float) Math.sin(angle) * radius);
         }
 
+        GL11.glEnd();
+        GLStateUtil.resetColor();
+    }
+
+    public static void renderStatusEffectBox(float x, float y, float w, float h, float alphaMult) {
+        GLStateUtil.resetBlendState();
+
+        Misc.renderQuad(x + 3, y - 3, w, h, COLOR_SHADOW, alphaMult * 0.3f);
+        Misc.renderQuad(x, y, w, h, COLOR_STATUS_BG, alphaMult);
+
+        float radius = 8f;
+        float[] c = ColorHelper.toGLComponents(COLOR_STATUS_BORDER, alphaMult);
+        GL11.glColor4f(c[0], c[1], c[2], c[3]);
+        GL11.glLineWidth(2f);
+
+        GL11.glBegin(GL11.GL_LINE_LOOP);
+        int segments = 8;
+        float step = (float) Math.PI / 2 / segments;
+
+        for (int i = 0; i <= segments; i++) {
+            float angle = (float) Math.PI + i * step;
+            GL11.glVertex2f(x + radius + (float) Math.cos(angle) * radius, y + radius + (float) Math.sin(angle) * radius);
+        }
+        for (int i = 0; i <= segments; i++) {
+            float angle = (float) Math.PI * 1.5f + i * step;
+            GL11.glVertex2f(x + w - radius + (float) Math.cos(angle) * radius, y + radius + (float) Math.sin(angle) * radius);
+        }
+        for (int i = 0; i <= segments; i++) {
+            float angle = i * step;
+            GL11.glVertex2f(x + w - radius + (float) Math.cos(angle) * radius, y + h - radius + (float) Math.sin(angle) * radius);
+        }
+        for (int i = 0; i <= segments; i++) {
+            float angle = (float) Math.PI / 2 + i * step;
+            GL11.glVertex2f(x + radius + (float) Math.cos(angle) * radius, y + h - radius + (float) Math.sin(angle) * radius);
+        }
         GL11.glEnd();
         GLStateUtil.resetColor();
     }

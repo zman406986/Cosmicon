@@ -1,6 +1,7 @@
 package data.scripts.cosmicon.ai;
 
 import data.scripts.cosmicon.battle.BattleState;
+import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
@@ -73,38 +74,62 @@ public final class DiceProbabilityCalculator {
         };
     }
 
-    public static float expectedValue(DiceType type, PrismaticDiceType prismType, boolean isAttacking, BattleState context) {
+    public static float expectedValue(DiceType type, PrismaticDiceType prismType, boolean isAttacking, BattleState context, boolean forPlayer) {
         if (type != DiceType.PRISMATIC || prismType == null) {
             return expectedValue(type);
         }
-        return expectedPrismaticValue(prismType, isAttacking, context);
+        return expectedPrismaticValue(prismType, isAttacking, context, forPlayer);
     }
 
-    public static float expectedPrismaticValue(PrismaticDiceType type, boolean isAttacking, BattleState context) {
+    public static float expectedPrismaticValue(PrismaticDiceType type, boolean isAttacking, BattleState context, boolean forPlayer) {
         int[] faces = type.getFaces(false);
         float avg = (float) Arrays.stream(faces).average().orElse(3);
-        return avg + estimateEffectBonus(type, isAttacking, context);
+        return avg + estimateEffectBonus(type, isAttacking, context, forPlayer);
     }
 
-    private static float estimateEffectBonus(PrismaticDiceType type, boolean isAttacking, BattleState context) {
+    private static float estimateEffectBonus(PrismaticDiceType type, boolean isAttacking, BattleState context, boolean forPlayer) {
         PrismaticEffect effect = type.getEffect();
         if (effect == null || effect.isNone()) return 0f;
 
-        if (effect.isDoubleValue()) return 2.0f;
+        if (effect.isDoubleValue()) {
+            int expectedDiceCount = context.getRequiredDiceCount(forPlayer);
+            float expectedAvg = 3.5f;
+            return expectedDiceCount * expectedAvg * 0.8f;
+        }
 
         if (effect.isGrantStatus()) {
             StatusEffect granted = effect.getGrantedEffect();
-            if (granted == StatusEffect.FORCEFIELD) {
-                return isAttacking ? 0f : 4f;
-            }
-            return 1f;
+            if (granted == null) return 0f;
+            
+            return switch (granted) {
+                case FORCEFIELD -> isAttacking ? 0f : 5f;
+                case COMBO -> isAttacking ? context.getAttackValue() : 0f;
+                case UNYIELDING -> {
+                    int hp = forPlayer ? context.getPlayerHp() : context.getOpponentHp();
+                    yield (hp <= 3 && !isAttacking) ? 4f : 0f;
+                }
+                case DESTINED -> 3f;
+                case THORNS -> isAttacking ? 0f : 3f;
+                case HACK -> 2f;
+                default -> 0f;
+            };
         }
 
-        if (effect.isHealHp()) return 1.5f;
-        if (effect.isInstantDamage()) return isAttacking ? 2f : 0f;
-        if (effect.isGainPrismaticUse()) return 1.5f;
+        if (effect.isHealHp()) {
+            CharacterCard card = context.getCard(forPlayer);
+            int hp = forPlayer ? context.getPlayerHp() : context.getOpponentHp();
+            int maxHp = card != null ? card.getMaxHp() : hp;
+            int missingHp = maxHp - hp;
+            return missingHp / 2f;
+        }
 
-        return 1f;
+        if (effect.isInstantDamage()) {
+            return isAttacking ? effect.getInstantDamageAmount() : 0f;
+        }
+
+        if (effect.isGainPrismaticUse()) return 2f;
+
+        return 0f;
     }
 
     public static float[] getSingleDicePMF(DiceType type) {

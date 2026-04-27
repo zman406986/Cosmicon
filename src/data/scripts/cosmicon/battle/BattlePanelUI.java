@@ -50,6 +50,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
     private boolean opponentDiceAnimating;
     private float opponentRollDelay;
+    private boolean isDefenderRollTransition;
 
     private float roleTransitionProgress;
     private float targetRoleTransition;
@@ -76,6 +77,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         this.cachedRotationAngle = 0f;
         this.opponentDiceAnimating = false;
         this.opponentRollDelay = 0f;
+        this.isDefenderRollTransition = false;
         this.dicePreviewActive = false;
         this.dicePreviewDelay = 0f;
         this.opponentAutoRollDelay = 0f;
@@ -151,9 +153,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         labels = new BattleUILabels();
         buttons = new BattleUIButtons();
 
-        float opponentCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
+        float opponentCardX = BattleRenderingUtils.MARGIN;
         float opponentCardY = BattleRenderingUtils.MARGIN;
-        opponentPrismaticBtnX = opponentCardX - 60f;
+        opponentPrismaticBtnX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.MARGIN - PRISMATIC_BTN_SIZE - 20f;
         opponentPrismaticBtnY = opponentCardY + 40f;
         labels.init(panel, battleState, diceRollManager,
             opponentPrismaticBtnX, opponentPrismaticBtnY,
@@ -201,9 +203,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             diceAnimating = true;
             dicePreviewActive = false;
             dicePreviewDelay = 0f;
-            opponentDiceAnimating = false;
-            opponentRollDelay = 0f;
-            opponentAutoRollDelay = 0f;
             preClashTimer = 0f;
             valueAnimationPending = false;
             damageAnimationPending = false;
@@ -213,10 +212,18 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             
             labels.clearPrismaticRolledLabel();
 
-            if (diceRollManager != null) {
-                diceRollManager.clear();
-                diceRollManager.clearOpponentAnimators();
+            if (!isDefenderRollTransition) {
+                opponentDiceAnimating = false;
+                opponentRollDelay = 0f;
+                opponentAutoRollDelay = 0f;
+                
+                if (diceRollManager != null) {
+                    diceRollManager.clear();
+                    diceRollManager.clearOpponentAnimators();
+                }
             }
+            
+            isDefenderRollTransition = false;
             
             if (damageAnimator != null) {
                 damageAnimator.cleanup();
@@ -294,6 +301,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     
     @Override
     public void onTransitionToDefenderRoll() {
+        isDefenderRollTransition = true;
+        
         if (diceRollManager != null) {
             diceRollManager.clear();
             diceRollManager.clearOpponentAnimators();
@@ -414,6 +423,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         labels.updateSelectionDisplayLabels();
         labels.updateConfirmedSelectionLabels();
         labels.updateIconValueLabels();
+        labels.updateStatusEffectLabels();
         updatePrismaticClickHint();
 
         if (battleController != null) {
@@ -717,6 +727,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
             renderPlayerCard(alphaMult);
             renderOpponentCard(alphaMult);
+            renderStatusEffectBoxes(alphaMult);
             renderDiceZone(x, y, alphaMult);
 
             ValueChangeAnimator attackerAnimator = labels.getAttackerValueAnimator();
@@ -764,11 +775,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         if (battleState != null) {
             CharacterCard card = battleState.getPlayerCard();
             BattleRenderingUtils.renderCharacterCard(cardX, cardY, card, alphaMult);
-
-            float passiveX = cardX - 20;
-            float passiveY = cardY + BattleRenderingUtils.CARD_HEIGHT + 10;
-            BattleRenderingUtils.renderPassiveBox(passiveX, passiveY,
-                BattleRenderingUtils.CARD_WIDTH + 40, 60, alphaMult);
         } else {
             Color playerCardColor = ColorHelper.PLAYER_CARD_PLACEHOLDER;
             BattleRenderingUtils.renderCardPlaceholder(cardX, cardY, BattleRenderingUtils.CARD_WIDTH,
@@ -785,16 +791,33 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         if (battleState != null) {
             CharacterCard card = battleState.getOpponentCard();
             BattleRenderingUtils.renderCharacterCard(cardX, cardY, card, alphaMult);
-
-            float passiveX = cardX - 20;
-            float passiveY = cardY - 70;
-            BattleRenderingUtils.renderPassiveBox(passiveX, passiveY,
-                BattleRenderingUtils.CARD_WIDTH + 40, 60, alphaMult);
         } else {
             Color opponentCardColor = ColorHelper.OPPONENT_CARD_PLACEHOLDER;
             BattleRenderingUtils.renderCardPlaceholder(cardX, cardY, BattleRenderingUtils.CARD_WIDTH,
                 BattleRenderingUtils.CARD_HEIGHT, opponentCardColor, alphaMult);
         }
+    }
+
+    private void renderStatusEffectBoxes(float alphaMult) {
+        float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
+        float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        float playerBoxX = playerCardX - BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
+        UnifiedCoord playerBoxPos = new UnifiedCoord(playerBoxX, playerCardY);
+        float playerBoxGlX = playerBoxPos.glX();
+        float playerBoxGlY = playerBoxPos.glSpriteY(BattleRenderingUtils.CARD_HEIGHT);
+
+        BattleRenderingUtils.renderStatusEffectBox(playerBoxGlX, playerBoxGlY,
+            BattleRenderingUtils.STATUS_BOX_WIDTH, BattleRenderingUtils.CARD_HEIGHT, alphaMult);
+
+        float opponentCardX = BattleRenderingUtils.MARGIN;
+        float opponentCardY = BattleRenderingUtils.MARGIN;
+        float opponentBoxX = opponentCardX + BattleRenderingUtils.CARD_WIDTH + 20f;
+        UnifiedCoord opponentBoxPos = new UnifiedCoord(opponentBoxX, opponentCardY);
+        float opponentBoxGlX = opponentBoxPos.glX();
+        float opponentBoxGlY = opponentBoxPos.glSpriteY(BattleRenderingUtils.CARD_HEIGHT);
+
+        BattleRenderingUtils.renderStatusEffectBox(opponentBoxGlX, opponentBoxGlY,
+            BattleRenderingUtils.STATUS_BOX_WIDTH, BattleRenderingUtils.CARD_HEIGHT, alphaMult);
     }
 
     private void renderDiceZone(float panelX, float panelY, float alphaMult) {

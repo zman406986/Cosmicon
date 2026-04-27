@@ -51,6 +51,13 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private static final float BUTTON_AREA_HEIGHT = 50f;
     private static final float BUTTON_WIDTH = 140f;
     private static final float BUTTON_HEIGHT = 35f;
+    private static final float GALLERY_ICON_SIZE = 16f;
+    private static final float GALLERY_ICON_SPACING = 20f;
+    private static final float GALLERY_DICE_RIGHT_MARGIN = 8f;
+    private static final float GALLERY_DICE_TOP_MARGIN = 8f;
+    private static final float GALLERY_ATK_DEF_BOTTOM_MARGIN = 10f;
+    private static final float GALLERY_ATK_LEFT_MARGIN = 8f;
+    private static final float GALLERY_DEF_RIGHT_MARGIN = 8f;
 
     private static final Color COLOR_BG_DARK = new Color(20, 20, 30);
     private static final Color COLOR_BOX_BG = new Color(45, 50, 65);
@@ -82,12 +89,15 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private boolean wasMousePressed = false;
 
     private final List<ClickRegion> clickRegions = new ArrayList<>();
+    private final List<CardLabels> cardLabels = new ArrayList<>();
 
     private final CharacterSetupCallback callback;
 
     private CustomPanelAPI popupPanel = null;
 
     private record ClickRegion(float boxX, float boxY, float width, float height, int index) {}
+    private record CardLabels(LabelAPI hpLabel, LabelAPI atkLabel, LabelAPI defLabel,
+                              LabelAPI orangeLabel, LabelAPI purpleLabel, LabelAPI blueLabel, LabelAPI prismaticLabel) {}
 
     public interface CharacterSetupCallback {
         void onConfirm(String charId, String prismaticDiceId);
@@ -114,6 +124,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         callbacks.getPanelFader().setDurationOut(0.3f);
 
         createUIElements();
+        createCardLabels();
         updateLabels();
     }
 
@@ -182,6 +193,58 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         cancelButton.setQuickMode(true);
 
         buttonsCreated = true;
+    }
+
+    private void createCardLabels() {
+        if (panel == null || characters.isEmpty()) return;
+
+        cardLabels.clear();
+
+        float galleryStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 15f;
+
+        for (int i = 0; i < characters.size(); i++) {
+            int col = i % COLS;
+            int row = i / COLS;
+            float boxX = MARGIN + col * (CARD_WIDTH + GAP_X);
+            float boxY = galleryStartY + row * (CARD_HEIGHT + GAP_Y);
+
+            CharacterCard card = characters.get(i);
+
+            LabelAPI hpLabel = createCardLabel(boxX + 5f, boxY + 5f, "0/0", Color.WHITE);
+            LabelAPI atkLabel = createCardLabel(boxX + GALLERY_ATK_LEFT_MARGIN + 4f, boxY + CARD_HEIGHT - 12f, "0", ColorHelper.ATTACK_VALUE);
+            LabelAPI defLabel = createCardLabel(boxX + CARD_WIDTH - GALLERY_DEF_RIGHT_MARGIN - 16f, boxY + CARD_HEIGHT - 12f, "0", ColorHelper.DEFENSE_VALUE);
+
+            float diceX = boxX + CARD_WIDTH - GALLERY_DICE_RIGHT_MARGIN - GALLERY_ICON_SIZE / 2f - 7f;
+            float diceStartY = boxY + GALLERY_DICE_TOP_MARGIN + 2f;
+
+            LabelAPI orangeLabel = createCardLabel(diceX, diceStartY, "0", Color.WHITE);
+            LabelAPI purpleLabel = createCardLabel(diceX, diceStartY + GALLERY_ICON_SPACING, "0", Color.WHITE);
+            LabelAPI blueLabel = createCardLabel(diceX, diceStartY + GALLERY_ICON_SPACING * 2, "0", Color.WHITE);
+            LabelAPI prismaticLabel = createCardLabel(diceX, diceStartY + GALLERY_ICON_SPACING * 3, "0", ColorHelper.PRISMATIC_GOLD);
+
+            cardLabels.add(new CardLabels(hpLabel, atkLabel, defLabel, orangeLabel, purpleLabel, blueLabel, prismaticLabel));
+        }
+    }
+
+    private LabelAPI createCardLabel(float x, float y, String text, Color color) {
+        return UIComponentFactory.createLabelSmall(panel, text, color, Alignment.MID, 20f, 14f, x, y);
+    }
+
+    private void updateCardLabels() {
+        for (int i = 0; i < characters.size() && i < cardLabels.size(); i++) {
+            CharacterCard card = characters.get(i);
+            CardLabels labels = cardLabels.get(i);
+
+            labels.hpLabel.setText(card.getMaxHp() + "/" + card.getMaxHp());
+            labels.atkLabel.setText(String.valueOf(card.getAtkLevel()));
+            labels.defLabel.setText(String.valueOf(card.getDefLevel()));
+
+            DicePoolCounts counts = DicePoolCounts.fromPool(card.getDicePool());
+            labels.orangeLabel.setText(String.valueOf(counts.getCount(DiceType.ORANGE_D8)));
+            labels.purpleLabel.setText(String.valueOf(counts.getCount(DiceType.PURPLE_D6)));
+            labels.blueLabel.setText(String.valueOf(counts.getCount(DiceType.BLUE_D4)));
+            labels.prismaticLabel.setText(String.valueOf(counts.getCount(DiceType.PRISMATIC)));
+        }
     }
 
     private void updateLabels() {
@@ -269,6 +332,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         UnifiedCoord.clearCurrent();
 
         updateLabels();
+        updateCardLabels();
     }
 
     private void renderCardBoxes(float startY, float alphaMult) {
@@ -336,8 +400,6 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         float rightMargin = 8f;
         float topMargin = 8f;
 
-        DicePoolCounts counts = DicePoolCounts.fromPool(card.getDicePool());
-
         float startX = cardGlX + CARD_WIDTH - rightMargin - iconSize;
         float startY = cardGlY + CARD_HEIGHT - topMargin - iconSize;
 
@@ -356,6 +418,26 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                 icon.render(startX, startY - offsetY);
             }
             offsetY += iconSpacing;
+        }
+
+        SpriteAPI atkIcon = CosmiconSprites.getAtkIcon();
+        if (atkIcon != null) {
+            float atkIconSize = 20f;
+            float atkX = cardGlX + GALLERY_ATK_LEFT_MARGIN;
+            float atkY = cardGlY + GALLERY_ATK_DEF_BOTTOM_MARGIN;
+            atkIcon.setSize(atkIconSize, atkIconSize);
+            atkIcon.setAlphaMult(alphaMult);
+            atkIcon.render(atkX, atkY);
+        }
+
+        SpriteAPI defIcon = CosmiconSprites.getDefIcon();
+        if (defIcon != null) {
+            float defIconSize = 20f;
+            float defX = cardGlX + CARD_WIDTH - GALLERY_DEF_RIGHT_MARGIN - defIconSize;
+            float defY = cardGlY + GALLERY_ATK_DEF_BOTTOM_MARGIN;
+            defIcon.setSize(defIconSize, defIconSize);
+            defIcon.setAlphaMult(alphaMult);
+            defIcon.render(defX, defY);
         }
 
         GLStateUtil.disableTexturing();

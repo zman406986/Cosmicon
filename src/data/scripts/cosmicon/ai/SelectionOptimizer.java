@@ -49,6 +49,15 @@ public final class SelectionOptimizer {
             }
         }
 
+        if (profile != null && profile.prefersPairs()) {
+            SelectionResult pairResult = selectForPairs(diceValues, diceTypes, requiredCount);
+            if (pairResult.passiveTriggered) {
+                CosmiconLogger.debug("Selection: pair optimization triggered, pairs found, indices: %s", 
+                    pairResult.selectedIndices);
+                return pairResult;
+            }
+        }
+
         SelectionResult greedyResult = greedyHighSelection(diceValues, diceTypes, requiredCount, isAttacking, profile, state, forPlayer);
         
         if (profile != null && !profile.shouldOptimizeForPassive(isAttacking)) {
@@ -110,6 +119,8 @@ public final class SelectionOptimizer {
         return new SelectionResult(selectedIndices, sum, selectedValues, selectedTypes, false, 0f, sum);
     }
 
+    // Reserved for future context-aware effect scoring (e.g., HP-based heal bonus, combo attack scaling)
+    @SuppressWarnings("unused")
     private static float getEffectBonusForSelection(PrismaticEffect effect, boolean isAttacking, BattleState state) {
         if (effect == null || effect.isNone()) return 0f;
 
@@ -331,10 +342,6 @@ public final class SelectionOptimizer {
 
         public List<Integer> getSelectedIndicesList() {
             return new ArrayList<>(selectedIndices);
-        }
-
-        public int getPairCount() {
-            return DiceProbabilityCalculator.countPairs(selectedValues);
         }
     }
 }

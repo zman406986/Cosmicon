@@ -19,9 +19,11 @@ import com.fs.starfarer.api.ui.TooltipMakerAPI.ActionListenerDelegate;
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.CharacterCard;
+import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.prismatic.AvailabilityCondition.ConditionContext;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
+import data.scripts.cosmicon.prismatic.PrismaticEffect;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
 import data.scripts.cosmicon.util.ColorHelper;
@@ -210,14 +212,17 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
 
         confirmTitleLabel.setOpacity(showConfirm ? 1f : 0f);
         confirmEffectLabel.setOpacity(showConfirm ? 1f : 0f);
-        warningLabel.setOpacity(showConfirm && isRolledFaceSpecial() ? 1f : 0f);
+        warningLabel.setOpacity(showConfirm && shouldShowDestinedWarning() ? 1f : 0f);
         cancelButton.setOpacity(showConfirm ? 1f : 0f);
         confirmButton.setOpacity(showConfirm ? 1f : 0f);
     }
 
-    private boolean isRolledFaceSpecial() {
+    private boolean shouldShowDestinedWarning() {
         if (selectedType == null || rolledInstance == null) return false;
-        return selectedType.isSpecialFace(rolledInstance.faceIndex, rolledInstance.isTrueVersion);
+        PrismaticEffect effect = selectedType.getEffect();
+        boolean grantsDestined = effect.isGrantStatus() && 
+                                 effect.getGrantedEffect() == StatusEffect.DESTINED;
+        return grantsDestined && rolledInstance.isSpecialFace;
     }
 
     @Override
@@ -260,7 +265,7 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
         String effectText = Strings.get("prismatic.popup.effect_header") + " " + PrismaticDisplayHelper.getEffectDescription(type);
         confirmEffectLabel.setText(effectText);
 
-        if (isRolledFaceSpecial()) {
+        if (shouldShowDestinedWarning()) {
             warningLabel.setText(Strings.get("prismatic.popup.warning_destined"));
             warningLabel.setOpacity(1f);
         } else {
@@ -273,7 +278,7 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
     private void confirmRoll() {
         if (selectedType == null || rolledInstance == null) return;
 
-        rolledInstance.setMustSelect(isRolledFaceSpecial());
+        rolledInstance.setMustSelect(shouldShowDestinedWarning());
 
         if (selectionCallback != null) {
             selectionCallback.onPrismaticDiceSelected(selectedType, rolledInstance);
