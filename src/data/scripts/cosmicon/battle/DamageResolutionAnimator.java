@@ -8,7 +8,6 @@ import com.fs.starfarer.api.ui.CustomPanelAPI;
 import data.scripts.cosmicon.util.ColorHelper;
 
 public class DamageResolutionAnimator {
-    private static final float ICON_PREP_DURATION = 0.5f;
     private static final float ICON_CLASH_DURATION = 0.8f;
     private static final float ICON_IMPACT_DURATION = 0.6f;
     private static final float WINNER_IMPACT_DURATION = 0.6f;

@@ -1,11 +1,14 @@
 package data.scripts.cosmicon.ai;
 
+import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.DiceType;
+import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public final class RerollOptimizer {
@@ -18,7 +21,37 @@ public final class RerollOptimizer {
             int requiredSelectCount,
             int rerollsAvailable,
             int targetSum,
+            boolean isAttacking,
+            BattleState state,
+            boolean forPlayer) {
+        
+        Map<Integer, PrismaticDiceInstance> prismaticMap = state != null 
+            ? state.getPrismaticDiceMap(forPlayer) : null;
+        
+        return optimalRerollsInternal(currentValues, diceTypes, requiredSelectCount, 
+            rerollsAvailable, targetSum, isAttacking, prismaticMap);
+    }
+
+    public static Set<Integer> optimalRerolls(
+            List<Integer> currentValues,
+            List<DiceType> diceTypes,
+            int requiredSelectCount,
+            int rerollsAvailable,
+            int targetSum,
             boolean isAttacking) {
+        
+        return optimalRerollsInternal(currentValues, diceTypes, requiredSelectCount, 
+            rerollsAvailable, targetSum, isAttacking, null);
+    }
+
+    private static Set<Integer> optimalRerollsInternal(
+            List<Integer> currentValues,
+            List<DiceType> diceTypes,
+            int requiredSelectCount,
+            int rerollsAvailable,
+            int targetSum,
+            boolean isAttacking,
+            Map<Integer, PrismaticDiceInstance> prismaticMap) {
         
         CosmiconLogger.debug("[AI_REROLL_DIAG] RerollOptimizer.optimalRerolls: currentValues=%s, diceTypes=%s", 
             currentValues, diceTypes);
@@ -54,10 +87,10 @@ public final class RerollOptimizer {
 
         if (maxReroll <= 3 && currentValues.size() <= 7) {
             candidates = enumerateAllRerollSubsets(currentValues, diceTypes, alreadySelected, 
-                                                    requiredSelectCount, targetSum, maxReroll);
+                                                    requiredSelectCount, targetSum, maxReroll, prismaticMap);
         } else {
             candidates = greedyRerollCandidates(currentValues, diceTypes, alreadySelected, 
-                                                requiredSelectCount, targetSum, maxReroll);
+                                                requiredSelectCount, targetSum, maxReroll, prismaticMap);
         }
 
         if (candidates.isEmpty()) {
@@ -105,20 +138,34 @@ public final class RerollOptimizer {
         return sum;
     }
 
+    private static boolean shouldSkipPrismaticReroll(int idx, DiceType type, 
+            Map<Integer, PrismaticDiceInstance> prismaticMap) {
+        if (type != DiceType.PRISMATIC || prismaticMap == null) {
+            return false;
+        }
+        PrismaticDiceInstance pd = prismaticMap.get(idx);
+        if (pd == null) {
+            return false;
+        }
+        return pd.rolledFace >= 6 || pd.isSpecialFace;
+    }
+
     private static List<RerollCandidate> enumerateAllRerollSubsets(
             List<Integer> currentValues,
             List<DiceType> diceTypes,
             Set<Integer> currentSelection,
             int requiredCount,
             int targetSum,
-            int maxReroll) {
+            int maxReroll,
+            Map<Integer, PrismaticDiceInstance> prismaticMap) {
         
         List<RerollCandidate> candidates = new ArrayList<>();
         int n = currentValues.size();
 
         for (int k = 1; k <= maxReroll; k++) {
             enumerateRerollCombinations(candidates, new HashSet<>(), 0, n, k,
-                                        currentValues, diceTypes, currentSelection, requiredCount, targetSum);
+                                        currentValues, diceTypes, currentSelection, requiredCount, targetSum,
+                                        prismaticMap);
         }
 
         return candidates;
@@ -134,7 +181,8 @@ public final class RerollOptimizer {
             List<DiceType> types,
             Set<Integer> originalSelection,
             int required,
-            int target) {
+            int target,
+            Map<Integer, PrismaticDiceInstance> prismaticMap) {
         
         if (currentRerolls.size() == k) {
             float improvement = calculateExpectedImprovement(values, types, currentRerolls, 
@@ -145,9 +193,12 @@ public final class RerollOptimizer {
         if (start >= n) return;
 
         for (int i = start; i < n; i++) {
+            if (shouldSkipPrismaticReroll(i, types.get(i), prismaticMap)) {
+                continue;
+            }
             currentRerolls.add(i);
             enumerateRerollCombinations(result, currentRerolls, i + 1, n, k,
-                                        values, types, originalSelection, required, target);
+                                        values, types, originalSelection, required, target, prismaticMap);
             currentRerolls.remove(i);
         }
     }
@@ -158,12 +209,17 @@ public final class RerollOptimizer {
             Set<Integer> currentSelection,
             int requiredCount,
             int targetSum,
-            int maxReroll) {
+            int maxReroll,
+            Map<Integer, PrismaticDiceInstance> prismaticMap) {
         
         List<RerollCandidate> candidates = new ArrayList<>();
 
         List<Integer> indices = new ArrayList<>();
-        for (int i = 0; i < currentValues.size(); i++) indices.add(i);
+        for (int i = 0; i < currentValues.size(); i++) {
+            if (!shouldSkipPrismaticReroll(i, diceTypes.get(i), prismaticMap)) {
+                indices.add(i);
+            }
+        }
 
         for (int i = 0; i < Math.min(maxReroll, indices.size()); i++) {
             Set<Integer> rerollSet = new HashSet<>();

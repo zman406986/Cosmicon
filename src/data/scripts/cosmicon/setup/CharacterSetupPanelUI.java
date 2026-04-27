@@ -26,6 +26,8 @@ import data.scripts.Strings;
 import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.CharacterRegistry;
 import data.scripts.cosmicon.battle.CosmiconSprites;
+import data.scripts.cosmicon.battle.DiceType;
+import data.scripts.cosmicon.battle.DicePoolCounts;
 import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.UnifiedCoord;
 import data.scripts.cosmicon.util.GLStateUtil;
@@ -307,7 +309,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                 portrait.renderAtCenter(centerX, centerY);
             }
 
-            renderPrismaticBadge(cardGlX, cardGlY + CARD_HEIGHT, card, alphaMult);
+            renderDicePoolIcons(cardGlX, cardGlY, card, alphaMult);
 
             GLStateUtil.disableTexturing();
         }
@@ -328,23 +330,32 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         GLStateUtil.resetColor();
     }
 
-    private void renderPrismaticBadge(float x, float badgeY, CharacterCard card, float alphaMult) {
+    private void renderDicePoolIcons(float cardGlX, float cardGlY, CharacterCard card, float alphaMult) {
+        float iconSize = 16f;
+        float iconSpacing = 20f;
+        float rightMargin = 8f;
+        float topMargin = 8f;
+
+        DicePoolCounts counts = DicePoolCounts.fromPool(card.getDicePool());
+
+        float startX = cardGlX + CARD_WIDTH - rightMargin - iconSize;
+        float startY = cardGlY + CARD_HEIGHT - topMargin - iconSize;
+
+        List<DiceType> order = java.util.Arrays.asList(
+            DiceType.ORANGE_D8, DiceType.PURPLE_D6, DiceType.BLUE_D4, DiceType.PRISMATIC
+        );
+
         GLStateUtil.enableTexturingWithBlend();
 
-        SpriteAPI prismaticIcon = CosmiconSprites.getDiceIcon(data.scripts.cosmicon.battle.DiceType.PRISMATIC);
-        if (prismaticIcon != null) {
-            float iconSize = 18f;
-            float iconX = x + CARD_WIDTH - iconSize - 5f;
-            float iconY = badgeY - iconSize - 3f;
-
-            Map<String, Integer> prismaticDice = card.getPrismaticDiceIds();
-            boolean hasPrismatic = prismaticDice != null && !prismaticDice.isEmpty();
-
-            if (hasPrismatic) {
-                prismaticIcon.setSize(iconSize, iconSize);
-                prismaticIcon.setAlphaMult(alphaMult);
-                prismaticIcon.render(iconX, iconY);
+        float offsetY = 0f;
+        for (DiceType type : order) {
+            SpriteAPI icon = CosmiconSprites.getDiceIcon(type);
+            if (icon != null) {
+                icon.setSize(iconSize, iconSize);
+                icon.setAlphaMult(alphaMult);
+                icon.render(startX, startY - offsetY);
             }
+            offsetY += iconSpacing;
         }
 
         GLStateUtil.disableTexturing();

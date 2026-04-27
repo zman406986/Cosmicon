@@ -2,6 +2,8 @@ package data.scripts.cosmicon.battle;
 
 import data.scripts.CosmiconConfig;
 import data.scripts.cosmicon.util.CosmiconLogger;
+import data.scripts.cosmicon.ai.AIPrismaticSelector;
+import data.scripts.cosmicon.ai.AIPrismaticSelector.PrismaticDecision;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.Phase;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.battle.BattleState.TurnType;
@@ -157,12 +159,11 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             state.getRemainingRerolls(true), state.getRemainingRerolls(false));
         
         state.setCurrentPhase(BattleState.Phase.ROLLING);
+        state.notifyPhaseChange(BattleState.Phase.ROLLING);
         
         if (diceRoller != null) {
             diceRoller.rollForAttacker(state);
         }
-        
-        state.notifyPhaseChange(BattleState.Phase.ROLLING);
         
         boolean attackerIsPlayer = state.isPlayerAttacker();
         StatusEffectProcessor.BattleContext attackerContext = createBattleContext(attackerIsPlayer);
@@ -190,6 +191,9 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
     private void advanceToDefensePhase() {
         state.notifyTransitionToDefenderRoll();
         
+        state.setCurrentPhase(BattleState.Phase.ROLLING);
+        state.notifyPhaseChange(BattleState.Phase.ROLLING);
+        
         state.setDefenderRolling(true);
         
         PassiveEventSystem.onStartOfDefenseTurn(state, true);
@@ -204,9 +208,6 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         TurnType defenderTurnType = TurnType.DEFENSE;
         state.getEffects(defenderIsPlayer).processPhase(Phase.AFTER_ROLL, defenderTurnType, defenderContext);
         state.setDiceValues(defenderIsPlayer, defenderContext.getDiceValues());
-        
-        state.setCurrentPhase(BattleState.Phase.ROLLING);
-        state.notifyPhaseChange(BattleState.Phase.ROLLING);
     }
     
     public void advanceToDefenderSelectPhase() {
@@ -230,6 +231,13 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             aiRerolls, state.isPlayerAttacker(), state.getCurrentPhase());
         CosmiconLogger.debug("[AI_REROLL_DIAG] opponentDiceValues=%s, opponentDiceTypes=%s", 
             state.getOpponentDiceValues(), state.getOpponentDiceTypes());
+        
+        PrismaticDecision prismDecision = AIPrismaticSelector.selectPrismaticDice(state, false);
+        if (prismDecision != null && prismDecision.shouldUse()) {
+            state.addPrismaticDiceToPool(prismDecision.instance(), false);
+            CosmiconLogger.debug("AI added prismatic dice: %s with score %.1f", 
+                prismDecision.instance().type.getId(), prismDecision.score());
+        }
         
         if (aiRerolls > 0 && aiEngine != null) {
             List<Integer> rerollIndices = aiEngine.planReroll(state, false);

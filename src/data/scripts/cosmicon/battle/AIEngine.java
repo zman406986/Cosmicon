@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import data.scripts.cosmicon.ai.AIPrismaticSelector;
+import data.scripts.cosmicon.ai.AIPrismaticSelector.PrismaticDecision;
 import data.scripts.cosmicon.ai.CosmiconAICore;
 import data.scripts.cosmicon.ai.CosmiconAICore.AIDecision;
 import data.scripts.cosmicon.util.CosmiconLogger;
@@ -110,5 +112,9 @@ public class AIEngine {
             isAttacking, 0);
         
         return new ArrayList<>(rerollIndices);
+    }
+    
+    public PrismaticDecision planPrismaticUse(BattleState state, boolean forPlayer) {
+        return AIPrismaticSelector.selectPrismaticDice(state, forPlayer);
     }
 }

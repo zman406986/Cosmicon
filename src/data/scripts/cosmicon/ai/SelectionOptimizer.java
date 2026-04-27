@@ -1,6 +1,10 @@
 package data.scripts.cosmicon.ai;
 
+import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.DiceType;
+import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
+import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
+import data.scripts.cosmicon.prismatic.PrismaticEffect;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -20,6 +24,17 @@ public final class SelectionOptimizer {
             int requiredCount,
             boolean isAttacking,
             CharacterAIProfile profile) {
+        return optimalSelection(diceValues, diceTypes, requiredCount, isAttacking, profile, null, true);
+    }
+
+    public static SelectionResult optimalSelection(
+            List<Integer> diceValues,
+            List<DiceType> diceTypes,
+            int requiredCount,
+            boolean isAttacking,
+            CharacterAIProfile profile,
+            BattleState state,
+            boolean forPlayer) {
         
         if (diceValues == null || diceValues.isEmpty() || requiredCount <= 0) {
             return SelectionResult.empty();
@@ -34,7 +49,7 @@ public final class SelectionOptimizer {
             }
         }
 
-        SelectionResult greedyResult = greedyHighSelection(diceValues, diceTypes, requiredCount, isAttacking, profile);
+        SelectionResult greedyResult = greedyHighSelection(diceValues, diceTypes, requiredCount, isAttacking, profile, state, forPlayer);
         
         if (profile != null && !profile.shouldOptimizeForPassive(isAttacking)) {
             SelectionResult enhancedResult = considerPassiveBonus(diceValues, diceTypes, requiredCount, profile, isAttacking);
@@ -55,18 +70,27 @@ public final class SelectionOptimizer {
             List<DiceType> diceTypes,
             int requiredCount,
             boolean isAttacking,
-            CharacterAIProfile profile) {
+            CharacterAIProfile profile,
+            BattleState state,
+            boolean forPlayer) {
         
         boolean preferHigh = profile == null || profile.prefersHighValues(isAttacking);
 
         List<DiceIndexValue> indexedValues = new ArrayList<>();
         for (int i = 0; i < diceValues.size(); i++) {
-            indexedValues.add(new DiceIndexValue(i, diceValues.get(i), diceTypes.get(i)));
+            float value = diceValues.get(i);
+            if (diceTypes.get(i) == DiceType.PRISMATIC && state != null) {
+                PrismaticDiceInstance pd = state.getPrismaticDiceAt(i, forPlayer);
+                if (pd != null && pd.isSpecialFace) {
+                    value += getEffectBonusForSelection(pd.type.getEffect(), isAttacking, state);
+                }
+            }
+            indexedValues.add(new DiceIndexValue(i, value, diceTypes.get(i)));
         }
 
         Comparator<DiceIndexValue> comparator = preferHigh 
-            ? Comparator.comparingInt(DiceIndexValue::value).reversed()
-            : Comparator.comparingInt(DiceIndexValue::value);
+            ? Comparator.comparingDouble(DiceIndexValue::sortValue).reversed()
+            : Comparator.comparingDouble(DiceIndexValue::sortValue);
         
         indexedValues.sort(comparator);
 
@@ -78,12 +102,39 @@ public final class SelectionOptimizer {
         for (int i = 0; i < Math.min(requiredCount, indexedValues.size()); i++) {
             DiceIndexValue dv = indexedValues.get(i);
             selectedIndices.add(dv.index());
-            sum += dv.value();
-            selectedValues.add(dv.value());
+            sum += diceValues.get(dv.index());
+            selectedValues.add(diceValues.get(dv.index()));
             selectedTypes.add(dv.type());
         }
 
         return new SelectionResult(selectedIndices, sum, selectedValues, selectedTypes, false, 0f, sum);
+    }
+
+    private static float getEffectBonusForSelection(PrismaticEffect effect, boolean isAttacking, BattleState state) {
+        if (effect == null || effect.isNone()) return 0f;
+
+        if (effect.isDoubleValue()) return 3f;
+
+        if (effect.isGrantStatus()) {
+            StatusEffect grantedEffect = effect.getGrantedEffect();
+            if (grantedEffect == null) return 0f;
+
+            return switch (grantedEffect) {
+                case FORCEFIELD -> isAttacking ? 0f : 4f;
+                case COMBO -> 3f;
+                case UNYIELDING -> 2f;
+                case DESTINED -> 2f;
+                case THORNS -> isAttacking ? 0f : 2f;
+                case HACK -> 2f;
+                default -> 1f;
+            };
+        }
+
+        if (effect.isHealHp()) return 2f;
+        if (effect.isInstantDamage()) return isAttacking ? 3f : 0f;
+        if (effect.isGainPrismaticUse()) return 2f;
+
+        return 1f;
     }
 
     private static SelectionResult optimizeForPassive(
@@ -138,7 +189,7 @@ public final class SelectionOptimizer {
             indexedValues.add(new DiceIndexValue(i, diceValues.get(i), diceTypes.get(i)));
         }
 
-        indexedValues.sort(Comparator.comparingInt(DiceIndexValue::value).reversed());
+        indexedValues.sort(Comparator.comparingDouble(DiceIndexValue::sortValue).reversed());
 
         Set<Integer> selectedIndices = new HashSet<>();
         List<Integer> selectedValues = new ArrayList<>();
@@ -148,9 +199,9 @@ public final class SelectionOptimizer {
         for (int i = 0; i < Math.min(requiredCount, indexedValues.size()); i++) {
             DiceIndexValue dv = indexedValues.get(i);
             selectedIndices.add(dv.index());
-            selectedValues.add(dv.value());
+            selectedValues.add(diceValues.get(dv.index()));
             selectedTypes.add(dv.type());
-            sum += dv.value();
+            sum += diceValues.get(dv.index());
         }
 
         CharacterAIProfile.PassiveEvaluation eval = profile.evaluatePassiveTrigger(selectedValues, selectedTypes, isAttacking);
@@ -235,12 +286,12 @@ public final class SelectionOptimizer {
                 remaining.add(new DiceIndexValue(i, diceValues.get(i), diceTypes.get(i)));
             }
         }
-        remaining.sort(Comparator.comparingInt(DiceIndexValue::value).reversed());
+        remaining.sort(Comparator.comparingDouble(DiceIndexValue::sortValue).reversed());
 
         for (DiceIndexValue dv : remaining) {
             if (selectedIndices.size() >= requiredCount) break;
             selectedIndices.add(dv.index());
-            selectedValues.add(dv.value());
+            selectedValues.add(diceValues.get(dv.index()));
             selectedTypes.add(dv.type());
         }
 
@@ -252,7 +303,7 @@ public final class SelectionOptimizer {
                                     pairsFound > 0, bonus, sum + bonus);
     }
 
-    private record DiceIndexValue(int index, int value, DiceType type) {}
+    private record DiceIndexValue(int index, float sortValue, DiceType type) {}
 
     public static final class SelectionResult {
         public final Set<Integer> selectedIndices;

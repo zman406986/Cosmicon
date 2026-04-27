@@ -8,7 +8,7 @@ public class PassiveResults {
 
     public static class PassiveResult {
         private int attackBonus;
-        private int defenseBonus;
+        private final int defenseBonus;
         private boolean perforation;
         private final List<GrantedEffect> grantedEffects;
         private int healAmount;

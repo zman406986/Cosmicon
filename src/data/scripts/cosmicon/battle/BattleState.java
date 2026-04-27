@@ -325,18 +325,6 @@ public class BattleState {
         return result;
     }
     
-    public List<PrismaticDiceInstance> getMustSelectPrismaticDice(boolean forPlayer) {
-        List<PrismaticDiceInstance> result = new ArrayList<>();
-        Map<Integer, PrismaticDiceInstance> map = forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
-        
-        for (PrismaticDiceInstance dice : map.values()) {
-            if (dice.isMustSelect()) {
-                result.add(dice);
-            }
-        }
-        return result;
-    }
-    
     public DicePoolCounts getPlayerDicePoolCounts() {
         return playerDicePoolCounts;
     }

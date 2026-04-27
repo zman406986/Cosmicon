@@ -178,10 +178,10 @@ public class BattleUILabels {
         float diceX = playerCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DICE_POOL_RIGHT_MARGIN - BattleRenderingUtils.DICE_ICON_SIZE / 2f - 11f;
         float diceStartY = playerCardY + BattleRenderingUtils.DICE_POOL_TOP_MARGIN + 3f;
 
-        playerPrismaticLabel = createCountLabel(diceX, diceStartY);
-        playerOrangeLabel = createCountLabel(diceX, diceStartY + 26);
-        playerPurpleLabel = createCountLabel(diceX, diceStartY + 52);
-        playerBlueLabel = createCountLabel(diceX, diceStartY + 78);
+        playerOrangeLabel = createCountLabel(diceX, diceStartY);
+        playerPurpleLabel = createCountLabel(diceX, diceStartY + 26);
+        playerBlueLabel = createCountLabel(diceX, diceStartY + 52);
+        playerPrismaticLabel = createCountLabel(diceX, diceStartY + 78);
 
         float opponentCardX = BattleRenderingUtils.MARGIN;
         float opponentCardY = BattleRenderingUtils.MARGIN;
@@ -189,10 +189,10 @@ public class BattleUILabels {
         diceX = opponentCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DICE_POOL_RIGHT_MARGIN - BattleRenderingUtils.DICE_ICON_SIZE / 2f - 11f;
         diceStartY = opponentCardY + BattleRenderingUtils.DICE_POOL_TOP_MARGIN + 3f;
 
-        opponentPrismaticLabel = createCountLabel(diceX, diceStartY);
-        opponentOrangeLabel = createCountLabel(diceX, diceStartY + 26);
-        opponentPurpleLabel = createCountLabel(diceX, diceStartY + 52);
-        opponentBlueLabel = createCountLabel(diceX, diceStartY + 78);
+        opponentOrangeLabel = createCountLabel(diceX, diceStartY);
+        opponentPurpleLabel = createCountLabel(diceX, diceStartY + 26);
+        opponentBlueLabel = createCountLabel(diceX, diceStartY + 52);
+        opponentPrismaticLabel = createCountLabel(diceX, diceStartY + 78);
     }
 
     private LabelAPI createCountLabel(float x, float y) {

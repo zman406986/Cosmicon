@@ -1,7 +1,12 @@
 package data.scripts.cosmicon.ai;
 
+import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.DiceType;
+import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
+import data.scripts.cosmicon.prismatic.PrismaticDiceType;
+import data.scripts.cosmicon.prismatic.PrismaticEffect;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +71,40 @@ public final class DiceProbabilityCalculator {
             case PURPLE_D6, PRISMATIC -> 3.5f;
             case ORANGE_D8 -> 4.5f;
         };
+    }
+
+    public static float expectedValue(DiceType type, PrismaticDiceType prismType, boolean isAttacking, BattleState context) {
+        if (type != DiceType.PRISMATIC || prismType == null) {
+            return expectedValue(type);
+        }
+        return expectedPrismaticValue(prismType, isAttacking, context);
+    }
+
+    public static float expectedPrismaticValue(PrismaticDiceType type, boolean isAttacking, BattleState context) {
+        int[] faces = type.getFaces(false);
+        float avg = (float) Arrays.stream(faces).average().orElse(3);
+        return avg + estimateEffectBonus(type, isAttacking, context);
+    }
+
+    private static float estimateEffectBonus(PrismaticDiceType type, boolean isAttacking, BattleState context) {
+        PrismaticEffect effect = type.getEffect();
+        if (effect == null || effect.isNone()) return 0f;
+
+        if (effect.isDoubleValue()) return 2.0f;
+
+        if (effect.isGrantStatus()) {
+            StatusEffect granted = effect.getGrantedEffect();
+            if (granted == StatusEffect.FORCEFIELD) {
+                return isAttacking ? 0f : 4f;
+            }
+            return 1f;
+        }
+
+        if (effect.isHealHp()) return 1.5f;
+        if (effect.isInstantDamage()) return isAttacking ? 2f : 0f;
+        if (effect.isGainPrismaticUse()) return 1.5f;
+
+        return 1f;
     }
 
     public static float[] getSingleDicePMF(DiceType type) {

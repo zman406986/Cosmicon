@@ -210,7 +210,7 @@ public class FlyingIcon {
     }
     
     public boolean isComplete() { return flyPhase == FlyPhase.COMPLETE; }
-    public boolean isPullbackComplete() { return flyPhase == FlyPhase.READY || flyPhase == FlyPhase.FLYING || flyPhase == FlyPhase.COMPLETE; }
+
     public boolean isReady() { return flyPhase == FlyPhase.READY; }
     public float getX() { return currentX; }
     public float getY() { return currentY; }

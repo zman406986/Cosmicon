@@ -2,9 +2,7 @@ package data.scripts.cosmicon.battle;
 
 import java.awt.Color;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.lwjgl.opengl.GL11;
 
@@ -226,32 +224,24 @@ public final class BattleRenderingUtils {
     }
 
     public static void renderDicePoolIcons(float cardX, float cardY, List<DiceType> pool, float alphaMult) {
-        Map<DiceType, Integer> counts = new HashMap<>();
-        for (DiceType d : pool) {
-            counts.merge(d, 1, Integer::sum);
-        }
-
         GLStateUtil.enableTexturingWithBlend();
 
         float startX = cardX + CARD_WIDTH - DICE_POOL_RIGHT_MARGIN - DICE_ICON_SIZE;
         float startY = cardY + CARD_HEIGHT - DICE_POOL_TOP_MARGIN - DICE_ICON_SIZE;
 
         List<DiceType> order = Arrays.asList(
-            DiceType.PRISMATIC, DiceType.ORANGE_D8, DiceType.PURPLE_D6, DiceType.BLUE_D4
+            DiceType.ORANGE_D8, DiceType.PURPLE_D6, DiceType.BLUE_D4, DiceType.PRISMATIC
         );
 
         float offsetY = 0f;
         for (DiceType type : order) {
-            int count = counts.getOrDefault(type, 0);
-            if (count > 0) {
-                SpriteAPI icon = CosmiconSprites.getDiceIcon(type);
-                if (icon != null) {
-                    icon.setSize(DICE_ICON_SIZE, DICE_ICON_SIZE);
-                    icon.setAlphaMult(alphaMult);
-                    icon.render(startX, startY - offsetY);
-                }
-                offsetY += DICE_ICON_SPACING;
+            SpriteAPI icon = CosmiconSprites.getDiceIcon(type);
+            if (icon != null) {
+                icon.setSize(DICE_ICON_SIZE, DICE_ICON_SIZE);
+                icon.setAlphaMult(alphaMult);
+                icon.render(startX, startY - offsetY);
             }
+            offsetY += DICE_ICON_SPACING;
         }
 
         GLStateUtil.disableTexturing();
