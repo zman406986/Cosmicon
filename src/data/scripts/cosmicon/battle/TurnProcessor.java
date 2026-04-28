@@ -75,6 +75,8 @@ public class TurnProcessor {
     
     public void executeTurn() {
         state.clearConfirmedSelections();
+        state.setAttackValue(0);
+        state.setDefenseValue(0);
         state.getPlayerEffects().resetTurnState();
         state.getOpponentEffects().resetTurnState();
         
@@ -570,6 +572,7 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
                     state.setDefenseValue(state.calculateSelectedSum(targetIsPlayer));
                 }
             }
+            state.getPlayerEffects().removeEffect(StatusEffect.HACK);
         }
         if (state.getOpponentEffects().hasEffect(StatusEffect.HACK)) {
             CosmiconLogger.debug("HACK triggered for opponent");
@@ -583,6 +586,7 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
                     state.setDefenseValue(state.calculateSelectedSum(targetIsPlayer));
                 }
             }
+            state.getOpponentEffects().removeEffect(StatusEffect.HACK);
         }
         
         int attackerInstantDamage = attackerContext.getInstantDamageToOpponent();
@@ -639,12 +643,14 @@ private void applyDamageResult(DamageResolver.DamageResult result) {
                 if (result.siphonHeal() > 0) {
                     state.applyHealTo(true, result.siphonHeal());
                 }
+                state.getEffects(playerIsAttacker).removeEffect(StatusEffect.SIPHON);
             } else {
                 state.applyDamageTo(true, damage);
                 
                 if (result.siphonHeal() > 0) {
                     state.applyHealTo(false, result.siphonHeal());
                 }
+                state.getEffects(playerIsAttacker).removeEffect(StatusEffect.SIPHON);
             }
             
             int instantDamageToAttacker = PassiveEventSystem.onDamageTaken(state, defenderIsPlayer, damage);
@@ -678,9 +684,18 @@ private void applyDamageResult(DamageResolver.DamageResult result) {
         
         if (result.reflectDamage() > 0) {
             state.applyDamageTo(playerIsAttacker, result.reflectDamage());
+            state.getEffects(defenderIsPlayer).removeEffect(StatusEffectProcessor.StatusEffect.REFLECT);
         }
         
         applyComboAttack(playerIsAttacker, defenderIsPlayer);
+        
+        if (result.perforationSuccessful()) {
+            state.getEffects(playerIsAttacker).removeEffect(StatusEffectProcessor.StatusEffect.PERFORATION);
+        }
+        
+        if (result.forcefieldUsed()) {
+            state.getEffects(defenderIsPlayer).removeEffect(StatusEffectProcessor.StatusEffect.FORCEFIELD);
+        }
         
         PassiveEventSystem.onAttackResolved(state, playerIsAttacker, result.perforationSuccessful(), damage);
         
@@ -707,9 +722,11 @@ private void applyDamageResult(DamageResolver.DamageResult result) {
         StatusEffectProcessor defenderEffects = state.getEffects(defenderIsPlayer);
         int comboDamage = modifiedAttack;
         
+        int forcefieldReduction = 0;
         if (defenderEffects.isForcefieldActive() && comboDamage > 0) {
-            int forcefieldLayers = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.FORCEFIELD);
-            comboDamage = Math.max(1, comboDamage - forcefieldLayers);
+            forcefieldReduction = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.FORCEFIELD);
+            comboDamage = Math.max(1, comboDamage - forcefieldReduction);
+            defenderEffects.removeEffect(StatusEffectProcessor.StatusEffect.FORCEFIELD);
         }
         
         attackerEffects.removeEffect(StatusEffect.COMBO);
@@ -718,12 +735,12 @@ private void applyDamageResult(DamageResolver.DamageResult result) {
             state.applyDamageTo(defenderIsPlayer, comboDamage);
             
             CosmiconLogger.info("COMBO attack: %d damage (Attack=%d, modified=%d, Forcefield reduction=%d)",
-                comboDamage, attackValue, modifiedAttack, 
-                defenderEffects.isForcefieldActive() ? defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.FORCEFIELD) : 0);
+                comboDamage, attackValue, modifiedAttack, forcefieldReduction);
             
             int reflectDamage = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.REFLECT);
             if (reflectDamage > 0) {
                 state.applyDamageTo(playerIsAttacker, reflectDamage);
+                defenderEffects.removeEffect(StatusEffectProcessor.StatusEffect.REFLECT);
                 CosmiconLogger.debug("COMBO reflect: %d damage to attacker", reflectDamage);
             }
             

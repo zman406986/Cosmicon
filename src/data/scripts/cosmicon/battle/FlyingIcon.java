@@ -37,6 +37,7 @@ public class FlyingIcon {
     private int value;
     private final Color color;
     private boolean usePullback;
+    private boolean useLinearFlight;
     
     private float currentRotation = 0f;
     private float targetRotation = 0f;
@@ -78,6 +79,14 @@ public class FlyingIcon {
     }
     
     public void flyTo(float x, float y, float duration) {
+        flyTo(x, y, duration, false, false);
+    }
+    
+    public void flyTo(float x, float y, float duration, boolean useLinear) {
+        flyTo(x, y, duration, useLinear, useLinear);
+    }
+    
+    public void flyTo(float x, float y, float duration, boolean useLinear, boolean skipPullback) {
         this.startX = currentX;
         this.startY = currentY;
         float dx = x - currentX;
@@ -90,21 +99,32 @@ public class FlyingIcon {
             pullbackX = currentX;
             pullbackY = currentY;
         }
+        if (skipPullback) {
+            pullbackX = currentX;
+            pullbackY = currentY;
+        }
         this.targetX = x;
         this.targetY = y;
         this.flyDuration = duration;
         this.elapsed = 0f;
         this.rotationElapsed = 0f;
-        this.usePullback = true;
+        this.usePullback = !skipPullback;
+        this.useLinearFlight = useLinear;
         
         if (Math.abs(targetRotation - currentRotation) > 0.5f) {
             flyPhase = FlyPhase.ROTATING;
+        } else if (skipPullback) {
+            flyPhase = FlyPhase.READY;
         } else {
             flyPhase = FlyPhase.PULLBACK;
         }
     }
     
     public void flyDirectTo(float x, float y, float duration) {
+        flyDirectTo(x, y, duration, false);
+    }
+    
+    public void flyDirectTo(float x, float y, float duration, boolean useLinear) {
         this.startX = currentX;
         this.startY = currentY;
         this.pullbackX = currentX;
@@ -115,6 +135,7 @@ public class FlyingIcon {
         this.elapsed = 0f;
         this.rotationElapsed = 0f;
         this.usePullback = false;
+        this.useLinearFlight = useLinear;
         
         if (Math.abs(targetRotation - currentRotation) > 0.5f) {
             flyPhase = FlyPhase.ROTATING;
@@ -204,7 +225,7 @@ public class FlyingIcon {
         }
         
         float progress = elapsed / flyDuration;
-        float eased = EasingUtil.easeOutQuad(progress);
+        float eased = useLinearFlight ? progress : EasingUtil.easeOutQuad(progress);
         currentX = pullbackX + (targetX - pullbackX) * eased;
         currentY = pullbackY + (targetY - pullbackY) * eased;
     }

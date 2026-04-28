@@ -219,6 +219,8 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.travelProgress = 0f;
         this.bounceCount = 0;
         this.bounceHeights = new float[0];
+        this.targetCenterX = targetCenterX;
+        this.targetCenterY = targetCenterY;
     }
     
     

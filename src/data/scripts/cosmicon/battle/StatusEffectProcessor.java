@@ -168,6 +168,8 @@ public class StatusEffectProcessor {
     private void processAfterSelect(BattleContext context) {
         if (hasEffect(StatusEffect.ARISE)) {
             context.applyArise();
+            effects.remove(StatusEffect.ARISE);
+            durations.remove(StatusEffect.ARISE);
         }
 
         if (hasEffect(StatusEffect.LEVEL_UP)) {
@@ -179,6 +181,8 @@ public class StatusEffectProcessor {
 
         if (hasEffect(StatusEffect.AWAKENING)) {
             context.applyAwakening();
+            effects.remove(StatusEffect.AWAKENING);
+            durations.remove(StatusEffect.AWAKENING);
         }
     }
 

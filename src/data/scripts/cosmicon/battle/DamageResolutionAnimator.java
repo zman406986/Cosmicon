@@ -51,6 +51,7 @@ public class DamageResolutionAnimator {
     private FlyingNumber comboResultNumber;
     private final ImpactEffect impactEffect;
     private final IconShatterEffect shatterEffect;
+    private final IconSplitEffect splitEffect;
     
     private FlyingIcon atkFlyingIcon;
     private FlyingIcon defFlyingIcon;
@@ -72,6 +73,11 @@ public class DamageResolutionAnimator {
     private float defenderTargetX;
     private float defenderTargetY;
     
+    private float atkClashX;
+    private float atkClashY;
+    private float defClashX;
+    private float defClashY;
+    
     private float atkIconCenterX;
     private float atkIconCenterY;
     private float defIconCenterX;
@@ -90,6 +96,7 @@ public class DamageResolutionAnimator {
         shatterRestoreAlpha = 0f;
         impactEffect = new ImpactEffect();
         shatterEffect = new IconShatterEffect();
+        splitEffect = new IconSplitEffect();
     }
     
     public void startResolution(
@@ -150,8 +157,8 @@ public class DamageResolutionAnimator {
         atkFlyingIcon.createLabel(panel);
         defFlyingIcon.createLabel(panel);
         
-        atkFlyingIcon.flyTo(centerX, centerY, ICON_CLASH_DURATION);
-        defFlyingIcon.flyTo(centerX, centerY, ICON_CLASH_DURATION);
+        atkFlyingIcon.flyTo(atkClashX, atkClashY, ICON_CLASH_DURATION, true, true);
+        defFlyingIcon.flyTo(defClashX, defClashY, ICON_CLASH_DURATION, true, true);
         
         phase = Phase.ICON_PREPARATION;
         phaseElapsed = 0f;
@@ -168,16 +175,28 @@ public class DamageResolutionAnimator {
         float bottomIconCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
         float bottomIconCenterY = halfH + (halfH - iconSize) / 2f + iconSize / 2f;
         
+        float clashOffset = iconSize * 0.25f;
+        
         if (state.isPlayerAttacker()) {
             atkIconCenterX = bottomIconCenterX;
             atkIconCenterY = bottomIconCenterY;
             defIconCenterX = topIconCenterX;
             defIconCenterY = topIconCenterY;
+            
+            atkClashX = centerX;
+            atkClashY = centerY + clashOffset;
+            defClashX = centerX;
+            defClashY = centerY - clashOffset;
         } else {
             atkIconCenterX = topIconCenterX;
             atkIconCenterY = topIconCenterY;
             defIconCenterX = bottomIconCenterX;
             defIconCenterY = bottomIconCenterY;
+            
+            atkClashX = centerX;
+            atkClashY = centerY - clashOffset;
+            defClashX = centerX;
+            defClashY = centerY + clashOffset;
         }
     }
     
@@ -236,6 +255,7 @@ public class DamageResolutionAnimator {
         
         impactEffect.advance(amount);
         shatterEffect.advance(amount);
+        splitEffect.advance(amount);
     }
     
     private void advanceFlyingNumbers(float amount) {
@@ -301,12 +321,18 @@ public class DamageResolutionAnimator {
         if (attackWins) {
             shatterEffect.trigger(centerX, centerY, 
                 ColorHelper.DEFENSE_VALUE, iconSize);
+            splitEffect.trigger(
+                defFlyingIcon != null ? defFlyingIcon.getSprite() : CosmiconSprites.getDefIcon(),
+                defClashX, defClashY, ColorHelper.DEFENSE_VALUE, iconSize);
             if (defFlyingIcon != null) {
                 defFlyingIcon.setLabelOpacity(0f);
             }
         } else {
             shatterEffect.trigger(centerX, centerY, 
                 ColorHelper.ATTACK_VALUE, iconSize);
+            splitEffect.trigger(
+                atkFlyingIcon != null ? atkFlyingIcon.getSprite() : CosmiconSprites.getAtkIcon(),
+                atkClashX, atkClashY, ColorHelper.ATTACK_VALUE, iconSize);
             if (atkFlyingIcon != null) {
                 atkFlyingIcon.setLabelOpacity(0f);
             }
@@ -388,6 +414,10 @@ public class DamageResolutionAnimator {
     
     private void advanceShatterRestore() {
         shatterRestoreAlpha = Math.min(phaseElapsed / SHATTER_RESTORE_DURATION, 1f);
+        
+        if (phaseElapsed == 0f && splitEffect.isActive() && !splitEffect.isRestoring()) {
+            splitEffect.startRestore(SHATTER_RESTORE_DURATION);
+        }
         
         boolean atkDone = atkFlyingIcon == null || atkFlyingIcon.isComplete();
         boolean defDone = defFlyingIcon == null || defFlyingIcon.isComplete();
@@ -481,6 +511,7 @@ public class DamageResolutionAnimator {
         renderNumbersOnIcons(panelX, panelY, panelHeight, alphaMult);
         
         shatterEffect.render(panelX, panelY, panelHeight, alphaMult);
+        splitEffect.render(panelX, panelY, panelHeight, alphaMult);
         
         renderResultNumbers(panelX, panelY, panelHeight, alphaMult);
         
@@ -502,11 +533,14 @@ public class DamageResolutionAnimator {
                               phase == Phase.ICON_IMPACT;
         
         if (duringClash) {
-            if (atkFlyingIcon != null) {
+            boolean atkHiddenBySplit = splitEffect.isActive() && !attackWins;
+            boolean defHiddenBySplit = splitEffect.isActive() && attackWins;
+            
+            if (atkFlyingIcon != null && !atkHiddenBySplit) {
                 atkFlyingIcon.render(panelX, panelY, panelHeight, alphaMult);
                 atkFlyingIcon.setLabelOpacity(alphaMult);
             }
-            if (defFlyingIcon != null) {
+            if (defFlyingIcon != null && !defHiddenBySplit) {
                 defFlyingIcon.render(panelX, panelY, panelHeight, alphaMult);
                 defFlyingIcon.setLabelOpacity(alphaMult);
             }
@@ -516,13 +550,14 @@ public class DamageResolutionAnimator {
         boolean atkShattered = !attackWins || isDraw;
         boolean defShattered = attackWins;
         boolean restoring = phase == Phase.SHATTER_RESTORE;
+        boolean splitDone = !splitEffect.isActive();
         
-        if (atkFlyingIcon != null && (!atkShattered || restoring)) {
+        if (atkFlyingIcon != null && (!atkShattered || (restoring && splitDone))) {
             float restoreAlpha = atkShattered ? shatterRestoreAlpha : alphaMult;
             atkFlyingIcon.render(panelX, panelY, panelHeight, restoreAlpha);
             atkFlyingIcon.setLabelOpacity(restoreAlpha);
         }
-        if (defFlyingIcon != null && (!defShattered || restoring)) {
+        if (defFlyingIcon != null && (!defShattered || (restoring && splitDone))) {
             float restoreAlpha = defShattered ? shatterRestoreAlpha : alphaMult;
             defFlyingIcon.render(panelX, panelY, panelHeight, restoreAlpha);
             defFlyingIcon.setLabelOpacity(restoreAlpha);
@@ -605,6 +640,7 @@ public class DamageResolutionAnimator {
         
         impactEffect.clear();
         shatterEffect.clear();
+        splitEffect.clear();
     }
     
     public void cleanup() {
@@ -635,6 +671,7 @@ public class DamageResolutionAnimator {
         
         impactEffect.clear();
         shatterEffect.clear();
+        splitEffect.clear();
         
         phase = Phase.IDLE;
         phaseElapsed = 0f;

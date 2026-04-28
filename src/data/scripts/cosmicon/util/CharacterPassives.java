@@ -92,10 +92,10 @@ public class CharacterPassives {
     private static void evaluateHyacine(PassiveResult result, List<Integer> values, boolean isAttacking) {
         if (!isAttacking || values == null || values.isEmpty()) return;
         if (allDiceEqualSix(values)) {
-            result.addGrantedEffect(StatusEffect.STRENGTH, sumOfValues(values));
+            result.setGrantedEffect(StatusEffect.STRENGTH, sumOfValues(values));
             result.setHealAmount(6);
         } else {
-            result.addGrantedEffect(StatusEffect.STRENGTH, sumOfValues(values) / 2);
+            result.setGrantedEffect(StatusEffect.STRENGTH, sumOfValues(values) / 2);
         }
     }
 
@@ -231,6 +231,8 @@ public class CharacterPassives {
 
     public static void onEndOfDefenseTurn(String characterId, BattleState state, boolean forPlayer) {
         if (characterId == null) return;
+        
+        state.getEffects(forPlayer).removeEffect(StatusEffect.COUNTER);
         
         int originalDefLevel = state.getOriginalDefLevel(forPlayer);
         if (originalDefLevel > 0) {

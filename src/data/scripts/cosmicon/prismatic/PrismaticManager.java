@@ -27,11 +27,42 @@ public class PrismaticManager {
     
     private void initializePrismaticUses() {
         for (PrismaticDiceType type : PrismaticDiceRegistry.getAll().values()) {
-            playerPrismatic.setUsesByType(type, 2);
-            opponentPrismatic.setUsesByType(type, 2);
+            playerPrismatic.setUsesByType(type, 0);
+            opponentPrismatic.setUsesByType(type, 0);
         }
-        playerPrismatic.setUses(2);
-        opponentPrismatic.setUses(2);
+        playerPrismatic.setUses(0);
+        opponentPrismatic.setUses(0);
+    }
+    
+    public void initializeFromCards(CharacterCard playerCard, CharacterCard opponentCard) {
+        initializePrismaticUses();
+        
+        if (playerCard != null) {
+            java.util.Map<String, Integer> playerPrismaticDice = playerCard.getPrismaticDiceIds();
+            for (java.util.Map.Entry<String, Integer> entry : playerPrismaticDice.entrySet()) {
+                PrismaticDiceType type = PrismaticDiceRegistry.get(entry.getKey());
+                if (type != null) {
+                    int uses = entry.getValue();
+                    playerPrismatic.setUsesByType(type, uses);
+                    playerPrismatic.setUses(playerPrismatic.getUses() + uses);
+                }
+            }
+        }
+        
+        if (opponentCard != null) {
+            java.util.Map<String, Integer> opponentPrismaticDice = opponentCard.getPrismaticDiceIds();
+            for (java.util.Map.Entry<String, Integer> entry : opponentPrismaticDice.entrySet()) {
+                PrismaticDiceType type = PrismaticDiceRegistry.get(entry.getKey());
+                if (type != null) {
+                    int uses = entry.getValue();
+                    opponentPrismatic.setUsesByType(type, uses);
+                    opponentPrismatic.setUses(opponentPrismatic.getUses() + uses);
+                }
+            }
+        }
+        
+        CosmiconLogger.debug("Prismatic uses initialized - Player: %d, Opponent: %d", 
+            playerPrismatic.getUses(), opponentPrismatic.getUses());
     }
     
     public List<PrismaticDiceType> getAvailable(boolean forPlayer, BattleState state) {
@@ -134,10 +165,10 @@ public class PrismaticManager {
         opponentPrismatic.clear();
     }
     
-    public void resetForNewBattle() {
+    public void resetForNewBattle(CharacterCard playerCard, CharacterCard opponentCard) {
         playerPrismatic.reset();
         opponentPrismatic.reset();
-        initializePrismaticUses();
+        initializeFromCards(playerCard, opponentCard);
         CosmiconLogger.debug("Prismatic state reset for new battle");
     }
     

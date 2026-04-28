@@ -36,7 +36,7 @@ public final class BattleRenderingUtils {
     public static final float PORTRAIT_DISPLAY_H = CARD_HEIGHT * PORTRAIT_SCALE;
 
     public static final float MARGIN = 20f;
-    public static final float STATUS_BOX_WIDTH = 300f;
+    public static final float STATUS_BOX_WIDTH = 180f;
     public static final float STATUS_BOX_PADDING = 15f;
     public static final Color COLOR_STATUS_BG = new Color(30, 35, 45, 220);
     public static final Color COLOR_STATUS_BORDER = new Color(70, 75, 90);

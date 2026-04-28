@@ -171,7 +171,7 @@ public class BattleState {
         opponentCumulativeAtkDef = 0;
         playerCyreneThresholdMet = false;
         opponentCyreneThresholdMet = false;
-        if (prismaticManager != null) prismaticManager.resetForNewBattle();
+        if (prismaticManager != null) prismaticManager.initializeFromCards(playerCard, opponentCard);
         
         CosmiconLogger.debug("BattleState initialized - Player: %s (HP %d), Opponent: %s (HP %d)",
             playerCard.getName(), playerHp, opponentCard.getName(), opponentHp);
@@ -526,6 +526,7 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
             } else {
                 opponentHp = 1;
             }
+            getEffects(isPlayer).removeEffect(StatusEffectProcessor.StatusEffect.UNYIELDING);
             CosmiconLogger.info("%s: UNYIELDING prevented death (HP: 1)", characterName);
         }
         

@@ -11,6 +11,7 @@ public class PassiveResults {
         private final int defenseBonus;
         private boolean perforation;
         private final List<GrantedEffect> grantedEffects;
+        private final List<GrantedEffect> setGrantedEffects;
         private int healAmount;
         private int instantDamageToOpponent;
         private int toughnessToRemove;
@@ -22,6 +23,7 @@ public class PassiveResults {
             this.defenseBonus = 0;
             this.perforation = false;
             this.grantedEffects = new ArrayList<>();
+            this.setGrantedEffects = new ArrayList<>();
             this.healAmount = 0;
             this.instantDamageToOpponent = 0;
             this.toughnessToRemove = 0;
@@ -39,6 +41,10 @@ public class PassiveResults {
 
         public void addGrantedEffect(StatusEffect effect, int layers) {
             grantedEffects.add(new GrantedEffect(effect, layers));
+        }
+
+        public void setGrantedEffect(StatusEffect effect, int layers) {
+            setGrantedEffects.add(new GrantedEffect(effect, layers));
         }
 
         public void setHealAmount(int heal) {
@@ -67,6 +73,10 @@ public class PassiveResults {
             return new ArrayList<>(grantedEffects);
         }
 
+        public List<GrantedEffect> getSetGrantedEffects() {
+            return new ArrayList<>(setGrantedEffects);
+        }
+
         public int getHealAmount() {
             return healAmount;
         }
@@ -93,7 +103,7 @@ public class PassiveResults {
 
         public boolean isEmpty() {
             return attackBonus == 0 && defenseBonus == 0 && !perforation && grantedEffects.isEmpty() 
-                && healAmount == 0 && instantDamageToOpponent == 0 && pendingDefLevelBoost == 0;
+                && setGrantedEffects.isEmpty() && healAmount == 0 && instantDamageToOpponent == 0 && pendingDefLevelBoost == 0;
         }
     }
 

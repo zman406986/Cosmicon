@@ -52,6 +52,8 @@ public class PrismaticState {
     
     public void reset() {
         clear();
+        uses = 0;
+        usesByType.clear();
         CosmiconLogger.debug("Prismatic state fully reset");
     }
 }

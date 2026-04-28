@@ -36,9 +36,11 @@ public class DamageResolver {
         
         int damage = Math.max(0, modifiedAttack - modifiedDefense);
         
+        boolean forcefieldUsed = false;
         if (defenderEffects.isForcefieldActive() && damage > 0) {
             int forcefieldLayers = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.FORCEFIELD);
             damage = Math.max(1, damage - forcefieldLayers);
+            forcefieldUsed = true;
         }
         
         int thornsDamage = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.THORNS);
@@ -81,7 +83,8 @@ public class DamageResolver {
             siphonHeal + weatherSiphon,
             reflectDamage,
             instantDamage,
-            perforationSuccessful
+            perforationSuccessful,
+            forcefieldUsed
         );
         
         logDamageResolution(state, attackValue, defenseValue, modifiedAttack, modifiedDefense,
@@ -92,7 +95,7 @@ public class DamageResolver {
 
     public record DamageResult(int damageToDefender, int thornsDamage, int selfThornsDamage, int counterDamage, 
                                int overloadSelfDamage, int siphonHeal, int reflectDamage, int instantDamage,
-                               boolean perforationSuccessful)
+                               boolean perforationSuccessful, boolean forcefieldUsed)
     {
     }
     

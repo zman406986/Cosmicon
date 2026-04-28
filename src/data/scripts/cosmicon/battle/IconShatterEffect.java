@@ -11,7 +11,7 @@ import data.scripts.cosmicon.util.GLStateUtil;
 import data.scripts.cosmicon.util.UnifiedCoord;
 
 public class IconShatterEffect {
-    private static final float SHATTER_DURATION = 0.5f;
+    protected static final float SHATTER_DURATION = 0.5f;
     private static final int MIN_PARTICLES = 12;
     private static final int MAX_PARTICLES = 20;
     

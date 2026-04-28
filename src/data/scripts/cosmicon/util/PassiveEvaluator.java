@@ -97,6 +97,10 @@ public class PassiveEvaluator {
             effects.addEffect(ge.effect(), ge.layers());
         }
         
+        for (GrantedEffect ge : result.getSetGrantedEffects()) {
+            effects.setEffect(ge.effect(), ge.layers());
+        }
+        
         if (result.shouldTriggerToughnessInstantDamage()) {
             int currentToughness = effects.getLayers(StatusEffect.TOUGHNESS);
             int newToughness = Math.max(0, currentToughness - result.getToughnessToRemove());
