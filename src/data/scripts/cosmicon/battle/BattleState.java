@@ -94,6 +94,7 @@ public class BattleState {
     private final List<BattleEventListener> listeners;
     private final AISelectionVisualizer aiSelectionVisualizer;
     private final List<ValueChangeRecord> pendingValueChanges;
+    private boolean valueChangeAnimationInProgress;
 
     public interface BattleEventListener {
         void onPhaseChange(Phase newPhase);
@@ -153,6 +154,7 @@ public class BattleState {
         this.opponentPrismaticDiceByIndex = new HashMap<>();
         this.aiSelectionVisualizer = new AISelectionVisualizer();
         this.pendingValueChanges = new ArrayList<>();
+        this.valueChangeAnimationInProgress = false;
         this.playerPendingDefLevelBoost = 0;
         this.opponentPendingDefLevelBoost = 0;
         this.playerOriginalDefLevel = 0;
@@ -171,7 +173,7 @@ public class BattleState {
         opponentCumulativeAtkDef = 0;
         playerCyreneThresholdMet = false;
         opponentCyreneThresholdMet = false;
-        if (prismaticManager != null) prismaticManager.initializeFromCards(playerCard, opponentCard);
+        prismaticManager.initializeFromCards(playerCard, opponentCard);
         
         CosmiconLogger.debug("BattleState initialized - Player: %s (HP %d), Opponent: %s (HP %d)",
             playerCard.getName(), playerHp, opponentCard.getName(), opponentHp);
@@ -279,9 +281,9 @@ public class BattleState {
     }
 
     public void addPrismaticDiceToPool(PrismaticDiceInstance dice, boolean forPlayer) {
-        List<DiceType> types = getDiceTypes(forPlayer);
-        List<Integer> values = getDiceValues(forPlayer);
-        List<Boolean> selected = getDiceSelected(forPlayer);
+        List<DiceType> types = getDiceTypesDirect(forPlayer);
+        List<Integer> values = getDiceValuesDirect(forPlayer);
+        List<Boolean> selected = getDiceSelectedDirect(forPlayer);
         Map<Integer, PrismaticDiceInstance> map = forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
         
         types.add(DiceType.PRISMATIC);
@@ -459,21 +461,20 @@ public class BattleState {
     }
 
     public int getPlayerPrismaticUses() {
-        return prismaticManager != null ? prismaticManager.getUses(true) : 0;
+        return prismaticManager.getUses(true);
     }
 
     public int getOpponentPrismaticUses() {
-        return prismaticManager != null ? prismaticManager.getUses(false) : 0;
+        return prismaticManager.getUses(false);
     }
 
     public void addPrismaticUse(PrismaticDiceType type, boolean isPlayer) {
-        if (prismaticManager != null) prismaticManager.addPrismaticUse(type, isPlayer);
+        prismaticManager.addPrismaticUse(type, isPlayer);
     }
     
     
     
 public boolean canConfirmPrismaticSelection(boolean isPlayer) {
-        if (prismaticManager == null) return true;
         return prismaticManager.canConfirmPrismaticSelection(isPlayer);
     }
     
@@ -583,28 +584,36 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     
     
     public void setDoubleValueActive(boolean isPlayer, boolean active) {
-        if (prismaticManager != null) prismaticManager.setDoubleValueActive(isPlayer, active);
+        prismaticManager.setDoubleValueActive(isPlayer, active);
     }
     
     public void addInstantDamage(boolean isPlayer, int amount) {
-        if (prismaticManager != null) prismaticManager.addInstantDamage(isPlayer, amount);
+        prismaticManager.addInstantDamage(isPlayer, amount);
     }
     
     public void clearPrismaticState() {
-        if (prismaticManager != null) prismaticManager.clearState();
+        if (valueChangeAnimationInProgress) {
+            CosmiconLogger.warn("Cannot clear prismatic state while value change animation is in progress");
+            return;
+        }
+        if (currentPhase == Phase.RESOLVING || currentPhase == Phase.RESOLVING_PRE_CLASH) {
+            CosmiconLogger.warn("Cannot clear prismatic state during resolution phase");
+            return;
+        }
+        prismaticManager.clearState();
+        playerPrismaticDiceByIndex.clear();
+        opponentPrismaticDiceByIndex.clear();
     }
     
     public void applyPrismaticDiceEffects() {
-        if (prismaticManager != null) prismaticManager.applyQueuedEffects(this);
+        prismaticManager.applyQueuedEffects(this);
     }
     
     public int getPrismaticDiceTotalValue(boolean isPlayer) {
-        if (prismaticManager == null) return 0;
         return prismaticManager.calculateTotalValue(isPlayer, true);
     }
     
     public int getPrismaticInstantDamage(boolean isPlayer) {
-        if (prismaticManager == null) return 0;
         return prismaticManager.getInstantDamage(isPlayer);
     }
     
@@ -626,19 +635,15 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
     
     public void addPrismaticUse(int amount) {
-        if (prismaticManager != null) {
-            for (int i = 0; i < amount; i++) {
-                prismaticManager.addPrismaticUse(null, true);
-                prismaticManager.addPrismaticUse(null, false);
-            }
+        for (int i = 0; i < amount; i++) {
+            prismaticManager.addPrismaticUse(null, true);
+            prismaticManager.addPrismaticUse(null, false);
         }
     }
     
     public void addPrismaticUseByType(PrismaticDiceType type, boolean isPlayer, int amount) {
-        if (prismaticManager != null) {
-            for (int i = 0; i < amount; i++) {
-                prismaticManager.addPrismaticUse(type, isPlayer);
-            }
+        for (int i = 0; i < amount; i++) {
+            prismaticManager.addPrismaticUse(type, isPlayer);
         }
     }
 
@@ -675,6 +680,18 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
     
     public List<Boolean> getDiceSelected(boolean forPlayer) {
+        return forPlayer ? playerDiceSelected : opponentDiceSelected;
+    }
+    
+    List<Integer> getDiceValuesDirect(boolean forPlayer) {
+        return forPlayer ? playerDiceValues : opponentDiceValues;
+    }
+    
+    List<DiceType> getDiceTypesDirect(boolean forPlayer) {
+        return forPlayer ? playerDiceTypes : opponentDiceTypes;
+    }
+    
+    List<Boolean> getDiceSelectedDirect(boolean forPlayer) {
         return forPlayer ? playerDiceSelected : opponentDiceSelected;
     }
     
@@ -751,7 +768,7 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
     
     public void clearDiceSelection(boolean forPlayer) {
-        List<Boolean> selected = getDiceSelected(forPlayer);
+        List<Boolean> selected = getDiceSelectedDirect(forPlayer);
         if (selected != null) {
             Collections.fill(selected, false);
         }
@@ -890,7 +907,22 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
 
     public void clearPendingValueChanges() {
+        if (valueChangeAnimationInProgress) {
+            CosmiconLogger.warn("Cannot clear pending value changes while animation is in progress");
+            return;
+        }
         pendingValueChanges.clear();
+    }
+
+    public void setValueChangeAnimationInProgress(boolean inProgress) {
+        this.valueChangeAnimationInProgress = inProgress;
+        if (!inProgress) {
+            pendingValueChanges.clear();
+        }
+    }
+
+    public boolean isValueChangeAnimationInProgress() {
+        return valueChangeAnimationInProgress;
     }
 
     public void notifyValueChange(boolean isPlayer, String changeType, int oldValue, int newValue, int delta) {
@@ -936,7 +968,13 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
 
     public void clearPendingDefLevelBoost(boolean forPlayer) {
-        setPendingDefLevelBoost(forPlayer, 0);
+        if (forPlayer) {
+            playerPendingDefLevelBoost = 0;
+            playerOriginalDefLevel = 0;
+        } else {
+            opponentPendingDefLevelBoost = 0;
+            opponentOriginalDefLevel = 0;
+        }
     }
 
     public int getOriginalDefLevel(boolean forPlayer) {
@@ -995,9 +1033,7 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         clearTemporaryEffects();
         resetEffectTurnState();
         
-        if (prismaticManager != null) {
-            prismaticManager.clearState();
-        }
+        prismaticManager.clearState();
         
         playerDiceTypes = null;
         playerDiceValues = null;
@@ -1030,6 +1066,20 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         aiSelectionVisualizer.reset();
         
         pendingValueChanges.clear();
+        valueChangeAnimationInProgress = false;
+        
+        attackValue = 0;
+        defenseValue = 0;
+        winner = null;
+        currentPhase = Phase.WAITING_NEXT_TURN;
+        playerHp = 0;
+        opponentHp = 0;
+        playerRemainingRerolls = 0;
+        opponentRemainingRerolls = 0;
+        playerRerollsUsedThisTurn = 0;
+        opponentRerollsUsedThisTurn = 0;
+        isDefenderRolling = false;
+        clearConfirmedSelections();
         
         CosmiconLogger.debug("BattleState cleanup complete");
     }

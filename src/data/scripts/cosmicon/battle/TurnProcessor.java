@@ -67,9 +67,7 @@ public class TurnProcessor {
     }
     
     public void startBattle() {
-        if (weatherController != null) {
-            weatherController.applyStartOfBattle(state);
-        }
+        weatherController.applyStartOfBattle(state);
         executeTurn();
     }
     
@@ -77,6 +75,9 @@ public class TurnProcessor {
         state.clearConfirmedSelections();
         state.setAttackValue(0);
         state.setDefenseValue(0);
+        state.setDefenderRolling(false);
+        state.clearPendingDefLevelBoost(true);
+        state.clearPendingDefLevelBoost(false);
         state.getPlayerEffects().resetTurnState();
         state.getOpponentEffects().resetTurnState();
         
@@ -90,9 +91,7 @@ public class TurnProcessor {
             viz.reset();
         }
         
-        if (weatherController != null) {
-            weatherController.applyStartOfTurn(state);
-        }
+        weatherController.applyStartOfTurn(state);
         
         StatusEffectProcessor.BattleContext playerContext = createBattleContext(true);
         StatusEffectProcessor.BattleContext opponentContext = createBattleContext(false);
@@ -113,9 +112,7 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         CosmiconLogger.debug("[AI_REROLL_DIAG] executeTurn: isPlayerAttacker=%s, baseRerolls=%d, opponentBaseRerolls=%d", 
             state.isPlayerAttacker(), baseRerolls, opponentBaseRerolls);
         
-        if (weatherController != null) {
-            weatherController.applyRerollPhase(state, state.isPlayerAttacker() ? baseRerolls : opponentBaseRerolls);
-        }
+        weatherController.applyRerollPhase(state, state.isPlayerAttacker() ? baseRerolls : opponentBaseRerolls);
         
         CosmiconLogger.debug("[AI_REROLL_DIAG] After weather: playerRerolls=%d, opponentRerolls=%d", 
             state.getRemainingRerolls(true), state.getRemainingRerolls(false));
@@ -162,9 +159,7 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         state.setCurrentPhase(BattleState.Phase.ROLLING);
         state.notifyPhaseChange(BattleState.Phase.ROLLING);
         
-        if (diceRoller != null) {
-            diceRoller.rollForAttacker(state);
-        }
+        diceRoller.rollForAttacker(state);
         
         boolean attackerIsPlayer = state.isPlayerAttacker();
         StatusEffectProcessor.BattleContext attackerContext = createBattleContext(attackerIsPlayer);
@@ -200,9 +195,7 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         PassiveEventSystem.onStartOfDefenseTurn(state, true);
         PassiveEventSystem.onStartOfDefenseTurn(state, false);
         
-        if (diceRoller != null) {
-            diceRoller.rollForDefender(state);
-        }
+        diceRoller.rollForDefender(state);
         
         boolean defenderIsPlayer = !state.isPlayerAttacker();
         StatusEffectProcessor.BattleContext defenderContext = createBattleContext(defenderIsPlayer);
@@ -240,7 +233,7 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
                 prismDecision.instance().type.getId(), prismDecision.score());
         }
         
-        if (aiRerolls > 0 && aiEngine != null) {
+        if (aiRerolls > 0) {
             List<Integer> rerollIndices = aiEngine.planReroll(state, false);
             CosmiconLogger.debug("[AI_REROLL_DIAG] planReroll returned: %s (size=%d)", rerollIndices, rerollIndices.size());
             aiPlannedIndices = rerollIndices;
@@ -374,16 +367,13 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             }
         }
         
-        DiceRoller roller = state.getDiceRoller();
-        if (roller != null) {
-            roller.rerollSelected(state, false);
-        }
+        diceRoller.rerollSelected(state, false);
         
         CosmiconLogger.debug("AI executed planned reroll for indices: %s", aiPlannedIndices);
     }
     
     private void executePlannedAiSelection() {
-        if (aiEngine == null || aiPlannedIndices == null) return;
+        if (aiPlannedIndices == null) return;
         
         boolean isAttackPhase = state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK;
         boolean aiIsAttacker = !state.isPlayerAttacker();
@@ -424,26 +414,25 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             state.setDefenseValue(state.calculateSelectedSum(false));
         }
         
-        if (weatherController != null) {
-            int oldAtk = state.getAttackValue();
-            int oldDef = state.getDefenseValue();
-            weatherController.applySelectionPhase(state, forPlayer);
-            int newAtk = state.getAttackValue();
-            int newDef = state.getDefenseValue();
-            if (newAtk != oldAtk) {
-                int delta = newAtk - oldAtk;
-                state.queueValueChange(forPlayer, "WEATHER", delta);
-                state.notifyValueChange(forPlayer, "WEATHER", oldAtk, newAtk, delta);
-            }
-            if (newDef != oldDef) {
-                int delta = newDef - oldDef;
-                state.queueValueChange(forPlayer, "WEATHER", delta);
-                state.notifyValueChange(forPlayer, "WEATHER", oldDef, newDef, delta);
-            }
+        int oldAtk = state.getAttackValue();
+        int oldDef = state.getDefenseValue();
+        weatherController.applySelectionPhase(state, forPlayer);
+        int newAtk = state.getAttackValue();
+        int newDef = state.getDefenseValue();
+        if (newAtk != oldAtk) {
+            int delta = newAtk - oldAtk;
+            state.queueValueChange(forPlayer, "WEATHER", delta);
+            state.notifyValueChange(forPlayer, "WEATHER", oldAtk, newAtk, delta);
+        }
+        if (newDef != oldDef) {
+            int delta = newDef - oldDef;
+            state.queueValueChange(forPlayer, "WEATHER", delta);
+            state.notifyValueChange(forPlayer, "WEATHER", oldDef, newDef, delta);
         }
         
         if (aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
             state.setAttackerConfirmedSelection(state.getSelectedDiceValuesFormatted(false));
+            state.getAiSelectionVisualizer().reset();
             advanceToDefensePhase();
         } else if (!aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
             state.setDefenderConfirmedSelection(state.getSelectedDiceValuesFormatted(false));
@@ -454,8 +443,6 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
     }
     
     private void performAiSelection() {
-        if (aiEngine == null) return;
-        
         boolean isAttackPhase = state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK;
         boolean aiIsAttacker = !state.isPlayerAttacker();
         
@@ -484,23 +471,21 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             state.setDefenseValue(state.calculateSelectedSum(false));
         }
         
-        if (weatherController != null) {
-            int oldAtk = state.getAttackValue();
-            int oldDef = state.getDefenseValue();
-            boolean isPlayer = state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE;
-            weatherController.applySelectionPhase(state, isPlayer);
-            int newAtk = state.getAttackValue();
-            int newDef = state.getDefenseValue();
-            if (newAtk != oldAtk) {
-                int delta = newAtk - oldAtk;
-                state.queueValueChange(isPlayer, "WEATHER", delta);
-                state.notifyValueChange(isPlayer, "WEATHER", oldAtk, newAtk, delta);
-            }
-            if (newDef != oldDef) {
-                int delta = newDef - oldDef;
-                state.queueValueChange(isPlayer, "WEATHER", delta);
-                state.notifyValueChange(isPlayer, "WEATHER", oldDef, newDef, delta);
-            }
+        int oldAtk = state.getAttackValue();
+        int oldDef = state.getDefenseValue();
+        boolean isPlayer = state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE;
+        weatherController.applySelectionPhase(state, isPlayer);
+        int newAtk = state.getAttackValue();
+        int newDef = state.getDefenseValue();
+        if (newAtk != oldAtk) {
+            int delta = newAtk - oldAtk;
+            state.queueValueChange(isPlayer, "WEATHER", delta);
+            state.notifyValueChange(isPlayer, "WEATHER", oldAtk, newAtk, delta);
+        }
+        if (newDef != oldDef) {
+            int delta = newDef - oldDef;
+            state.queueValueChange(isPlayer, "WEATHER", delta);
+            state.notifyValueChange(isPlayer, "WEATHER", oldDef, newDef, delta);
         }
         
         aiSelectionComplete = true;
@@ -516,9 +501,7 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
     }
     
     private void resolveDamage() {
-        if (weatherController != null) {
-            weatherController.applyPreResolution(state);
-        }
+        weatherController.applyPreResolution(state);
 
         int prePrismaticAttack = state.getAttackValue();
         int prePrismaticDefense = state.getDefenseValue();
@@ -614,12 +597,10 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         state.setCurrentPhase(BattleState.Phase.RESOLVING);
         state.notifyPhaseChange(BattleState.Phase.RESOLVING);
 
-        if (damageResolver != null) {
-            DamageResolver.DamageResult result = damageResolver.resolve(state);
-            pendingDamageResult = result;
-            damageAnimationInProgress = true;
-            state.notifyDamageAnimationStart(result);
-        }
+        DamageResolver.DamageResult result = damageResolver.resolve(state);
+        pendingDamageResult = result;
+        damageAnimationInProgress = true;
+        state.notifyDamageAnimationStart(result);
     }
     
     public void onDamageAnimationComplete() {
@@ -782,13 +763,11 @@ private void applyDamageResult(DamageResolver.DamageResult result) {
         processEndOfTurnPassives(true);
         processEndOfTurnPassives(false);
         
-        if (weatherController != null) {
-            if (weatherController.shouldApplyFineSnowEffect(state, true)) {
-                state.getPlayerEffects().addEffect(StatusEffectProcessor.StatusEffect.TOUGHNESS, 3);
-            }
-            if (weatherController.shouldApplyFineSnowEffect(state, false)) {
-                state.getOpponentEffects().addEffect(StatusEffectProcessor.StatusEffect.TOUGHNESS, 3);
-            }
+        if (weatherController.shouldApplyFineSnowEffect(state, true)) {
+            state.getPlayerEffects().addEffect(StatusEffectProcessor.StatusEffect.TOUGHNESS, 3);
+        }
+        if (weatherController.shouldApplyFineSnowEffect(state, false)) {
+            state.getOpponentEffects().addEffect(StatusEffectProcessor.StatusEffect.TOUGHNESS, 3);
         }
         
         PassiveEventSystem.onEndOfDefenseTurn(state, true);
@@ -800,15 +779,13 @@ private void applyDamageResult(DamageResolver.DamageResult result) {
         CosmiconLogger.debug("Turn transition: Turn %d, Player now %s", 
             state.getTurnNumber(), state.isPlayerAttacker() ? "attacker" : "defender");
         
-        if (weatherController != null) {
-            WeatherType oldWeather = weatherController.getCurrentWeather();
-            weatherController.advanceTurn();
-            WeatherType newWeather = weatherController.getCurrentWeather();
-            
-            if (newWeather != oldWeather && newWeather != null) {
-                state.notifyWeatherChange(newWeather);
-                weatherController.applyWeatherTransitionEffect(state, oldWeather, newWeather);
-            }
+        WeatherType oldWeather = weatherController.getCurrentWeather();
+        weatherController.advanceTurn();
+        WeatherType newWeather = weatherController.getCurrentWeather();
+        
+        if (newWeather != oldWeather && newWeather != null) {
+            state.notifyWeatherChange(newWeather);
+            weatherController.applyWeatherTransitionEffect(state, oldWeather, newWeather);
         }
         
         state.clearDiceSelection(true);
@@ -824,7 +801,6 @@ private void applyDamageResult(DamageResolver.DamageResult result) {
     }
     
     public void executePlayerReroll() {
-        if (diceRoller == null) return;
         if (!state.canReroll(true)) return;
         
         int selectedCount = state.countSelectedDice(true);
@@ -879,22 +855,20 @@ private void applyDamageResult(DamageResolver.DamageResult result) {
             state.setDefenseValue(state.calculateSelectedSum(true));
         }
         
-        if (weatherController != null) {
-            int oldAtk = state.getAttackValue();
-            int oldDef = state.getDefenseValue();
-            weatherController.applySelectionPhase(state, true);
-            int newAtk = state.getAttackValue();
-            int newDef = state.getDefenseValue();
-            if (newAtk != oldAtk) {
-                int delta = newAtk - oldAtk;
-                state.queueValueChange(true, "WEATHER", delta);
-                state.notifyValueChange(true, "WEATHER", oldAtk, newAtk, delta);
-            }
-            if (newDef != oldDef) {
-                int delta = newDef - oldDef;
-                state.queueValueChange(true, "WEATHER", delta);
-                state.notifyValueChange(true, "WEATHER", oldDef, newDef, delta);
-            }
+        int oldAtk = state.getAttackValue();
+        int oldDef = state.getDefenseValue();
+        weatherController.applySelectionPhase(state, true);
+        int newAtk = state.getAttackValue();
+        int newDef = state.getDefenseValue();
+        if (newAtk != oldAtk) {
+            int delta = newAtk - oldAtk;
+            state.queueValueChange(true, "WEATHER", delta);
+            state.notifyValueChange(true, "WEATHER", oldAtk, newAtk, delta);
+        }
+        if (newDef != oldDef) {
+            int delta = newDef - oldDef;
+            state.queueValueChange(true, "WEATHER", delta);
+            state.notifyValueChange(true, "WEATHER", oldDef, newDef, delta);
         }
         
         if (state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {

@@ -31,10 +31,12 @@ public class ValueChangeAnimator {
     private static class QueuedChange {
         String deltaText;
         Color color;
+        int delta;
         
-        QueuedChange(String deltaText, Color color) {
+        QueuedChange(String deltaText, Color color, int delta) {
             this.deltaText = deltaText;
             this.color = color;
+            this.delta = delta;
         }
     }
 
@@ -69,8 +71,8 @@ public class ValueChangeAnimator {
         isAttack = true;
     }
 
-    public void queueChange(String deltaText, Color color) {
-        changeQueue.add(new QueuedChange(deltaText, color));
+    public void queueChange(String deltaText, Color color, int delta) {
+        changeQueue.add(new QueuedChange(deltaText, color, delta));
     }
 
     public void start(float iconCenterX, float iconCenterY, int currentValue, 
@@ -93,6 +95,11 @@ public class ValueChangeAnimator {
             
             createLabels();
         }
+    }
+
+    public void updateIconPosition(float newCenterX, float newCenterY) {
+        this.iconCenterX = newCenterX;
+        this.iconCenterY = newCenterY;
     }
 
     private void createLabels() {
@@ -174,7 +181,9 @@ public class ValueChangeAnimator {
     }
 
     private void processNextChange() {
-        changeQueue.remove(0);
+        QueuedChange completed = changeQueue.remove(0);
+        currentValue += completed.delta;
+        updateTotalLabel();
         
         if (changeQueue.isEmpty()) {
             phase = Phase.COMPLETE;
@@ -197,6 +206,17 @@ public class ValueChangeAnimator {
         
         elapsed = 0f;
         phase = Phase.DELTA_SHOW;
+    }
+
+    private void updateTotalLabel() {
+        if (totalLabel != null) {
+            String totalText = String.valueOf(currentValue);
+            totalLabel.setText(totalText);
+            float width = totalLabel.computeTextWidth(totalText) + 20f;
+            ((UIComponentAPI) totalLabel).getPosition()
+                .setSize(width, LABEL_HEIGHT)
+                .inTL(iconCenterX - width / 2f, iconCenterY - LABEL_HEIGHT / 2f);
+        }
     }
 
     private void updateLabelPositions() {
@@ -222,12 +242,11 @@ public class ValueChangeAnimator {
         if (phase == Phase.IDLE) return;
         
         if (phase != Phase.COMPLETE && flashIntensity > 0f && roleIcon != null) {
-            // Use existing context if available, otherwise create one
             UnifiedCoord.PanelContext existingCtx = UnifiedCoord.getCurrentOrNull();
             boolean needsContextCleanup = existingCtx == null;
             
             if (needsContextCleanup) {
-                UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(panelX, panelY, 0, panelHeight));
+                UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(panelX, panelY, BattleRenderingUtils.PANEL_WIDTH, panelHeight));
             }
             try {
                 renderIconFlash(alphaMult);
@@ -274,17 +293,20 @@ public class ValueChangeAnimator {
         totalLabel = null;
         panel = null;
         labelsCreated = false;
+        phase = Phase.IDLE;
+        elapsed = 0f;
+        deltaCurrentY = 0f;
+        deltaAlpha = 0f;
+        flashIntensity = 0f;
         changeQueue.clear();
     }
 
     public void reset() {
         cleanup();
-        phase = Phase.IDLE;
-        elapsed = 0f;
         currentValue = 0;
         iconSize = 0f;
-        deltaCurrentY = 0f;
-        deltaAlpha = 0f;
-        flashIntensity = 0f;
+        iconCenterX = 0f;
+        iconCenterY = 0f;
+        roleIcon = null;
     }
 }

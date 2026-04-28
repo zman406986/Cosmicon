@@ -108,13 +108,12 @@ public class ImpactEffect {
         }
     }
     
-    public void render(float panelX, float panelY, float panelHeight, float alphaMult) {
-        // Use existing context if available, otherwise create one
+    public void render(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
         UnifiedCoord.PanelContext existingCtx = UnifiedCoord.getCurrentOrNull();
         boolean needsContextCleanup = existingCtx == null;
         
         if (needsContextCleanup) {
-            UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(panelX, panelY, 0, panelHeight));
+            UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(panelX, panelY, panelWidth, panelHeight));
         }
         try {
             renderFlash(alphaMult);

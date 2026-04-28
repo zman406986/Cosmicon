@@ -55,6 +55,8 @@ public class FlyingNumber {
     private LabelAPI label;
     private CustomPanelAPI labelPanel;
     private boolean labelCreated;
+    private boolean pendingLabelCreation = false;
+    private CustomPanelAPI pendingPanel = null;
     
     private static class Particle {
         float x;
@@ -121,6 +123,12 @@ public class FlyingNumber {
     
     public void advance(float amount) {
         if (phase == Phase.WAITING || phase == Phase.COMPLETE) return;
+        
+        if (!labelCreated && pendingLabelCreation && pendingPanel != null && phase == Phase.FLYING) {
+            createLabel(pendingPanel);
+            pendingLabelCreation = false;
+            pendingPanel = null;
+        }
         
         elapsed += amount;
         
@@ -209,7 +217,8 @@ public class FlyingNumber {
         if (phase == Phase.WAITING) return;
         
         if (!labelCreated && panel != null && phase == Phase.FLYING) {
-            createLabel(panel);
+            pendingLabelCreation = true;
+            pendingPanel = panel;
         }
         
         if (phase != Phase.SHATTER && phase != Phase.COMPLETE) {
@@ -217,7 +226,6 @@ public class FlyingNumber {
         }
         
         if (phase == Phase.SHATTER) {
-            // Use existing context if available, otherwise create one
             UnifiedCoord.PanelContext existingCtx = UnifiedCoord.getCurrentOrNull();
             boolean needsContextCleanup = existingCtx == null;
             
@@ -237,12 +245,15 @@ public class FlyingNumber {
     private void createLabel(CustomPanelAPI panel) {
         if (labelCreated) return;
         
+        String text = (displayText != null && !displayText.isEmpty()) ? displayText : "0";
+        Color labelColor = (color != null) ? color : Color.WHITE;
+        
         SettingsAPI settings = Global.getSettings();
-        label = settings.createLabel(displayText, Fonts.INSIGNIA_VERY_LARGE);
-        label.setColor(color);
+        label = settings.createLabel(text, Fonts.INSIGNIA_VERY_LARGE);
+        label.setColor(labelColor);
         label.setAlignment(Alignment.MID);
         
-        float labelWidth = label.computeTextWidth(displayText) + 10f;
+        float labelWidth = label.computeTextWidth(text) + 10f;
         
         panel.addComponent((UIComponentAPI) label)
             .setSize(labelWidth, LABEL_HEIGHT)

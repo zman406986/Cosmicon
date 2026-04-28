@@ -303,6 +303,7 @@ public class StatusEffectProcessor {
     }
 
     public void resetTurnState() {
+        lastStandHpReduction = 0;
     }
 
     public static class BattleContext {

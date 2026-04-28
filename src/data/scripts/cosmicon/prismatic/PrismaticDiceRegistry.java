@@ -133,7 +133,10 @@ public final class PrismaticDiceRegistry {
             new int[]{1, 1, 4, 4, 4, 4},
             indices(4, 5),
             PrismaticEffect.grantStatus(StatusEffect.COMBO, 1),
-            FaceSelectionCountCondition.faceSelected(4, 2)
+            new CompositeCondition(
+                FaceSelectionCountCondition.faceSelected(4, 2),
+                ActionTypeCondition.attackOnly()
+            )
         );
     }
     

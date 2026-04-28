@@ -8,6 +8,7 @@ import com.fs.starfarer.api.ui.Alignment;
 import com.fs.starfarer.api.ui.CustomPanelAPI;
 import com.fs.starfarer.api.ui.Fonts;
 import com.fs.starfarer.api.ui.LabelAPI;
+import com.fs.starfarer.api.ui.UIComponentAPI;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleState.Phase;
@@ -101,9 +102,106 @@ public class BattleUILabels {
             defenderValueAnimator.cleanup();
             defenderValueAnimator = null;
         }
+
+        removeAndNullLabel(phaseLabel);
+        phaseLabel = null;
+        removeAndNullLabel(instructionLabel);
+        instructionLabel = null;
+        removeAndNullLabel(playerHpLabel);
+        playerHpLabel = null;
+        removeAndNullLabel(opponentHpLabel);
+        opponentHpLabel = null;
+        removeAndNullLabel(playerNameLabel);
+        playerNameLabel = null;
+        removeAndNullLabel(opponentNameLabel);
+        opponentNameLabel = null;
+        removeAndNullLabel(resultLabel);
+        resultLabel = null;
+        removeAndNullLabel(playerAtkLabel);
+        playerAtkLabel = null;
+        removeAndNullLabel(playerDefLabel);
+        playerDefLabel = null;
+        removeAndNullLabel(opponentAtkLabel);
+        opponentAtkLabel = null;
+        removeAndNullLabel(opponentDefLabel);
+        opponentDefLabel = null;
+        removeAndNullLabel(playerPrismaticLabel);
+        playerPrismaticLabel = null;
+        removeAndNullLabel(playerOrangeLabel);
+        playerOrangeLabel = null;
+        removeAndNullLabel(playerPurpleLabel);
+        playerPurpleLabel = null;
+        removeAndNullLabel(playerBlueLabel);
+        playerBlueLabel = null;
+        removeAndNullLabel(opponentPrismaticLabel);
+        opponentPrismaticLabel = null;
+        removeAndNullLabel(opponentOrangeLabel);
+        opponentOrangeLabel = null;
+        removeAndNullLabel(opponentPurpleLabel);
+        opponentPurpleLabel = null;
+        removeAndNullLabel(opponentBlueLabel);
+        opponentBlueLabel = null;
+        removeAndNullLabel(clickHintLabel);
+        clickHintLabel = null;
+        removeAndNullLabel(attackerSelectionLabel);
+        attackerSelectionLabel = null;
+        removeAndNullLabel(attackerEffectLabel);
+        attackerEffectLabel = null;
+        removeAndNullLabel(defenderSelectionLabel);
+        defenderSelectionLabel = null;
+        removeAndNullLabel(defenderEffectLabel);
+        defenderEffectLabel = null;
+        removeAndNullLabel(attackerConfirmedSelectionLabel);
+        attackerConfirmedSelectionLabel = null;
+        removeAndNullLabel(attackerConfirmedEffectLabel);
+        attackerConfirmedEffectLabel = null;
+        removeAndNullLabel(attackerIconValueLabel);
+        attackerIconValueLabel = null;
+        removeAndNullLabel(defenderIconValueLabel);
+        defenderIconValueLabel = null;
+        removeAndNullLabel(playerPrismaticUsesLabel);
+        playerPrismaticUsesLabel = null;
+        removeAndNullLabel(playerPrismaticFaceMappingLabel);
+        playerPrismaticFaceMappingLabel = null;
+        removeAndNullLabel(playerPrismaticEffectLabel);
+        playerPrismaticEffectLabel = null;
+        removeAndNullLabel(playerPrismaticRolledLabel);
+        playerPrismaticRolledLabel = null;
+        removeAndNullLabel(opponentPrismaticUsesLabel);
+        opponentPrismaticUsesLabel = null;
+        removeAndNullLabel(opponentPrismaticFaceMappingLabel);
+        opponentPrismaticFaceMappingLabel = null;
+        removeAndNullLabel(opponentPrismaticEffectLabel);
+        opponentPrismaticEffectLabel = null;
+        removeAndNullLabel(playerPrismaticClickHintLabel);
+        playerPrismaticClickHintLabel = null;
+
+        if (playerStatusLabels != null) {
+            for (LabelAPI label : playerStatusLabels) {
+                removeAndNullLabel(label);
+            }
+            playerStatusLabels.clear();
+            playerStatusLabels = null;
+        }
+        if (opponentStatusLabels != null) {
+            for (LabelAPI label : opponentStatusLabels) {
+                removeAndNullLabel(label);
+            }
+            opponentStatusLabels.clear();
+            opponentStatusLabels = null;
+        }
+
         panel = null;
         battleState = null;
         diceRollManager = null;
+        pendingPrismaticInstance = null;
+        pendingPrismaticAnimatorIndex = -1;
+    }
+
+    private void removeAndNullLabel(LabelAPI label) {
+        if (label != null && panel != null) {
+            panel.removeComponent((UIComponentAPI) label);
+        }
     }
 
     public void setBattleState(BattleState state) {
@@ -577,22 +675,22 @@ public class BattleUILabels {
         float labelW = 80f;
         float labelH = 35f;
 
-        boolean playerIsSelecting = battleState.isPlayerAttacker();
+        boolean playerIsAttacker = battleState.isPlayerAttacker();
 
         float topIconCenterY = halfH / 2f;
         float bottomIconCenterY = halfH + halfH / 2f;
 
-        float attackerLabelY = playerIsSelecting ? bottomIconCenterY : topIconCenterY;
-        float defenderLabelY = playerIsSelecting ? topIconCenterY : bottomIconCenterY;
+        float attackerLabelY = playerIsAttacker ? bottomIconCenterY : topIconCenterY;
+        float defenderLabelY = playerIsAttacker ? topIconCenterY : bottomIconCenterY;
 
         attackerIconValueLabel.getPosition().inTL(centerX - labelW / 2f, attackerLabelY - labelH / 2f);
         defenderIconValueLabel.getPosition().inTL(centerX - labelW / 2f, defenderLabelY - labelH / 2f);
 
         if (phase == Phase.SELECTING_ATTACK) {
-            int runningTotal = battleState.calculateSelectedSum(playerIsSelecting);
+            int runningTotal = calculateVisibleSum(playerIsAttacker);
             if (runningTotal > 0) {
                 attackerIconValueLabel.setText(String.valueOf(runningTotal));
-                attackerIconValueLabel.setOpacity(playerIsSelecting ? 1f : 0f);
+                attackerIconValueLabel.setOpacity(1f);
             }
             defenderIconValueLabel.setOpacity(0f);
             return;
@@ -604,11 +702,10 @@ public class BattleUILabels {
             attackerIconValueLabel.setOpacity(attackerValue > 0 ? 1f : 0f);
 
             if (phase == Phase.SELECTING_DEFENSE) {
-                playerIsSelecting = !playerIsSelecting;
-                int runningTotal = battleState.calculateSelectedSum(playerIsSelecting);
+                int runningTotal = calculateVisibleSum(!playerIsAttacker);
                 if (runningTotal > 0) {
                     defenderIconValueLabel.setText(String.valueOf(runningTotal));
-                    defenderIconValueLabel.setOpacity(playerIsSelecting ? 1f : 0f);
+                    defenderIconValueLabel.setOpacity(1f);
                 }
             }
             return;
@@ -623,6 +720,29 @@ public class BattleUILabels {
             defenderIconValueLabel.setText(String.valueOf(defenderValue));
             defenderIconValueLabel.setOpacity(defenderValue > 0 ? 1f : 0f);
         }
+    }
+
+    private int calculateVisibleSum(boolean forPlayer) {
+        AISelectionVisualizer viz = battleState.getAiSelectionVisualizer();
+        Phase phase = battleState.getCurrentPhase();
+        if (viz != null && viz.hasStarted() && !viz.isRerollPhase() && !forPlayer) {
+            boolean vizMatchesPhase = (phase == Phase.SELECTING_ATTACK && !battleState.isPlayerAttacker()) ||
+                                      (phase == Phase.SELECTING_DEFENSE && battleState.isPlayerAttacker());
+            if (vizMatchesPhase) {
+                List<Integer> visibleIndices = viz.getVisibleIndices();
+                List<Integer> values = battleState.getOpponentDiceValues();
+                if (values != null && !visibleIndices.isEmpty()) {
+                    int sum = 0;
+                    for (int idx : visibleIndices) {
+                        if (idx >= 0 && idx < values.size()) {
+                            sum += values.get(idx);
+                        }
+                    }
+                    return sum;
+                }
+            }
+        }
+        return battleState.calculateSelectedSum(forPlayer);
     }
 
     private int getAttackerTotalValue() {
@@ -773,6 +893,11 @@ public class BattleUILabels {
         pendingPrismaticAnimatorIndex = -1;
     }
 
+    public void onDiceRerolled() {
+        clearPrismaticRolledLabel();
+    }
+
+    // pendingPrismaticAnimatorIndex becomes stale when dice animators are recreated or repositioned
     public void setPendingPrismatic(PrismaticDiceInstance instance, int animatorIndex) {
         this.pendingPrismaticInstance = instance;
         this.pendingPrismaticAnimatorIndex = animatorIndex;
@@ -832,3 +957,4 @@ public class BattleUILabels {
         return phaseLabel;
     }
 }
+

@@ -50,11 +50,11 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
     private boolean opponentDiceAnimating;
     private float opponentRollDelay;
-    private boolean isDefenderRollTransition;
 
     private float roleTransitionProgress;
     private float targetRoleTransition;
     private boolean lastPlayerWasAttacker;
+    // Refreshed each frame in updateRoleTransition(); do not cache across frames
     private float cachedRotationAngle;
 
     private float opponentPrismaticBtnX;
@@ -77,7 +77,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         this.cachedRotationAngle = 0f;
         this.opponentDiceAnimating = false;
         this.opponentRollDelay = 0f;
-        this.isDefenderRollTransition = false;
         this.dicePreviewActive = false;
         this.dicePreviewDelay = 0f;
         this.opponentAutoRollDelay = 0f;
@@ -93,6 +92,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             if (labels != null) labels.setBattleState(battleState);
             if (buttons != null) buttons.setBattleState(battleState);
             if (inputHandler != null) inputHandler.setBattleState(battleState);
+            lastPlayerWasAttacker = battleState.isPlayerAttacker();
+            roleTransitionProgress = lastPlayerWasAttacker ? 0f : 1f;
+            targetRoleTransition = roleTransitionProgress;
         }
     }
 
@@ -205,25 +207,25 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             dicePreviewDelay = 0f;
             preClashTimer = 0f;
             valueAnimationPending = false;
-            damageAnimationPending = false;
-            pendingDamageResult = null;
+            if (damageAnimator == null || damageAnimator.isComplete()) {
+                damageAnimationPending = false;
+                pendingDamageResult = null;
+            }
             
             inputHandler.setWaitingForClickToRoll(false);
             
             labels.clearPrismaticRolledLabel();
 
-            if (!isDefenderRollTransition) {
+            if (!battleState.isDefenderRolling()) {
                 opponentDiceAnimating = false;
                 opponentRollDelay = 0f;
                 opponentAutoRollDelay = 0f;
-                
-                if (diceRollManager != null) {
-                    diceRollManager.clear();
-                    diceRollManager.clearOpponentAnimators();
-                }
             }
             
-            isDefenderRollTransition = false;
+            if (diceRollManager != null) {
+                diceRollManager.clear();
+                diceRollManager.clearOpponentAnimators();
+            }
             
             if (damageAnimator != null) {
                 damageAnimator.cleanup();
@@ -254,6 +256,12 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             }
         }
 
+        if (newPhase == Phase.WAITING_NEXT_TURN || newPhase == Phase.ENDED) {
+            if (inputHandler != null) {
+                inputHandler.createDiceHitboxes(new ArrayList<>());
+            }
+        }
+
         if (labels.getPhaseLabel() == null) return;
         labels.updatePhaseLabel();
         buttons.updateButtons(newPhase);
@@ -261,7 +269,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
     @Override
     public void onDiceRerolled(boolean isPlayer, List<Integer> newValues, List<Integer> rerolledIndices) {
-        if (diceRollManager == null || rerolledIndices.isEmpty()) return;
+        if (battleState == null || diceRollManager == null || rerolledIndices.isEmpty()) return;
 
         float animDuration = DiceAnimator.getTotalDuration() + 0.1f;
 
@@ -301,12 +309,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     
     @Override
     public void onTransitionToDefenderRoll() {
-        isDefenderRollTransition = true;
-        
-        if (diceRollManager != null) {
-            diceRollManager.clear();
-            diceRollManager.clearOpponentAnimators();
-        }
+        if (battleState == null || diceRollManager == null) return;
+
+        diceRollManager.clear();
+        diceRollManager.clearOpponentAnimators();
         
         diceAnimating = true;
         rollAnimationDelay = 0f;
@@ -401,7 +407,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         Color color = getChangeColor(changeType, delta);
         String displayText = delta >= 0 ? "+" + delta : String.valueOf(delta);
         if (targetAnimator != null) {
-            targetAnimator.queueChange(displayText, color);
+            targetAnimator.queueChange(displayText, color, delta);
         }
     }
 
@@ -473,7 +479,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                     diceAnimating = false;
                     labels.updatePrismaticRolledLabel();
                     List<DiceType> playerTypes = battleState.getPlayerDiceTypes();
-                    if (playerTypes != null && !playerTypes.isEmpty() && hasPlayerAnimators) {
+                    if (playerTypes != null && !playerTypes.isEmpty() && diceRollManager.hasAnimators()) {
                         inputHandler.createDiceHitboxes(playerTypes);
                     }
                     if (battleState.getCurrentPhase() == Phase.ROLLING) {
@@ -482,8 +488,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                     }
                 }
             } else if (rollAnimationDelay <= 0f) {
-                diceAnimating = false;
-
                 boolean isDefenderRolling = battleState.isDefenderRolling();
                 boolean showPlayerDice = isDefenderRolling != battleState.isPlayerAttacker();
                 boolean anyDiceStarted = false;
@@ -734,20 +738,20 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             ValueChangeAnimator defenderAnimator = labels.getDefenderValueAnimator();
 
             if (attackerAnimator != null && !attackerAnimator.isComplete()) {
-                attackerAnimator.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+                attackerAnimator.render(x, y, h, alphaMult);
             }
             if (defenderAnimator != null && !defenderAnimator.isComplete()) {
-                defenderAnimator.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+                defenderAnimator.render(x, y, h, alphaMult);
             }
 
-            diceRollManager.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+            diceRollManager.render(x, y, w, h, alphaMult);
 
             if (damageAnimator != null && !damageAnimator.isComplete()) {
-                damageAnimator.render(panelX, panelY, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+                damageAnimator.render(x, y, w, h, alphaMult);
             }
 
             if (shouldShowOpponentDice()) {
-                renderOpponentDiceZone(alphaMult);
+                renderOpponentDiceZone(x, y, w, h, alphaMult);
             }
 
             renderDiceSelectionHighlights(alphaMult);
@@ -869,13 +873,13 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         GLStateUtil.resetColor();
     }
 
-    private void renderOpponentDiceZone(float alphaMult) {
+    private void renderOpponentDiceZone(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
         float zoneX = panelX + BattleRenderingUtils.MARGIN + BattleRenderingUtils.OPPONENT_DICE_ZONE_OFFSET_X;
         float zoneY = panelY + BattleRenderingUtils.MARGIN + BattleRenderingUtils.OPPONENT_DICE_ZONE_Y_OFFSET;
 
         BattleRenderingUtils.renderOpponentDiceZone(zoneX, zoneY, alphaMult);
 
-        diceRollManager.renderOpponentDice(panelX, panelY, alphaMult);
+        diceRollManager.renderOpponentDice(panelX, panelY, panelWidth, panelHeight, alphaMult);
 
         renderOpponentSelectionHighlights(alphaMult);
     }

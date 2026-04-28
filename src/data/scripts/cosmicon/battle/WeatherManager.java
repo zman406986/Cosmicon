@@ -112,6 +112,13 @@ public class WeatherManager {
         }
     }
     
+    public void reset() {
+        currentTurn = 1;
+        currentWeather = null;
+        weatherSchedule.clear();
+        initializeWeatherSchedule();
+    }
+    
     public WeatherType getCurrentWeather() {
         return currentWeather;
     }

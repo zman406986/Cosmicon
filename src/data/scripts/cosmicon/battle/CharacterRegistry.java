@@ -163,26 +163,30 @@ public class CharacterRegistry {
 
     public static CharacterCard getRandomCharacter() {
         if (threeStarCards.isEmpty()) return null;
-        return threeStarCards.get(random.nextInt(threeStarCards.size()));
+        return threeStarCards.get(random.nextInt(threeStarCards.size())).copy();
     }
 
     public static CharacterCard getRandomOpponent() {
         if (threeStarCards.isEmpty()) return null;
-        return threeStarCards.get(random.nextInt(threeStarCards.size()));
+        return threeStarCards.get(random.nextInt(threeStarCards.size())).copy();
     }
 
     public static CharacterCard getCharacterById(String id) {
         for (CharacterCard card : threeStarCards) {
-            if (card.getId().equals(id)) return card;
+            if (card.getId().equals(id)) return card.copy();
         }
         return getRandomCharacter();
     }
 
     public static List<CharacterCard> getAllCards() {
-        return new ArrayList<>(threeStarCards);
+        List<CharacterCard> copies = new ArrayList<>();
+        for (CharacterCard card : threeStarCards) {
+            copies.add(card.copy());
+        }
+        return copies;
     }
 
     public static List<CharacterCard> getThreeStarCards() {
-        return new ArrayList<>(threeStarCards);
+        return getAllCards();
     }
 }

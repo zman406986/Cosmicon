@@ -43,10 +43,10 @@ public class DiceRollManager {
         animators.clear();
         pendingRollPaths = null;
         pendingScatterDestinations = null;
-        waitingForRollTrigger = false;
 
         int count = Math.min(types.size(), results.size());
-        List<PlannedPath> gridPaths = DicePathPlanner.planPaths(types, results, centerX, centerY, DICE_SPACING);
+        List<PlannedPath> gridPaths = DicePathPlanner.planPaths(types, results, centerX, centerY, DICE_SPACING,
+                BattleRenderingUtils.PANEL_WIDTH, BattleRenderingUtils.PANEL_HEIGHT);
         
         float panelW = BattleRenderingUtils.PANEL_WIDTH;
         float panelH = BattleRenderingUtils.PANEL_HEIGHT;
@@ -79,7 +79,8 @@ public class DiceRollManager {
         if (pendingRollPaths == null || pendingRollPaths.isEmpty()) return;
         if (pendingScatterDestinations == null) return;
         
-        for (int i = 0; i < animators.size() && i < pendingRollPaths.size(); i++) {
+        int count = Math.min(animators.size(), Math.min(pendingRollPaths.size(), pendingScatterDestinations.length));
+        for (int i = 0; i < count; i++) {
             DiceAnimator animator = animators.get(i);
             PlannedPath path = pendingRollPaths.get(i);
             float scatterX = pendingScatterDestinations[i][0];
@@ -92,6 +93,8 @@ public class DiceRollManager {
         }
         
         waitingForRollTrigger = false;
+        pendingRollPaths = null;
+        pendingScatterDestinations = null;
     }
     
     public boolean isWaitingForRollTrigger() {
@@ -104,10 +107,10 @@ public class DiceRollManager {
         clearOpponentAnimators();
         pendingOpponentRollPaths = null;
         pendingOpponentScatterDestinations = null;
-        opponentWaitingForRollTrigger = false;
 
         int count = Math.min(types.size(), results.size());
-        List<PlannedPath> gridPaths = DicePathPlanner.planPaths(types, results, centerX, centerY, DICE_SPACING);
+        List<PlannedPath> gridPaths = DicePathPlanner.planPaths(types, results, centerX, centerY, DICE_SPACING,
+                BattleRenderingUtils.PANEL_WIDTH, BattleRenderingUtils.PANEL_HEIGHT);
         
         float panelW = BattleRenderingUtils.PANEL_WIDTH;
         float panelH = BattleRenderingUtils.PANEL_HEIGHT;
@@ -140,7 +143,8 @@ public class DiceRollManager {
         if (pendingOpponentRollPaths == null || pendingOpponentRollPaths.isEmpty()) return;
         if (pendingOpponentScatterDestinations == null) return;
         
-        for (int i = 0; i < opponentAnimators.size() && i < pendingOpponentRollPaths.size(); i++) {
+        int count = Math.min(opponentAnimators.size(), Math.min(pendingOpponentRollPaths.size(), pendingOpponentScatterDestinations.length));
+        for (int i = 0; i < count; i++) {
             DiceAnimator animator = opponentAnimators.get(i);
             PlannedPath path = pendingOpponentRollPaths.get(i);
             float scatterX = pendingOpponentScatterDestinations[i][0];
@@ -153,6 +157,8 @@ public class DiceRollManager {
         }
         
         opponentWaitingForRollTrigger = false;
+        pendingOpponentRollPaths = null;
+        pendingOpponentScatterDestinations = null;
     }
     
     public boolean isOpponentWaitingForRollTrigger() {
@@ -202,9 +208,9 @@ public class DiceRollManager {
         }
     }
 
-    public void render(float panelX, float panelY, float panelHeight, float alphaMult) {
+    public void render(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
         for (DiceAnimator animator : animators) {
-            animator.render(panelX, panelY, BattleRenderingUtils.PANEL_WIDTH, panelHeight, alphaMult);
+            animator.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
         }
     }
 
@@ -227,7 +233,8 @@ public class DiceRollManager {
 
         List<float[]> existingPositions = collectAllDicePositions();
         PlannedPath prismaticPath = DicePathPlanner.planSinglePrismaticPath(
-            animators.size(), centerX, centerY, DICE_SPACING, existingPositions);
+            animators.size(), centerX, centerY, DICE_SPACING, existingPositions,
+            BattleRenderingUtils.PANEL_WIDTH, BattleRenderingUtils.PANEL_HEIGHT);
         
         float panelW = BattleRenderingUtils.PANEL_WIDTH;
         float panelH = BattleRenderingUtils.PANEL_HEIGHT;
@@ -258,8 +265,8 @@ public class DiceRollManager {
         List<float[]> positions = new ArrayList<>();
         for (DiceAnimator animator : animators) {
             positions.add(new float[]{
-                animator.getVisualX(),
-                animator.getVisualY()
+                animator.getTargetSlotX(),
+                animator.getTargetSlotY()
             });
         }
         return positions;
@@ -269,8 +276,8 @@ public class DiceRollManager {
         List<float[]> positions = new ArrayList<>();
         for (DiceAnimator animator : opponentAnimators) {
             positions.add(new float[]{
-                animator.getVisualX(),
-                animator.getVisualY()
+                animator.getTargetSlotX(),
+                animator.getTargetSlotY()
             });
         }
         return positions;
@@ -287,28 +294,34 @@ public class DiceRollManager {
     }
 
     public void partialReroll(List<Integer> indices, List<Integer> newValues) {
-        List<float[]> allPositions = collectAllDicePositions();
-        List<PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, allPositions);
+        if (indices == null || indices.isEmpty() || newValues == null) return;
         
-        for (int i = 0; i < indices.size(); i++) {
+        List<float[]> allPositions = collectAllDicePositions();
+        List<PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, allPositions,
+                BattleRenderingUtils.PANEL_WIDTH, BattleRenderingUtils.PANEL_HEIGHT);
+        
+        int count = Math.min(indices.size(), newValues.size());
+        for (int i = 0; i < count; i++) {
             int animatorIndex = indices.get(i);
+            if (animatorIndex < 0 || animatorIndex >= animators.size() || animatorIndex >= rerollPaths.size()) continue;
+            
             PlannedPath path = rerollPaths.get(i);
-            if (animatorIndex >= 0 && animatorIndex < animators.size() && path != null) {
-                DiceAnimator animator = animators.get(animatorIndex);
-                int rerollValue = newValues.get(animatorIndex);
-                
-                if (battleState != null && battleState.isPrismaticDiceAt(animatorIndex, true)) {
-                    PrismaticDiceInstance prismatic = battleState.getPrismaticDiceAt(animatorIndex, true);
-                    if (prismatic != null) {
-                        rerollValue = prismatic.faceIndex;
-                    }
+            if (path == null) continue;
+            
+            DiceAnimator animator = animators.get(animatorIndex);
+            int rerollValue = newValues.get(i);
+            
+            if (battleState != null && battleState.isPrismaticDiceAt(animatorIndex, true)) {
+                PrismaticDiceInstance prismatic = battleState.getPrismaticDiceAt(animatorIndex, true);
+                if (prismatic != null) {
+                    rerollValue = prismatic.faceIndex;
                 }
-                
-                animator.rerollWithNewPath(rerollValue, path.startX(), path.startY(),
-                        path.rotation(), path.travelDistance(),
-                        path.bounceCount(), path.bounceHeights(),
-                        path.targetCenterX(), path.targetCenterY());
             }
+            
+            animator.rerollWithNewPath(rerollValue, path.startX(), path.startY(),
+                    path.rotation(), path.travelDistance(),
+                    path.bounceCount(), path.bounceHeights(),
+                    animator.getTargetSlotX(), animator.getTargetSlotY());
         }
     }
 
@@ -318,35 +331,41 @@ public class DiceRollManager {
         }
     }
 
-    public void renderOpponentDice(float panelX, float panelY, float alphaMult) {
+    public void renderOpponentDice(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
         for (DiceAnimator animator : opponentAnimators) {
-            animator.render(panelX, panelY, BattleRenderingUtils.PANEL_WIDTH, BattleRenderingUtils.PANEL_HEIGHT, alphaMult);
+            animator.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
         }
     }
 
     public void rerollOpponentDice(List<Integer> indices, List<Integer> newValues) {
-        List<float[]> allPositions = collectAllOpponentDicePositions();
-        List<PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, allPositions);
+        if (indices == null || indices.isEmpty() || newValues == null) return;
         
-        for (int i = 0; i < indices.size(); i++) {
+        List<float[]> allPositions = collectAllOpponentDicePositions();
+        List<PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, allPositions,
+                BattleRenderingUtils.PANEL_WIDTH, BattleRenderingUtils.PANEL_HEIGHT);
+        
+        int count = Math.min(indices.size(), newValues.size());
+        for (int i = 0; i < count; i++) {
             int animatorIndex = indices.get(i);
+            if (animatorIndex < 0 || animatorIndex >= opponentAnimators.size() || animatorIndex >= rerollPaths.size()) continue;
+            
             PlannedPath path = rerollPaths.get(i);
-            if (animatorIndex >= 0 && animatorIndex < opponentAnimators.size() && path != null) {
-                DiceAnimator animator = opponentAnimators.get(animatorIndex);
-                int rerollValue = newValues.get(animatorIndex);
-                
-                if (battleState != null && battleState.isPrismaticDiceAt(animatorIndex, false)) {
-                    PrismaticDiceInstance prismatic = battleState.getPrismaticDiceAt(animatorIndex, false);
-                    if (prismatic != null) {
-                        rerollValue = prismatic.faceIndex;
-                    }
+            if (path == null) continue;
+            
+            DiceAnimator animator = opponentAnimators.get(animatorIndex);
+            int rerollValue = newValues.get(i);
+            
+            if (battleState != null && battleState.isPrismaticDiceAt(animatorIndex, false)) {
+                PrismaticDiceInstance prismatic = battleState.getPrismaticDiceAt(animatorIndex, false);
+                if (prismatic != null) {
+                    rerollValue = prismatic.faceIndex;
                 }
-                
-                animator.rerollWithNewPath(rerollValue, path.startX(), path.startY(),
-                        path.rotation(), path.travelDistance(),
-                        path.bounceCount(), path.bounceHeights(),
-                        path.targetCenterX(), path.targetCenterY());
             }
+            
+            animator.rerollWithNewPath(rerollValue, path.startX(), path.startY(),
+                    path.rotation(), path.travelDistance(),
+                    path.bounceCount(), path.bounceHeights(),
+                    animator.getTargetSlotX(), animator.getTargetSlotY());
         }
     }
 
@@ -373,13 +392,18 @@ public class DiceRollManager {
         pendingOpponentRollPaths = null;
         pendingOpponentScatterDestinations = null;
     }
+    
+    public void clearAll() {
+        clear();
+        clearOpponentAnimators();
+    }
 
     public List<DiceAnimator> getOpponentAnimators() {
-        return opponentAnimators;
+        return new ArrayList<>(opponentAnimators);
     }
     
     public List<DiceAnimator> getAnimators() {
-        return animators;
+        return new ArrayList<>(animators);
     }
 
     public float getAnimatorVisualX(int index) {

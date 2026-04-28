@@ -43,6 +43,7 @@ public class FlyingIcon {
     private float targetRotation = 0f;
     private float rotationElapsed = 0f;
     private float originalRotation = 0f;
+    private boolean positionInitialized = false;
     
     private LabelAPI valueLabel;
     private CustomPanelAPI labelPanel;
@@ -64,6 +65,7 @@ public class FlyingIcon {
         this.currentX = x;
         this.currentY = y;
         this.originalRotation = currentRotation;
+        this.positionInitialized = true;
     }
     
     public void setTargetRotation(float rotation) {
@@ -87,6 +89,11 @@ public class FlyingIcon {
     }
     
     public void flyTo(float x, float y, float duration, boolean useLinear, boolean skipPullback) {
+        if (!positionInitialized) {
+            currentX = 0f;
+            currentY = 0f;
+            originalRotation = currentRotation;
+        }
         this.startX = currentX;
         this.startY = currentY;
         float dx = x - currentX;
@@ -125,6 +132,11 @@ public class FlyingIcon {
     }
     
     public void flyDirectTo(float x, float y, float duration, boolean useLinear) {
+        if (!positionInitialized) {
+            currentX = 0f;
+            currentY = 0f;
+            originalRotation = currentRotation;
+        }
         this.startX = currentX;
         this.startY = currentY;
         this.pullbackX = currentX;
@@ -181,7 +193,7 @@ public class FlyingIcon {
             startX = currentX;
             startY = currentY;
             elapsed = 0f;
-            flyPhase = usePullback ? FlyPhase.PULLBACK : FlyPhase.FLYING;
+            flyPhase = usePullback ? FlyPhase.PULLBACK : FlyPhase.READY;
             return;
         }
         
@@ -243,11 +255,12 @@ public class FlyingIcon {
         if (labelCreated || panel == null) return;
         
         SettingsAPI settings = Global.getSettings();
-        valueLabel = settings.createLabel(String.valueOf(value), Fonts.INSIGNIA_VERY_LARGE);
+        String text = String.valueOf(value);
+        valueLabel = settings.createLabel(text, Fonts.INSIGNIA_VERY_LARGE);
         valueLabel.setColor(color);
         valueLabel.setAlignment(Alignment.MID);
         
-        float labelWidth = valueLabel.computeTextWidth(String.valueOf(value)) + 10f;
+        float labelWidth = valueLabel.computeTextWidth(text) + 10f;
         panel.addComponent((UIComponentAPI) valueLabel)
             .setSize(labelWidth, LABEL_HEIGHT)
             .inTL(currentX - labelWidth / 2f, currentY - LABEL_HEIGHT / 2f);
@@ -280,14 +293,28 @@ public class FlyingIcon {
         labelCreated = false;
     }
     
-    public void render(float panelX, float panelY, float panelHeight, float alphaMult) {
+    public void forceComplete() {
+        flyPhase = FlyPhase.COMPLETE;
+        elapsed = 0f;
+        currentX = targetX;
+        currentY = targetY;
+        currentRotation = targetRotation;
+        rotationElapsed = 0f;
+        usePullback = false;
+        useLinearFlight = false;
+        if (valueLabel != null) {
+            valueLabel.setOpacity(0f);
+        }
+    }
+    
+    public void render(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
         if (sprite == null) return;
         
         UnifiedCoord.PanelContext existingCtx = UnifiedCoord.getCurrentOrNull();
         boolean needsContextCleanup = existingCtx == null;
         
         if (needsContextCleanup) {
-            UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(panelX, panelY, 0f, panelHeight));
+            UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(panelX, panelY, panelWidth, panelHeight));
         }
         
         try {

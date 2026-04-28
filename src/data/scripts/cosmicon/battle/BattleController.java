@@ -119,6 +119,7 @@ public class BattleController implements BattleState.DamageAnimationCallback {
                 state.getPlayerHp(), state.getOpponentHp());
         }
         state.cleanup();
+        state.getWeatherController().reset();
         DiceProbabilityCalculator.clearCache();
         CosmiconSprites.clearCache();
         CosmiconLogger.info("====================================");

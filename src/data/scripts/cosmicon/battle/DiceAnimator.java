@@ -154,11 +154,16 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.travelProgress = 0f;
         this.posXOffset = 0f;
         this.posYOffset = 0f;
+        this.targetCenterX = 0f;
+        this.targetCenterY = 0f;
+        this.bounceHeights = new float[0];
+        this.bounceCount = 0;
         if (useDirectionalAnimation) {
             this.phase = Phase.DROP;
             this.scale = INITIAL_SCALE;
         } else {
             this.phase = Phase.ROLLING;
+            this.rotation = 0f;
         }
     }
     
@@ -225,9 +230,13 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
     
     
     
-    public void startScatterFromPreview(float scatterX, float scatterY, float delay,
-                                         float rotation, float travelDistance, int bounceCount,
-                                         float[] bounceHeights, float targetCenterX, float targetCenterY) {
+public void startScatterFromPreview(float scatterX, float scatterY, float delay,
+                                          float rotation, float travelDistance, int bounceCount,
+                                          float[] bounceHeights, float targetCenterX, float targetCenterY) {
+        this.x = scatterX;
+        this.y = scatterY;
+        this.posXOffset = 0f;
+        this.posYOffset = 0f;
         this.scatterTargetX = scatterX;
         this.scatterTargetY = scatterY;
         this.targetCenterX = targetCenterX;
@@ -240,8 +249,12 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.rollPickupStartScale = scale;
         this.phaseElapsed = 0f;
         this.elapsed = -delay;
+        this.currentFrame = 0;
         this.phase = Phase.SCATTER_PICKUP;
         this.useDirectionalAnimation = true;
+        if (stationaryResultIndex >= 0) {
+            this.finalValue = stationaryResultIndex;
+        }
     }
     
     
@@ -367,6 +380,7 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
             y = scatterTargetY;
             posXOffset = 0f;
             posYOffset = 0f;
+            finalValue = stationaryResultIndex;
             phase = Phase.TRAVEL;
             phaseElapsed = 0f;
             travelProgress = 0f;
@@ -642,6 +656,11 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
     }
     
     public void forceComplete() {
+        x = 0f;
+        y = 0f;
+        // type is NOT reset - it's an immutable identity property, not a stale value
+        finalValue = 0;
+        
         elapsed = TOTAL_DURATION;
         currentFrame = 0;
         scale = 1f;
@@ -649,6 +668,20 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         posYOffset = 0f;
         rotation = 0f;
         directionRad = 0f;
+        bounceCount = 0;
+        bounceHeights = new float[0];
+        travelDistance = 0f;
+        travelProgress = 0f;
+        useDirectionalAnimation = false;
+        stationaryFrameIndex = 0;
+        stationaryResultIndex = 0;
+        rollPickupStartScale = 0f;
+        centeringStartX = 0f;
+        centeringStartY = 0f;
+        targetCenterX = 0f;
+        targetCenterY = 0f;
+        scatterTargetX = 0f;
+        scatterTargetY = 0f;
         complete = true;
         phase = Phase.COMPLETE;
     }

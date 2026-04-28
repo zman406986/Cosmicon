@@ -371,4 +371,8 @@ public class WeatherController {
         }
         return counts;
     }
+    
+    public void reset() {
+        schedule.reset();
+    }
 }

@@ -82,14 +82,14 @@ public class IconSplitEffect {
         }
     }
     
-    public void render(float panelX, float panelY, float panelHeight, float alphaMult) {
+    public void render(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
         if (!active || sprite == null) return;
         
         UnifiedCoord.PanelContext existingCtx = UnifiedCoord.getCurrentOrNull();
         boolean needsContextCleanup = existingCtx == null;
         
         if (needsContextCleanup) {
-            UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(panelX, panelY, 0, panelHeight));
+            UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(panelX, panelY, panelWidth, panelHeight));
         }
         
         try {

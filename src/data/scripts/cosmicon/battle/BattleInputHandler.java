@@ -126,7 +126,7 @@ public class BattleInputHandler {
                     diceRollManager.triggerRollFromStationary();
                     waitingForClickToRoll = false;
                     labels.hideClickHint();
-                } else {
+                } else if (diceRollManager.hasAnimators() || diceRollManager.isWaitingForRollTrigger()) {
                     CosmiconLogger.debug("Player clicked to skip dice roll animation");
                     diceRollManager.forceCompleteAll();
                     labels.hideClickHint();

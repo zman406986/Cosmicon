@@ -74,4 +74,8 @@ public class CharacterCard {
         newPrismatic.put(diceId, uses);
         return new CharacterCard(id, name, maxHp, atkLevel, defLevel, dicePool, passiveDescription, newPrismatic);
     }
+
+    public CharacterCard copy() {
+        return new CharacterCard(id, name, maxHp, atkLevel, defLevel, dicePool, passiveDescription, prismaticDiceIds);
+    }
 }
