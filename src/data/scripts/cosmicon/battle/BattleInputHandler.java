@@ -128,9 +128,9 @@ public class BattleInputHandler {
                     labels.hideClickHint();
                 } else if (diceRollManager.hasAnimators() || diceRollManager.isWaitingForRollTrigger()) {
                     CosmiconLogger.debug("Player clicked to skip dice roll animation");
-                    diceRollManager.forceCompleteAll();
-                    labels.hideClickHint();
 
+                    // Create hitboxes BEFORE force-completing so animator target
+                    // slot coordinates are still valid and not zeroed
                     boolean showPlayerDice = battleState.isDefenderRolling() != battleState.isPlayerAttacker();
                     if (showPlayerDice && diceHitboxes.isEmpty()) {
                         List<DiceType> types = battleState.getPlayerDiceTypes();
@@ -139,6 +139,8 @@ public class BattleInputHandler {
                         }
                     }
 
+                    diceRollManager.forceCompleteAll();
+                    labels.hideClickHint();
                     labels.updatePrismaticRolledLabel();
 
                     if (battleState.isDefenderRolling()) {

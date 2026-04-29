@@ -106,6 +106,8 @@ public class DamageResolutionAnimator {
             float defenderTargetY,
             CustomPanelAPI panel) {
         
+        cleanup();
+        
         this.panel = panel;
         this.defenderTargetX = defenderTargetX;
         this.defenderTargetY = defenderTargetY;
@@ -150,13 +152,9 @@ public class DamageResolutionAnimator {
             this.comboDamage = 0;
         }
         
-        cleanup();
-        
         calculateStaticIconPositions(state);
         createFlyingNumbers();
         
-        atkFlyingIcon.startFrom(atkIconCenterX, atkIconCenterY);
-        defFlyingIcon.startFrom(defIconCenterX, defIconCenterY);
         atkFlyingIcon.createLabel(panel);
         defFlyingIcon.createLabel(panel);
         
@@ -226,11 +224,11 @@ public class DamageResolutionAnimator {
         SpriteAPI atkRoleIcon = CosmiconSprites.getAtkIcon();
         SpriteAPI defRoleIcon = CosmiconSprites.getDefIcon();
         
-        atkFlyingIcon = new FlyingIcon(atkRoleIcon, iconSize, ColorHelper.ATTACK_VALUE);
+        atkFlyingIcon = new FlyingIcon(atkRoleIcon, iconSize, ColorHelper.ATTACK_VALUE, atkIconCenterX, atkIconCenterY);
         atkFlyingIcon.setValue(attackValue);
         atkFlyingIcon.setTargetRotation(playerAttacker ? ATK_ROTATION_TO_BOTTOM_RIGHT : ATK_ROTATION_TO_TOP_LEFT);
         
-        defFlyingIcon = new FlyingIcon(defRoleIcon, iconSize, ColorHelper.DEFENSE_VALUE);
+        defFlyingIcon = new FlyingIcon(defRoleIcon, iconSize, ColorHelper.DEFENSE_VALUE, defIconCenterX, defIconCenterY);
         defFlyingIcon.setValue(originalDefenseValue);
     }
     

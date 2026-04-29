@@ -270,7 +270,7 @@ public class DicePathPlanner {
             if (allPlaced) return destinations;
         }
         
-        float spacing = (panelW - 2f * SCATTER_MARGIN) / Math.max(count, 1);
+        float spacing = (panelW - 2f * SCATTER_MARGIN) / count;
         float startX = SCATTER_MARGIN + spacing / 2f;
         float y = panelH / 2f;
         for (int i = 0; i < count; i++) {

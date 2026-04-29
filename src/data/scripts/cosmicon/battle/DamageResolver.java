@@ -18,8 +18,10 @@ public class DamageResolver {
         int attackValue = state.getAttackValue();
         int defenseValue = state.getDefenseValue();
         
-        int modifiedAttack = attackValue + attackerEffects.calculateAttackBonus(TurnType.ATTACK);
-        int modifiedDefense = defenseValue + defenderEffects.calculateDefenseBonus(TurnType.DEFENSE);
+        int atkBonus = attackerEffects.calculateAttackBonus(TurnType.ATTACK);
+        int defBonus = defenderEffects.calculateDefenseBonus(TurnType.DEFENSE);
+        int modifiedAttack = attackValue + atkBonus;
+        int modifiedDefense = defenseValue + defBonus;
         
         int attackerPrismaticValue = state.getPrismaticDiceTotalValue(state.isPlayerAttacker());
         int defenderPrismaticValue = state.getPrismaticDiceTotalValue(!state.isPlayerAttacker());
@@ -27,14 +29,21 @@ public class DamageResolver {
         modifiedDefense += defenderPrismaticValue;
         
         int prePerforationDefense = modifiedDefense;
+        boolean hasPerforation = attackerEffects.shouldIgnoreDefense();
         
-        if (attackerEffects.shouldIgnoreDefense()) {
+        if (hasPerforation) {
             modifiedDefense = 0;
         }
         
-        boolean perforationSuccessful = attackerEffects.shouldIgnoreDefense() && prePerforationDefense > 0;
+        boolean perforationSuccessful = hasPerforation && prePerforationDefense > 0;
         
         int damage = Math.max(0, modifiedAttack - modifiedDefense);
+        
+        CosmiconLogger.info("[DMG_DIAG] resolve: attacker=%s, atkValue=%d, defValue=%d, atkBonus=%d, defBonus=%d, prismAtk=%d, prismDef=%d, perf=%s, damage=%d",
+            state.isPlayerAttacker() ? "Player" : "Opponent",
+            attackValue, defenseValue, atkBonus, defBonus,
+            attackerPrismaticValue, defenderPrismaticValue,
+            hasPerforation, damage);
         
         boolean forcefieldUsed = false;
         if (defenderEffects.isForcefieldActive() && damage > 0) {

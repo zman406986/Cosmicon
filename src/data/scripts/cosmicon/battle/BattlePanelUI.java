@@ -155,7 +155,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         labels = new BattleUILabels();
         buttons = new BattleUIButtons();
 
-        float opponentCardX = BattleRenderingUtils.MARGIN;
         float opponentCardY = BattleRenderingUtils.MARGIN;
         opponentPrismaticBtnX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.MARGIN - PRISMATIC_BTN_SIZE - 20f;
         opponentPrismaticBtnY = opponentCardY + 40f;
@@ -387,6 +386,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         }
 
         battleState.clearPendingValueChanges();
+        battleState.setValueChangeAnimationInProgress(true);
     }
 
     @Override
@@ -457,6 +457,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
                 if (attackerComplete && defenderComplete) {
                     preClashTimer = 0f;
+                    battleState.setValueChangeAnimationInProgress(false);
                     if (battleController != null) {
                         battleController.proceedToClash();
                     }
@@ -579,6 +580,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
             if (attackerComplete && defenderComplete) {
                 valueAnimationPending = false;
+                battleState.setValueChangeAnimationInProgress(false);
                 startDamageResolutionAnimation(battleState, pendingDamageResult);
             }
         }
@@ -854,17 +856,22 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             if (selected.get(i)) {
                 DiceAnimator animator = animators.get(i);
                 if (animator != null) {
-                    float diceSize = animator.getDisplaySize();
-                    UnifiedCoord dicePos = new UnifiedCoord(animator.getVisualX(), animator.getVisualY()).bottomLeft(diceSize);
+                    float visX = animator.getVisualX();
+                    float visY = animator.getVisualY();
+                    float displaySize = animator.getDisplaySize();
+                    float centeringOffset = (AnimationConstants.DICE_SIZE - displaySize) / 2f;
+                    float boxX = visX - centeringOffset;
+                    float boxY = visY - centeringOffset;
+                    UnifiedCoord dicePos = new UnifiedCoord(boxX, boxY).bottomLeft(AnimationConstants.DICE_SIZE);
 
                     float diceX = dicePos.glX();
                     float diceY = dicePos.glY();
 
                     GL11.glBegin(GL11.GL_LINE_LOOP);
                     GL11.glVertex2f(diceX, diceY);
-                    GL11.glVertex2f(diceX + diceSize, diceY);
-                    GL11.glVertex2f(diceX + diceSize, diceY + diceSize);
-                    GL11.glVertex2f(diceX, diceY + diceSize);
+                    GL11.glVertex2f(diceX + AnimationConstants.DICE_SIZE, diceY);
+                    GL11.glVertex2f(diceX + AnimationConstants.DICE_SIZE, diceY + AnimationConstants.DICE_SIZE);
+                    GL11.glVertex2f(diceX, diceY + AnimationConstants.DICE_SIZE);
                     GL11.glEnd();
                 }
             }
@@ -910,17 +917,22 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             if (idx >= 0 && idx < opponentAnimators.size()) {
                 DiceAnimator animator = opponentAnimators.get(idx);
                 if (animator != null) {
-                    float diceSize = animator.getDisplaySize();
-                    UnifiedCoord dicePos = new UnifiedCoord(animator.getVisualX(), animator.getVisualY()).bottomLeft(diceSize);
+                    float visX = animator.getVisualX();
+                    float visY = animator.getVisualY();
+                    float displaySize = animator.getDisplaySize();
+                    float centeringOffset = (AnimationConstants.DICE_SIZE - displaySize) / 2f;
+                    float boxX = visX - centeringOffset;
+                    float boxY = visY - centeringOffset;
+                    UnifiedCoord dicePos = new UnifiedCoord(boxX, boxY).bottomLeft(AnimationConstants.DICE_SIZE);
 
                     float diceX = dicePos.glX();
                     float diceY = dicePos.glY();
 
                     GL11.glBegin(GL11.GL_LINE_LOOP);
                     GL11.glVertex2f(diceX, diceY);
-                    GL11.glVertex2f(diceX + diceSize, diceY);
-                    GL11.glVertex2f(diceX + diceSize, diceY + diceSize);
-                    GL11.glVertex2f(diceX, diceY + diceSize);
+                    GL11.glVertex2f(diceX + AnimationConstants.DICE_SIZE, diceY);
+                    GL11.glVertex2f(diceX + AnimationConstants.DICE_SIZE, diceY + AnimationConstants.DICE_SIZE);
+                    GL11.glVertex2f(diceX, diceY + AnimationConstants.DICE_SIZE);
                     GL11.glEnd();
                 }
             }

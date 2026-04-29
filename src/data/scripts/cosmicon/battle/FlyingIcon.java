@@ -43,13 +43,12 @@ public class FlyingIcon {
     private float targetRotation = 0f;
     private float rotationElapsed = 0f;
     private float originalRotation = 0f;
-    private boolean positionInitialized = false;
-    
+
     private LabelAPI valueLabel;
     private CustomPanelAPI labelPanel;
     private boolean labelCreated;
     
-    public FlyingIcon(SpriteAPI sprite, float size, Color color) {
+    public FlyingIcon(SpriteAPI sprite, float size, Color color, float startX, float startY) {
         this.sprite = sprite;
         this.size = size;
         this.color = color;
@@ -57,15 +56,10 @@ public class FlyingIcon {
         this.elapsed = 0f;
         this.labelCreated = false;
         this.usePullback = false;
-    }
-    
-    public void startFrom(float x, float y) {
-        this.startX = x;
-        this.startY = y;
-        this.currentX = x;
-        this.currentY = y;
-        this.originalRotation = currentRotation;
-        this.positionInitialized = true;
+        this.startX = startX;
+        this.startY = startY;
+        this.currentX = startX;
+        this.currentY = startY;
     }
     
     public void setTargetRotation(float rotation) {
@@ -80,20 +74,7 @@ public class FlyingIcon {
         this.currentRotation = rotation;
     }
     
-    public void flyTo(float x, float y, float duration) {
-        flyTo(x, y, duration, false, false);
-    }
-    
-    public void flyTo(float x, float y, float duration, boolean useLinear) {
-        flyTo(x, y, duration, useLinear, useLinear);
-    }
-    
     public void flyTo(float x, float y, float duration, boolean useLinear, boolean skipPullback) {
-        if (!positionInitialized) {
-            currentX = 0f;
-            currentY = 0f;
-            originalRotation = currentRotation;
-        }
         this.startX = currentX;
         this.startY = currentY;
         float dx = x - currentX;
@@ -119,6 +100,7 @@ public class FlyingIcon {
         this.useLinearFlight = useLinear;
         
         if (Math.abs(targetRotation - currentRotation) > 0.5f) {
+            this.originalRotation = currentRotation;
             flyPhase = FlyPhase.ROTATING;
         } else if (skipPullback) {
             flyPhase = FlyPhase.READY;
@@ -132,11 +114,6 @@ public class FlyingIcon {
     }
     
     public void flyDirectTo(float x, float y, float duration, boolean useLinear) {
-        if (!positionInitialized) {
-            currentX = 0f;
-            currentY = 0f;
-            originalRotation = currentRotation;
-        }
         this.startX = currentX;
         this.startY = currentY;
         this.pullbackX = currentX;
@@ -150,6 +127,7 @@ public class FlyingIcon {
         this.useLinearFlight = useLinear;
         
         if (Math.abs(targetRotation - currentRotation) > 0.5f) {
+            this.originalRotation = currentRotation;
             flyPhase = FlyPhase.ROTATING;
         } else {
             flyPhase = FlyPhase.FLYING;
@@ -199,6 +177,7 @@ public class FlyingIcon {
         
         float progress = rotationElapsed / ROTATION_DURATION;
         float eased = EasingUtil.easeOutQuad(progress);
+        float originalRotation = 0f;
         currentRotation = originalRotation + (targetRotation - originalRotation) * eased;
     }
     
@@ -293,20 +272,6 @@ public class FlyingIcon {
         labelCreated = false;
     }
     
-    public void forceComplete() {
-        flyPhase = FlyPhase.COMPLETE;
-        elapsed = 0f;
-        currentX = targetX;
-        currentY = targetY;
-        currentRotation = targetRotation;
-        rotationElapsed = 0f;
-        usePullback = false;
-        useLinearFlight = false;
-        if (valueLabel != null) {
-            valueLabel.setOpacity(0f);
-        }
-    }
-    
     public void render(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
         if (sprite == null) return;
         
@@ -321,10 +286,10 @@ public class FlyingIcon {
             GLStateUtil.enableTexturingWithBlend();
             
             float uiX = currentX - size / 2f;
-            float uiY = currentY + size / 2f;
+            float uiY = currentY - size / 2f;
             UnifiedCoord pos = new UnifiedCoord(uiX, uiY);
             float glX = pos.glX();
-            float glY = pos.glY();
+            float glY = pos.glSpriteY(size);
             
             sprite.setSize(size, size);
             sprite.setAlphaMult(alphaMult);

@@ -173,10 +173,8 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
                                    float targetCenterX, float targetCenterY) {
         this.finalValue = newFinalValue;
         
-        float displaySize = type != null ? type.getDisplaySize() : AnimationConstants.DICE_SIZE;
-        float centeringOffset = (AnimationConstants.DICE_SIZE - displaySize) / 2f;
-        this.x = startX - centeringOffset;
-        this.y = startY - centeringOffset;
+        this.x = startX;
+        this.y = startY;
         
         this.elapsed = 0f;
         this.complete = false;
@@ -194,8 +192,8 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.useDirectionalAnimation = true;
         this.phase = Phase.DROP;
         this.scale = INITIAL_SCALE;
-        this.targetCenterX = targetCenterX - centeringOffset;
-        this.targetCenterY = targetCenterY - centeringOffset;
+        this.targetCenterX = targetCenterX;
+        this.targetCenterY = targetCenterY;
     }
     
     public void startStationaryPreview(DiceType type, int result, float targetCenterX, float targetCenterY) {
@@ -205,7 +203,7 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         if (type == DiceType.PRISMATIC) {
             this.stationaryResultIndex = (int)(Math.random() * 6);
         } else {
-            this.stationaryResultIndex = 1 + (int)(Math.random() * type.getMaxFace());
+            this.stationaryResultIndex = type.getMaxFace();
         }
         this.x = targetCenterX;
         this.y = targetCenterY;
@@ -252,9 +250,6 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         this.currentFrame = 0;
         this.phase = Phase.SCATTER_PICKUP;
         this.useDirectionalAnimation = true;
-        if (stationaryResultIndex >= 0) {
-            this.finalValue = stationaryResultIndex;
-        }
     }
     
     
@@ -372,7 +367,6 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         float progress = Math.min(1f, phaseElapsed / SCATTER_DROP_DURATION);
         float eased = EasingUtil.easeInQuad(progress);
         scale = CENTERING_SCALE - (CENTERING_SCALE - 1f) * eased;
-        currentFrame = (int)(phaseElapsed * 12f) % AnimationConstants.FRAME_COUNT;
         
         if (phaseElapsed >= SCATTER_DROP_DURATION) {
             scale = 1f;
@@ -380,7 +374,6 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
             y = scatterTargetY;
             posXOffset = 0f;
             posYOffset = 0f;
-            finalValue = stationaryResultIndex;
             phase = Phase.TRAVEL;
             phaseElapsed = 0f;
             travelProgress = 0f;
@@ -563,7 +556,7 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         if (elapsed < 0f) return;
         
         SpriteAPI sprite;
-        boolean isScatterPickupOrTravel = phase == Phase.SCATTER_PICKUP || phase == Phase.SCATTER_TRAVEL;
+        boolean isScatterPickupOrTravel = phase == Phase.SCATTER_PICKUP || phase == Phase.SCATTER_TRAVEL || phase == Phase.SCATTER_DROP;
         if (phase == Phase.STATIONARY_PREVIEW || isScatterPickupOrTravel) {
             if (type == DiceType.PRISMATIC) {
                 sprite = DiceSpriteRegistry.getPrismaticFrame(stationaryResultIndex, stationaryFrameIndex);
@@ -656,11 +649,11 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
     }
     
     public void forceComplete() {
-        x = 0f;
-        y = 0f;
-        // type is NOT reset - it's an immutable identity property, not a stale value
-        finalValue = 0;
-        
+        // Snap to target grid slot so visuals and hitboxes agree on position.
+        // Callers that clear the list (clear/clearOpponentAnimators) are unaffected.
+        x = targetCenterX;
+        y = targetCenterY;
+
         elapsed = TOTAL_DURATION;
         currentFrame = 0;
         scale = 1f;
@@ -678,8 +671,6 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         rollPickupStartScale = 0f;
         centeringStartX = 0f;
         centeringStartY = 0f;
-        targetCenterX = 0f;
-        targetCenterY = 0f;
         scatterTargetX = 0f;
         scatterTargetY = 0f;
         complete = true;

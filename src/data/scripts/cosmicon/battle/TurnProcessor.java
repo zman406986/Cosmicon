@@ -185,12 +185,12 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
     }
     
     private void advanceToDefensePhase() {
+        state.setDefenderRolling(true);
+        
         state.notifyTransitionToDefenderRoll();
         
         state.setCurrentPhase(BattleState.Phase.ROLLING);
         state.notifyPhaseChange(BattleState.Phase.ROLLING);
-        
-        state.setDefenderRolling(true);
         
         PassiveEventSystem.onStartOfDefenseTurn(state, true);
         PassiveEventSystem.onStartOfDefenseTurn(state, false);
@@ -849,10 +849,20 @@ private void applyDamageResult(DamageResolver.DamageResult result) {
             state.notifyValueChange(true, "LEVEL_UP", oldValue, newValue, delta);
         }
         
+        int calcSum = state.calculateSelectedSum(true);
+        List<Integer> vals = state.getDiceValues(true);
+        List<Boolean> sels = state.getDiceSelected(true);
+        int prismaticCount = 0;
+        for (int i = 0; i < (vals != null ? vals.size() : 0); i++) {
+            if (state.isPrismaticDiceAt(i, true)) prismaticCount++;
+        }
+        CosmiconLogger.info("[ATK_DIAG] confirmPlayerSelection: required=%d, selected=%d, calcSum=%d, values=%s, prismaticInMap=%d",
+            requiredCount, selectedCount, calcSum, vals != null ? vals.toString() : "null", prismaticCount);
+
         if (state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
-            state.setAttackValue(state.calculateSelectedSum(true));
+            state.setAttackValue(calcSum);
         } else if (!state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
-            state.setDefenseValue(state.calculateSelectedSum(true));
+            state.setDefenseValue(calcSum);
         }
         
         int oldAtk = state.getAttackValue();

@@ -742,7 +742,14 @@ public class BattleUILabels {
                 }
             }
         }
-        return battleState.calculateSelectedSum(forPlayer);
+        int base = battleState.calculateSelectedSum(forPlayer);
+        boolean isAttacking = battleState.isAttacker(forPlayer);
+        StatusEffectProcessor effects = battleState.getEffects(forPlayer);
+        int bonus = isAttacking
+            ? effects.calculateAttackBonus(BattleState.TurnType.ATTACK)
+            : effects.calculateDefenseBonus(BattleState.TurnType.DEFENSE);
+        int prismatic = battleState.getPrismaticDiceTotalValue(forPlayer);
+        return base + bonus + prismatic;
     }
 
     private int getAttackerTotalValue() {
@@ -891,10 +898,6 @@ public class BattleUILabels {
         }
         pendingPrismaticInstance = null;
         pendingPrismaticAnimatorIndex = -1;
-    }
-
-    public void onDiceRerolled() {
-        clearPrismaticRolledLabel();
     }
 
     // pendingPrismaticAnimatorIndex becomes stale when dice animators are recreated or repositioned

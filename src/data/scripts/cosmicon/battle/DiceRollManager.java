@@ -1,6 +1,7 @@
 package data.scripts.cosmicon.battle;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import data.scripts.cosmicon.battle.DicePathPlanner.PlannedPath;
@@ -296,20 +297,26 @@ public class DiceRollManager {
     public void partialReroll(List<Integer> indices, List<Integer> newValues) {
         if (indices == null || indices.isEmpty() || newValues == null) return;
         
-        List<float[]> allPositions = collectAllDicePositions();
-        List<PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, allPositions,
-                BattleRenderingUtils.PANEL_WIDTH, BattleRenderingUtils.PANEL_HEIGHT);
+        float panelW = BattleRenderingUtils.PANEL_WIDTH;
+        float panelH = BattleRenderingUtils.PANEL_HEIGHT;
         
-        int count = Math.min(indices.size(), newValues.size());
-        for (int i = 0; i < count; i++) {
-            int animatorIndex = indices.get(i);
-            if (animatorIndex < 0 || animatorIndex >= animators.size() || animatorIndex >= rerollPaths.size()) continue;
+        List<float[]> allPositions = collectAllDicePositions();
+        List<PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, allPositions, panelW, panelH);
+        
+        float[][] scatters = DicePathPlanner.planScatterDestinations(rerollPaths.size(), panelW, panelH);
+        
+        List<Integer> sortedIndices = new ArrayList<>(indices);
+        Collections.sort(sortedIndices);
+        
+        for (int i = 0; i < sortedIndices.size(); i++) {
+            int animatorIndex = sortedIndices.get(i);
+            if (animatorIndex < 0 || animatorIndex >= animators.size() || i >= rerollPaths.size()) continue;
             
             PlannedPath path = rerollPaths.get(i);
             if (path == null) continue;
             
             DiceAnimator animator = animators.get(animatorIndex);
-            int rerollValue = newValues.get(i);
+            int rerollValue = newValues.get(animatorIndex);
             
             if (battleState != null && battleState.isPrismaticDiceAt(animatorIndex, true)) {
                 PrismaticDiceInstance prismatic = battleState.getPrismaticDiceAt(animatorIndex, true);
@@ -318,7 +325,10 @@ public class DiceRollManager {
                 }
             }
             
-            animator.rerollWithNewPath(rerollValue, path.startX(), path.startY(),
+            float dropX = scatters[i][0];
+            float dropY = scatters[i][1];
+            
+            animator.rerollWithNewPath(rerollValue, dropX, dropY,
                     path.rotation(), path.travelDistance(),
                     path.bounceCount(), path.bounceHeights(),
                     animator.getTargetSlotX(), animator.getTargetSlotY());
@@ -340,20 +350,26 @@ public class DiceRollManager {
     public void rerollOpponentDice(List<Integer> indices, List<Integer> newValues) {
         if (indices == null || indices.isEmpty() || newValues == null) return;
         
-        List<float[]> allPositions = collectAllOpponentDicePositions();
-        List<PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, allPositions,
-                BattleRenderingUtils.PANEL_WIDTH, BattleRenderingUtils.PANEL_HEIGHT);
+        float panelW = BattleRenderingUtils.PANEL_WIDTH;
+        float panelH = BattleRenderingUtils.PANEL_HEIGHT;
         
-        int count = Math.min(indices.size(), newValues.size());
-        for (int i = 0; i < count; i++) {
-            int animatorIndex = indices.get(i);
-            if (animatorIndex < 0 || animatorIndex >= opponentAnimators.size() || animatorIndex >= rerollPaths.size()) continue;
+        List<float[]> allPositions = collectAllOpponentDicePositions();
+        List<PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, allPositions, panelW, panelH);
+        
+        float[][] scatters = DicePathPlanner.planScatterDestinations(rerollPaths.size(), panelW, panelH);
+        
+        List<Integer> sortedIndices = new ArrayList<>(indices);
+        Collections.sort(sortedIndices);
+        
+        for (int i = 0; i < sortedIndices.size(); i++) {
+            int animatorIndex = sortedIndices.get(i);
+            if (animatorIndex < 0 || animatorIndex >= opponentAnimators.size() || i >= rerollPaths.size()) continue;
             
             PlannedPath path = rerollPaths.get(i);
             if (path == null) continue;
             
             DiceAnimator animator = opponentAnimators.get(animatorIndex);
-            int rerollValue = newValues.get(i);
+            int rerollValue = newValues.get(animatorIndex);
             
             if (battleState != null && battleState.isPrismaticDiceAt(animatorIndex, false)) {
                 PrismaticDiceInstance prismatic = battleState.getPrismaticDiceAt(animatorIndex, false);
@@ -362,7 +378,10 @@ public class DiceRollManager {
                 }
             }
             
-            animator.rerollWithNewPath(rerollValue, path.startX(), path.startY(),
+            float dropX = scatters[i][0];
+            float dropY = scatters[i][1];
+            
+            animator.rerollWithNewPath(rerollValue, dropX, dropY,
                     path.rotation(), path.travelDistance(),
                     path.bounceCount(), path.bounceHeights(),
                     animator.getTargetSlotX(), animator.getTargetSlotY());
@@ -393,11 +412,6 @@ public class DiceRollManager {
         pendingOpponentScatterDestinations = null;
     }
     
-    public void clearAll() {
-        clear();
-        clearOpponentAnimators();
-    }
-
     public List<DiceAnimator> getOpponentAnimators() {
         return new ArrayList<>(opponentAnimators);
     }

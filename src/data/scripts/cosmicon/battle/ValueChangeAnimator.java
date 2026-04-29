@@ -97,11 +97,6 @@ public class ValueChangeAnimator {
         }
     }
 
-    public void updateIconPosition(float newCenterX, float newCenterY) {
-        this.iconCenterX = newCenterX;
-        this.iconCenterY = newCenterY;
-    }
-
     private void createLabels() {
         if (labelsCreated || panel == null) return;
         

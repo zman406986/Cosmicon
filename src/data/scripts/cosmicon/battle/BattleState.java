@@ -33,8 +33,6 @@ public class BattleState {
     private final StatusEffectProcessor opponentEffects;
     private PrismaticManager prismaticManager;
     private WeatherController weatherController;
-    private DiceRoller diceRoller;
-
     private CharacterCard playerCard;
     private CharacterCard opponentCard;
     private DicePoolCounts playerDicePoolCounts;
@@ -593,11 +591,13 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     
     public void clearPrismaticState() {
         if (valueChangeAnimationInProgress) {
-            CosmiconLogger.warn("Cannot clear prismatic state while value change animation is in progress");
+            CosmiconLogger.warn("[PRISM_DIAG] Cannot clear prismatic state (turn %d): valueChangeAnimationInProgress, playerPrismaticDiceByIndex=%s",
+                turnNumber, playerPrismaticDiceByIndex.keySet());
             return;
         }
         if (currentPhase == Phase.RESOLVING || currentPhase == Phase.RESOLVING_PRE_CLASH) {
-            CosmiconLogger.warn("Cannot clear prismatic state during resolution phase");
+            CosmiconLogger.warn("[PRISM_DIAG] Cannot clear prismatic state (turn %d): phase=%s, playerPrismaticDiceByIndex=%s",
+                turnNumber, currentPhase, playerPrismaticDiceByIndex.keySet());
             return;
         }
         prismaticManager.clearState();
@@ -779,7 +779,18 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
     
     public int calculateSelectedSum(boolean forPlayer) {
-        return calculateSelectedSum(getDiceValues(forPlayer), getDiceSelected(forPlayer));
+        return calculateSelectedSumExcludingPrismatic(getDiceValues(forPlayer), getDiceSelected(forPlayer), forPlayer);
+    }
+    
+    private int calculateSelectedSumExcludingPrismatic(List<Integer> values, List<Boolean> selected, boolean forPlayer) {
+        if (values == null || selected == null) return 0;
+        int sum = 0;
+        for (int i = 0; i < values.size(); i++) {
+            if (selected.get(i) && !isPrismaticDiceAt(i, forPlayer)) {
+                sum += values.get(i);
+            }
+        }
+        return sum;
     }
     
     public void recordSelectedFaces(boolean forPlayer) {
@@ -856,12 +867,6 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         for (BattleEventListener l : listeners) {
             l.onTransitionToDefenderRoll();
         }
-    }
-    
-    
-    
-    public DiceRoller getDiceRoller() {
-        return diceRoller;
     }
     
     
@@ -1045,7 +1050,6 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         playerPrismaticDiceByIndex.clear();
         opponentPrismaticDiceByIndex.clear();
         
-        diceRoller = null;
         weatherController = null;
         
         playerFaceSelectionHistory.clear();

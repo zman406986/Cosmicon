@@ -186,7 +186,4 @@ public class CharacterRegistry {
         return copies;
     }
 
-    public static List<CharacterCard> getThreeStarCards() {
-        return getAllCards();
-    }
 }

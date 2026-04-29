@@ -118,8 +118,11 @@ public class BattleController implements BattleState.DamageAnimationCallback {
             CosmiconLogger.info("Final HP - Player: %d, Opponent: %d", 
                 state.getPlayerHp(), state.getOpponentHp());
         }
+        WeatherController wc = state.getWeatherController();
         state.cleanup();
-        state.getWeatherController().reset();
+        if (wc != null) {
+            wc.reset();
+        }
         DiceProbabilityCalculator.clearCache();
         CosmiconSprites.clearCache();
         CosmiconLogger.info("====================================");
