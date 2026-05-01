@@ -31,8 +31,8 @@ import data.scripts.cosmicon.util.UnifiedCoord;
 
 public class PrismaticEquipPopup extends BaseCustomUIPanelPlugin implements ActionListenerDelegate {
 
-    private static final float POPUP_WIDTH = 350f;
-    private static final float POPUP_HEIGHT = 450f;
+    static final float POPUP_WIDTH = 350f;
+    static final float POPUP_HEIGHT = 450f;
     private static final float MARGIN = 15f;
     private static final float DICE_ENTRY_HEIGHT = 24f;
     private static final float RADIO_SIZE = 16f;

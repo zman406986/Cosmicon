@@ -35,7 +35,7 @@ public class PhainonAIProfile extends AbstractCharacterAIProfile {
             return PassiveEvaluation.notTriggered();
         }
         
-        PassiveResult result = PassiveEvaluator.evaluateForCharacter(CharacterIds.PHAINON, selectedValues, isAttacking);
+        PassiveResult result = PassiveEvaluator.evaluateForCharacter(CharacterIds.PHAINON, selectedValues, false);
         return PassiveEvaluator.toPassiveEvaluation(result, 
             PassiveEvaluator.allSame(selectedValues) ? Strings.get("character.phainon.passive_desc") : "");
     }

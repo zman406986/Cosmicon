@@ -172,10 +172,10 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
                                    int bounceCount, float[] bounceHeights,
                                    float targetCenterX, float targetCenterY) {
         this.finalValue = newFinalValue;
-        
-        this.x = startX;
-        this.y = startY;
-        
+
+        this.scatterTargetX = startX;
+        this.scatterTargetY = startY;
+
         this.elapsed = 0f;
         this.complete = false;
         this.currentFrame = 0;
@@ -183,15 +183,15 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.travelProgress = 0f;
         this.posXOffset = 0f;
         this.posYOffset = 0f;
-        
+
         this.rotation = rotation;
         this.directionRad = (float)Math.toRadians(rotation);
         this.travelDistance = travelDistance;
         this.bounceCount = bounceCount;
         this.bounceHeights = bounceHeights;
         this.useDirectionalAnimation = true;
-        this.phase = Phase.DROP;
-        this.scale = INITIAL_SCALE;
+        this.phase = Phase.SCATTER_PICKUP;
+        this.scale = 1f;
         this.targetCenterX = targetCenterX;
         this.targetCenterY = targetCenterY;
     }
@@ -231,12 +231,10 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
 public void startScatterFromPreview(float scatterX, float scatterY, float delay,
                                           float rotation, float travelDistance, int bounceCount,
                                           float[] bounceHeights, float targetCenterX, float targetCenterY) {
-        this.x = scatterX;
-        this.y = scatterY;
-        this.posXOffset = 0f;
-        this.posYOffset = 0f;
         this.scatterTargetX = scatterX;
         this.scatterTargetY = scatterY;
+        this.posXOffset = 0f;
+        this.posYOffset = 0f;
         this.targetCenterX = targetCenterX;
         this.targetCenterY = targetCenterY;
         this.rotation = rotation;
@@ -629,8 +627,8 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         return visualRotation;
     }
 
-    public boolean isComplete() {
-        return complete;
+    public boolean isRunning() {
+        return !complete;
     }
     
     public boolean isReadyForCentering() {

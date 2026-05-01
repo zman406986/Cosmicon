@@ -243,7 +243,7 @@ public final class PrismaticDiceRegistry {
             new int[]{3, 3, 3, 8, 8, 12},
             new int[]{4, 4, 8, 8, 12, 12},
             indices(3, 4, 5),
-            PrismaticEffect.grantStatus(StatusEffect.THORNS, 0, true),
+            PrismaticEffect.grantStatusWithDivisor(StatusEffect.THORNS, 4),
             AlwaysAvailableCondition.INSTANCE
         );
     }

@@ -11,7 +11,6 @@ import org.lwjgl.opengl.GL11;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.BaseCustomUIPanelPlugin;
 import com.fs.starfarer.api.campaign.CustomVisualDialogDelegate.DialogCallbacks;
-import com.fs.starfarer.api.graphics.SpriteAPI;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.ui.Alignment;
 import com.fs.starfarer.api.ui.ButtonAPI;
@@ -25,10 +24,13 @@ import com.fs.starfarer.api.util.Misc;
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.CharacterRegistry;
-import data.scripts.cosmicon.battle.CosmiconSprites;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.battle.DicePoolCounts;
+import data.scripts.cosmicon.battle.BattleRenderingUtils;
+import data.scripts.cosmicon.prismatic.PrismaticDiceType;
+import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.util.ColorHelper;
+import data.scripts.cosmicon.util.PrismaticDisplayHelper;
 import data.scripts.cosmicon.util.UnifiedCoord;
 import data.scripts.cosmicon.util.GLStateUtil;
 import data.scripts.cosmicon.util.UIComponentFactory;
@@ -38,39 +40,42 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
     private static final float PANEL_WIDTH = 1000f;
     private static final float PANEL_HEIGHT = 700f;
-    private static final float CARD_WIDTH = 120f;
-    private static final float CARD_HEIGHT = 170f;
-    private static final int COLS = 5;
-    private static final float GAP_X = 15f;
+    private static final float CARD_WIDTH = BattleRenderingUtils.CARD_WIDTH;
+    private static final float CARD_HEIGHT = BattleRenderingUtils.CARD_HEIGHT;
+    private static final int COLS = 3;
+    private static final float GAP_X = 10f;
     private static final float GAP_Y = 20f;
-    private static final float MARGIN = 30f;
+    private static final float MARGIN = 15f;
     private static final float HEADER_HEIGHT = 40f;
     private static final float SELECTION_BAR_HEIGHT = 30f;
-    private static final float INFO_PANEL_X = 710f;
-    private static final float INFO_PANEL_WIDTH = 270f;
+
+    private static final float GALLERY_WIDTH = 595f;
+    private static final float DICE_LIST_X = GALLERY_WIDTH + MARGIN + 10f;
+    private static final float DICE_LIST_WIDTH = PANEL_WIDTH - DICE_LIST_X - MARGIN;
+    private static final float DICE_ENTRY_HEIGHT = 55f;
+
     private static final float BUTTON_AREA_HEIGHT = 50f;
     private static final float BUTTON_WIDTH = 140f;
     private static final float BUTTON_HEIGHT = 35f;
-    private static final float GALLERY_ICON_SIZE = 16f;
-    private static final float GALLERY_ICON_SPACING = 20f;
-    private static final float GALLERY_DICE_RIGHT_MARGIN = 8f;
-    private static final float GALLERY_DICE_TOP_MARGIN = 8f;
-    private static final float GALLERY_ATK_DEF_BOTTOM_MARGIN = 10f;
-    private static final float GALLERY_ATK_LEFT_MARGIN = 8f;
-    private static final float GALLERY_DEF_RIGHT_MARGIN = 8f;
+
+    private static final float SCROLLBAR_WIDTH = 14f;
+    private static final Color COLOR_SCROLLBAR_TRACK = new Color(35, 38, 48, 200);
+    private static final Color COLOR_SCROLLBAR_THUMB = new Color(90, 100, 120, 180);
 
     private static final Color COLOR_BG_DARK = new Color(20, 20, 30);
-    private static final Color COLOR_BOX_BG = new Color(45, 50, 65);
     private static final Color COLOR_SELECTED = new Color(255, 215, 0);
-    private static final Color COLOR_UNSELECTED = new Color(80, 85, 100);
     private static final Color COLOR_HEADER = new Color(100, 150, 255);
     private static final Color COLOR_TEXT = new Color(220, 220, 230);
-    private static final Color COLOR_INFO_PANEL_BG = new Color(35, 40, 55, 220);
+    private static final Color COLOR_DICE_PANEL_BG = new Color(35, 40, 55, 220);
     private static final Color COLOR_SECTION_HEADER = new Color(100, 120, 150);
+    private static final Color COLOR_DICE_ENTRY_BG = new Color(30, 35, 50, 180);
+    private static final Color COLOR_DICE_ENTRY_SELECTED = new Color(50, 55, 75, 220);
+    private static final Color COLOR_RADIO_SELECTED = new Color(255, 215, 0);
+    private static final Color COLOR_RADIO_UNSELECTED = new Color(100, 100, 100);
+    private static final Color COLOR_VERSION_LABEL = new Color(140, 140, 160);
 
     private static final String ACTION_CONFIRM = "setup_confirm";
     private static final String ACTION_CANCEL = "setup_cancel";
-    private static final String ACTION_CHANGE_DICE = "setup_change_dice";
     private static final String ACTION_BACK = "setup_back";
 
     private int selectedIndex = -1;
@@ -81,23 +86,47 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private DialogCallbacks callbacks;
 
     private LabelAPI selectedNameLabel;
-    private LabelAPI prismaticLabel;
     private LabelAPI passiveLabel;
-    private LabelAPI prismaticEffectLabel;
 
     private boolean buttonsCreated = false;
     private boolean wasMousePressed = false;
 
+    // Card gallery scrollbar
+    private float scrollOffset = 0f;
+    private float maxScroll = 0f;
+    private boolean isDraggingScrollbar = false;
+    private float dragStartMouseY = 0f;
+    private float dragStartScrollOffset = 0f;
+    private float scrollThumbUiY = 0f;
+    private float scrollThumbHeight = 0f;
+
+    // Dice list scrollbar
+    private float diceScrollOffset = 0f;
+    private float diceMaxScroll = 0f;
+    private boolean isDraggingDiceScrollbar = false;
+    private float diceDragStartMouseY = 0f;
+    private float diceDragStartScrollOffset = 0f;
+    private float diceScrollThumbUiY = 0f;
+    private float diceScrollThumbHeight = 0f;
+
+    // Dice list state
+    private int selectedDiceEntryIndex = -1;
+    private boolean selectedUseTrueVersion = false;
+
     private final List<ClickRegion> clickRegions = new ArrayList<>();
     private final List<CardLabels> cardLabels = new ArrayList<>();
+    private final List<DiceClickRegion> diceClickRegions = new ArrayList<>();
+    private final List<VersionClickRegion> versionClickRegions = new ArrayList<>();
+    private final List<DiceEntryLabels> diceEntryLabels = new ArrayList<>();
 
     private final CharacterSetupCallback callback;
 
-    private CustomPanelAPI popupPanel = null;
-
     private record ClickRegion(float boxX, float boxY, float width, float height, int index) {}
-    private record CardLabels(LabelAPI hpLabel, LabelAPI atkLabel, LabelAPI defLabel,
+    private record CardLabels(LabelAPI nameLabel, LabelAPI hpLabel, LabelAPI atkLabel, LabelAPI defLabel,
                               LabelAPI orangeLabel, LabelAPI purpleLabel, LabelAPI blueLabel, LabelAPI prismaticLabel) {}
+    private record DiceClickRegion(float x, float y, float width, float height, int entryIndex) {}
+    private record VersionClickRegion(float x, float y, float width, float height, int entryIndex, boolean useTrue) {}
+    private record DiceEntryLabels(LabelAPI nameLabel, LabelAPI facesLabel, String diceId, boolean hasBothVersions) {}
 
     public interface CharacterSetupCallback {
         void onConfirm(String charId, String prismaticDiceId);
@@ -107,13 +136,17 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     public CharacterSetupPanelUI(CharacterSetupCallback callback) {
         this.callback = callback;
         this.characters = CharacterRegistry.getAllCards();
+
+        List<String> allDiceIds = new ArrayList<>(PrismaticDiceRegistry.getAll().keySet());
+        if (!allDiceIds.isEmpty()) {
+            selectedPrismaticDiceId = allDiceIds.get(0);
+            selectedDiceEntryIndex = 0;
+            PrismaticDiceType firstType = PrismaticDiceRegistry.get(selectedPrismaticDiceId);
+            selectedUseTrueVersion = firstType != null && !PrismaticDisplayHelper.hasDistinctDefaultFaces(firstType);
+        }
+
         if (!characters.isEmpty()) {
             this.selectedIndex = 0;
-            CharacterCard first = characters.get(0);
-            Map<String, Integer> prismatic = first.getPrismaticDiceIds();
-            if (prismatic != null && !prismatic.isEmpty()) {
-                this.selectedPrismaticDiceId = prismatic.keySet().iterator().next();
-            }
         }
     }
 
@@ -133,16 +166,17 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         createHeaderLabels();
         createSelectionBarLabels();
-        createInfoPanelLabels();
+        createPassiveLabel();
         createButtons();
+        createDiceListLabels();
     }
 
     private void createHeaderLabels() {
-        UIComponentFactory.createLabelSmall(panel, 
-            Strings.get("menu.play") + " - " + Strings.get("menu.character_setup"), 
+        UIComponentFactory.createLabelSmall(panel,
+            Strings.get("menu.play") + " - " + Strings.get("menu.character_setup"),
             COLOR_HEADER, Alignment.LMID, PANEL_WIDTH - MARGIN * 2 - BUTTON_WIDTH, HEADER_HEIGHT, MARGIN, MARGIN);
 
-        TooltipMakerAPI backTp = UIComponentFactory.createTooltipForButtons(panel, this, BUTTON_WIDTH + 20f, HEADER_HEIGHT, 
+        TooltipMakerAPI backTp = UIComponentFactory.createTooltipForButtons(panel, this, BUTTON_WIDTH + 20f, HEADER_HEIGHT,
             PANEL_WIDTH - BUTTON_WIDTH - MARGIN - 20f, MARGIN);
         ButtonAPI backButton = backTp.addButton(Strings.get("menu.back"), ACTION_BACK, BUTTON_WIDTH, HEADER_HEIGHT - 5f, 0f);
         backButton.setQuickMode(true);
@@ -152,23 +186,14 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private void createSelectionBarLabels() {
         float barY = MARGIN + HEADER_HEIGHT + 10f;
 
-        selectedNameLabel = UIComponentFactory.createLabelSmall(panel, "", 
-            COLOR_SELECTED, Alignment.LMID, PANEL_WIDTH - MARGIN * 2 - BUTTON_WIDTH - 100f, SELECTION_BAR_HEIGHT, MARGIN, barY);
-
-        prismaticLabel = UIComponentFactory.createLabelSmall(panel, "", 
-            ColorHelper.PRISMATIC_GOLD, Alignment.LMID, 200f, SELECTION_BAR_HEIGHT, MARGIN + 250f, barY + 5f);
+        selectedNameLabel = UIComponentFactory.createLabelSmall(panel, "",
+            COLOR_SELECTED, Alignment.LMID, GALLERY_WIDTH, SELECTION_BAR_HEIGHT, MARGIN, barY);
     }
 
-    private void createInfoPanelLabels() {
-        float infoPanelStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 20f;
-
-        float passiveY = infoPanelStartY + 40f;
-        passiveLabel = UIComponentFactory.createLabelSmall(panel, "", 
-            COLOR_TEXT, Alignment.LMID, INFO_PANEL_WIDTH - 20f, 60f, INFO_PANEL_X + 10f, passiveY);
-
-        float prismaticEffectY = passiveY + 80f;
-        prismaticEffectLabel = UIComponentFactory.createLabelSmall(panel, "", 
-            ColorHelper.PRISMATIC_GOLD, Alignment.LMID, INFO_PANEL_WIDTH - 20f, 60f, INFO_PANEL_X + 10f, prismaticEffectY);
+    private void createPassiveLabel() {
+        float passiveY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 5f;
+        passiveLabel = UIComponentFactory.createLabelSmall(panel, "",
+            COLOR_TEXT, Alignment.LMID, GALLERY_WIDTH, 40f, MARGIN, passiveY);
     }
 
     private void createButtons() {
@@ -180,12 +205,8 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         btnTp.setActionListenerDelegate(this);
         panel.addUIElement(btnTp).inTL(0, buttonAreaY);
 
-        ButtonAPI changeDiceButton = btnTp.addButton(Strings.get("setup.change_dice"), ACTION_CHANGE_DICE, 120f, BUTTON_HEIGHT, 0f);
-        changeDiceButton.getPosition().inTL(80f, 5f);
-        changeDiceButton.setQuickMode(true);
-
         ButtonAPI confirmButton = btnTp.addButton(Strings.get("setup.confirm"), ACTION_CONFIRM, BUTTON_WIDTH, BUTTON_HEIGHT, 0f);
-        confirmButton.getPosition().inTL(420f, 5f);
+        confirmButton.getPosition().inTL(500f, 5f);
         confirmButton.setQuickMode(true);
 
         ButtonAPI cancelButton = btnTp.addButton(Strings.get("setup.cancel"), ACTION_CANCEL, BUTTON_WIDTH, BUTTON_HEIGHT, 0f);
@@ -195,12 +216,79 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         buttonsCreated = true;
     }
 
+    private void createDiceListLabels() {
+        if (panel == null) return;
+
+        diceEntryLabels.clear();
+        Map<String, PrismaticDiceType> allDice = PrismaticDiceRegistry.getAll();
+        List<PrismaticDiceType> diceList = new ArrayList<>(allDice.values());
+
+        float listStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 15f;
+        float titleOffset = 20f;
+
+        for (int i = 0; i < diceList.size(); i++) {
+            PrismaticDiceType type = diceList.get(i);
+            String diceId = type.getId();
+            boolean hasBoth = PrismaticDisplayHelper.hasDistinctDefaultFaces(type);
+            float entryY = listStartY + titleOffset + i * DICE_ENTRY_HEIGHT;
+
+            float labelX = DICE_LIST_X + (hasBoth ? 45f : 8f);
+            float labelW = DICE_LIST_WIDTH - (hasBoth ? 50f : 16f);
+
+            LabelAPI nameLabel = UIComponentFactory.createLabelSmall(panel,
+                PrismaticDisplayHelper.getDiceDisplayName(diceId),
+                ColorHelper.PRISMATIC_BRIGHT, Alignment.LMID, labelW, 16f,
+                labelX, entryY + 2f);
+
+            LabelAPI facesLabel = UIComponentFactory.createLabelSmall(panel,
+                "", Color.LIGHT_GRAY, Alignment.LMID, labelW, 16f,
+                labelX, entryY + 20f);
+
+            diceEntryLabels.add(new DiceEntryLabels(nameLabel, facesLabel, diceId, hasBoth));
+        }
+    }
+
+    private void updateDiceListLabels() {
+        for (int i = 0; i < diceEntryLabels.size(); i++) {
+            DiceEntryLabels labels = diceEntryLabels.get(i);
+            PrismaticDiceType type = PrismaticDiceRegistry.get(labels.diceId());
+            if (type == null) continue;
+
+            boolean useTrue = (i == selectedDiceEntryIndex) ? selectedUseTrueVersion : !labels.hasBothVersions();
+
+            String displayName = PrismaticDisplayHelper.getDiceDisplayName(labels.diceId());
+            if (useTrue && labels.hasBothVersions()) {
+                displayName = "True " + displayName;
+            }
+            labels.nameLabel().setText(displayName);
+            labels.facesLabel().setText(PrismaticDisplayHelper.getFaceValuesDisplay(type, useTrue));
+        }
+    }
+
+    private void repositionDiceListLabels(float listStartY, float listHeight) {
+        float titleOffset = 20f;
+
+        for (int i = 0; i < diceEntryLabels.size(); i++) {
+            DiceEntryLabels labels = diceEntryLabels.get(i);
+            boolean hasBoth = labels.hasBothVersions();
+
+            float entryY = listStartY + titleOffset + i * DICE_ENTRY_HEIGHT - diceScrollOffset;
+
+            float labelX = DICE_LIST_X + (hasBoth ? 45f : 8f);
+
+            labels.nameLabel().getPosition().inTL(labelX, entryY + 2f);
+            labels.nameLabel().setOpacity(labelOpacity(entryY + 2f, 16f, listStartY, listHeight));
+            labels.facesLabel().getPosition().inTL(labelX, entryY + 20f);
+            labels.facesLabel().setOpacity(labelOpacity(entryY + 20f, 16f, listStartY, listHeight));
+        }
+    }
+
     private void createCardLabels() {
         if (panel == null || characters.isEmpty()) return;
 
         cardLabels.clear();
 
-        float galleryStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 15f;
+        float galleryStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 50f;
 
         for (int i = 0; i < characters.size(); i++) {
             int col = i % COLS;
@@ -208,26 +296,85 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             float boxX = MARGIN + col * (CARD_WIDTH + GAP_X);
             float boxY = galleryStartY + row * (CARD_HEIGHT + GAP_Y);
 
-            CharacterCard card = characters.get(i);
+            LabelAPI nameLabel = createCardLabel(boxX, boxY + 5f, "", ColorHelper.PLAYER_NAME, CARD_WIDTH, 20f);
 
-            LabelAPI hpLabel = createCardLabel(boxX + 5f, boxY + 5f, "0/0", Color.WHITE);
-            LabelAPI atkLabel = createCardLabel(boxX + GALLERY_ATK_LEFT_MARGIN + 4f, boxY + CARD_HEIGHT - 12f, "0", ColorHelper.ATTACK_VALUE);
-            LabelAPI defLabel = createCardLabel(boxX + CARD_WIDTH - GALLERY_DEF_RIGHT_MARGIN - 16f, boxY + CARD_HEIGHT - 12f, "0", ColorHelper.DEFENSE_VALUE);
+            LabelAPI hpLabel = createCardLabel(boxX - 3f, boxY + 14f, "0", Color.WHITE, 50f, 20f);
 
-            float diceX = boxX + CARD_WIDTH - GALLERY_DICE_RIGHT_MARGIN - GALLERY_ICON_SIZE / 2f - 7f;
-            float diceStartY = boxY + GALLERY_DICE_TOP_MARGIN + 2f;
+            float labelCenterY = boxY + CARD_HEIGHT
+                - BattleRenderingUtils.ATK_DEF_BOTTOM_MARGIN
+                - BattleRenderingUtils.ATK_DEF_ICON_SIZE / 2f - 10f;
+            float atkLabelX = boxX + BattleRenderingUtils.ATK_LEFT_MARGIN
+                + (BattleRenderingUtils.ATK_DEF_ICON_SIZE - 30f) / 2f;
+            float defLabelX = boxX + CARD_WIDTH - BattleRenderingUtils.DEF_RIGHT_MARGIN
+                - (BattleRenderingUtils.ATK_DEF_ICON_SIZE + 30f) / 2f;
+            LabelAPI atkLabel = createCardLabel(atkLabelX, labelCenterY, "0", ColorHelper.ATTACK_VALUE, 30f, 20f);
+            LabelAPI defLabel = createCardLabel(defLabelX, labelCenterY, "0", ColorHelper.DEFENSE_VALUE, 30f, 20f);
 
-            LabelAPI orangeLabel = createCardLabel(diceX, diceStartY, "0", Color.WHITE);
-            LabelAPI purpleLabel = createCardLabel(diceX, diceStartY + GALLERY_ICON_SPACING, "0", Color.WHITE);
-            LabelAPI blueLabel = createCardLabel(diceX, diceStartY + GALLERY_ICON_SPACING * 2, "0", Color.WHITE);
-            LabelAPI prismaticLabel = createCardLabel(diceX, diceStartY + GALLERY_ICON_SPACING * 3, "0", ColorHelper.PRISMATIC_GOLD);
+            float diceX = boxX + CARD_WIDTH - BattleRenderingUtils.DICE_POOL_RIGHT_MARGIN
+                - BattleRenderingUtils.DICE_ICON_SIZE / 2f - 11f;
+            float diceStartY = boxY + BattleRenderingUtils.DICE_POOL_TOP_MARGIN + 3f;
 
-            cardLabels.add(new CardLabels(hpLabel, atkLabel, defLabel, orangeLabel, purpleLabel, blueLabel, prismaticLabel));
+            LabelAPI orangeLabel = createCardLabel(diceX, diceStartY, "0", Color.WHITE, 22f, 16f);
+            LabelAPI purpleLabel = createCardLabel(diceX, diceStartY + 21f, "0", Color.WHITE, 22f, 16f);
+            LabelAPI blueLabel = createCardLabel(diceX, diceStartY + 42f, "0", Color.WHITE, 22f, 16f);
+            LabelAPI prismaticLabel = createCardLabel(diceX, diceStartY + 63f, "0", ColorHelper.PRISMATIC_GOLD, 22f, 16f);
+
+            cardLabels.add(new CardLabels(nameLabel, hpLabel, atkLabel, defLabel, orangeLabel, purpleLabel, blueLabel, prismaticLabel));
         }
     }
 
-    private LabelAPI createCardLabel(float x, float y, String text, Color color) {
-        return UIComponentFactory.createLabelSmall(panel, text, color, Alignment.MID, 20f, 14f, x, y);
+    private LabelAPI createCardLabel(float x, float y, String text, Color color, float w, float h) {
+        return UIComponentFactory.createLabelSmall(panel, text, color, Alignment.MID, w, h, x, y);
+    }
+
+    private static float labelOpacity(float labelTopY, float labelHeight,
+            float areaTopY, float areaHeight) {
+        float areaBottomY = areaTopY + areaHeight;
+        return (labelTopY >= areaTopY && labelTopY + labelHeight <= areaBottomY) ? 1f : 0f;
+    }
+
+    private void repositionCardLabels(float galleryStartY, float galleryHeight) {
+        for (int i = 0; i < characters.size() && i < cardLabels.size(); i++) {
+            int col = i % COLS;
+            int row = i / COLS;
+            float boxX = MARGIN + col * (CARD_WIDTH + GAP_X);
+            float boxY = galleryStartY + row * (CARD_HEIGHT + GAP_Y) - scrollOffset;
+
+            CardLabels labels = cardLabels.get(i);
+
+            labels.nameLabel.getPosition().inTL(boxX, boxY + 5f);
+            labels.nameLabel.setOpacity(labelOpacity(boxY + 5f, 20f, galleryStartY, galleryHeight));
+
+            labels.hpLabel.getPosition().inTL(boxX - 3f, boxY + 14f);
+            labels.hpLabel.setOpacity(labelOpacity(boxY + 14f, 20f, galleryStartY, galleryHeight));
+
+            float labelCenterY = boxY + CARD_HEIGHT
+                - BattleRenderingUtils.ATK_DEF_BOTTOM_MARGIN
+                - BattleRenderingUtils.ATK_DEF_ICON_SIZE / 2f - 10f;
+
+            labels.atkLabel.getPosition().inTL(
+                boxX + BattleRenderingUtils.ATK_LEFT_MARGIN + (BattleRenderingUtils.ATK_DEF_ICON_SIZE - 30f) / 2f,
+                labelCenterY);
+            labels.atkLabel.setOpacity(labelOpacity(labelCenterY, 20f, galleryStartY, galleryHeight));
+
+            labels.defLabel.getPosition().inTL(
+                boxX + CARD_WIDTH - BattleRenderingUtils.DEF_RIGHT_MARGIN - (BattleRenderingUtils.ATK_DEF_ICON_SIZE + 30f) / 2f,
+                labelCenterY);
+            labels.defLabel.setOpacity(labelOpacity(labelCenterY, 20f, galleryStartY, galleryHeight));
+
+            float diceX = boxX + CARD_WIDTH - BattleRenderingUtils.DICE_POOL_RIGHT_MARGIN
+                - BattleRenderingUtils.DICE_ICON_SIZE / 2f - 11f;
+            float diceStartY = boxY + BattleRenderingUtils.DICE_POOL_TOP_MARGIN + 3f;
+
+            labels.orangeLabel.getPosition().inTL(diceX, diceStartY);
+            labels.orangeLabel.setOpacity(labelOpacity(diceStartY, 16f, galleryStartY, galleryHeight));
+            labels.purpleLabel.getPosition().inTL(diceX, diceStartY + 21f);
+            labels.purpleLabel.setOpacity(labelOpacity(diceStartY + 21f, 16f, galleryStartY, galleryHeight));
+            labels.blueLabel.getPosition().inTL(diceX, diceStartY + 42f);
+            labels.blueLabel.setOpacity(labelOpacity(diceStartY + 42f, 16f, galleryStartY, galleryHeight));
+            labels.prismaticLabel.getPosition().inTL(diceX, diceStartY + 63f);
+            labels.prismaticLabel.setOpacity(labelOpacity(diceStartY + 63f, 16f, galleryStartY, galleryHeight));
+        }
     }
 
     private void updateCardLabels() {
@@ -235,7 +382,8 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             CharacterCard card = characters.get(i);
             CardLabels labels = cardLabels.get(i);
 
-            labels.hpLabel.setText(card.getMaxHp() + "/" + card.getMaxHp());
+            labels.nameLabel.setText(card.getName());
+            labels.hpLabel.setText(String.valueOf(card.getMaxHp()));
             labels.atkLabel.setText(String.valueOf(card.getAtkLevel()));
             labels.defLabel.setText(String.valueOf(card.getDefLevel()));
 
@@ -243,70 +391,35 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             labels.orangeLabel.setText(String.valueOf(counts.getCount(DiceType.ORANGE_D8)));
             labels.purpleLabel.setText(String.valueOf(counts.getCount(DiceType.PURPLE_D6)));
             labels.blueLabel.setText(String.valueOf(counts.getCount(DiceType.BLUE_D4)));
-            labels.prismaticLabel.setText(String.valueOf(counts.getCount(DiceType.PRISMATIC)));
+            labels.prismaticLabel.setText(String.valueOf(card.getPrismaticDiceIds().values().stream().mapToInt(Integer::intValue).sum()));
         }
     }
 
     private void updateLabels() {
         if (selectedIndex < 0 || selectedIndex >= characters.size()) {
             selectedNameLabel.setText(Strings.get("setup.no_selection"));
-            prismaticLabel.setText("");
             passiveLabel.setText("");
-            prismaticEffectLabel.setText("");
             return;
         }
 
         CharacterCard card = characters.get(selectedIndex);
         selectedNameLabel.setText(Strings.format("setup.selected", card.getName()));
 
-        Map<String, Integer> prismaticDice = card.getPrismaticDiceIds();
-        if (prismaticDice != null && !prismaticDice.isEmpty()) {
-            if (selectedPrismaticDiceId == null || !prismaticDice.containsKey(selectedPrismaticDiceId)) {
-                selectedPrismaticDiceId = prismaticDice.keySet().iterator().next();
-            }
-            int uses = prismaticDice.getOrDefault(selectedPrismaticDiceId, 0);
-            String diceName = formatPrismaticName(selectedPrismaticDiceId);
-            prismaticLabel.setText(Strings.format("setup.prismatic", diceName + " (" + uses + ")"));
-            
-            String effectDesc = getPrismaticEffectDescription(selectedPrismaticDiceId);
-            prismaticEffectLabel.setText(effectDesc);
-        } else {
-            prismaticLabel.setText(Strings.get("setup.prismatic_na"));
-            selectedPrismaticDiceId = null;
-            prismaticEffectLabel.setText("");
-        }
-
         String passive = card.getPassiveDescription();
         if (passive != null && !passive.isEmpty()) {
-            passiveLabel.setText(Strings.format("setup.passive", truncatePassive(passive)));
+            passiveLabel.setText(truncatePassive(passive));
         } else {
-            passiveLabel.setText(Strings.get("setup.passive_none"));
-        }
-    }
-
-    private String formatPrismaticName(String id) {
-        try {
-            return Strings.get("prismatic." + id + ".name");
-        } catch (Exception e) {
-            return id.replace("_", " ");
+            passiveLabel.setText("");
         }
     }
 
     private String truncatePassive(String text) {
-        int maxLen = 80;
+        int maxLen = 120;
         if (text.length() <= maxLen) return text;
         return text.substring(0, maxLen - 3) + "...";
     }
 
-    private String getPrismaticEffectDescription(String diceId) {
-        if (diceId == null || diceId.isEmpty()) return "";
-        String key = "prismatic." + diceId + ".description";
-        try {
-            return Strings.get(key);
-        } catch (Exception e) {
-            return "";
-        }
-    }
+    // --- Rendering ---
 
     public void renderBelow(float alphaMult) {
         PositionAPI pos = panel.getPosition();
@@ -317,34 +430,62 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         Misc.renderQuad(panelX, panelY, PANEL_WIDTH, PANEL_HEIGHT, COLOR_BG_DARK, alphaMult);
 
-        float galleryStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 15f;
+        float galleryStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 50f;
         float galleryHeight = PANEL_HEIGHT - galleryStartY - BUTTON_AREA_HEIGHT - 20f;
-        float galleryWidth = INFO_PANEL_X - MARGIN - 10f;
+        float galleryWidth = GALLERY_WIDTH - MARGIN;
+
+        float scale = Global.getSettings().getScreenScaleMult();
+        int sX = Math.round(panelX * scale);
+        int sY = Math.round((panelY + PANEL_HEIGHT - galleryStartY - galleryHeight) * scale);
+        int sW = Math.round(galleryWidth * scale);
+        int sH = Math.round(galleryHeight * scale);
+        GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        GL11.glScissor(sX, sY, sW, sH);
 
         UnifiedCoord galleryBgPos = new UnifiedCoord(MARGIN - 5f, galleryStartY - 5f);
         Misc.renderQuad(galleryBgPos.glX(), galleryBgPos.glSpriteY(galleryHeight + 10f),
             galleryWidth + 10f, galleryHeight + 10f,
             new Color(35, 40, 50, 180), alphaMult * 0.7f);
 
-        renderCardBoxes(galleryStartY, alphaMult);
-        renderInfoPanel(alphaMult);
+        renderCardBoxes(galleryStartY, alphaMult, galleryHeight, sX, sY, sW, sH);
+
+        GL11.glDisable(GL11.GL_SCISSOR_TEST);
+
+        renderScrollbar(galleryStartY, galleryHeight, alphaMult);
+
+        renderDiceList(alphaMult, panelX, panelY, scale);
 
         UnifiedCoord.clearCurrent();
 
+        repositionCardLabels(galleryStartY, galleryHeight);
+        float diceListStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 15f;
+        float diceListHeight = PANEL_HEIGHT - diceListStartY - BUTTON_AREA_HEIGHT - 20f;
+        repositionDiceListLabels(diceListStartY, diceListHeight);
         updateLabels();
         updateCardLabels();
+        updateDiceListLabels();
     }
 
-    private void renderCardBoxes(float startY, float alphaMult) {
+    private void renderCardBoxes(float startY, float alphaMult, float galleryHeight,
+            int scissorX, int scissorY, int scissorW, int scissorH) {
         clickRegions.clear();
 
-        for (int i = 0; i < characters.size(); i++) {
-            GLStateUtil.resetBlendState();
+        int totalRows = (int) Math.ceil((float) characters.size() / COLS);
+        float totalContentHeight = totalRows * (CARD_HEIGHT + GAP_Y) - GAP_Y;
+        maxScroll = Math.max(0f, totalContentHeight - galleryHeight);
+        if (scrollOffset > maxScroll) scrollOffset = maxScroll;
+        if (scrollOffset < 0f) scrollOffset = 0f;
 
+        for (int i = 0; i < characters.size(); i++) {
             int col = i % COLS;
             int row = i / COLS;
             float boxX = MARGIN + col * (CARD_WIDTH + GAP_X);
-            float boxY = startY + row * (CARD_HEIGHT + GAP_Y);
+            float boxY = startY + row * (CARD_HEIGHT + GAP_Y) - scrollOffset;
+
+            float cardBottom = boxY + CARD_HEIGHT;
+            if (cardBottom < startY || boxY > startY + galleryHeight) {
+                continue;
+            }
 
             clickRegions.add(new ClickRegion(boxX, boxY, CARD_WIDTH, CARD_HEIGHT, i));
 
@@ -352,160 +493,423 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             float cardGlX = cardPos.glX();
             float cardGlY = cardPos.glSpriteY(CARD_HEIGHT);
 
-            boolean isSelected = (i == selectedIndex);
-            Color borderColor = isSelected ? COLOR_SELECTED : COLOR_UNSELECTED;
-
-            Misc.renderQuad(cardGlX, cardGlY, CARD_WIDTH, CARD_HEIGHT, COLOR_BOX_BG, alphaMult * 0.9f);
-
-            drawBorder(cardGlX, cardGlY, borderColor, alphaMult, isSelected);
-
-            GLStateUtil.enableTexturing();
-
             CharacterCard card = characters.get(i);
-            SpriteAPI portrait = CosmiconSprites.getPortrait(card.getId());
-            if (portrait != null) {
-                float portraitW = CARD_WIDTH * 0.95f;
-                float portraitH = CARD_HEIGHT * 0.95f;
-                float centerX = cardGlX + CARD_WIDTH / 2f;
-                float centerY = cardPos.glCenterY(CARD_HEIGHT / 2f);
-                portrait.setSize(portraitW, portraitH);
-                portrait.setAlphaMult(alphaMult * (isSelected ? 1f : 0.85f));
-                portrait.renderAtCenter(centerX, centerY);
+            BattleRenderingUtils.renderCharacterCard(cardGlX, cardGlY, card, alphaMult);
+
+            if (i == selectedIndex) {
+                GLStateUtil.resetBlendState();
+                float[] c = ColorHelper.toGLComponents(COLOR_SELECTED, alphaMult);
+                GL11.glColor4f(c[0], c[1], c[2], c[3]);
+                GL11.glLineWidth(3f);
+                GL11.glBegin(GL11.GL_LINE_LOOP);
+                GL11.glVertex2f(cardGlX, cardGlY);
+                GL11.glVertex2f(cardGlX + CARD_WIDTH, cardGlY);
+                GL11.glVertex2f(cardGlX + CARD_WIDTH, cardGlY + CARD_HEIGHT);
+                GL11.glVertex2f(cardGlX, cardGlY + CARD_HEIGHT);
+                GL11.glEnd();
+                GLStateUtil.resetColor();
             }
 
-            renderDicePoolIcons(cardGlX, cardGlY, card, alphaMult);
+            UnifiedCoord hpCenter = new UnifiedCoord(boxX + 22f, boxY + 24f);
+            BattleRenderingUtils.renderHpCircle(hpCenter.glX(), hpCenter.glY(),
+                BattleRenderingUtils.HP_CIRCLE_RADIUS, 1f, alphaMult);
 
-            GLStateUtil.disableTexturing();
+            GL11.glEnable(GL11.GL_SCISSOR_TEST);
+            GL11.glScissor(scissorX, scissorY, scissorW, scissorH);
         }
-
-        GL11.glLineWidth(1f);
     }
 
-    private void drawBorder(float x, float y, Color color, float alphaMult, boolean isSelected) {
-        float[] c = ColorHelper.toGLComponents(color, alphaMult);
-        GL11.glColor4f(c[0], c[1], c[2], c[3]);
-        GL11.glLineWidth(isSelected ? 3f : 1.5f);
-        GL11.glBegin(GL11.GL_LINE_LOOP);
-        GL11.glVertex2f(x, y);
-        GL11.glVertex2f(x + CARD_WIDTH, y);
-        GL11.glVertex2f(x + CARD_WIDTH, y + CARD_HEIGHT);
-        GL11.glVertex2f(x, y + CARD_HEIGHT);
-        GL11.glEnd();
-        GLStateUtil.resetColor();
-    }
+    private void renderScrollbar(float trackUiY, float galleryHeight, float alphaMult) {
+        if (maxScroll <= 0f) return;
 
-    private void renderDicePoolIcons(float cardGlX, float cardGlY, CharacterCard card, float alphaMult) {
-        float iconSize = 16f;
-        float iconSpacing = 20f;
-        float rightMargin = 8f;
-        float topMargin = 8f;
+        float trackX = GALLERY_WIDTH - 15f;
 
-        float startX = cardGlX + CARD_WIDTH - rightMargin - iconSize;
-        float startY = cardGlY + CARD_HEIGHT - topMargin - iconSize;
+        float visibleRatio = galleryHeight / (galleryHeight + maxScroll);
+        float thumbHeight = Math.max(20f, galleryHeight * visibleRatio);
+        float thumbTravel = galleryHeight - thumbHeight;
+        float scrollRatio = maxScroll > 0f ? scrollOffset / maxScroll : 0f;
+        float thumbUiY = trackUiY + scrollRatio * thumbTravel;
 
-        List<DiceType> order = java.util.Arrays.asList(
-            DiceType.ORANGE_D8, DiceType.PURPLE_D6, DiceType.BLUE_D4, DiceType.PRISMATIC
-        );
-
-        GLStateUtil.enableTexturingWithBlend();
-
-        float offsetY = 0f;
-        for (DiceType type : order) {
-            SpriteAPI icon = CosmiconSprites.getDiceIcon(type);
-            if (icon != null) {
-                icon.setSize(iconSize, iconSize);
-                icon.setAlphaMult(alphaMult);
-                icon.render(startX, startY - offsetY);
-            }
-            offsetY += iconSpacing;
-        }
-
-        SpriteAPI atkIcon = CosmiconSprites.getAtkIcon();
-        if (atkIcon != null) {
-            float atkIconSize = 20f;
-            float atkX = cardGlX + GALLERY_ATK_LEFT_MARGIN;
-            float atkY = cardGlY + GALLERY_ATK_DEF_BOTTOM_MARGIN;
-            atkIcon.setSize(atkIconSize, atkIconSize);
-            atkIcon.setAlphaMult(alphaMult);
-            atkIcon.render(atkX, atkY);
-        }
-
-        SpriteAPI defIcon = CosmiconSprites.getDefIcon();
-        if (defIcon != null) {
-            float defIconSize = 20f;
-            float defX = cardGlX + CARD_WIDTH - GALLERY_DEF_RIGHT_MARGIN - defIconSize;
-            float defY = cardGlY + GALLERY_ATK_DEF_BOTTOM_MARGIN;
-            defIcon.setSize(defIconSize, defIconSize);
-            defIcon.setAlphaMult(alphaMult);
-            defIcon.render(defX, defY);
-        }
-
-        GLStateUtil.disableTexturing();
-    }
-
-    private void renderInfoPanel(float alphaMult) {
-        float infoPanelStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 20f;
-        float borderH = PANEL_HEIGHT - infoPanelStartY - BUTTON_AREA_HEIGHT - 20f;
+        scrollThumbUiY = thumbUiY;
+        scrollThumbHeight = thumbHeight;
 
         GLStateUtil.resetBlendState();
-        UnifiedCoord infoPos = new UnifiedCoord(INFO_PANEL_X, infoPanelStartY);
-        float glY = infoPos.glSpriteY(borderH);
-        Misc.renderQuad(infoPos.glX(), glY,
-            INFO_PANEL_WIDTH, borderH,
-            COLOR_INFO_PANEL_BG, alphaMult);
 
-        float borderX = infoPos.glX();
-        float borderW = INFO_PANEL_WIDTH;
-        float[] c = ColorHelper.toGLComponents(COLOR_SECTION_HEADER, alphaMult * 0.8f);
+        UnifiedCoord trackPos = new UnifiedCoord(trackX, trackUiY);
+        Misc.renderQuad(trackPos.glX(), trackPos.glSpriteY(galleryHeight),
+            SCROLLBAR_WIDTH, galleryHeight, COLOR_SCROLLBAR_TRACK, alphaMult);
+
+        UnifiedCoord thumbPos = new UnifiedCoord(trackX, thumbUiY);
+        Misc.renderQuad(thumbPos.glX(), thumbPos.glSpriteY(thumbHeight),
+            SCROLLBAR_WIDTH, thumbHeight, COLOR_SCROLLBAR_THUMB, alphaMult);
+    }
+
+    // --- Dice list rendering ---
+
+    private void renderDiceList(float alphaMult, float panelX, float panelY, float scale) {
+        float listStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 15f;
+        float listHeight = PANEL_HEIGHT - listStartY - BUTTON_AREA_HEIGHT - 20f;
+
+        GLStateUtil.resetBlendState();
+
+        UnifiedCoord bgPos = new UnifiedCoord(DICE_LIST_X - 5f, listStartY - 5f);
+        Misc.renderQuad(bgPos.glX(), bgPos.glSpriteY(listHeight + 10f),
+            DICE_LIST_WIDTH + 10f, listHeight + 10f,
+            COLOR_DICE_PANEL_BG, alphaMult);
+
+        float[] c = ColorHelper.toGLComponents(COLOR_SECTION_HEADER, alphaMult * 0.6f);
         GL11.glColor4f(c[0], c[1], c[2], c[3]);
-        GL11.glLineWidth(1.5f);
+        GL11.glLineWidth(1f);
         GL11.glBegin(GL11.GL_LINE_LOOP);
-        GL11.glVertex2f(borderX, glY);
-        GL11.glVertex2f(borderX + borderW, glY);
-        GL11.glVertex2f(borderX + borderW, glY + borderH);
-        GL11.glVertex2f(borderX, glY + borderH);
+        float bx = bgPos.glX();
+        float by = bgPos.glSpriteY(listHeight + 10f);
+        GL11.glVertex2f(bx, by);
+        GL11.glVertex2f(bx + DICE_LIST_WIDTH + 10f, by);
+        GL11.glVertex2f(bx + DICE_LIST_WIDTH + 10f, by + listHeight + 10f);
+        GL11.glVertex2f(bx, by + listHeight + 10f);
         GL11.glEnd();
         GLStateUtil.resetColor();
+
+        int dsX = Math.round((panelX + DICE_LIST_X) * scale);
+        int dsY = Math.round((panelY + PANEL_HEIGHT - listStartY - listHeight) * scale);
+        int dsW = Math.round(DICE_LIST_WIDTH * scale);
+        int dsH = Math.round(listHeight * scale);
+
+        renderDiceEntries(listStartY, listHeight, alphaMult, dsX, dsY, dsW, dsH);
+        renderDiceScrollbar(listStartY, listHeight, alphaMult);
+    }
+
+    private void renderDiceEntries(float startY, float height, float alphaMult,
+            int scissorX, int scissorY, int scissorW, int scissorH) {
+        diceClickRegions.clear();
+        versionClickRegions.clear();
+
+        Map<String, PrismaticDiceType> allDice = PrismaticDiceRegistry.getAll();
+        List<PrismaticDiceType> diceList = new ArrayList<>(allDice.values());
+
+        float titleOffset = 20f;
+        float totalContentHeight = titleOffset + diceList.size() * DICE_ENTRY_HEIGHT;
+        diceMaxScroll = Math.max(0f, totalContentHeight - height);
+        if (diceScrollOffset > diceMaxScroll) diceScrollOffset = diceMaxScroll;
+        if (diceScrollOffset < 0f) diceScrollOffset = 0f;
+
+        GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        GL11.glScissor(scissorX, scissorY, scissorW, scissorH);
+
+        for (int i = 0; i < diceList.size(); i++) {
+            PrismaticDiceType type = diceList.get(i);
+            float entryY = startY + titleOffset + i * DICE_ENTRY_HEIGHT - diceScrollOffset;
+
+            float entryBottom = entryY + DICE_ENTRY_HEIGHT;
+            if (entryBottom < startY || entryY > startY + height) continue;
+
+            boolean isSelected = (i == selectedDiceEntryIndex);
+            boolean hasBothVersions = PrismaticDisplayHelper.hasDistinctDefaultFaces(type);
+
+            diceClickRegions.add(new DiceClickRegion(DICE_LIST_X, entryY, DICE_LIST_WIDTH, DICE_ENTRY_HEIGHT, i));
+
+            UnifiedCoord entryPos = new UnifiedCoord(DICE_LIST_X, entryY);
+            Color bgColor = isSelected ? COLOR_DICE_ENTRY_SELECTED : COLOR_DICE_ENTRY_BG;
+            Misc.renderQuad(entryPos.glX(), entryPos.glSpriteY(DICE_ENTRY_HEIGHT),
+                DICE_LIST_WIDTH, DICE_ENTRY_HEIGHT, bgColor, alphaMult);
+
+            if (isSelected) {
+                float[] sel = ColorHelper.toGLComponents(COLOR_SELECTED, alphaMult * 0.8f);
+                GL11.glColor4f(sel[0], sel[1], sel[2], sel[3]);
+                GL11.glLineWidth(2f);
+                GL11.glBegin(GL11.GL_LINE_LOOP);
+                float ex = entryPos.glX();
+                float ey = entryPos.glSpriteY(DICE_ENTRY_HEIGHT);
+                GL11.glVertex2f(ex, ey);
+                GL11.glVertex2f(ex + DICE_LIST_WIDTH, ey);
+                GL11.glVertex2f(ex + DICE_LIST_WIDTH, ey + DICE_ENTRY_HEIGHT);
+                GL11.glVertex2f(ex, ey + DICE_ENTRY_HEIGHT);
+                GL11.glEnd();
+                GLStateUtil.resetColor();
+            }
+
+            // Version toggle (D/T radio buttons)
+            if (hasBothVersions) {
+                renderVersionToggle(entryY, alphaMult, i);
+            }
+
+            // Face values text
+            boolean useTrue = isSelected ? selectedUseTrueVersion : !hasBothVersions;
+        }
+
+        GL11.glDisable(GL11.GL_SCISSOR_TEST);
+    }
+
+    private void renderVersionToggle(float entryY, float alphaMult, int entryIndex) {
+        float radioSize = 12f;
+        float toggleX = DICE_LIST_X + 8f;
+        float toggleY = entryY + DICE_ENTRY_HEIGHT - 18f;
+
+        boolean useTrue = entryIndex == selectedDiceEntryIndex && selectedUseTrueVersion;
+
+        // "D" radio
+        UnifiedCoord dCenter = new UnifiedCoord(toggleX + radioSize / 2f, toggleY + radioSize / 2f);
+        Color dColor = (!useTrue && entryIndex == selectedDiceEntryIndex) ? COLOR_RADIO_SELECTED : COLOR_RADIO_UNSELECTED;
+        drawRadioCircle(dCenter.glX(), dCenter.glY(), radioSize, dColor, alphaMult, !useTrue && entryIndex == selectedDiceEntryIndex);
+
+        versionClickRegions.add(new VersionClickRegion(toggleX, toggleY, radioSize + 14f, radioSize, entryIndex, false));
+
+        // "T" radio
+        float tX = toggleX + radioSize + 18f;
+        UnifiedCoord tCenter = new UnifiedCoord(tX + radioSize / 2f, toggleY + radioSize / 2f);
+        Color tColor = (useTrue && entryIndex == selectedDiceEntryIndex) ? COLOR_RADIO_SELECTED : COLOR_RADIO_UNSELECTED;
+        drawRadioCircle(tCenter.glX(), tCenter.glY(), radioSize, tColor, alphaMult, useTrue && entryIndex == selectedDiceEntryIndex);
+
+        versionClickRegions.add(new VersionClickRegion(tX, toggleY, radioSize + 14f, radioSize, entryIndex, true));
+
+        // D/T labels - drawn as small colored quads with text approximation
+        // Use GL to draw "D" and "T" indicators
+        float[] labelC = ColorHelper.toGLComponents(COLOR_VERSION_LABEL, alphaMult);
+        GL11.glColor4f(labelC[0], labelC[1], labelC[2], labelC[3]);
+
+        // Small indicator squares as text placeholders
+        float indicatorSize = 8f;
+        UnifiedCoord dInd = new UnifiedCoord(toggleX + radioSize + 2f, toggleY + 2f);
+        Misc.renderQuad(dInd.glX(), dInd.glSpriteY(indicatorSize), indicatorSize, indicatorSize, COLOR_VERSION_LABEL, alphaMult);
+
+        UnifiedCoord tInd = new UnifiedCoord(tX + radioSize + 2f, toggleY + 2f);
+        Misc.renderQuad(tInd.glX(), tInd.glSpriteY(indicatorSize), indicatorSize, indicatorSize, COLOR_VERSION_LABEL, alphaMult);
+
+        GLStateUtil.resetColor();
+    }
+
+    private void drawRadioCircle(float centerX, float centerY, float size, Color color, float alphaMult, boolean filled) {
+        float outerRadius = size / 2f;
+        float innerRadius = outerRadius * 0.4f;
+
+        float[] outer = ColorHelper.toGLComponents(color, alphaMult);
+        GL11.glColor4f(outer[0], outer[1], outer[2], outer[3]);
+
+        GL11.glBegin(GL11.GL_LINE_LOOP);
+        for (int angle = 0; angle < 360; angle += 15) {
+            double rad = Math.toRadians(angle);
+            float px = centerX + (float) Math.cos(rad) * outerRadius;
+            float py = centerY + (float) Math.sin(rad) * outerRadius;
+            GL11.glVertex2f(px, py);
+        }
+        GL11.glEnd();
+
+        if (filled) {
+            GL11.glBegin(GL11.GL_POLYGON);
+            for (int angle = 0; angle < 360; angle += 15) {
+                double rad = Math.toRadians(angle);
+                float px = centerX + (float) Math.cos(rad) * innerRadius;
+                float py = centerY + (float) Math.sin(rad) * innerRadius;
+                GL11.glVertex2f(px, py);
+            }
+            GL11.glEnd();
+        }
+    }
+
+    private void renderDiceScrollbar(float trackUiY, float listHeight, float alphaMult) {
+        if (diceMaxScroll <= 0f) return;
+
+        float trackX = DICE_LIST_X + DICE_LIST_WIDTH + 2f;
+
+        float visibleRatio = listHeight / (listHeight + diceMaxScroll);
+        float thumbHeight = Math.max(20f, listHeight * visibleRatio);
+        float thumbTravel = listHeight - thumbHeight;
+        float scrollRatio = diceMaxScroll > 0f ? diceScrollOffset / diceMaxScroll : 0f;
+        float thumbUiY = trackUiY + scrollRatio * thumbTravel;
+
+        diceScrollThumbUiY = thumbUiY;
+        diceScrollThumbHeight = thumbHeight;
+
+        GLStateUtil.resetBlendState();
+
+        UnifiedCoord trackPos = new UnifiedCoord(trackX, trackUiY);
+        Misc.renderQuad(trackPos.glX(), trackPos.glSpriteY(listHeight),
+            SCROLLBAR_WIDTH, listHeight, COLOR_SCROLLBAR_TRACK, alphaMult);
+
+        UnifiedCoord thumbPos = new UnifiedCoord(trackX, thumbUiY);
+        Misc.renderQuad(thumbPos.glX(), thumbPos.glSpriteY(thumbHeight),
+            SCROLLBAR_WIDTH, thumbHeight, COLOR_SCROLLBAR_THUMB, alphaMult);
+    }
+
+    // --- Input handling ---
+
+    @Override
+    public void advance(float amount) {
+        if (maxScroll > 0f || diceMaxScroll > 0f) {
+            int wheel = Mouse.getDWheel();
+            if (wheel != 0) {
+                PositionAPI pos = panel.getPosition();
+                float mouseX = Mouse.getX() / Global.getSettings().getScreenScaleMult();
+                float panelX = pos.getX();
+                float relMouseX = mouseX - panelX;
+
+                if (relMouseX >= DICE_LIST_X - 10f) {
+                    diceScrollOffset -= wheel / 4f;
+                    if (diceScrollOffset < 0f) diceScrollOffset = 0f;
+                    if (diceScrollOffset > diceMaxScroll) diceScrollOffset = diceMaxScroll;
+                } else {
+                    scrollOffset -= wheel / 4f;
+                    if (scrollOffset < 0f) scrollOffset = 0f;
+                    if (scrollOffset > maxScroll) scrollOffset = maxScroll;
+                }
+            }
+        }
     }
 
     public void processInput(List<InputEventAPI> events) {
         boolean mouseDown = Mouse.isButtonDown(0);
 
-        if (mouseDown && !wasMousePressed) {
-            PositionAPI pos = panel.getPosition();
-            UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(
-                pos.getX(), pos.getY(), PANEL_WIDTH, PANEL_HEIGHT));
-            
-            UnifiedCoord mousePos = UnifiedCoord.fromMouse();
+        PositionAPI pos = panel.getPosition();
+        UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(
+            pos.getX(), pos.getY(), PANEL_WIDTH, PANEL_HEIGHT));
+        UnifiedCoord mousePos = UnifiedCoord.fromMouse();
 
-            for (ClickRegion region : clickRegions) {
-                if (mousePos.isInsideRect(region.boxX, region.boxY, region.width, region.height)) {
-                    handleSelection(region.index);
-                    Global.getSoundPlayer().playUISound("ui_button_pressed", 1f, 0.6f);
-                    break;
+        float galleryStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 50f;
+        float galleryHeight = PANEL_HEIGHT - galleryStartY - BUTTON_AREA_HEIGHT - 20f;
+        float trackX = GALLERY_WIDTH - 15f;
+
+        float diceListStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 15f;
+        float diceListHeight = PANEL_HEIGHT - diceListStartY - BUTTON_AREA_HEIGHT - 20f;
+        float diceTrackX = DICE_LIST_X + DICE_LIST_WIDTH + 2f;
+
+        // Gallery scrollbar drag
+        if (isDraggingScrollbar) {
+            if (mouseDown) {
+                float deltaY = mousePos.uiY() - dragStartMouseY;
+                float thumbTravel = galleryHeight - scrollThumbHeight;
+                if (thumbTravel > 0f) {
+                    scrollOffset = dragStartScrollOffset + deltaY / thumbTravel * maxScroll;
+                    if (scrollOffset < 0f) scrollOffset = 0f;
+                    if (scrollOffset > maxScroll) scrollOffset = maxScroll;
+                }
+            } else {
+                isDraggingScrollbar = false;
+            }
+        }
+        // Dice list scrollbar drag
+        else if (isDraggingDiceScrollbar) {
+            if (mouseDown) {
+                float deltaY = mousePos.uiY() - diceDragStartMouseY;
+                float thumbTravel = diceListHeight - diceScrollThumbHeight;
+                if (thumbTravel > 0f) {
+                    diceScrollOffset = diceDragStartScrollOffset + deltaY / thumbTravel * diceMaxScroll;
+                    if (diceScrollOffset < 0f) diceScrollOffset = 0f;
+                    if (diceScrollOffset > diceMaxScroll) diceScrollOffset = diceMaxScroll;
+                }
+            } else {
+                isDraggingDiceScrollbar = false;
+            }
+        }
+        else if (mouseDown && !wasMousePressed) {
+            // Gallery scrollbar click
+            if (maxScroll > 0f && mousePos.uiX() >= trackX && mousePos.uiX() <= trackX + SCROLLBAR_WIDTH
+                    && mousePos.uiY() >= galleryStartY && mousePos.uiY() <= galleryStartY + galleryHeight) {
+                float thumbTop = scrollThumbUiY;
+                float thumbBottom = thumbTop + scrollThumbHeight;
+                if (mousePos.uiY() >= thumbTop && mousePos.uiY() <= thumbBottom) {
+                    isDraggingScrollbar = true;
+                    dragStartMouseY = mousePos.uiY();
+                    dragStartScrollOffset = scrollOffset;
+                } else {
+                    float thumbTravel = galleryHeight - scrollThumbHeight;
+                    if (thumbTravel > 0f) {
+                        float clickRatio = (mousePos.uiY() - galleryStartY) / thumbTravel;
+                        if (clickRatio < 0f) clickRatio = 0f;
+                        if (clickRatio > 1f) clickRatio = 1f;
+                        scrollOffset = clickRatio * maxScroll;
+                    }
                 }
             }
+            // Dice list scrollbar click
+            else if (diceMaxScroll > 0f && mousePos.uiX() >= diceTrackX && mousePos.uiX() <= diceTrackX + SCROLLBAR_WIDTH
+                    && mousePos.uiY() >= diceListStartY && mousePos.uiY() <= diceListStartY + diceListHeight) {
+                float thumbTop = diceScrollThumbUiY;
+                float thumbBottom = thumbTop + diceScrollThumbHeight;
+                if (mousePos.uiY() >= thumbTop && mousePos.uiY() <= thumbBottom) {
+                    isDraggingDiceScrollbar = true;
+                    diceDragStartMouseY = mousePos.uiY();
+                    diceDragStartScrollOffset = diceScrollOffset;
+                } else {
+                    float thumbTravel = diceListHeight - diceScrollThumbHeight;
+                    if (thumbTravel > 0f) {
+                        float clickRatio = (mousePos.uiY() - diceListStartY) / thumbTravel;
+                        if (clickRatio < 0f) clickRatio = 0f;
+                        if (clickRatio > 1f) clickRatio = 1f;
+                        diceScrollOffset = clickRatio * diceMaxScroll;
+                    }
+                }
+            }
+            // Version toggle click
+            else {
+                boolean versionClicked = false;
+                for (VersionClickRegion region : versionClickRegions) {
+                    if (mousePos.isInsideRect(region.x, region.y, region.width, region.height)) {
+                        handleVersionToggle(region.entryIndex, region.useTrue());
+                        Global.getSoundPlayer().playUISound("ui_button_pressed", 1f, 0.5f);
+                        versionClicked = true;
+                        break;
+                    }
+                }
 
-            UnifiedCoord.clearCurrent();
+                if (!versionClicked) {
+                    // Dice entry click
+                    boolean diceClicked = false;
+                    for (DiceClickRegion region : diceClickRegions) {
+                        if (mousePos.isInsideRect(region.x, region.y, region.width, region.height)) {
+                            handleDiceSelection(region.entryIndex);
+                            Global.getSoundPlayer().playUISound("ui_button_pressed", 1f, 0.6f);
+                            diceClicked = true;
+                            break;
+                        }
+                    }
+
+                    // Card click
+                    if (!diceClicked) {
+                        for (ClickRegion region : clickRegions) {
+                            if (mousePos.isInsideRect(region.boxX, region.boxY, region.width, region.height)) {
+                                handleCardSelection(region.index);
+                                Global.getSoundPlayer().playUISound("ui_button_pressed", 1f, 0.6f);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         wasMousePressed = mouseDown;
+        UnifiedCoord.clearCurrent();
     }
 
-    private void handleSelection(int index) {
+    private void handleCardSelection(int index) {
         if (index < 0 || index >= characters.size()) return;
-
         selectedIndex = index;
-        CharacterCard card = characters.get(index);
-
-        Map<String, Integer> prismaticDice = card.getPrismaticDiceIds();
-        if (prismaticDice != null && !prismaticDice.isEmpty()) {
-            selectedPrismaticDiceId = prismaticDice.keySet().iterator().next();
-        } else {
-            selectedPrismaticDiceId = null;
-        }
-
         updateLabels();
+    }
+
+    private void handleDiceSelection(int entryIndex) {
+        Map<String, PrismaticDiceType> allDice = PrismaticDiceRegistry.getAll();
+        List<PrismaticDiceType> diceList = new ArrayList<>(allDice.values());
+        if (entryIndex < 0 || entryIndex >= diceList.size()) return;
+
+        selectedDiceEntryIndex = entryIndex;
+        PrismaticDiceType type = diceList.get(entryIndex);
+        selectedPrismaticDiceId = type.getId();
+
+        boolean hasBoth = PrismaticDisplayHelper.hasDistinctDefaultFaces(type);
+        if (!hasBoth) {
+            selectedUseTrueVersion = true;
+        }
+    }
+
+    private void handleVersionToggle(int entryIndex, boolean useTrue) {
+        Map<String, PrismaticDiceType> allDice = PrismaticDiceRegistry.getAll();
+        List<PrismaticDiceType> diceList = new ArrayList<>(allDice.values());
+        if (entryIndex < 0 || entryIndex >= diceList.size()) return;
+
+        selectedDiceEntryIndex = entryIndex;
+        selectedUseTrueVersion = useTrue;
+        selectedPrismaticDiceId = diceList.get(entryIndex).getId();
     }
 
     @Override
@@ -533,35 +937,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                 }
                 callbacks.dismissDialog();
             }
-            case ACTION_CHANGE_DICE -> showPrismaticPopup();
         }
-    }
-
-    public void showPrismaticPopup() {
-        if (selectedIndex < 0 || selectedIndex >= characters.size()) return;
-
-        CharacterCard card = characters.get(selectedIndex);
-        Map<String, Integer> prismaticDice = card.getPrismaticDiceIds();
-        if (prismaticDice == null || prismaticDice.isEmpty()) return;
-
-        String charId = card.getId();
-        new PrismaticEquipPopup(charId, selectedPrismaticDiceId, new PrismaticEquipPopup.PrismaticEquipCallback() {
-            @Override
-            public void onDiceSelected(String selectedId) {
-                selectedPrismaticDiceId = selectedId;
-                closePrismaticPopup();
-                updateLabels();
-            }
-
-            @Override
-            public void onPopupClosed() {
-                closePrismaticPopup();
-            }
-        });
-    }
-
-    public void closePrismaticPopup() {
-        popupPanel = null;
     }
 
     public void setSelection(String charId, String diceId) {
@@ -571,7 +947,17 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                 break;
             }
         }
-        selectedPrismaticDiceId = diceId;
+
+        Map<String, PrismaticDiceType> allDice = PrismaticDiceRegistry.getAll();
+        List<PrismaticDiceType> diceList = new ArrayList<>(allDice.values());
+        for (int i = 0; i < diceList.size(); i++) {
+            if (diceList.get(i).getId().equals(diceId)) {
+                selectedDiceEntryIndex = i;
+                selectedPrismaticDiceId = diceId;
+                break;
+            }
+        }
+
         updateLabels();
     }
 
@@ -579,15 +965,22 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         if (!characters.isEmpty()) {
             selectedIndex = 0;
             CharacterCard firstCard = characters.get(0);
-            selectedPrismaticDiceId = CosmiconPlayerState.getDefaultPrismaticForCharacter(firstCard.getId());
+            String defaultDice = CosmiconPlayerState.getDefaultPrismaticForCharacter(firstCard.getId());
+            if (defaultDice != null) {
+                selectedPrismaticDiceId = defaultDice;
+                Map<String, PrismaticDiceType> allDice = PrismaticDiceRegistry.getAll();
+                List<PrismaticDiceType> diceList = new ArrayList<>(allDice.values());
+                for (int i = 0; i < diceList.size(); i++) {
+                    if (diceList.get(i).getId().equals(defaultDice)) {
+                        selectedDiceEntryIndex = i;
+                        break;
+                    }
+                }
+            }
             updateLabels();
         }
     }
 
     public void cleanup() {
-        if (popupPanel != null && panel != null) {
-            panel.removeComponent(popupPanel);
-            popupPanel = null;
-        }
     }
 }

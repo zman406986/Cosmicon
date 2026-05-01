@@ -24,13 +24,13 @@ public final class BattleRenderingUtils {
 
     public static final float PORTRAIT_SCALE = 0.95f;
     public static final float DICE_ICON_SIZE = 22f;
-    public static final float DICE_ICON_SPACING = 26f;
-    public static final float DICE_POOL_RIGHT_MARGIN = 12f;
-    public static final float DICE_POOL_TOP_MARGIN = 12f;
-    public static final float ATK_DEF_ICON_SIZE = 28f;
-    public static final float ATK_LEFT_MARGIN = 15f;
-    public static final float DEF_RIGHT_MARGIN = 15f;
-    public static final float ATK_DEF_BOTTOM_MARGIN = 15f;
+    public static final float DICE_ICON_SPACING = 21f;
+    public static final float DICE_POOL_RIGHT_MARGIN = 3f;
+    public static final float DICE_POOL_TOP_MARGIN = 0f;
+    public static final float ATK_DEF_ICON_SIZE = 49f;
+    public static final float ATK_LEFT_MARGIN = 1f;
+    public static final float DEF_RIGHT_MARGIN = 1f;
+    public static final float ATK_DEF_BOTTOM_MARGIN = 1f;
 
     public static final float PORTRAIT_DISPLAY_W = CARD_WIDTH * PORTRAIT_SCALE;
     public static final float PORTRAIT_DISPLAY_H = CARD_HEIGHT * PORTRAIT_SCALE;
@@ -51,10 +51,12 @@ public final class BattleRenderingUtils {
     public static final Color COLOR_BG_BOARD = new Color(45, 50, 70);
     public static final Color COLOR_CARD_BG = new Color(60, 65, 85);
     public static final Color COLOR_HP_TEXT = new Color(255, 255, 255);
-    public static final Color COLOR_PASSIVE_BG = new Color(35, 38, 50, 220);
     public static final Color COLOR_PASSIVE_BORDER = new Color(80, 85, 100);
     public static final Color COLOR_TEXT = new Color(220, 220, 230);
     public static final Color COLOR_SHADOW = new Color(0, 0, 0, 80);
+    public static final float HP_CIRCLE_RADIUS = 19f;
+    public static final Color COLOR_HP_CIRCLE_FG = new Color(220, 30, 30, 220);
+    public static final Color COLOR_HP_CIRCLE_BG = new Color(80, 20, 20, 150);
 
     public static final Color COLOR_ATTACK_SIDE = new Color(255, 120, 120, 40);
     public static final Color COLOR_DEFENSE_SIDE = new Color(120, 180, 255, 40);
@@ -79,7 +81,7 @@ public final class BattleRenderingUtils {
         }
     }
 
-    private static void setupScissor(float panelX, float panelY, float panelW, float panelH) {
+    static void setupScissor(float panelX, float panelY, float panelW, float panelH) {
         float scale = Global.getSettings().getScreenScaleMult();
         
         int scissorX = Math.round(panelX * scale);
@@ -93,6 +95,62 @@ public final class BattleRenderingUtils {
 
     private static void disableScissor() {
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
+    }
+
+    public static void renderHpCircle(float glCenterX, float glCenterY, float radius, float fillFraction, float alphaMult) {
+        float clampedFill = Math.max(0f, Math.min(1f, fillFraction));
+
+        GLStateUtil.resetBlendState();
+
+        float[] bg = ColorHelper.toGLComponents(COLOR_HP_CIRCLE_BG, alphaMult);
+        GL11.glColor4f(bg[0], bg[1], bg[2], bg[3]);
+        drawFilledCircle(glCenterX, glCenterY, radius);
+
+        if (clampedFill > 0f) {
+            float visibleH = 2f * radius * clampedFill;
+            float bottomY = glCenterY - radius;
+            setupScissor(glCenterX - radius, bottomY, 2f * radius, visibleH);
+
+            int strips = 24;
+            float stripH = visibleH / strips;
+
+            for (int i = 0; i < strips; i++) {
+                float y0 = bottomY + i * stripH;
+                float y1 = y0 + stripH;
+                float midY = (y0 + y1) / 2f;
+                float t = (midY - bottomY) / visibleH;
+                float stripAlpha = 1f - t * 0.8f;
+
+                float dy = midY - glCenterY;
+                if (Math.abs(dy) >= radius) continue;
+                float halfW = (float) Math.sqrt(radius * radius - dy * dy);
+
+                float[] fg = ColorHelper.toGLComponents(COLOR_HP_CIRCLE_FG, alphaMult * stripAlpha);
+                GL11.glColor4f(fg[0], fg[1], fg[2], fg[3]);
+
+                GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
+                GL11.glVertex2f(glCenterX - halfW, y0);
+                GL11.glVertex2f(glCenterX + halfW, y0);
+                GL11.glVertex2f(glCenterX - halfW, y1);
+                GL11.glVertex2f(glCenterX + halfW, y1);
+                GL11.glEnd();
+            }
+
+            disableScissor();
+        }
+
+        GLStateUtil.resetColor();
+    }
+
+    private static void drawFilledCircle(float cx, float cy, float radius) {
+        int segments = 24;
+        GL11.glBegin(GL11.GL_TRIANGLE_FAN);
+        GL11.glVertex2f(cx, cy);
+        for (int i = 0; i <= segments; i++) {
+            double angle = 2.0 * Math.PI * i / segments;
+            GL11.glVertex2f(cx + (float) Math.cos(angle) * radius, cy + (float) Math.sin(angle) * radius);
+        }
+        GL11.glEnd();
     }
 
     private static void renderSideBackgrounds(float x, float y, float w, float h, 
@@ -249,53 +307,6 @@ public final class BattleRenderingUtils {
         }
 
         GLStateUtil.disableTexturing();
-    }
-
-    public static void renderPassiveBox(float x, float y, float w, float h, float alphaMult) {
-        GLStateUtil.resetBlendState();
-
-        Misc.renderQuad(x + 3, y - 3, w, h, COLOR_SHADOW, alphaMult * 0.3f);
-
-        Misc.renderQuad(x, y, w, h, COLOR_PASSIVE_BG, alphaMult);
-
-        renderRoundedBorder(x, y, w, h, alphaMult);
-    }
-
-    private static void renderRoundedBorder(float x, float y, float w, float h, float alphaMult) {
-        float radius = 8f;
-        GLStateUtil.resetBlendState();
-
-        float[] c = ColorHelper.toGLComponents(COLOR_PASSIVE_BORDER, alphaMult);
-        GL11.glColor4f(c[0], c[1], c[2], c[3]);
-        GL11.glLineWidth(2f);
-
-        GL11.glBegin(GL11.GL_LINE_LOOP);
-
-        int segments = 8;
-        float step = (float) Math.PI / 2 / segments;
-
-        for (int i = 0; i <= segments; i++) {
-            float angle = (float) Math.PI + i * step;
-            GL11.glVertex2f(x + radius + (float) Math.cos(angle) * radius, y + radius + (float) Math.sin(angle) * radius);
-        }
-
-        for (int i = 0; i <= segments; i++) {
-            float angle = (float) Math.PI * 1.5f + i * step;
-            GL11.glVertex2f(x + w - radius + (float) Math.cos(angle) * radius, y + radius + (float) Math.sin(angle) * radius);
-        }
-
-        for (int i = 0; i <= segments; i++) {
-            float angle = i * step;
-            GL11.glVertex2f(x + w - radius + (float) Math.cos(angle) * radius, y + h - radius + (float) Math.sin(angle) * radius);
-        }
-
-        for (int i = 0; i <= segments; i++) {
-            float angle = (float) Math.PI / 2 + i * step;
-            GL11.glVertex2f(x + radius + (float) Math.cos(angle) * radius, y + h - radius + (float) Math.sin(angle) * radius);
-        }
-
-        GL11.glEnd();
-        GLStateUtil.resetColor();
     }
 
     public static void renderStatusEffectBox(float x, float y, float w, float h, float alphaMult) {

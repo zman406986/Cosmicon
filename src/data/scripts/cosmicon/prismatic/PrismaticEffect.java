@@ -5,15 +5,14 @@ import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 public class PrismaticEffect {
     public static final PrismaticEffect NONE = new PrismaticEffect("NONE");
     public static final PrismaticEffect DOUBLE_VALUE = new PrismaticEffect("DOUBLE_VALUE");
-    public static final PrismaticEffect GRANT_STATUS = new PrismaticEffect("GRANT_STATUS");
     public static final PrismaticEffect HEAL_HP = new PrismaticEffect("HEAL_HP");
     public static final PrismaticEffect GAIN_PRISMATIC_USE = new PrismaticEffect("GAIN_PRISMATIC_USE");
-    public static final PrismaticEffect INSTANT_DAMAGE = new PrismaticEffect("INSTANT_DAMAGE");
     
     private final String name;
     private StatusEffect grantedEffect;
     private int fixedLayers;
     private boolean useFaceValueForLayers;
+    private int layerDivisor;
     private int instantDamageAmount;
     
     private PrismaticEffect(String name) {
@@ -33,6 +32,16 @@ public class PrismaticEffect {
         effect.grantedEffect = status;
         effect.fixedLayers = layers;
         effect.useFaceValueForLayers = useFaceValue;
+        effect.layerDivisor = 1;
+        return effect;
+    }
+
+    public static PrismaticEffect grantStatusWithDivisor(StatusEffect status, int divisor) {
+        PrismaticEffect effect = new PrismaticEffect("GRANT_STATUS");
+        effect.grantedEffect = status;
+        effect.fixedLayers = 0;
+        effect.useFaceValueForLayers = true;
+        effect.layerDivisor = divisor;
         return effect;
     }
     
@@ -62,13 +71,11 @@ public class PrismaticEffect {
     public boolean isInstantDamage() { return "INSTANT_DAMAGE".equals(name); }
     
     public StatusEffect getGrantedEffect() { return grantedEffect; }
-    public int getFixedLayers() { return fixedLayers; }
-    public boolean useFaceValueForLayers() { return useFaceValueForLayers; }
     public int getInstantDamageAmount() { return instantDamageAmount; }
     
     public int calculateLayers(int faceValue) {
         if (useFaceValueForLayers) {
-            return faceValue;
+            return layerDivisor > 1 ? faceValue / layerDivisor : faceValue;
         }
         return fixedLayers;
     }

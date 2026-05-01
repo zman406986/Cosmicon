@@ -45,10 +45,10 @@
       "id": "doctors_advice",
       "name": "Doctor's Advice",
       "faces_default": [1, 2, 3, 4, 6, 6],
-      "faces_default_special": [1, 2, 3, 4],
+      "faces_default_special": [1, 2, 3, 4, 6],
       "faces_true": [1, 2, 3, 4, 6, 6],
-      "faces_true_special": [1, 2, 3, 4],
-      "use_condition": "Available anytime (Default: Available when HP is 10 or less)",
+      "faces_true_special": [1, 2, 3, 4, 6],
+      "use_condition": "Available anytime",
       "effect": "After it is selected, provides 1/2/3/4/6 points and heals 1/2/3/4/6 HP. Heal: Restores a specified amount of HP.",
       "source": "Expansion Pack 1 (After defeating Hook)"
     },

@@ -93,6 +93,31 @@
         "heal": "治愈",
         "reflect": "反弹"
     },
+    "status_desc": {
+        "poison_desc": "在回合结算后，将会受到对应层数的伤害，随后使层数-1",
+        "strength_desc": "在攻击时，提供对应层数的攻击值加成",
+        "toughness_desc": "在防御时，提供对应层数的防御值加成",
+        "deterrence_desc": "重投次数被减少",
+        "forcefield_desc": "生效期间，不会受到常规攻击伤害",
+        "perforation_desc": "攻击时，无视对方的防御值与力场效果",
+        "combo_desc": "额外进行1次基于当前攻击值的攻击",
+        "counter_desc": "在受到攻击时，如果防御值更大，对攻击方造成差值伤害",
+        "unyielding_desc": "生效期间，始终保留1点生命值",
+        "hack_desc": "结算前，将对手已选择骰子中点数最大的一颗转变为2点（不会作用于曜彩骰）",
+        "thorns_desc": "在回合结算前，将会受到对应层数的伤害，结算后清除荆棘",
+        "arise_desc": "结算前，随机将已选择骰子中点数最小的一颗，转变为该骰子的最大值（不会作用于曜彩骰）",
+        "level_up_desc": "将符合条件的骰子进行稀有度和最大面数提升，最高变为十二面",
+        "last_stand_desc": "将自身生命值降低为1，获得降低值的点数加成",
+        "overload_desc": "攻击时附加与层数相同的攻击值，但防御时对自己造成层数50%的伤害",
+        "siphon_desc": "攻击时，恢复造成伤害一定比例的生命值",
+        "destined_desc": "持有这一效果的骰子在投出后必须被选择使用",
+        "venom_desc": "因为中毒而受到的伤害变为2倍",
+        "instant_damage_desc": "无需进入伤害结算环节，立刻造成的伤害",
+        "tactics_desc": "重投次数增加",
+        "awakening_desc": "选定后，将所有点数翻倍",
+        "heal_desc": "回复指定点数的生命值",
+        "reflect_desc": "受到伤害后，立刻造成瞬伤"
+    },
     "weather_category": {
         "safeguard": "坚守",
         "attack": "进攻",
@@ -250,56 +275,56 @@
         "special_face": "特殊骰面",
         "condition_not_met": "条件未满足",
         "evolution": {
-            "name": "「真•进化」",
+            "name": "「真-进化」",
             "description": "选定后提供点数，随后让攻击值/防御值翻倍"
         },
         "absolute_six": {
-            "name": "「真•6•6」",
+            "name": "「真-6-6」",
             "description": "总是投出6点",
             "effect_desc": "所有骰面都是6"
         },
         "destiny": {
-            "name": "「真•命运」",
+            "name": "「真-命运」",
             "description": "所有骰面获得命定——骰子必须被选择"
         },
         "revenge": {
-            "name": "「真•复仇」",
+            "name": "「真-复仇」",
             "description": "累计受到25点伤害后可在攻击时使用"
         },
         "doctors_advice": {
-            "name": "「真•医嘱」",
+            "name": "「真-医嘱」",
             "description": "特殊骰面治愈等同于点数的生命值"
         },
         "last_words": {
-            "name": "「真•遗语」",
+            "name": "「真-遗语」",
             "description": "生命值≤8时可用，特殊骰面使攻击值/防御值翻倍"
         },
         "repeater": {
-            "name": "「真•复读」",
+            "name": "「真-复读」",
             "description": "累计选择2次骰面4后可在攻击时使用，获得连击"
         },
         "cactus": {
-            "name": "「真•仙人球」",
+            "name": "「真-仙人球」",
             "description": "仅防御时可用，获得反击"
         },
         "miracle": {
-            "name": "「真•奇迹」",
+            "name": "「真-奇迹」",
             "description": "累计选择9次骰面1后可在攻击时使用，投出99"
         },
         "loan": {
-            "name": "「真•贷款」",
+            "name": "「真-贷款」",
             "description": "获得等同于骰面点数的超载层数"
         },
         "astral_shield": {
-            "name": "「真•星盾」",
+            "name": "「真-星盾」",
             "description": "仅防御时可用，特殊骰面获得力场"
         },
         "oath": {
-            "name": "「真•誓言」",
+            "name": "「真-誓言」",
             "description": "仅防御时可用，特殊骰面获得不屈"
         },
         "prime_number": {
-            "name": "「真•质数」",
+            "name": "「真-质数」",
             "description": "所有骰面都是质数"
         },
         "big_red_button": {
@@ -307,23 +332,23 @@
             "description": "回合≥5时攻击可用，获得背水"
         },
         "sorcerer": {
-            "name": "「真•奇术师」",
+            "name": "「真-奇术师」",
             "description": "特殊骰面获得骇入"
         },
         "heartbeat": {
-            "name": "「真•心跳」",
+            "name": "「真-心跳」",
             "description": "特殊骰面获得+1次曜彩骰使用次数"
         },
         "berserker": {
-            "name": "「真•战狂」",
+            "name": "「真-战狂」",
             "description": "获得等同于骰面点数的荆棘层数"
         },
         "gambler": {
-            "name": "「真•赌徒」",
+            "name": "「真-赌徒」",
             "description": "仅前4回合内可用"
         },
         "magic_bullet": {
-            "name": "「真•魔弹」",
+            "name": "「真-魔弹」",
             "description": "特殊骰面造成3点瞬伤"
         },
         "condition": {

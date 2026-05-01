@@ -71,4 +71,27 @@ public final class PrismaticDisplayHelper {
             return Strings.get("prismatic.equip.no_effect");
         }
     }
+
+    public static String getFaceValuesDisplay(PrismaticDiceType type, boolean useTrueVersion) {
+        if (type == null) return "";
+        int[] faces = type.getFaces(useTrueVersion);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < faces.length; i++) {
+            if (i > 0) sb.append(", ");
+            sb.append(faces[i]);
+            if (type.isSpecialFace(i, useTrueVersion)) sb.append("*");
+        }
+        return sb.toString();
+    }
+
+    public static boolean hasDistinctDefaultFaces(PrismaticDiceType type) {
+        if (type == null) return false;
+        int[] def = type.getFaces(false);
+        int[] tru = type.getFaces(true);
+        if (def.length != tru.length) return true;
+        for (int i = 0; i < def.length; i++) {
+            if (def[i] != tru[i]) return true;
+        }
+        return false;
+    }
 }

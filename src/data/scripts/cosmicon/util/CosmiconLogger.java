@@ -5,7 +5,7 @@ import org.apache.log4j.Logger;
 
 public final class CosmiconLogger {
     
-    public static boolean DEBUG = true;
+    public static final boolean DEBUG = true;
     
     private static final Logger LOG = Global.getLogger(CosmiconLogger.class);
     
@@ -55,25 +55,6 @@ public final class CosmiconLogger {
         info("========== BATTLE START ==========");
         info("Player: %s vs Enemy: %s", playerChar, enemyChar);
         info("==================================");
-    }
-    
-    public static void turnStart(int turn, boolean isPlayerTurn) {
-        debug("--- Turn %d: %s ---", turn, isPlayerTurn ? "Player" : "Enemy");
-    }
-    
-    public static void diceRoll(String character, int[] results) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(character).append(" rolled: [");
-        for (int i = 0; i < results.length; i++) {
-            if (i > 0) sb.append(", ");
-            sb.append(results[i]);
-        }
-        sb.append("]");
-        debug(sb.toString());
-    }
-    
-    public static void damageDealt(String attacker, String defender, int damage) {
-        debug("%s dealt %d damage to %s", attacker, damage, defender);
     }
     
     public static void hpChange(String character, int oldHp, int newHp, int maxHp) {

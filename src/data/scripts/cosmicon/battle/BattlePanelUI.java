@@ -66,6 +66,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
     private boolean valueAnimationPending;
 
+    private boolean rerollSelectionClearPending;
+
     private float preClashTimer;
 
     public BattlePanelUI() {
@@ -81,6 +83,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         this.dicePreviewDelay = 0f;
         this.opponentAutoRollDelay = 0f;
         this.valueAnimationPending = false;
+        this.rerollSelectionClearPending = false;
         this.preClashTimer = 0f;
     }
 
@@ -156,7 +159,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         buttons = new BattleUIButtons();
 
         float opponentCardY = BattleRenderingUtils.MARGIN;
-        opponentPrismaticBtnX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.MARGIN - PRISMATIC_BTN_SIZE - 20f;
+        opponentPrismaticBtnX = BattleRenderingUtils.MARGIN + BattleRenderingUtils.CARD_WIDTH + 100f;
         opponentPrismaticBtnY = opponentCardY + 40f;
         labels.init(panel, battleState, diceRollManager,
             opponentPrismaticBtnX, opponentPrismaticBtnY,
@@ -276,6 +279,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             diceRollManager.partialReroll(rerolledIndices, newValues);
             rollAnimationDelay = animDuration;
             diceAnimating = true;
+            rerollSelectionClearPending = true;
         } else {
             diceRollManager.rerollOpponentDice(rerolledIndices, newValues);
             opponentRollDelay = animDuration;
@@ -564,6 +568,13 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         diceRollManager.advance(amount);
 
+        if (rerollSelectionClearPending) {
+            rerollSelectionClearPending = false;
+            if (battleState != null) {
+                battleState.clearDiceSelection(true);
+            }
+        }
+
         ValueChangeAnimator attackerAnimator = labels.getAttackerValueAnimator();
         ValueChangeAnimator defenderAnimator = labels.getDefenderValueAnimator();
 
@@ -732,7 +743,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                 cachedRotationAngle, alphaMult, battleState != null, hideRoleIcons);
 
             renderPlayerCard(alphaMult);
+            renderPlayerHpCircle(alphaMult);
             renderOpponentCard(alphaMult);
+            renderOpponentHpCircle(alphaMult);
             renderStatusEffectBoxes(alphaMult);
             renderDiceZone(x, y, alphaMult);
 
@@ -802,6 +815,32 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             BattleRenderingUtils.renderCardPlaceholder(cardX, cardY, BattleRenderingUtils.CARD_WIDTH,
                 BattleRenderingUtils.CARD_HEIGHT, opponentCardColor, alphaMult);
         }
+    }
+
+    private void renderPlayerHpCircle(float alphaMult) {
+        if (battleState == null) return;
+        CharacterCard card = battleState.getPlayerCard();
+        if (card == null) return;
+
+        float cx = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN + 5f + 17f;
+        float cy = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN + 14f + 10f;
+
+        UnifiedCoord center = new UnifiedCoord(cx, cy);
+        float fillFraction = (float) battleState.getPlayerHp() / card.getMaxHp();
+        BattleRenderingUtils.renderHpCircle(center.glX(), center.glY(), BattleRenderingUtils.HP_CIRCLE_RADIUS, fillFraction, alphaMult);
+    }
+
+    private void renderOpponentHpCircle(float alphaMult) {
+        if (battleState == null) return;
+        CharacterCard card = battleState.getOpponentCard();
+        if (card == null) return;
+
+        float cx = BattleRenderingUtils.MARGIN + 5f + 17f;
+        float cy = BattleRenderingUtils.MARGIN + 14f + 10f;
+
+        UnifiedCoord center = new UnifiedCoord(cx, cy);
+        float fillFraction = (float) battleState.getOpponentHp() / card.getMaxHp();
+        BattleRenderingUtils.renderHpCircle(center.glX(), center.glY(), BattleRenderingUtils.HP_CIRCLE_RADIUS, fillFraction, alphaMult);
     }
 
     private void renderStatusEffectBoxes(float alphaMult) {

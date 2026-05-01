@@ -21,6 +21,7 @@ import data.scripts.cosmicon.util.UIComponentFactory;
 
 public class BattleUILabels {
     private static final float PRISMATIC_ROLLED_LABEL_OFFSET_Y = 20f;
+    private static final float PRISMATIC_BTN_SIZE = 40f;
 
     private LabelAPI phaseLabel;
     private LabelAPI instructionLabel;
@@ -61,7 +62,7 @@ public class BattleUILabels {
 
     private List<LabelAPI> playerStatusLabels;
     private List<LabelAPI> opponentStatusLabels;
-    private static final int MAX_STATUS_EFFECTS = 12;
+    static final int MAX_STATUS_EFFECTS = 12;
 
     private ValueChangeAnimator attackerValueAnimator;
     private ValueChangeAnimator defenderValueAnimator;
@@ -225,7 +226,7 @@ public class BattleUILabels {
         playerHpLabel = UIComponentFactory.createLabelSmall(panel, "25/25", 
             BattleRenderingUtils.COLOR_HP_TEXT, Alignment.LMID, 50f, 20f,
             BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN + 5f,
-            BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN + 5f);
+            BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN + 14f);
 
         opponentNameLabel = UIComponentFactory.createLabelSmall(panel, Strings.get("battle.opponent"), 
             ColorHelper.OPPONENT_NAME, Alignment.MID, BattleRenderingUtils.CARD_WIDTH, 20f,
@@ -233,7 +234,7 @@ public class BattleUILabels {
 
         opponentHpLabel = UIComponentFactory.createLabelSmall(panel, "30/30", 
             BattleRenderingUtils.COLOR_HP_TEXT, Alignment.LMID, 50f, 20f,
-            BattleRenderingUtils.MARGIN + 5f, BattleRenderingUtils.MARGIN + 5f);
+            BattleRenderingUtils.MARGIN + 5f, BattleRenderingUtils.MARGIN + 14f);
 
         resultLabel = UIComponentFactory.createLabelWithOpacity(panel, "", 
             Fonts.INSIGNIA_LARGE, ColorHelper.PRISMATIC_GOLD, Alignment.MID, 400f, 40f,
@@ -279,28 +280,36 @@ public class BattleUILabels {
         float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
         float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
 
+        float labelCenterY = playerCardY + BattleRenderingUtils.CARD_HEIGHT
+            - BattleRenderingUtils.ATK_DEF_BOTTOM_MARGIN
+            - BattleRenderingUtils.ATK_DEF_ICON_SIZE / 2f - 10f;
+
         playerAtkLabel = UIComponentFactory.createLabelSmall(panel, "3", 
             ColorHelper.ATTACK_VALUE, Alignment.MID, 30f, 20f,
-            playerCardX + BattleRenderingUtils.ATK_LEFT_MARGIN + 2f,
-            playerCardY + BattleRenderingUtils.CARD_HEIGHT - 22f);
+            playerCardX + BattleRenderingUtils.ATK_LEFT_MARGIN + (BattleRenderingUtils.ATK_DEF_ICON_SIZE - 30f) / 2f,
+            labelCenterY);
 
         playerDefLabel = UIComponentFactory.createLabelSmall(panel, "2", 
             ColorHelper.DEFENSE_VALUE, Alignment.MID, 30f, 20f,
-            playerCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DEF_RIGHT_MARGIN - 30f,
-            playerCardY + BattleRenderingUtils.CARD_HEIGHT - 22f);
+            playerCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DEF_RIGHT_MARGIN - (BattleRenderingUtils.ATK_DEF_ICON_SIZE + 30f) / 2f,
+            labelCenterY);
 
         float opponentCardX = BattleRenderingUtils.MARGIN;
         float opponentCardY = BattleRenderingUtils.MARGIN;
 
+        float opponentLabelCenterY = opponentCardY + BattleRenderingUtils.CARD_HEIGHT
+            - BattleRenderingUtils.ATK_DEF_BOTTOM_MARGIN
+            - BattleRenderingUtils.ATK_DEF_ICON_SIZE / 2f - 10f;
+
         opponentAtkLabel = UIComponentFactory.createLabelSmall(panel, "3", 
             ColorHelper.ATTACK_VALUE, Alignment.MID, 30f, 20f,
-            opponentCardX + BattleRenderingUtils.ATK_LEFT_MARGIN + 2f,
-            opponentCardY + BattleRenderingUtils.CARD_HEIGHT - 22f);
+            opponentCardX + BattleRenderingUtils.ATK_LEFT_MARGIN + (BattleRenderingUtils.ATK_DEF_ICON_SIZE - 30f) / 2f,
+            opponentLabelCenterY);
 
         opponentDefLabel = UIComponentFactory.createLabelSmall(panel, "2", 
             ColorHelper.DEFENSE_VALUE, Alignment.MID, 30f, 20f,
-            opponentCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DEF_RIGHT_MARGIN - 30f,
-            opponentCardY + BattleRenderingUtils.CARD_HEIGHT - 22f);
+            opponentCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DEF_RIGHT_MARGIN - (BattleRenderingUtils.ATK_DEF_ICON_SIZE + 30f) / 2f,
+            opponentLabelCenterY);
     }
 
     private void createDiceCountLabels() {
@@ -311,9 +320,9 @@ public class BattleUILabels {
         float diceStartY = playerCardY + BattleRenderingUtils.DICE_POOL_TOP_MARGIN + 3f;
 
         playerOrangeLabel = createCountLabel(diceX, diceStartY);
-        playerPurpleLabel = createCountLabel(diceX, diceStartY + 26);
-        playerBlueLabel = createCountLabel(diceX, diceStartY + 52);
-        playerPrismaticLabel = createCountLabel(diceX, diceStartY + 78);
+        playerPurpleLabel = createCountLabel(diceX, diceStartY + 21);
+        playerBlueLabel = createCountLabel(diceX, diceStartY + 42);
+        playerPrismaticLabel = createCountLabel(diceX, diceStartY + 63);
 
         float opponentCardX = BattleRenderingUtils.MARGIN;
         float opponentCardY = BattleRenderingUtils.MARGIN;
@@ -322,9 +331,9 @@ public class BattleUILabels {
         diceStartY = opponentCardY + BattleRenderingUtils.DICE_POOL_TOP_MARGIN + 3f;
 
         opponentOrangeLabel = createCountLabel(diceX, diceStartY);
-        opponentPurpleLabel = createCountLabel(diceX, diceStartY + 26);
-        opponentBlueLabel = createCountLabel(diceX, diceStartY + 52);
-        opponentPrismaticLabel = createCountLabel(diceX, diceStartY + 78);
+        opponentPurpleLabel = createCountLabel(diceX, diceStartY + 21);
+        opponentBlueLabel = createCountLabel(diceX, diceStartY + 42);
+        opponentPrismaticLabel = createCountLabel(diceX, diceStartY + 63);
     }
 
     private LabelAPI createCountLabel(float x, float y) {
@@ -375,7 +384,8 @@ public class BattleUILabels {
 
     private void createPrismaticLabels() {
         opponentPrismaticUsesLabel = UIComponentFactory.createLabelSmall(panel, "2", 
-            ColorHelper.PRISMATIC_GOLD, Alignment.MID, 40f, 20f, opponentPrismaticBtnX + 50f, opponentPrismaticBtnY + 25f);
+            ColorHelper.PRISMATIC_GOLD, Alignment.MID, 40f, 20f,
+            opponentPrismaticBtnX + (PRISMATIC_BTN_SIZE - 40f) / 2f, opponentPrismaticBtnY + 10f);
 
         float opponentPrismaticDescX = opponentPrismaticBtnX + 50f;
         opponentPrismaticFaceMappingLabel = UIComponentFactory.createLabel(panel, "", 
@@ -388,8 +398,8 @@ public class BattleUILabels {
             opponentPrismaticDescX, opponentPrismaticBtnY + 20f);
         opponentPrismaticEffectLabel.setOpacity(0f);
 
-        float playerPrismaticUsesX = BattleRenderingUtils.MARGIN + 110f;
-        float playerPrismaticUsesY = BattleRenderingUtils.PANEL_HEIGHT - 115f;
+        float playerPrismaticUsesX = playerPrismaticBtnX + (PRISMATIC_BTN_SIZE - 40f) / 2f;
+        float playerPrismaticUsesY = playerPrismaticBtnY + 10f;
 
         playerPrismaticUsesLabel = UIComponentFactory.createLabelSmall(panel, "2", 
             ColorHelper.PRISMATIC_GOLD, Alignment.MID, 40f, 20f, playerPrismaticUsesX, playerPrismaticUsesY);
@@ -412,11 +422,11 @@ public class BattleUILabels {
         playerPrismaticRolledLabel.setOpacity(0f);
 
         float hintLabelWidth = 110f;
-        float hintLabelX = playerPrismaticBtnX - hintLabelWidth - 5f;
-        float hintLabelY = playerPrismaticBtnY + 10f;
+        float hintLabelX = playerPrismaticBtnX + (PRISMATIC_BTN_SIZE - hintLabelWidth) / 2f;
+        float hintLabelY = playerPrismaticBtnY + PRISMATIC_BTN_SIZE + 5f;
         playerPrismaticClickHintLabel = UIComponentFactory.createLabelSmall(panel,
             Strings.get("battle.prismatic_click_hint"),
-            ColorHelper.PRISMATIC_HINT_ENABLED, Alignment.RMID, hintLabelWidth, 20f,
+            ColorHelper.PRISMATIC_HINT_ENABLED, Alignment.MID, hintLabelWidth, 20f,
             hintLabelX, hintLabelY);
         playerPrismaticClickHintLabel.setOpacity(0f);
     }
@@ -502,12 +512,14 @@ public class BattleUILabels {
         DicePoolCounts playerCounts = battleState.getPlayerDicePoolCounts();
         DicePoolCounts opponentCounts = battleState.getOpponentDicePoolCounts();
 
-        playerPrismaticLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.PRISMATIC) : 0));
+        int playerPrisCount = playerCard != null ? playerCard.getPrismaticDiceIds().values().stream().mapToInt(Integer::intValue).sum() : 0;
+        playerPrismaticLabel.setText(String.valueOf(playerPrisCount));
         playerOrangeLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.ORANGE_D8) : 0));
         playerPurpleLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.PURPLE_D6) : 0));
         playerBlueLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.BLUE_D4) : 0));
 
-        opponentPrismaticLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.PRISMATIC) : 0));
+        int opponentPrisCount = opponentCard != null ? opponentCard.getPrismaticDiceIds().values().stream().mapToInt(Integer::intValue).sum() : 0;
+        opponentPrismaticLabel.setText(String.valueOf(opponentPrisCount));
         opponentOrangeLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.ORANGE_D8) : 0));
         opponentPurpleLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.PURPLE_D6) : 0));
         opponentBlueLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.BLUE_D4) : 0));
@@ -911,12 +923,10 @@ public class BattleUILabels {
         
         DicePoolCounts counts = DicePoolCounts.fromPool(types);
         if (isPlayer) {
-            playerPrismaticLabel.setText(String.valueOf(counts.getCount(DiceType.PRISMATIC)));
             playerOrangeLabel.setText(String.valueOf(counts.getCount(DiceType.ORANGE_D8)));
             playerPurpleLabel.setText(String.valueOf(counts.getCount(DiceType.PURPLE_D6)));
             playerBlueLabel.setText(String.valueOf(counts.getCount(DiceType.BLUE_D4)));
         } else {
-            opponentPrismaticLabel.setText(String.valueOf(counts.getCount(DiceType.PRISMATIC)));
             opponentOrangeLabel.setText(String.valueOf(counts.getCount(DiceType.ORANGE_D8)));
             opponentPurpleLabel.setText(String.valueOf(counts.getCount(DiceType.PURPLE_D6)));
             opponentBlueLabel.setText(String.valueOf(counts.getCount(DiceType.BLUE_D4)));

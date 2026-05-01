@@ -61,11 +61,11 @@ public class FlyingNumber {
     private static class Particle {
         float x;
         float y;
-        float vx;
-        float vy;
+        final float vx;
+        final float vy;
         float scale;
         float alpha;
-        float lifetime;
+        final float lifetime;
         float elapsed;
         
         Particle(float x, float y, float vx, float vy, float scale, float lifetime) {

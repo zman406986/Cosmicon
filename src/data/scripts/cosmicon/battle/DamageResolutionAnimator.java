@@ -9,6 +9,7 @@ import data.scripts.cosmicon.util.ColorHelper;
 
 public class DamageResolutionAnimator {
     private static final float ICON_CLASH_DURATION = 0.8f;
+    private static final float ICON_ROTATION_DURATION = 0.3f;
     private static final float ICON_IMPACT_DURATION = 0.6f;
     private static final float WINNER_IMPACT_DURATION = 0.6f;
     private static final float ICON_RETREAT_DURATION = 0.5f;
@@ -17,6 +18,7 @@ public class DamageResolutionAnimator {
     private static final float IMPACT_FLASH_DURATION = 0.5f;
     private static final float POST_IMPACT_PAUSE_DURATION = 1.0f;
     private static final float COMBO_PAUSE_DURATION = 0.5f;
+    private static final float COMBO_ICON_FLY_DURATION = 0.6f;
     private static final float DEFENDER_PULSE_DURATION = 0.4f;
     
     private static final float ATK_ROTATION_TO_TOP_LEFT = -90f;
@@ -30,6 +32,7 @@ public class DamageResolutionAnimator {
     public enum Phase {
         IDLE,
         ICON_PREPARATION,
+        ICON_ROTATION,
         ICON_CLASH,
         ICON_IMPACT,
         WINNER_IMPACT,
@@ -42,6 +45,7 @@ public class DamageResolutionAnimator {
         COMBO_PAUSE,
         COMBO_SECOND_CLASH,
         COMBO_SECOND_IMPACT,
+        COMBO_ICON_RETREAT,
         COMPLETE
     }
     
@@ -158,8 +162,9 @@ public class DamageResolutionAnimator {
         atkFlyingIcon.createLabel(panel);
         defFlyingIcon.createLabel(panel);
         
-        atkFlyingIcon.flyTo(atkClashX, atkClashY, ICON_CLASH_DURATION, true, true);
-        defFlyingIcon.flyTo(defClashX, defClashY, ICON_CLASH_DURATION, true, true);
+        if (attackWins) {
+            atkFlyingIcon.startRotation(playerAttacker ? ATK_ROTATION_TO_BOTTOM_RIGHT : ATK_ROTATION_TO_TOP_LEFT);
+        }
         
         phase = Phase.ICON_PREPARATION;
         phaseElapsed = 0f;
@@ -226,7 +231,6 @@ public class DamageResolutionAnimator {
         
         atkFlyingIcon = new FlyingIcon(atkRoleIcon, iconSize, ColorHelper.ATTACK_VALUE, atkIconCenterX, atkIconCenterY);
         atkFlyingIcon.setValue(attackValue);
-        atkFlyingIcon.setTargetRotation(playerAttacker ? ATK_ROTATION_TO_BOTTOM_RIGHT : ATK_ROTATION_TO_TOP_LEFT);
         
         defFlyingIcon = new FlyingIcon(defRoleIcon, iconSize, ColorHelper.DEFENSE_VALUE, defIconCenterX, defIconCenterY);
         defFlyingIcon.setValue(originalDefenseValue);
@@ -239,6 +243,7 @@ public class DamageResolutionAnimator {
         
         switch (phase) {
             case ICON_PREPARATION -> advanceIconPreparation();
+            case ICON_ROTATION -> advanceIconRotation();
             case ICON_CLASH -> advanceIconClash();
             case ICON_IMPACT -> advanceIconImpact();
             case WINNER_IMPACT -> advanceWinnerImpact();
@@ -250,6 +255,7 @@ public class DamageResolutionAnimator {
             case COMBO_PAUSE -> advanceComboPause();
             case COMBO_SECOND_CLASH -> advanceComboSecondClash();
             case COMBO_SECOND_IMPACT -> advanceComboSecondImpact();
+            case COMBO_ICON_RETREAT -> advanceComboIconRetreat();
         }
         
         advanceFlyingNumbers(amount);
@@ -281,10 +287,18 @@ public class DamageResolutionAnimator {
     }
     
     private void advanceIconPreparation() {
-        boolean atkReady = atkFlyingIcon == null || atkFlyingIcon.isReady();
-        boolean defReady = defFlyingIcon == null || defFlyingIcon.isReady();
+        phase = Phase.ICON_ROTATION;
+        phaseElapsed = 0f;
+    }
+    
+    private void advanceIconRotation() {
+        boolean atkDone = atkFlyingIcon == null || !atkFlyingIcon.isRotating();
+        boolean defDone = defFlyingIcon == null || !defFlyingIcon.isRotating();
         
-        if (atkReady && defReady) {
+        if (phaseElapsed >= ICON_ROTATION_DURATION || (atkDone && defDone)) {
+            atkFlyingIcon.flyTo(atkClashX, atkClashY, ICON_CLASH_DURATION, true, true);
+            defFlyingIcon.flyTo(defClashX, defClashY, ICON_CLASH_DURATION, true, true);
+            
             phase = Phase.ICON_CLASH;
             phaseElapsed = 0f;
             startIconClash();
@@ -478,15 +492,23 @@ public class DamageResolutionAnimator {
             comboResultNumber.startFrom(centerX, centerY);
             comboResultNumber.flyTo(defenderTargetX, defenderTargetY, RESULT_FLIGHT_DURATION);
             
+            if (atkFlyingIcon != null) {
+                atkFlyingIcon.setValue(comboDamage);
+                atkFlyingIcon.setLabelOpacity(0f);
+                atkFlyingIcon.setTargetRotation(playerAttacker ? ATK_ROTATION_TO_BOTTOM_RIGHT : ATK_ROTATION_TO_TOP_LEFT);
+                atkFlyingIcon.flyDirectTo(defenderTargetX, defenderTargetY, COMBO_ICON_FLY_DURATION);
+            }
+            
             phase = Phase.COMBO_SECOND_CLASH;
             phaseElapsed = 0f;
         }
     }
     
     private void advanceComboSecondClash() {
-        if (phaseElapsed >= RESULT_FLIGHT_DURATION || 
-            (comboResultNumber != null && comboResultNumber.hasImpacted())) {
-            
+        boolean iconDone = atkFlyingIcon == null || atkFlyingIcon.isComplete();
+        boolean numberDone = comboResultNumber == null || comboResultNumber.hasImpacted();
+        
+        if ((phaseElapsed >= RESULT_FLIGHT_DURATION || numberDone) && iconDone) {
             impactEffect.triggerFlash(defenderTargetX, defenderTargetY, 40f, DAMAGE_RESULT_COLOR);
             impactEffect.triggerShockwave(defenderTargetX, defenderTargetY);
             
@@ -501,6 +523,22 @@ public class DamageResolutionAnimator {
     
     private void advanceComboSecondImpact() {
         if (phaseElapsed >= IMPACT_FLASH_DURATION) {
+            if (atkFlyingIcon != null) {
+                atkFlyingIcon.setTargetRotation(0f);
+                atkFlyingIcon.flyDirectTo(atkIconCenterX, atkIconCenterY, ICON_RETREAT_DURATION);
+            }
+            phase = Phase.COMBO_ICON_RETREAT;
+            phaseElapsed = 0f;
+        }
+    }
+    
+    private void advanceComboIconRetreat() {
+        boolean atkDone = atkFlyingIcon == null || atkFlyingIcon.isComplete();
+        
+        if (phaseElapsed >= ICON_RETREAT_DURATION || atkDone) {
+            if (atkFlyingIcon != null) {
+                atkFlyingIcon.setLabelOpacity(0f);
+            }
             phase = Phase.COMPLETE;
             complete = true;
         }
@@ -521,15 +559,30 @@ public class DamageResolutionAnimator {
     
     private void renderNumbersOnIcons(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
         boolean shouldRenderNumbers = phase == Phase.ICON_PREPARATION ||
+            phase == Phase.ICON_ROTATION ||
             phase == Phase.ICON_CLASH ||
             phase == Phase.ICON_IMPACT ||
             phase == Phase.WINNER_IMPACT ||
             phase == Phase.ICON_RETREAT ||
             phase == Phase.SHATTER_RESTORE;
         
-        if (!shouldRenderNumbers) return;
+        boolean isComboPhase = phase == Phase.COMBO_PAUSE ||
+            phase == Phase.COMBO_SECOND_CLASH ||
+            phase == Phase.COMBO_SECOND_IMPACT ||
+            phase == Phase.COMBO_ICON_RETREAT;
+        
+        if (!shouldRenderNumbers && !isComboPhase) return;
+        
+        if (isComboPhase) {
+            if (atkFlyingIcon != null) {
+                atkFlyingIcon.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
+                atkFlyingIcon.setLabelOpacity(0f);
+            }
+            return;
+        }
         
         boolean duringClash = phase == Phase.ICON_PREPARATION ||
+                              phase == Phase.ICON_ROTATION ||
                               phase == Phase.ICON_CLASH ||
                               phase == Phase.ICON_IMPACT;
         
@@ -552,13 +605,15 @@ public class DamageResolutionAnimator {
         boolean defShattered = attackWins;
         boolean restoring = phase == Phase.SHATTER_RESTORE;
         boolean splitDone = !splitEffect.isActive();
+        boolean atkHiddenBySplit = splitEffect.isActive() && atkShattered;
+        boolean defHiddenBySplit = splitEffect.isActive() && defShattered;
         
-        if (atkFlyingIcon != null && (!atkShattered || (restoring && splitDone))) {
+        if (atkFlyingIcon != null && !atkHiddenBySplit && (!atkShattered || (restoring && splitDone))) {
             float restoreAlpha = atkShattered ? shatterRestoreAlpha : alphaMult;
             atkFlyingIcon.render(panelX, panelY, panelWidth, panelHeight, restoreAlpha);
             atkFlyingIcon.setLabelOpacity(restoreAlpha);
         }
-        if (defFlyingIcon != null && (!defShattered || (restoring && splitDone))) {
+        if (defFlyingIcon != null && !defHiddenBySplit && (!defShattered || (restoring && splitDone))) {
             float restoreAlpha = defShattered ? shatterRestoreAlpha : alphaMult;
             defFlyingIcon.render(panelX, panelY, panelWidth, panelHeight, restoreAlpha);
             defFlyingIcon.setLabelOpacity(restoreAlpha);
@@ -567,6 +622,7 @@ public class DamageResolutionAnimator {
     
     public boolean isIconClashActive() {
         return phase == Phase.ICON_PREPARATION ||
+               phase == Phase.ICON_ROTATION ||
                phase == Phase.ICON_CLASH ||
                phase == Phase.ICON_IMPACT ||
                phase == Phase.WINNER_IMPACT ||
@@ -599,21 +655,21 @@ public class DamageResolutionAnimator {
             return;
         }
         
-        if (phase == Phase.ICON_PREPARATION || phase == Phase.ICON_CLASH) {
+        if (phase == Phase.ICON_PREPARATION || phase == Phase.ICON_ROTATION || phase == Phase.ICON_CLASH) {
             triggerIconImpact();
             phase = Phase.COMPLETE;
             complete = true;
         } else if (phase == Phase.ICON_IMPACT || phase == Phase.WINNER_IMPACT ||
                    phase == Phase.ICON_RETREAT || phase == Phase.SHATTER_RESTORE) {
-            proceedFromImpactWait();
             if (!attackWins || isDraw) {
-                phase = Phase.COMPLETE;
-                complete = true;
+                proceedFromImpactWait();
             }
+            phase = Phase.COMPLETE;
+            complete = true;
         } else if (phase == Phase.RESULT_FLIGHT || phase == Phase.IMPACT_FLASH || 
                    phase == Phase.DEFENDER_PULSE || phase == Phase.POST_IMPACT_PAUSE ||
                    phase == Phase.COMBO_PAUSE || phase == Phase.COMBO_SECOND_CLASH ||
-                   phase == Phase.COMBO_SECOND_IMPACT) {
+                   phase == Phase.COMBO_SECOND_IMPACT || phase == Phase.COMBO_ICON_RETREAT) {
             phase = Phase.COMPLETE;
             complete = true;
         }

@@ -119,11 +119,6 @@ public class CharacterRegistry {
         Map<String, Integer> result = new HashMap<>();
         
         if (!obj.has("prismaticDice")) {
-            String[] fallbackTypes = {"doctors_advice", "repeater", "sorcerer", "berserker", 
-                                       "prime_number", "magic_bullet", "destiny", "gambler", 
-                                       "astral_shield", "oath"};
-            String randomType = fallbackTypes[random.nextInt(fallbackTypes.length)];
-            result.put(randomType, 2);
             return result;
         }
         

@@ -133,10 +133,8 @@ public final class SelectionOptimizer {
             return switch (grantedEffect) {
                 case FORCEFIELD -> isAttacking ? 0f : 4f;
                 case COMBO -> 3f;
-                case UNYIELDING -> 2f;
-                case DESTINED -> 2f;
+                case UNYIELDING, DESTINED, HACK -> 2f;
                 case THORNS -> isAttacking ? 0f : 2f;
-                case HACK -> 2f;
                 default -> 1f;
             };
         }

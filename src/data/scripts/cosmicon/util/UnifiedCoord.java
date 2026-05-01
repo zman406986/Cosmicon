@@ -6,12 +6,7 @@ import org.lwjgl.input.Mouse;
 /** Read starsector reference api/UI tutorial concise.md first. UI coords: Y=0 at TOP (↓), GL coords: Y=0 at BOTTOM (↑). */
 public final class UnifiedCoord {
     
-    public static final class PanelContext {
-        public final float panelX, panelY, panelWidth, panelHeight;
-        public PanelContext(float panelX, float panelY, float panelWidth, float panelHeight) {
-            this.panelX = panelX; this.panelY = panelY; this.panelWidth = panelWidth; this.panelHeight = panelHeight;
-        }
-    }
+    public record PanelContext(float panelX, float panelY, float panelWidth, float panelHeight) {}
     
     private static final ThreadLocal<PanelContext> CURRENT_CONTEXT = new ThreadLocal<>();
     
@@ -35,10 +30,9 @@ public final class UnifiedCoord {
     public float uiX() { return uiX; }
     public float uiY() { return uiY; }
     
-    public float glX() { return ctx().panelX + uiX; }
-    public float glY() { PanelContext c = ctx(); return c.panelY + c.panelHeight - uiY; }
-    public float glSpriteY(float spriteHeight) { PanelContext c = ctx(); return c.panelY + c.panelHeight - uiY - spriteHeight; }
-    public float glCenterY(float halfHeight) { return glY() - halfHeight; }
+    public float glX() { return ctx().panelX() + uiX; }
+    public float glY() { PanelContext c = ctx(); return c.panelY() + c.panelHeight() - uiY; }
+    public float glSpriteY(float spriteHeight) { PanelContext c = ctx(); return c.panelY() + c.panelHeight() - uiY - spriteHeight; }
     
     public boolean isInsideRect(float rectX, float rectY, float rectW, float rectH) {
         return uiX >= rectX && uiX <= rectX + rectW && uiY >= rectY && uiY <= rectY + rectH;
@@ -48,12 +42,12 @@ public final class UnifiedCoord {
         PanelContext c = getCurrent();
         float scale = Global.getSettings().getScreenScaleMult();
         float glX = Mouse.getX() / scale, glY = Mouse.getY() / scale;
-        return new UnifiedCoord(glX - c.panelX, c.panelHeight - (glY - c.panelY));
+        return new UnifiedCoord(glX - c.panelX(), c.panelHeight() - (glY - c.panelY()));
     }
     public static UnifiedCoord fromMouse(PanelContext ctx) {
         float scale = Global.getSettings().getScreenScaleMult();
         float glX = Mouse.getX() / scale, glY = Mouse.getY() / scale;
-        return new UnifiedCoord(glX - ctx.panelX, ctx.panelHeight - (glY - ctx.panelY), ctx);
+        return new UnifiedCoord(glX - ctx.panelX(), ctx.panelHeight() - (glY - ctx.panelY()), ctx);
     }
     
     public UnifiedCoord offset(float dx, float dy) { return new UnifiedCoord(uiX + dx, uiY + dy, context); }

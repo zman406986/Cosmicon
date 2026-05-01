@@ -180,7 +180,7 @@ public class DiceRollManager {
             for (DiceAnimator animator : animators) {
                 if (animator.isReadyForCentering()) {
                     anyWaiting = true;
-                } else if (animator.isActive() && !animator.isComplete()) {
+                } else if (animator.isActive() && animator.isRunning()) {
                     anyStillAnimating = true;
                 }
             }
@@ -197,7 +197,7 @@ public class DiceRollManager {
             for (DiceAnimator animator : opponentAnimators) {
                 if (animator.isReadyForCentering()) {
                     anyWaiting = true;
-                } else if (animator.isActive() && !animator.isComplete()) {
+                } else if (animator.isActive() && animator.isRunning()) {
                     anyStillAnimating = true;
                 }
             }
@@ -218,7 +218,7 @@ public class DiceRollManager {
     public boolean isComplete() {
         if (animators.isEmpty()) return true;
         for (DiceAnimator animator : animators) {
-            if (!animator.isComplete()) {
+            if (animator.isRunning()) {
                 return false;
             }
         }
@@ -391,7 +391,7 @@ public class DiceRollManager {
     public boolean isOpponentComplete() {
         if (opponentAnimators.isEmpty()) return true;
         for (DiceAnimator animator : opponentAnimators) {
-            if (!animator.isComplete()) {
+            if (animator.isRunning()) {
                 return false;
             }
         }

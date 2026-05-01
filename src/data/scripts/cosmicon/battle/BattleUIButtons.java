@@ -13,6 +13,7 @@ import com.fs.starfarer.api.ui.TooltipMakerAPI.TooltipLocation;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleState.Phase;
+import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.ui.PrismaticDiceSelectionPopup;
@@ -70,7 +71,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
         PositionAPI pos = panel.getPosition();
         TooltipMakerAPI btnTp = UIComponentFactory.createTooltipForButtons(panel, this, pos.getWidth(), pos.getHeight(), 0f, 0f);
 
-        float btnWidth = 100f;
+        float btnWidth = 120f;
         float btnHeight = 30f;
         float centerX = BattleRenderingUtils.PANEL_WIDTH / 2f;
         float bottomY = BattleRenderingUtils.PANEL_HEIGHT - 60f;
@@ -79,18 +80,15 @@ public class BattleUIButtons implements ActionListenerDelegate {
             btnWidth, btnHeight, 0f);
         confirmButton.setQuickMode(true);
         confirmButton.setShortcut(Keyboard.KEY_SPACE, false);
-        confirmButton.getPosition().inTL(centerX - btnWidth - 10f, bottomY);
+        confirmButton.getPosition().inTL(centerX - btnWidth - 20f, bottomY);
 
         rerollButton = btnTp.addButton(Strings.get("phase.reroll_selected"), ACTION_REROLL,
             btnWidth, btnHeight, 0f);
         rerollButton.setQuickMode(true);
-        rerollButton.getPosition().inTL(centerX + 10f, bottomY);
+        rerollButton.getPosition().inTL(centerX + 20f, bottomY);
 
         float opponentCardX = BattleRenderingUtils.MARGIN;
         float opponentCardY = BattleRenderingUtils.MARGIN;
-
-        float opponentPrismaticBtnX = opponentCardX - 60f;
-        float opponentPrismaticBtnY = opponentCardY + 40f;
 
         TooltipMakerAPI exitTp = UIComponentFactory.createTooltipForButtons(panel, this, btnWidth, btnHeight, 
             BattleRenderingUtils.PANEL_WIDTH - btnWidth - 10f, 10f);
@@ -147,7 +145,99 @@ public class BattleUIButtons implements ActionListenerDelegate {
         playerPrismaticBtnX = BattleRenderingUtils.MARGIN + 60f;
         playerPrismaticBtnY = BattleRenderingUtils.PANEL_HEIGHT - 100f;
 
+        createStatusTooltips();
+
         buttonsCreated = true;
+    }
+
+    private void createStatusTooltips() {
+        float btnWidth = BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
+        float btnHeight = 18f;
+        float spacing = 20f;
+
+        float opponentCardX = BattleRenderingUtils.MARGIN;
+        float opponentCardY = BattleRenderingUtils.MARGIN;
+        float opponentBoxX = opponentCardX + BattleRenderingUtils.CARD_WIDTH + 20f;
+        float opponentBtnX = opponentBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
+
+        TooltipMakerAPI opponentTp = UIComponentFactory.createTooltipForButtons(panel, this,
+            BattleRenderingUtils.STATUS_BOX_WIDTH, BattleRenderingUtils.CARD_HEIGHT,
+            opponentBtnX, opponentCardY + BattleRenderingUtils.STATUS_BOX_PADDING);
+
+        for (int i = 0; i < BattleUILabels.MAX_STATUS_EFFECTS; i++) {
+            float yOffset = i * spacing;
+            ButtonAPI btn = opponentTp.addButton("", "status_opp_" + i, btnWidth, btnHeight, 0f);
+            btn.setQuickMode(true);
+            btn.setOpacity(0f);
+            btn.getPosition().inTL(0f, yOffset);
+
+            final int index = i;
+            opponentTp.addTooltipToPrevious(new TooltipCreator() {
+                @Override
+                public boolean isTooltipExpandable(Object tooltipParam) { return false; }
+                @Override
+                public float getTooltipWidth(Object tooltipParam) { return 350f; }
+                @Override
+                public void createTooltip(TooltipMakerAPI tooltip, boolean expanded, Object tooltipParam) {
+                    String desc = getEffectDescriptionAtIndex(index, false);
+                    if (desc != null) {
+                        tooltip.addPara(desc, 5f);
+                    }
+                }
+            }, TooltipLocation.LEFT, false);
+        }
+
+        float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
+        float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        float playerBoxX = playerCardX - BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
+        float playerBtnX = playerBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
+
+        TooltipMakerAPI playerTp = UIComponentFactory.createTooltipForButtons(panel, this,
+            BattleRenderingUtils.STATUS_BOX_WIDTH, BattleRenderingUtils.CARD_HEIGHT,
+            playerBtnX, playerCardY + BattleRenderingUtils.STATUS_BOX_PADDING);
+
+        for (int i = 0; i < BattleUILabels.MAX_STATUS_EFFECTS; i++) {
+            float yOffset = i * spacing;
+            ButtonAPI btn = playerTp.addButton("", "status_plr_" + i, btnWidth, btnHeight, 0f);
+            btn.setQuickMode(true);
+            btn.setOpacity(0f);
+            btn.getPosition().inTL(0f, yOffset);
+
+            final int index = i;
+            playerTp.addTooltipToPrevious(new TooltipCreator() {
+                @Override
+                public boolean isTooltipExpandable(Object tooltipParam) { return false; }
+                @Override
+                public float getTooltipWidth(Object tooltipParam) { return 350f; }
+                @Override
+                public void createTooltip(TooltipMakerAPI tooltip, boolean expanded, Object tooltipParam) {
+                    String desc = getEffectDescriptionAtIndex(index, true);
+                    if (desc != null) {
+                        tooltip.addPara(desc, 5f);
+                    }
+                }
+            }, TooltipLocation.RIGHT, false);
+        }
+    }
+
+    private String getEffectDescriptionAtIndex(int targetIndex, boolean forPlayer) {
+        if (battleState == null) return null;
+        StatusEffectProcessor effects = battleState.getEffects(forPlayer);
+        int idx = 0;
+        for (StatusEffect effect : StatusEffect.values()) {
+            if (effects.getLayers(effect) > 0) {
+                if (idx == targetIndex) {
+                    String key = "status_desc." + effect.name().toLowerCase() + "_desc";
+                    try {
+                        return Strings.get(key);
+                    } catch (Exception e) {
+                        return null;
+                    }
+                }
+                idx++;
+            }
+        }
+        return null;
     }
 
     @Override

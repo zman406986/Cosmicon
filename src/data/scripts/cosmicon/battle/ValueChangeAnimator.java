@@ -29,9 +29,9 @@ public class ValueChangeAnimator {
     private enum Phase { IDLE, DELTA_SHOW, FLASH, DELTA_FLY, COMPLETE }
 
     private static class QueuedChange {
-        String deltaText;
-        Color color;
-        int delta;
+        final String deltaText;
+        final Color color;
+        final int delta;
         
         QueuedChange(String deltaText, Color color, int delta) {
             this.deltaText = deltaText;

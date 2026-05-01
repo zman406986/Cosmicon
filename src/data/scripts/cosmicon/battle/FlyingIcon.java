@@ -74,6 +74,19 @@ public class FlyingIcon {
         this.currentRotation = rotation;
     }
     
+    public void startRotation(float targetRotation) {
+        if (Math.abs(targetRotation - currentRotation) > 0.5f) {
+            this.originalRotation = currentRotation;
+            this.targetRotation = targetRotation;
+            this.rotationElapsed = 0f;
+            flyPhase = FlyPhase.ROTATING;
+        }
+    }
+    
+    public boolean isRotating() {
+        return flyPhase == FlyPhase.ROTATING;
+    }
+    
     public void flyTo(float x, float y, float duration, boolean useLinear, boolean skipPullback) {
         this.startX = currentX;
         this.startY = currentY;
@@ -171,14 +184,17 @@ public class FlyingIcon {
             startX = currentX;
             startY = currentY;
             elapsed = 0f;
-            flyPhase = usePullback ? FlyPhase.PULLBACK : FlyPhase.READY;
+            if (usePullback) {
+                flyPhase = FlyPhase.PULLBACK;
+            } else {
+                flyPhase = FlyPhase.FLYING;
+            }
             return;
         }
         
         float progress = rotationElapsed / ROTATION_DURATION;
         float eased = EasingUtil.easeOutQuad(progress);
-        float originalRotation = 0f;
-        currentRotation = originalRotation + (targetRotation - originalRotation) * eased;
+        currentRotation = this.originalRotation + (targetRotation - this.originalRotation) * eased;
     }
     
     private void advancePullback() {

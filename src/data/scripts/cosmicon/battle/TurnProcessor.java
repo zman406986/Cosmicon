@@ -208,8 +208,8 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         if (!state.isDefenderRolling()) return;
         state.setDefenderRolling(false);
         
-        state.clearDiceSelection(true);
-        state.clearDiceSelection(false);
+        boolean defenderIsPlayer = !state.isPlayerAttacker();
+        state.clearDiceSelection(defenderIsPlayer);
         
         state.setCurrentPhase(BattleState.Phase.SELECTING_DEFENSE);
         state.notifyPhaseChange(BattleState.Phase.SELECTING_DEFENSE);
@@ -547,7 +547,7 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             CosmiconLogger.debug("HACK triggered for player");
             StatusEffectProcessor.BattleContext targetContext = state.isPlayerAttacker() ? defenderContext : attackerContext;
             if (targetContext.applyHackToSelectedDice()) {
-                boolean targetIsPlayer = !state.isPlayerAttacker();
+                boolean targetIsPlayer = false;
                 state.setDiceValues(targetIsPlayer, targetContext.getDiceValues());
                 if (targetIsPlayer == state.isPlayerAttacker()) {
                     state.setAttackValue(state.calculateSelectedSum(targetIsPlayer));
@@ -561,7 +561,7 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             CosmiconLogger.debug("HACK triggered for opponent");
             StatusEffectProcessor.BattleContext targetContext = state.isPlayerAttacker() ? attackerContext : defenderContext;
             if (targetContext.applyHackToSelectedDice()) {
-                boolean targetIsPlayer = state.isPlayerAttacker();
+                boolean targetIsPlayer = true;
                 state.setDiceValues(targetIsPlayer, targetContext.getDiceValues());
                 if (targetIsPlayer == state.isPlayerAttacker()) {
                     state.setAttackValue(state.calculateSelectedSum(targetIsPlayer));
@@ -624,14 +624,14 @@ private void applyDamageResult(DamageResolver.DamageResult result) {
                 if (result.siphonHeal() > 0) {
                     state.applyHealTo(true, result.siphonHeal());
                 }
-                state.getEffects(playerIsAttacker).removeEffect(StatusEffect.SIPHON);
+                state.getEffects(true).removeEffect(StatusEffect.SIPHON);
             } else {
                 state.applyDamageTo(true, damage);
                 
                 if (result.siphonHeal() > 0) {
                     state.applyHealTo(false, result.siphonHeal());
                 }
-                state.getEffects(playerIsAttacker).removeEffect(StatusEffect.SIPHON);
+                state.getEffects(false).removeEffect(StatusEffect.SIPHON);
             }
             
             int instantDamageToAttacker = PassiveEventSystem.onDamageTaken(state, defenderIsPlayer, damage);
@@ -807,7 +807,6 @@ private void applyDamageResult(DamageResolver.DamageResult result) {
         if (selectedCount == 0) return;
         
         diceRoller.rerollSelected(state, true);
-        state.clearDiceSelection(true);
         
         StatusEffectProcessor.BattleContext playerContext = createBattleContext(true);
         TurnType playerTurnType = state.isPlayerAttacker() ? TurnType.ATTACK : TurnType.DEFENSE;
@@ -851,13 +850,14 @@ private void applyDamageResult(DamageResolver.DamageResult result) {
         
         int calcSum = state.calculateSelectedSum(true);
         List<Integer> vals = state.getDiceValues(true);
-        List<Boolean> sels = state.getDiceSelected(true);
+        List<Boolean> selectedFlags = state.getDiceSelected(true);
         int prismaticCount = 0;
         for (int i = 0; i < (vals != null ? vals.size() : 0); i++) {
             if (state.isPrismaticDiceAt(i, true)) prismaticCount++;
         }
-        CosmiconLogger.info("[ATK_DIAG] confirmPlayerSelection: required=%d, selected=%d, calcSum=%d, values=%s, prismaticInMap=%d",
-            requiredCount, selectedCount, calcSum, vals != null ? vals.toString() : "null", prismaticCount);
+        CosmiconLogger.info("[ATK_DIAG] confirmPlayerSelection: required=%d, selected=%d, calcSum=%d, values=%s, selected=%s, prismaticInMap=%d",
+            requiredCount, selectedCount, calcSum, vals != null ? vals.toString() : "null",
+            selectedFlags != null ? selectedFlags.toString() : "null", prismaticCount);
 
         if (state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
             state.setAttackValue(calcSum);
