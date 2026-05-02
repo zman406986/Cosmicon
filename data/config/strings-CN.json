@@ -267,6 +267,12 @@
             "passive_desc_full": "全为6点：100%力量+治愈",
             "passive_desc_half": "力量 = 攻击值50%"
         },
+        "trashcan": {
+            "name": "垃圾桶",
+            "passive": "攻击后：获得2层力量，若选定的骰子全为偶数，则改为获得4层力量。力量：攻击时，根据层数提供攻击加成。",
+            "passive_desc_even": "全偶数：4层力量",
+            "passive_desc_odd": "2层力量"
+        },
         "default": {
             "name": "默认"
         }
@@ -454,7 +460,7 @@
         "games_remaining": "教程模式 - 剩余 {0} 局"
     },
     "gallery": {
-        "no_prismatic_unlocked": "尚未解锁曜彩骰。完成 5 局教程对局即可解锁真-6-6。"
+        "no_prismatic_unlocked": "尚未解锁曜彩骰。完成 2 局教程对局即可解锁真-6-6。"
     },
     "reward": {
         "unlock_character": "解锁 {0}",

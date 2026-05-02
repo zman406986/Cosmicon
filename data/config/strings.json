@@ -269,6 +269,12 @@
             "passive_desc_full": "All dice = 6: 100% Strength + heal",
             "passive_desc_half": "Strength = 50% of attack"
         },
+        "trashcan": {
+            "name": "Trashcan",
+            "passive": "After attacking: Gains 2 stack(s) of Strength. If all the selected dice show even numbers, gains 4 stack(s) of Strength instead. Strength: When attacking, provides an ATK bonus based on the number of stacks.",
+            "passive_desc_even": "All even: 4 Strength",
+            "passive_desc_odd": "2 Strength"
+        },
         "default": {
             "name": "Default"
         }
@@ -456,7 +462,7 @@
         "games_remaining": "Tutorial mode - {0} games remaining"
     },
     "gallery": {
-        "no_prismatic_unlocked": "No prismatic dice unlocked. Complete 5 tutorial games to unlock Absolute Six."
+        "no_prismatic_unlocked": "No prismatic dice unlocked. Complete 2 tutorial games to unlock Absolute Six."
     },
     "reward": {
         "unlock_character": "Unlock {0}",

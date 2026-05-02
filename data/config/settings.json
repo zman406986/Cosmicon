@@ -1758,7 +1758,8 @@
             "portrait_robin": "graphics/cosmicon/Cards/Characters/Robin.png",
             "portrait_sparxie": "graphics/cosmicon/Cards/Characters/Sparxie.png",
             "portrait_the_herta": "graphics/cosmicon/Cards/Characters/The_Herta.png",
-            "portrait_yao_guang": "graphics/cosmicon/Cards/Characters/Yao_Guang.png"
+            "portrait_yao_guang": "graphics/cosmicon/Cards/Characters/Yao_Guang.png",
+            "portrait_trashcan": "graphics/cosmicon/Cards/Characters/Trashcan.png"
         }
     }
 }

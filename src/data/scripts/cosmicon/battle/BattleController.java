@@ -38,6 +38,10 @@ public class BattleController implements BattleState.DamageAnimationCallback {
         turnProcessor.onDamageAnimationComplete();
     }
 
+    public void onDamageImpacted() {
+        turnProcessor.onDamageImpacted();
+    }
+
     public void initBattleWithSelection() {
         initBattleWithSelection(true);
     }
@@ -48,7 +52,23 @@ public class BattleController implements BattleState.DamageAnimationCallback {
         CharacterCard playerCard = CosmiconPlayerState.getConfiguredPlayerCard();
 
         CharacterCard opponentCard;
-        if (CosmiconEventState.isBarEvent()) {
+        int replayGame = CosmiconEventState.getReplayTutorialGame();
+        if (replayGame >= 0) {
+            String opponentId = replayGame == 1 ? "trashcan" : "robin";
+            opponentCard = CharacterRegistry.getCharacterById(opponentId);
+            CosmiconEventState.setOpponentCharacter(opponentCard.getId());
+            CosmiconLogger.info("Replay tutorial game %d: opponent = %s", replayGame, opponentCard.getName());
+        } else if (CosmiconStats.isInTutorialMode()) {
+            int gamesPlayed = CosmiconStats.getGamesPlayed();
+            if (gamesPlayed == 0) {
+                opponentCard = CharacterRegistry.getCharacterById("trashcan");
+            } else if (gamesPlayed == 1) {
+                opponentCard = CharacterRegistry.getCharacterById("robin");
+            } else {
+                opponentCard = CharacterRegistry.getRandomOpponent();
+            }
+            CosmiconEventState.setOpponentCharacter(opponentCard.getId());
+        } else if (CosmiconEventState.isBarEvent()) {
             opponentCard = CharacterRegistry.getCharacterById(CosmiconEventState.getOpponentCharacter());
         } else {
             opponentCard = CharacterRegistry.getRandomOpponent();

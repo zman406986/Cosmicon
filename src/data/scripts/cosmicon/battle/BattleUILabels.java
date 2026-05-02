@@ -429,6 +429,16 @@ public class BattleUILabels {
             ColorHelper.PRISMATIC_HINT_ENABLED, Alignment.MID, hintLabelWidth, 20f,
             hintLabelX, hintLabelY);
         playerPrismaticClickHintLabel.setOpacity(0f);
+
+        if (battleState != null && data.scripts.cosmicon.state.CosmiconStats.isInTutorialMode()) {
+            opponentPrismaticUsesLabel.setOpacity(0f);
+            opponentPrismaticFaceMappingLabel.setOpacity(0f);
+            opponentPrismaticEffectLabel.setOpacity(0f);
+            playerPrismaticUsesLabel.setOpacity(0f);
+            playerPrismaticFaceMappingLabel.setOpacity(0f);
+            playerPrismaticEffectLabel.setOpacity(0f);
+            playerPrismaticClickHintLabel.setOpacity(0f);
+        }
     }
 
     private void createClickHintLabel() {
@@ -523,6 +533,11 @@ public class BattleUILabels {
         opponentOrangeLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.ORANGE_D8) : 0));
         opponentPurpleLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.PURPLE_D6) : 0));
         opponentBlueLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.BLUE_D4) : 0));
+
+        if (data.scripts.cosmicon.state.CosmiconStats.isInTutorialMode()) {
+            playerPrismaticLabel.setOpacity(0f);
+            opponentPrismaticLabel.setOpacity(0f);
+        }
 
         updatePhaseLabel();
         updatePrismaticButton();
@@ -784,6 +799,15 @@ public class BattleUILabels {
 
     public void updatePrismaticButton() {
         if (playerPrismaticUsesLabel == null || battleState == null) return;
+        if (data.scripts.cosmicon.state.CosmiconStats.isInTutorialMode()) {
+            playerPrismaticUsesLabel.setOpacity(0f);
+            opponentPrismaticUsesLabel.setOpacity(0f);
+            playerPrismaticFaceMappingLabel.setOpacity(0f);
+            playerPrismaticEffectLabel.setOpacity(0f);
+            opponentPrismaticFaceMappingLabel.setOpacity(0f);
+            opponentPrismaticEffectLabel.setOpacity(0f);
+            return;
+        }
 
         int uses = battleState.getPlayerPrismaticUses();
         playerPrismaticUsesLabel.setText(String.valueOf(uses));
@@ -881,6 +905,10 @@ public class BattleUILabels {
 
     public void updatePrismaticRolledLabel() {
         if (playerPrismaticRolledLabel == null) return;
+        if (data.scripts.cosmicon.state.CosmiconStats.isInTutorialMode()) {
+            playerPrismaticRolledLabel.setOpacity(0f);
+            return;
+        }
 
         if (pendingPrismaticInstance == null || pendingPrismaticAnimatorIndex < 0) {
             playerPrismaticRolledLabel.setOpacity(0f);
@@ -948,6 +976,10 @@ public class BattleUILabels {
 
     public void updatePrismaticClickHint(boolean enabled) {
         if (playerPrismaticClickHintLabel != null) {
+            if (data.scripts.cosmicon.state.CosmiconStats.isInTutorialMode()) {
+                playerPrismaticClickHintLabel.setOpacity(0f);
+                return;
+            }
             if (enabled) {
                 playerPrismaticClickHintLabel.setColor(ColorHelper.PRISMATIC_HINT_ENABLED);
                 playerPrismaticClickHintLabel.setOpacity(1f);

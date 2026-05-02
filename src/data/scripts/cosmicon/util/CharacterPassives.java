@@ -35,6 +35,7 @@ public class CharacterPassives {
             case HYACINE -> evaluateHyacine(result, diceValues, isAttacking);
             case DAN_HENG -> evaluateDanHengPT(result, diceValues, isAttacking);
             case PHAINON -> evaluatePhainon(result, diceValues, isAttacking);
+            case TRASHCAN -> evaluateTrashcan(result, diceValues, isAttacking);
             case THE_HERTA, CYRENE, CASTORICE, YAO_GUANG -> {}
             case SPARXIE -> evaluateSparxie(result, diceValues);
         }
@@ -96,6 +97,15 @@ public class CharacterPassives {
             result.setHealAmount(6);
         } else {
             result.setGrantedEffect(StatusEffect.STRENGTH, sumOfValues(values) / 2);
+        }
+    }
+
+    private static void evaluateTrashcan(PassiveResult result, List<Integer> values, boolean isAttacking) {
+        if (!isAttacking || values == null || values.isEmpty()) return;
+        if (allEven(values)) {
+            result.addGrantedEffect(StatusEffect.STRENGTH, 4);
+        } else {
+            result.addGrantedEffect(StatusEffect.STRENGTH, 2);
         }
     }
 

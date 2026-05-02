@@ -139,12 +139,19 @@ public class CoinFlipAnimator {
 
     private void advanceSettle() {
         float progress = Math.min(1f, phaseElapsed / SETTLE_DURATION);
-        float eased = EasingUtil.easeOutQuad(progress);
+        float eased = EasingUtil.easeOutCubic(progress);
 
         float targetSquash = winningFace == Face.ATTACK ? 1f : -1f;
-        coinSquash = targetSquash * eased + (1f - eased) * coinSquash;
-        coinScale = 1f + (1f - eased) * 0.1f;
-        coinRotation = coinRotation * (1f - eased);
+        if (phaseElapsed < SETTLE_DURATION * 0.3f) {
+            float snapProgress = Math.min(1f, phaseElapsed / (SETTLE_DURATION * 0.3f));
+            coinSquash = targetSquash * EasingUtil.easeOutCubic(snapProgress)
+                + coinSquash * (1f - EasingUtil.easeOutCubic(snapProgress));
+        } else {
+            coinSquash = targetSquash;
+        }
+        float bounce = (1f - eased) * (float)Math.sin(progress * 3f * Math.PI) * 0.06f;
+        coinScale = 1f + bounce;
+        coinRotation = coinRotation * (1f - EasingUtil.easeOutCubic(progress));
 
         if (phaseElapsed >= SETTLE_DURATION) {
             phase = Phase.REVEAL;

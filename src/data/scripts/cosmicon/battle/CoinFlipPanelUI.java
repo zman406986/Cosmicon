@@ -23,7 +23,7 @@ import data.scripts.cosmicon.util.UIComponentFactory;
 
 public class CoinFlipPanelUI extends BaseCustomUIPanelPlugin {
 
-    private static final float FLIP_HINT_Y_OFFSET = 180f;
+    private static final float FLIP_HINT_Y_OFFSET = 210f;
     private static final float RESULT_TEXT_Y_OFFSET = 180f;
     private static final float CLICK_HINT_Y_OFFSET = 220f;
 

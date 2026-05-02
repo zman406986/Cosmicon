@@ -71,7 +71,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
     private DamageResolutionAnimator damageAnimator;
     private DamageResolver.DamageResult pendingDamageResult;
-    private boolean damageAnimationPending;
+    private boolean damageAnimationPending = false;
+    private boolean damageImpactHandled = false;
 
     private boolean valueAnimationPending;
 
@@ -139,6 +140,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         }
         diceRollManager = null;
         damageAnimationPending = false;
+        damageImpactHandled = false;
         valueAnimationPending = false;
         pendingDamageResult = null;
         battleState = null;
@@ -201,6 +203,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     public void startDamageResolutionAnimation(BattleState state, DamageResolver.DamageResult result) {
         pendingDamageResult = result;
         damageAnimationPending = true;
+        damageImpactHandled = false;
         inputHandler.setDamageAnimator(damageAnimator);
 
         float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
@@ -420,6 +423,11 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     @Override
+    public void onDamageImpacted() {
+        labels.updateLabelsFromState();
+    }
+
+    @Override
     public void onValueChange(boolean isPlayer, String changeType, int oldValue, int newValue, int delta) {
         boolean playerIsAttacker = battleState.isPlayerAttacker();
         boolean affectsAttackerValue = (playerIsAttacker == isPlayer &&
@@ -620,6 +628,16 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         if (damageAnimator != null) {
             damageAnimator.advance(amount);
 
+            if (damageAnimator.hasDamageImpacted() && damageAnimationPending && !damageImpactHandled) {
+                damageImpactHandled = true;
+                if (battleState != null) {
+                    battleState.notifyDamageImpacted();
+                }
+                if (battleController != null) {
+                    battleController.onDamageImpacted();
+                }
+            }
+
             if (!damageAnimator.isComplete()) {
                 labels.showClickHint("battle.click_to_continue", 0.6f);
             } else {
@@ -628,6 +646,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
             if (damageAnimator.isComplete() && damageAnimationPending) {
                 damageAnimationPending = false;
+                damageImpactHandled = false;
                 damageAnimator.cleanup();
                 damageAnimator = null;
                 inputHandler.setDamageAnimator(null);
@@ -677,7 +696,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void updatePrismaticClickHint() {
-        if (battleState == null) return;
+        if (battleState == null || CosmiconStats.isInTutorialMode()) return;
 
         int uses = battleState.getPlayerPrismaticUses();
         boolean playerShouldSelect = (battleState.isAttacker(true) &&
@@ -768,7 +787,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             renderOpponentCard(alphaMult);
             renderOpponentHpCircle(alphaMult);
             renderStatusEffectBoxes(alphaMult);
-            renderDiceZone(x, y, alphaMult);
 
             ValueChangeAnimator attackerAnimator = labels.getAttackerValueAnimator();
             ValueChangeAnimator defenderAnimator = labels.getDefenderValueAnimator();
@@ -1002,6 +1020,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void renderOpponentPrismaticButton(float alphaMult) {
+        if (CosmiconStats.isInTutorialMode()) return;
         SpriteAPI sprite = CosmiconSprites.getPrismaticButtonSprite();
         if (sprite == null) return;
 
@@ -1022,6 +1041,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void renderPrismaticButton(float alphaMult) {
+        if (CosmiconStats.isInTutorialMode()) return;
         SpriteAPI sprite = CosmiconSprites.getPrismaticButtonSprite();
         if (sprite == null) return;
 

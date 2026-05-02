@@ -78,6 +78,8 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         options.addOption(Strings.get("menu.start_game"), "start_game");
         options.addOption(Strings.get("menu.character_setup"), "character_setup");
+        options.addOption("Replay Tutorial Game 1", "replay_tutorial_1");
+        options.addOption("Replay Tutorial Game 2", "replay_tutorial_2");
         options.addOption(Strings.get("menu.help"), "help");
         options.addOption(Strings.get("menu.leave"), "leave");
 
@@ -94,6 +96,14 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             case MAIN_MENU:
                 switch (data) {
                     case "start_game" -> startBattleWithSelection();
+                    case "replay_tutorial_1" -> {
+                        CosmiconEventState.setReplayTutorialGame(1);
+                        startBattleWithSelection();
+                    }
+                    case "replay_tutorial_2" -> {
+                        CosmiconEventState.setReplayTutorialGame(2);
+                        startBattleWithSelection();
+                    }
                     case "character_setup" -> showCharacterSetup();
                     case "help" -> showHelp();
                     case "leave" -> {
@@ -210,10 +220,13 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     }
 
     private void handleVictory() {
-        CosmiconStats.incrementGamesPlayed();
-        CosmiconStats.incrementGamesWon();
+        boolean isReplay = CosmiconEventState.isReplayTutorial();
+        if (!isReplay) {
+            CosmiconStats.incrementGamesPlayed();
+            CosmiconStats.incrementGamesWon();
+        }
 
-        boolean tutorialJustCompleted = CosmiconStats.getGamesPlayed() == 5;
+        boolean tutorialJustCompleted = !isReplay && CosmiconStats.getGamesPlayed() == 2;
 
         pendingRewardCharId = CosmiconEventState.getOpponentCharacter();
         pendingRewardPrismaticId = CosmiconEventState.getOpponentPrismatic();
@@ -223,7 +236,9 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             textPanel.addPara(Strings.get("victory.absolute_six_unlocked"));
         }
 
-        if (CosmiconStats.isInTutorialMode()) {
+        if (isReplay) {
+            showReplayVictoryMenu();
+        } else if (CosmiconStats.isInTutorialMode()) {
             showTutorialReward();
         } else {
             showVictoryRewardMenu();
@@ -231,15 +246,22 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     }
 
     private void handleDefeat() {
-        CosmiconStats.incrementGamesPlayed();
+        boolean isReplay = CosmiconEventState.isReplayTutorial();
+        if (!isReplay) {
+            CosmiconStats.incrementGamesPlayed();
+        }
 
-        boolean tutorialJustCompleted = CosmiconStats.getGamesPlayed() == 5;
+        boolean tutorialJustCompleted = !isReplay && CosmiconStats.getGamesPlayed() == 2;
 
         if (tutorialJustCompleted) {
             textPanel.addPara(Strings.get("victory.absolute_six_unlocked"));
         }
 
-        showDefeatMenu();
+        if (isReplay) {
+            showReplayDefeatMenu();
+        } else {
+            showDefeatMenu();
+        }
         CosmiconEventState.clearAll();
     }
 
@@ -281,6 +303,22 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         if (CosmiconStats.isInTutorialMode() && remaining > 0) {
             textPanel.addPara(Strings.format("tutorial.games_remaining", remaining));
         }
+        options.addOption(Strings.get("menu.back"), "back");
+        setState(State.REWARD_SELECTION);
+    }
+
+    private void showReplayVictoryMenu() {
+        options.clearOptions();
+        textPanel.addPara(Strings.get("battle.you_won"));
+        textPanel.addPara("(Replay tutorial - stats not recorded)");
+        options.addOption(Strings.get("menu.back"), "back");
+        setState(State.REWARD_SELECTION);
+    }
+
+    private void showReplayDefeatMenu() {
+        options.clearOptions();
+        textPanel.addPara(Strings.get("battle.you_lost"));
+        textPanel.addPara("(Replay tutorial - stats not recorded)");
         options.addOption(Strings.get("menu.back"), "back");
         setState(State.REWARD_SELECTION);
     }

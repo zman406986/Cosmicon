@@ -103,6 +103,7 @@ public class BattleState {
         void onWeatherChange(WeatherType newWeather);
         void onDamageAnimationStart(DamageResolver.DamageResult result);
         void onDamageAnimationComplete();
+        void onDamageImpacted();
         void onValueChange(boolean isPlayer, String changeType, int oldValue, int newValue, int delta);
         void onTransitionToDefenderRoll();
     }
@@ -897,6 +898,12 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         }
         if (damageAnimationCallback != null) {
             damageAnimationCallback.onDamageAnimationComplete();
+        }
+    }
+
+    public void notifyDamageImpacted() {
+        for (BattleEventListener l : listeners) {
+            l.onDamageImpacted();
         }
     }
 

@@ -20,6 +20,7 @@ public final class CharacterIds {
     public static final String SPARXIE = "sparxie";
     public static final String HYACINE = "hyacine";
     public static final String YAO_GUANG = "yao_guang";
+    public static final String TRASHCAN = "trashcan";
 
     private CharacterIds() {}
 }

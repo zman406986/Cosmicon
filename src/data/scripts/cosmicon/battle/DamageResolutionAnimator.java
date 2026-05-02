@@ -91,7 +91,8 @@ public class DamageResolutionAnimator {
 
     private int comboDamage;
     private float shatterRestoreAlpha;
-    
+    private boolean damageImpacted;
+
     private CustomPanelAPI panel;
     
     public DamageResolutionAnimator() {
@@ -99,6 +100,7 @@ public class DamageResolutionAnimator {
         phaseElapsed = 0f;
         complete = false;
         shatterRestoreAlpha = 0f;
+        damageImpacted = false;
         impactEffect = new ImpactEffect();
         shatterEffect = new IconShatterEffect();
         splitEffect = new IconSplitEffect();
@@ -169,6 +171,7 @@ public class DamageResolutionAnimator {
         phase = Phase.ICON_PREPARATION;
         phaseElapsed = 0f;
         complete = false;
+        damageImpacted = false;
     }
     
     private void calculateStaticIconPositions(BattleState state) {
@@ -385,15 +388,17 @@ public class DamageResolutionAnimator {
     private void advanceWinnerImpact() {
         boolean atkDone = atkFlyingIcon == null || atkFlyingIcon.isComplete();
         boolean defDone = defFlyingIcon == null || defFlyingIcon.isComplete();
-        
+
         if (phaseElapsed >= WINNER_IMPACT_DURATION || (atkDone && defDone)) {
             impactEffect.triggerFlash(defenderTargetX, defenderTargetY, 40f, DAMAGE_RESULT_COLOR);
             impactEffect.triggerShockwave(defenderTargetX, defenderTargetY);
-            
+
             if (resultValue > 0) {
                 impactEffect.triggerParticles(defenderTargetX, defenderTargetY, 6, DAMAGE_RESULT_COLOR);
             }
-            
+
+            damageImpacted = true;
+
             startResultFlight();
             startIconRetreat();
             phase = Phase.ICON_RETREAT;
@@ -792,5 +797,9 @@ public class DamageResolutionAnimator {
     
     public boolean isDraw() {
         return isDraw;
+    }
+
+    public boolean hasDamageImpacted() {
+        return damageImpacted;
     }
 }

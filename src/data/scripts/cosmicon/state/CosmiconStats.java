@@ -2,6 +2,9 @@ package data.scripts.cosmicon.state;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
+import data.scripts.cosmicon.battle.CharacterCard;
+import data.scripts.cosmicon.battle.CharacterRegistry;
+import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -14,8 +17,9 @@ public class CosmiconStats {
     private static final String KEY_UNLOCKED_PRISMATIC = "$cos_unlocked_prismatic";
     private static final String KEY_PRISMATIC_FEATURE_UNLOCKED = "$cos_prismatic_feature_unlocked";
     private static final String KEY_STARTING_CHAR_GRANTED = "$cos_starting_char_granted";
+    private static final String KEY_HAS_GALLERY_CHARACTERS = "$cos_has_gallery_characters";
 
-    private static final int TUTORIAL_GAMES = 5;
+    private static final int TUTORIAL_GAMES = 2;
 
     private static MemoryAPI getMemory() {
         return Global.getSector().getPlayerMemoryWithoutUpdate();
@@ -59,7 +63,27 @@ public class CosmiconStats {
         MemoryAPI mem = getMemory();
         mem.set(KEY_GAMES_PLAYED, TUTORIAL_GAMES);
         setPrismaticFeatureUnlocked(true);
-        unlockPrismaticDice("absolute_six");
+        unlockAllPrismaticDice();
+        unlockAllCharacters();
+    }
+
+    private static void unlockAllCharacters() {
+        MemoryAPI mem = getMemory();
+        Set<String> unlockedChars = getUnlockedCharacters();
+        for (CharacterCard card : CharacterRegistry.getAllCards()) {
+            String cardId = card.getId();
+            if (!unlockedChars.contains(cardId)) {
+                unlockedChars.add(cardId);
+            }
+        }
+        mem.set(KEY_UNLOCKED_CHARACTERS, unlockedChars);
+        mem.set(KEY_HAS_GALLERY_CHARACTERS, true);
+    }
+
+    private static void unlockAllPrismaticDice() {
+        for (String diceId : PrismaticDiceRegistry.getAll().keySet()) {
+            unlockPrismaticDice(diceId);
+        }
     }
 
     public static boolean isPrismaticFeatureUnlocked() {
@@ -160,7 +184,16 @@ public class CosmiconStats {
         java.util.List<data.scripts.cosmicon.battle.CharacterCard> allCards =
             data.scripts.cosmicon.battle.CharacterRegistry.getAllCards();
         if (!allCards.isEmpty() && !hasAnyCharacterUnlocked()) {
-            String defaultCharId = allCards.get(0).getId();
+            String defaultCharId = null;
+            for (data.scripts.cosmicon.battle.CharacterCard card : allCards) {
+                if ("sparxie".equals(card.getId())) {
+                    defaultCharId = card.getId();
+                    break;
+                }
+            }
+            if (defaultCharId == null) {
+                defaultCharId = allCards.get(0).getId();
+            }
             grantStartingCharacter(defaultCharId);
             CosmiconPlayerState.saveCharacter(defaultCharId);
         }

@@ -9,6 +9,7 @@ public class CosmiconEventState {
     private static final String KEY_OPPONENT_PRISMATIC = "$cos_temp_opponent_prismatic";
     private static final String KEY_IS_BAR_EVENT = "$cos_temp_is_bar_event";
     private static final String KEY_IS_TUTORIAL = "$cos_temp_is_tutorial";
+    private static final String KEY_REPLAY_TUTORIAL = "$cos_replay_tutorial_game";
 
     private static MemoryAPI getMemory() {
         return Global.getSector().getMemory();
@@ -64,5 +65,24 @@ public class CosmiconEventState {
         mem.unset(KEY_OPPONENT_PRISMATIC);
         mem.unset(KEY_IS_BAR_EVENT);
         mem.unset(KEY_IS_TUTORIAL);
+        mem.unset(KEY_REPLAY_TUTORIAL);
+    }
+
+    public static void setReplayTutorialGame(int gameNumber) {
+        getMemory().set(KEY_REPLAY_TUTORIAL, gameNumber, 0f);
+    }
+
+    public static int getReplayTutorialGame() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_REPLAY_TUTORIAL)) return -1;
+        return (int) mem.getFloat(KEY_REPLAY_TUTORIAL);
+    }
+
+    public static boolean isReplayTutorial() {
+        return getReplayTutorialGame() >= 0;
+    }
+
+    public static void clearReplayTutorial() {
+        getMemory().unset(KEY_REPLAY_TUTORIAL);
     }
 }

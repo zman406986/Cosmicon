@@ -5,7 +5,6 @@ import org.lwjgl.input.Keyboard;
 import com.fs.starfarer.api.campaign.CustomVisualDialogDelegate.DialogCallbacks;
 import com.fs.starfarer.api.ui.ButtonAPI;
 import com.fs.starfarer.api.ui.CustomPanelAPI;
-import com.fs.starfarer.api.ui.PositionAPI;
 import com.fs.starfarer.api.ui.TooltipMakerAPI;
 import com.fs.starfarer.api.ui.TooltipMakerAPI.ActionListenerDelegate;
 import com.fs.starfarer.api.ui.TooltipMakerAPI.TooltipCreator;
@@ -68,24 +67,27 @@ public class BattleUIButtons implements ActionListenerDelegate {
     private void createButtons() {
         if (buttonsCreated) return;
 
-        PositionAPI pos = panel.getPosition();
-        TooltipMakerAPI btnTp = UIComponentFactory.createTooltipForButtons(panel, this, pos.getWidth(), pos.getHeight(), 0f, 0f);
-
         float btnWidth = 120f;
         float btnHeight = 30f;
         float centerX = BattleRenderingUtils.PANEL_WIDTH / 2f;
         float bottomY = BattleRenderingUtils.PANEL_HEIGHT - 60f;
 
+        float btnTpX = centerX - btnWidth - 40f;
+        float btnTpY = bottomY - 10f;
+        float btnTpW = btnWidth * 2f + 80f;
+        float btnTpH = btnHeight + 20f;
+        TooltipMakerAPI btnTp = UIComponentFactory.createTooltipForButtons(panel, this, btnTpW, btnTpH, btnTpX, btnTpY);
+
         confirmButton = btnTp.addButton(Strings.get("battle.confirm_attack"), ACTION_END_TURN,
             btnWidth, btnHeight, 0f);
         confirmButton.setQuickMode(true);
         confirmButton.setShortcut(Keyboard.KEY_SPACE, false);
-        confirmButton.getPosition().inTL(centerX - btnWidth - 20f, bottomY);
+        confirmButton.getPosition().inTL(20f, 10f);
 
         rerollButton = btnTp.addButton(Strings.get("phase.reroll_selected"), ACTION_REROLL,
             btnWidth, btnHeight, 0f);
         rerollButton.setQuickMode(true);
-        rerollButton.getPosition().inTL(centerX + 20f, bottomY);
+        rerollButton.getPosition().inTL(btnWidth + 60f, 10f);
 
         TooltipMakerAPI exitTp = UIComponentFactory.createTooltipForButtons(panel, this, btnWidth, btnHeight, 
             BattleRenderingUtils.PANEL_WIDTH - btnWidth - 10f, 10f);

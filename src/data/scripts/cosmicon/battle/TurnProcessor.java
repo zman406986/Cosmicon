@@ -22,6 +22,7 @@ public class TurnProcessor {
     
     private DamageResolver.DamageResult pendingDamageResult;
     private boolean damageAnimationInProgress;
+    private boolean impactDamageApplied = false;
     
     private float aiSelectDelay;
     private boolean aiSelectionComplete;
@@ -601,88 +602,105 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         DamageResolver.DamageResult result = damageResolver.resolve(state);
         pendingDamageResult = result;
         damageAnimationInProgress = true;
+        impactDamageApplied = false;
         state.notifyDamageAnimationStart(result);
     }
     
+    public void onDamageImpacted() {
+        if (pendingDamageResult == null || !damageAnimationInProgress) return;
+
+        applyImpactDamage(pendingDamageResult);
+        impactDamageApplied = true;
+    }
+
     public void onDamageAnimationComplete() {
         if (pendingDamageResult == null || !damageAnimationInProgress) return;
-        
-        applyDamageResult(pendingDamageResult);
+
+        if (!impactDamageApplied) {
+            applyImpactDamage(pendingDamageResult);
+        }
+        applyPostAnimationEffects(pendingDamageResult);
         pendingDamageResult = null;
         damageAnimationInProgress = false;
+        impactDamageApplied = false;
         state.notifyDamageAnimationComplete();
     }
-    
-private void applyDamageResult(DamageResolver.DamageResult result) {
+
+private void applyImpactDamage(DamageResolver.DamageResult result) {
         int damage = result.damageToDefender();
         boolean playerIsAttacker = state.isPlayerAttacker();
         boolean defenderIsPlayer = !playerIsAttacker;
-        
+
         if (damage > 0) {
             if (playerIsAttacker) {
                 state.applyDamageTo(false, damage);
-                
+
                 if (result.siphonHeal() > 0) {
                     state.applyHealTo(true, result.siphonHeal());
                 }
                 state.getEffects(true).removeEffect(StatusEffect.SIPHON);
             } else {
                 state.applyDamageTo(true, damage);
-                
+
                 if (result.siphonHeal() > 0) {
                     state.applyHealTo(false, result.siphonHeal());
                 }
                 state.getEffects(false).removeEffect(StatusEffect.SIPHON);
             }
-            
+
             int instantDamageToAttacker = PassiveEventSystem.onDamageTaken(state, defenderIsPlayer, damage);
             if (instantDamageToAttacker > 0) {
                 state.applyDamageTo(playerIsAttacker, instantDamageToAttacker);
             }
-            
+
             PassiveEventSystem.onDefenseFail(state, defenderIsPlayer);
         }
-        
+    }
+
+private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
+        boolean playerIsAttacker = state.isPlayerAttacker();
+        boolean defenderIsPlayer = !playerIsAttacker;
+
         if (result.thornsDamage() > 0) {
             state.applyDamageTo(playerIsAttacker, result.thornsDamage());
         }
-        
+
         if (result.counterDamage() > 0) {
             state.applyDamageTo(playerIsAttacker, result.counterDamage());
         }
-        
+
         if (result.selfThornsDamage() > 0) {
             state.applyDamageTo(playerIsAttacker, result.selfThornsDamage());
             state.getEffects(playerIsAttacker).removeEffect(StatusEffectProcessor.StatusEffect.THORNS);
         }
-        
+
         if (result.overloadSelfDamage() > 0) {
             state.applyDamageTo(playerIsAttacker, result.overloadSelfDamage());
         }
-        
+
         if (result.instantDamage() > 0) {
             state.applyDamageTo(defenderIsPlayer, result.instantDamage());
         }
-        
+
         if (result.reflectDamage() > 0) {
             state.applyDamageTo(playerIsAttacker, result.reflectDamage());
             state.getEffects(defenderIsPlayer).removeEffect(StatusEffectProcessor.StatusEffect.REFLECT);
         }
-        
+
         applyComboAttack(playerIsAttacker, defenderIsPlayer);
-        
+
         if (result.perforationSuccessful()) {
             state.getEffects(playerIsAttacker).removeEffect(StatusEffectProcessor.StatusEffect.PERFORATION);
         }
-        
+
         if (result.forcefieldUsed()) {
             state.getEffects(defenderIsPlayer).removeEffect(StatusEffectProcessor.StatusEffect.FORCEFIELD);
         }
-        
-        PassiveEventSystem.onAttackResolved(state, playerIsAttacker, result.perforationSuccessful(), damage);
-        
-        state.notifyDamageResolved(damage, state.getPlayerHp(), state.getOpponentHp());
-        
+
+        PassiveEventSystem.onAttackResolved(state, playerIsAttacker, result.perforationSuccessful(), result.damageToDefender());
+
+        state.notifyDamageResolved(result.damageToDefender(), state.getPlayerHp(), state.getOpponentHp());
+
         if (state.getPlayerHp() <= 0 || state.getOpponentHp() <= 0) {
             endBattle();
         } else {

@@ -41,6 +41,7 @@ public final class CosmiconSprites {
         PORTRAIT_KEYS.put(CharacterIds.SPARXIE, "portrait_sparxie");
         PORTRAIT_KEYS.put(CharacterIds.THE_HERTA, "portrait_the_herta");
         PORTRAIT_KEYS.put(CharacterIds.YAO_GUANG, "portrait_yao_guang");
+        PORTRAIT_KEYS.put(CharacterIds.TRASHCAN, "portrait_trashcan");
     }
 
     public static void load() {
