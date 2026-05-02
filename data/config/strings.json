@@ -37,6 +37,12 @@
         "no_selection": "Select dice...",
         "prismatic_effect_none": ""
     },
+    "coinflip": {
+        "flipping": "Flipping for first turn...",
+        "click_to_skip": "Click to skip",
+        "you_attack_first": "You are the Attacker!",
+        "opponent_attacks_first": "Opponent attacks first!"
+    },
     "errors": {
         "market_too_small": "This market is too small to host Cosmicon games."
     },

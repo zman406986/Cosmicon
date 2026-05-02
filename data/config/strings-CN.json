@@ -37,6 +37,12 @@
         "no_selection": "选择骰子...",
         "prismatic_effect_none": ""
     },
+    "coinflip": {
+        "flipping": "投掷硬币决定先手...",
+        "click_to_skip": "点击跳过",
+        "you_attack_first": "你是攻击方！",
+        "opponent_attacks_first": "对手先手攻击！"
+    },
     "errors": {
         "market_too_small": "这个市场太小，无法进行战力党游戏。"
     },

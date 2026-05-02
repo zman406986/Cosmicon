@@ -94,7 +94,12 @@ public class PassiveEvaluator {
         StatusEffectProcessor effects = state.getEffects(forPlayer);
         
         for (GrantedEffect ge : result.getGrantedEffects()) {
-            effects.addEffect(ge.effect(), ge.layers());
+            if (ge.effect() == StatusEffect.POISON || ge.effect() == StatusEffect.INSTANT_DAMAGE) {
+                boolean opponent = !forPlayer;
+                state.getEffects(opponent).addEffect(ge.effect(), ge.layers());
+            } else {
+                effects.addEffect(ge.effect(), ge.layers());
+            }
         }
         
         for (GrantedEffect ge : result.getSetGrantedEffects()) {

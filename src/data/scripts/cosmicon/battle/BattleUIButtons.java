@@ -87,9 +87,6 @@ public class BattleUIButtons implements ActionListenerDelegate {
         rerollButton.setQuickMode(true);
         rerollButton.getPosition().inTL(centerX + 20f, bottomY);
 
-        float opponentCardX = BattleRenderingUtils.MARGIN;
-        float opponentCardY = BattleRenderingUtils.MARGIN;
-
         TooltipMakerAPI exitTp = UIComponentFactory.createTooltipForButtons(panel, this, btnWidth, btnHeight, 
             BattleRenderingUtils.PANEL_WIDTH - btnWidth - 10f, 10f);
         ButtonAPI exitButton = exitTp.addButton(Strings.get("phase.close"), ACTION_EXIT, btnWidth, btnHeight, 0f);

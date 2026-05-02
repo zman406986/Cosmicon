@@ -296,8 +296,12 @@ public class DamageResolutionAnimator {
         boolean defDone = defFlyingIcon == null || !defFlyingIcon.isRotating();
         
         if (phaseElapsed >= ICON_ROTATION_DURATION || (atkDone && defDone)) {
-            atkFlyingIcon.flyTo(atkClashX, atkClashY, ICON_CLASH_DURATION, true, true);
-            defFlyingIcon.flyTo(defClashX, defClashY, ICON_CLASH_DURATION, true, true);
+            if (atkFlyingIcon != null) {
+                atkFlyingIcon.flyTo(atkClashX, atkClashY, ICON_CLASH_DURATION, true, true);
+            }
+            if (defFlyingIcon != null) {
+                defFlyingIcon.flyTo(defClashX, defClashY, ICON_CLASH_DURATION, true, true);
+            }
             
             phase = Phase.ICON_CLASH;
             phaseElapsed = 0f;
@@ -428,16 +432,21 @@ public class DamageResolutionAnimator {
     }
     
     private void advanceShatterRestore() {
-        shatterRestoreAlpha = Math.min(phaseElapsed / SHATTER_RESTORE_DURATION, 1f);
-        
         if (phaseElapsed == 0f && splitEffect.isActive() && !splitEffect.isRestoring()) {
             splitEffect.startRestore(SHATTER_RESTORE_DURATION);
         }
         
+        if (splitEffect.isRestoring()) {
+            shatterRestoreAlpha = 0f;
+        } else {
+            shatterRestoreAlpha = 1f;
+        }
+        
         boolean atkDone = atkFlyingIcon == null || atkFlyingIcon.isComplete();
         boolean defDone = defFlyingIcon == null || defFlyingIcon.isComplete();
+        boolean splitDone = !splitEffect.isActive();
         
-        if (phaseElapsed >= SHATTER_RESTORE_DURATION && atkDone && defDone) {
+        if (phaseElapsed >= SHATTER_RESTORE_DURATION && atkDone && defDone && splitDone) {
             shatterRestoreAlpha = 1f;
             
             boolean atkShattered = !attackWins || isDraw;
@@ -475,6 +484,8 @@ public class DamageResolutionAnimator {
     private void advancePostImpactPause() {
         if (phaseElapsed >= POST_IMPACT_PAUSE_DURATION) {
             if (combo && comboDamage > 0) {
+                shatterEffect.clear();
+                splitEffect.clear();
                 phase = Phase.COMBO_PAUSE;
                 phaseElapsed = 0f;
             } else {
@@ -547,10 +558,17 @@ public class DamageResolutionAnimator {
     public void render(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
         if (phase == Phase.IDLE) return;
         
+        boolean isComboPhase = phase == Phase.COMBO_PAUSE ||
+            phase == Phase.COMBO_SECOND_CLASH ||
+            phase == Phase.COMBO_SECOND_IMPACT ||
+            phase == Phase.COMBO_ICON_RETREAT;
+        
         renderNumbersOnIcons(panelX, panelY, panelWidth, panelHeight, alphaMult);
         
-        shatterEffect.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
-        splitEffect.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
+        if (!isComboPhase) {
+            shatterEffect.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
+            splitEffect.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
+        }
         
         renderResultNumbers(panelX, panelY, panelHeight, alphaMult);
         
@@ -605,8 +623,9 @@ public class DamageResolutionAnimator {
         boolean defShattered = attackWins;
         boolean restoring = phase == Phase.SHATTER_RESTORE;
         boolean splitDone = !splitEffect.isActive();
-        boolean atkHiddenBySplit = splitEffect.isActive() && atkShattered;
-        boolean defHiddenBySplit = splitEffect.isActive() && defShattered;
+        boolean splitRestoring = splitEffect.isRestoring();
+        boolean atkHiddenBySplit = (splitEffect.isActive() && atkShattered) || (splitRestoring && atkShattered);
+        boolean defHiddenBySplit = (splitEffect.isActive() && defShattered) || (splitRestoring && defShattered);
         
         if (atkFlyingIcon != null && !atkHiddenBySplit && (!atkShattered || (restoring && splitDone))) {
             float restoreAlpha = atkShattered ? shatterRestoreAlpha : alphaMult;

@@ -161,6 +161,11 @@ public class IconSplitEffect {
         return restoring;
     }
     
+    public float getRestoreProgress() {
+        if (!restoring || restoreDuration <= 0f) return 0f;
+        return Math.min(restoreElapsed / restoreDuration, 1f);
+    }
+    
     public void clear() {
         active = false;
         restoring = false;

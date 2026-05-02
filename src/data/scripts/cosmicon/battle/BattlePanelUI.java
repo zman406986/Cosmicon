@@ -159,7 +159,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         buttons = new BattleUIButtons();
 
         float opponentCardY = BattleRenderingUtils.MARGIN;
-        opponentPrismaticBtnX = BattleRenderingUtils.MARGIN + BattleRenderingUtils.CARD_WIDTH + 100f;
+        opponentPrismaticBtnX = BattleRenderingUtils.PANEL_WIDTH / 2f + 100f;
         opponentPrismaticBtnY = opponentCardY + 40f;
         labels.init(panel, battleState, diceRollManager,
             opponentPrismaticBtnX, opponentPrismaticBtnY,

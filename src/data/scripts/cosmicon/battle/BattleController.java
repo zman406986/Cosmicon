@@ -39,37 +39,41 @@ public class BattleController implements BattleState.DamageAnimationCallback {
     }
 
     public void initBattleWithSelection() {
+        initBattleWithSelection(true);
+    }
+
+    public void initBattleWithSelection(boolean playerIsAttacker) {
         CosmiconLogger.info("Initializing battle with player selection");
-        
+
         CharacterCard playerCard = CosmiconPlayerState.getConfiguredPlayerCard();
         CharacterCard opponentCard = CharacterRegistry.getRandomOpponent();
-        
+
         if (playerCard == null || opponentCard == null) {
             CosmiconLogger.error("Failed to load character cards for battle");
             throw new IllegalStateException("Failed to load character cards");
         }
-        
+
         String savedPrismaticId = CosmiconPlayerState.loadPrismaticDice();
         String defaultPrismaticId = CosmiconPlayerState.getDefaultPrismaticForCharacter(playerCard.getId());
-        
-        if (savedPrismaticId != null && !savedPrismaticId.isEmpty() 
+
+        if (savedPrismaticId != null && !savedPrismaticId.isEmpty()
             && !savedPrismaticId.equals(defaultPrismaticId)) {
-            int uses = playerCard.getPrismaticDiceIds().getOrDefault(defaultPrismaticId, 2);
+            int uses = playerCard.getPrismaticDiceIds().getOrDefault(savedPrismaticId, 2);
             playerCard = playerCard.withPrismaticDice(savedPrismaticId, uses);
             CosmiconLogger.info("Applied custom prismatic dice: %s", savedPrismaticId);
         }
-        
-        CosmiconLogger.info("Selected characters - Player: %s, Opponent: %s", 
+
+        CosmiconLogger.info("Selected characters - Player: %s, Opponent: %s",
             playerCard.getName(), opponentCard.getName());
-        CosmiconLogger.info("Player stats - HP: %d, ATK: %d, DEF: %d", 
+        CosmiconLogger.info("Player stats - HP: %d, ATK: %d, DEF: %d",
             playerCard.getMaxHp(), playerCard.getAtkLevel(), playerCard.getDefLevel());
-        CosmiconLogger.info("Opponent stats - HP: %d, ATK: %d, DEF: %d", 
+        CosmiconLogger.info("Opponent stats - HP: %d, ATK: %d, DEF: %d",
             opponentCard.getMaxHp(), opponentCard.getAtkLevel(), opponentCard.getDefLevel());
-        
+
         CosmiconLogger.battleStart(playerCard.getName(), opponentCard.getName());
-        
-        state.init(playerCard, opponentCard);
-        
+
+        state.init(playerCard, opponentCard, playerIsAttacker);
+
         CosmiconLogger.debug("Battle state initialized, starting turn processor");
         turnProcessor.startBattle();
     }

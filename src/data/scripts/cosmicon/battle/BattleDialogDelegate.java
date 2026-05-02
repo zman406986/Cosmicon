@@ -15,11 +15,13 @@ public class BattleDialogDelegate implements com.fs.starfarer.api.campaign.Custo
     private final InteractionDialogAPI dialog;
     private final Map<String, MemoryAPI> memoryMap;
     private final Runnable onDismissCallback;
+    private final boolean playerIsAttacker;
 
-    public BattleDialogDelegate(InteractionDialogAPI dialog, Map<String, MemoryAPI> memoryMap, Runnable onDismissCallback) {
+    public BattleDialogDelegate(InteractionDialogAPI dialog, Map<String, MemoryAPI> memoryMap, Runnable onDismissCallback, boolean playerIsAttacker) {
         this.dialog = dialog;
         this.memoryMap = memoryMap;
         this.onDismissCallback = onDismissCallback;
+        this.playerIsAttacker = playerIsAttacker;
 
         this.battleController = new BattleController();
         this.battlePanel = new BattlePanelUI();
@@ -34,7 +36,7 @@ public class BattleDialogDelegate implements com.fs.starfarer.api.campaign.Custo
     @Override
     public void init(CustomPanelAPI panel, DialogCallbacks callbacks) {
         battlePanel.init(panel, callbacks);
-        battleController.initRandomBattle();
+        battleController.initBattleWithSelection(playerIsAttacker);
         battlePanel.updateLabelsFromState();
     }
 
@@ -51,7 +53,7 @@ public class BattleDialogDelegate implements com.fs.starfarer.api.campaign.Custo
     public void reportDismissed(int option) {
         battlePanel.cleanup();
         battleController.cleanup();
-        
+
         if (memoryMap != null) {
             com.fs.starfarer.api.impl.campaign.rulecmd.FireBest.fire(null, dialog, memoryMap, COMPLETION_STR);
         }

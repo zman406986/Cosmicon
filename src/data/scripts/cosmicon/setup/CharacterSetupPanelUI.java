@@ -232,8 +232,8 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             boolean hasBoth = PrismaticDisplayHelper.hasDistinctDefaultFaces(type);
             float entryY = listStartY + titleOffset + i * DICE_ENTRY_HEIGHT;
 
-            float labelX = DICE_LIST_X + (hasBoth ? 45f : 8f);
-            float labelW = DICE_LIST_WIDTH - (hasBoth ? 50f : 16f);
+            float labelX = DICE_LIST_X + 8f;
+            float labelW = DICE_LIST_WIDTH - 16f;
 
             LabelAPI nameLabel = UIComponentFactory.createLabelSmall(panel,
                 PrismaticDisplayHelper.getDiceDisplayName(diceId),
@@ -274,7 +274,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
             float entryY = listStartY + titleOffset + i * DICE_ENTRY_HEIGHT - diceScrollOffset;
 
-            float labelX = DICE_LIST_X + (hasBoth ? 45f : 8f);
+            float labelX = DICE_LIST_X + 8f;
 
             labels.nameLabel().getPosition().inTL(labelX, entryY + 2f);
             labels.nameLabel().setOpacity(labelOpacity(entryY + 2f, 16f, listStartY, listHeight));
@@ -634,7 +634,6 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             }
 
             // Face values text
-            boolean useTrue = isSelected ? selectedUseTrueVersion : !hasBothVersions;
         }
 
         GL11.glDisable(GL11.GL_SCISSOR_TEST);

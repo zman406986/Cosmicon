@@ -70,7 +70,7 @@ public class CharacterCard {
     }
 
     public CharacterCard withPrismaticDice(String diceId, int uses) {
-        Map<String, Integer> newPrismatic = new java.util.HashMap<>(prismaticDiceIds);
+        Map<String, Integer> newPrismatic = new java.util.HashMap<>();
         newPrismatic.put(diceId, uses);
         return new CharacterCard(id, name, maxHp, atkLevel, defLevel, dicePool, passiveDescription, newPrismatic);
     }

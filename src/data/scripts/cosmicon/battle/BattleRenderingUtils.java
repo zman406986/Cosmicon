@@ -51,12 +51,11 @@ public final class BattleRenderingUtils {
     public static final Color COLOR_BG_BOARD = new Color(45, 50, 70);
     public static final Color COLOR_CARD_BG = new Color(60, 65, 85);
     public static final Color COLOR_HP_TEXT = new Color(255, 255, 255);
-    public static final Color COLOR_PASSIVE_BORDER = new Color(80, 85, 100);
     public static final Color COLOR_TEXT = new Color(220, 220, 230);
     public static final Color COLOR_SHADOW = new Color(0, 0, 0, 80);
     public static final float HP_CIRCLE_RADIUS = 19f;
-    public static final Color COLOR_HP_CIRCLE_FG = new Color(220, 30, 30, 220);
-    public static final Color COLOR_HP_CIRCLE_BG = new Color(80, 20, 20, 150);
+    public static final float HP_CIRCLE_INNER_RADIUS = 12f;
+    public static final Color COLOR_HP_CIRCLE_BG = new Color(40, 40, 40, 150);
 
     public static final Color COLOR_ATTACK_SIDE = new Color(255, 120, 120, 40);
     public static final Color COLOR_DEFENSE_SIDE = new Color(120, 180, 255, 40);
@@ -99,56 +98,51 @@ public final class BattleRenderingUtils {
 
     public static void renderHpCircle(float glCenterX, float glCenterY, float radius, float fillFraction, float alphaMult) {
         float clampedFill = Math.max(0f, Math.min(1f, fillFraction));
+        float innerRadius = HP_CIRCLE_INNER_RADIUS;
 
         GLStateUtil.resetBlendState();
 
         float[] bg = ColorHelper.toGLComponents(COLOR_HP_CIRCLE_BG, alphaMult);
         GL11.glColor4f(bg[0], bg[1], bg[2], bg[3]);
-        drawFilledCircle(glCenterX, glCenterY, radius);
+        drawRingArc(glCenterX, glCenterY, radius, innerRadius, 0f, (float) (2 * Math.PI));
 
         if (clampedFill > 0f) {
-            float visibleH = 2f * radius * clampedFill;
-            float bottomY = glCenterY - radius;
-            setupScissor(glCenterX - radius, bottomY, 2f * radius, visibleH);
+            Color hpColor = getHpColor(clampedFill);
+            float[] fg = ColorHelper.toGLComponents(hpColor, alphaMult);
+            GL11.glColor4f(fg[0], fg[1], fg[2], fg[3]);
 
-            int strips = 24;
-            float stripH = visibleH / strips;
-
-            for (int i = 0; i < strips; i++) {
-                float y0 = bottomY + i * stripH;
-                float y1 = y0 + stripH;
-                float midY = (y0 + y1) / 2f;
-                float t = (midY - bottomY) / visibleH;
-                float stripAlpha = 1f - t * 0.8f;
-
-                float dy = midY - glCenterY;
-                if (Math.abs(dy) >= radius) continue;
-                float halfW = (float) Math.sqrt(radius * radius - dy * dy);
-
-                float[] fg = ColorHelper.toGLComponents(COLOR_HP_CIRCLE_FG, alphaMult * stripAlpha);
-                GL11.glColor4f(fg[0], fg[1], fg[2], fg[3]);
-
-                GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
-                GL11.glVertex2f(glCenterX - halfW, y0);
-                GL11.glVertex2f(glCenterX + halfW, y0);
-                GL11.glVertex2f(glCenterX - halfW, y1);
-                GL11.glVertex2f(glCenterX + halfW, y1);
-                GL11.glEnd();
-            }
-
-            disableScissor();
+            float startAngle = (float) (-Math.PI / 2);
+            float sweepAngle = (float) (2 * Math.PI * clampedFill);
+            drawRingArc(glCenterX, glCenterY, radius, innerRadius, startAngle, startAngle + sweepAngle);
         }
 
         GLStateUtil.resetColor();
     }
 
-    private static void drawFilledCircle(float cx, float cy, float radius) {
-        int segments = 24;
-        GL11.glBegin(GL11.GL_TRIANGLE_FAN);
-        GL11.glVertex2f(cx, cy);
+    private static Color getHpColor(float fillFraction) {
+        if (fillFraction > 0.6f) {
+            return new Color(50, 205, 50, 220);
+        } else if (fillFraction > 0.4f) {
+            return new Color(255, 215, 0, 220);
+        } else if (fillFraction > 0.2f) {
+            return new Color(255, 140, 0, 220);
+        } else {
+            return new Color(220, 50, 50, 220);
+        }
+    }
+
+    private static void drawRingArc(float cx, float cy, float outerRadius, float innerRadius, float startAngle, float endAngle) {
+        int segments = 36;
+        float angleStep = (endAngle - startAngle) / segments;
+
+        GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
         for (int i = 0; i <= segments; i++) {
-            double angle = 2.0 * Math.PI * i / segments;
-            GL11.glVertex2f(cx + (float) Math.cos(angle) * radius, cy + (float) Math.sin(angle) * radius);
+            float angle = startAngle + i * angleStep;
+            float cos = (float) Math.cos(angle);
+            float sin = (float) Math.sin(angle);
+
+            GL11.glVertex2f(cx + outerRadius * cos, cy + outerRadius * sin);
+            GL11.glVertex2f(cx + innerRadius * cos, cy + innerRadius * sin);
         }
         GL11.glEnd();
     }

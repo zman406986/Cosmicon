@@ -162,27 +162,31 @@ public class BattleState {
     
     
     public void init(CharacterCard playerCard, CharacterCard opponentCard) {
+        init(playerCard, opponentCard, true);
+    }
+
+    public void init(CharacterCard playerCard, CharacterCard opponentCard, boolean playerIsAttacker) {
         this.playerCard = playerCard;
         this.opponentCard = opponentCard;
         this.playerDicePoolCounts = DicePoolCounts.fromPool(playerCard.getDicePool());
         this.opponentDicePoolCounts = DicePoolCounts.fromPool(opponentCard.getDicePool());
-        resetBattleState(playerCard.getMaxHp(), opponentCard.getMaxHp());
+        resetBattleState(playerCard.getMaxHp(), opponentCard.getMaxHp(), playerIsAttacker);
         playerCumulativeAtkDef = 0;
         opponentCumulativeAtkDef = 0;
         playerCyreneThresholdMet = false;
         opponentCyreneThresholdMet = false;
         prismaticManager.initializeFromCards(playerCard, opponentCard);
-        
+
         CosmiconLogger.debug("BattleState initialized - Player: %s (HP %d), Opponent: %s (HP %d)",
             playerCard.getName(), playerHp, opponentCard.getName(), opponentHp);
-        CosmiconLogger.debug("Initial turn: Turn 1, Player is attacker: %s", playerIsAttacker);
+        CosmiconLogger.debug("Initial turn: Turn 1, Player is attacker: %s", this.playerIsAttacker);
     }
-    
-    private void resetBattleState(int playerMaxHp, int opponentMaxHp) {
+
+    private void resetBattleState(int playerMaxHp, int opponentMaxHp, boolean playerIsAttacker) {
         playerHp = playerMaxHp;
         opponentHp = opponentMaxHp;
         turnNumber = 1;
-        playerIsAttacker = true;
+        this.playerIsAttacker = playerIsAttacker;
         currentPhase = Phase.WAITING_NEXT_TURN;
         winner = null;
         playerTotalDamageTaken = 0;

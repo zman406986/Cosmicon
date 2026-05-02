@@ -11,6 +11,7 @@ import data.scripts.CosmiconMusicPlugin;
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleDialogDelegate;
 import data.scripts.cosmicon.battle.BattleRenderingUtils;
+import data.scripts.cosmicon.battle.CoinFlipPanelUI;
 import data.scripts.cosmicon.setup.CharacterSetupDialogDelegate;
 import data.scripts.cosmicon.setup.CharacterSetupPanelUI;
 import data.scripts.cosmicon.state.CosmiconPlayerState;
@@ -123,15 +124,54 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     }
 
     private void startBattleWithSelection() {
-        BattleDialogDelegate delegate = new BattleDialogDelegate(dialog, memoryMap, this::showMenu);
+        CoinFlipPanelUI coinFlipUI = new CoinFlipPanelUI();
+
+        com.fs.starfarer.api.campaign.CustomVisualDialogDelegate coinDelegate =
+            new com.fs.starfarer.api.campaign.CustomVisualDialogDelegate() {
+                @Override
+                public com.fs.starfarer.api.campaign.CustomUIPanelPlugin getCustomPanelPlugin() {
+                    return coinFlipUI;
+                }
+
+                @Override
+                public void init(com.fs.starfarer.api.ui.CustomPanelAPI panel, DialogCallbacks callbacks) {
+                    coinFlipUI.init(panel, callbacks);
+                }
+
+                @Override
+                public float getNoiseAlpha() {
+                    return 0.2f;
+                }
+
+                @Override
+                public void advance(float amount) {
+                }
+
+                @Override
+                public void reportDismissed(int option) {
+                    boolean playerIsAttacker = coinFlipUI.isPlayerAttacker();
+                    coinFlipUI.cleanup();
+                    showBattleDialog(playerIsAttacker);
+                }
+            };
+
+        dialog.showCustomVisualDialog(
+            BattleRenderingUtils.PANEL_WIDTH,
+            BattleRenderingUtils.PANEL_HEIGHT,
+            coinDelegate
+        );
+
+        setState(State.PLAY);
+    }
+
+    private void showBattleDialog(boolean playerIsAttacker) {
+        BattleDialogDelegate delegate = new BattleDialogDelegate(dialog, memoryMap, this::showMenu, playerIsAttacker);
 
         dialog.showCustomVisualDialog(
             BattleRenderingUtils.PANEL_WIDTH,
             BattleRenderingUtils.PANEL_HEIGHT,
             delegate
         );
-
-        setState(State.PLAY);
     }
 
     private void showHelp() {
