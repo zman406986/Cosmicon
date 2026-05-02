@@ -809,6 +809,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             }
 
             renderDiceSelectionHighlights(alphaMult);
+            PassiveIndicationRenderer.renderIndications(battleState, diceRollManager, alphaMult);
             renderOpponentPrismaticButton(alphaMult);
             renderPrismaticButton(alphaMult);
 

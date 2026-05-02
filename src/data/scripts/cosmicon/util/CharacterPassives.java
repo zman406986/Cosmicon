@@ -7,6 +7,7 @@ import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.util.PassiveResults.EndOfTurnPassiveResult;
 import data.scripts.cosmicon.util.PassiveResults.PassiveResult;
 import data.scripts.cosmicon.util.PassiveResults.PostDamageResult;
+import java.util.ArrayList;
 import java.util.List;
 
 import static data.scripts.cosmicon.util.CharacterIds.*;
@@ -39,6 +40,37 @@ public class CharacterPassives {
             case THE_HERTA, CYRENE, CASTORICE, YAO_GUANG -> {}
             case SPARXIE -> evaluateSparxie(result, diceValues);
         }
+    }
+
+    public static boolean wouldDiceTriggerPassive(String characterId, int diceValue, boolean isPrismatic,
+                                                  List<Integer> currentlySelectedValues, boolean isAttacking,
+                                                  int currentHp, int maxHp, int currentToughnessLayers) {
+        if (!isAttacking) {
+            if (PHAINON.equals(characterId)) {
+                List<Integer> augmented = new ArrayList<>(currentlySelectedValues);
+                augmented.add(diceValue);
+                return allSame(augmented);
+            }
+            return false;
+        }
+
+        List<Integer> augmented = new ArrayList<>(currentlySelectedValues);
+        augmented.add(diceValue);
+
+        return switch (characterId) {
+            case ACHERON -> allDiceEqualFour(augmented);
+            case FIREFLY -> hasTwoPairs(augmented) || (maxHp > 0 && currentHp == maxHp);
+            case ROBIN -> allEven(augmented);
+            case AVENTURINE -> diceValue % 2 != 0;
+            case KAFKA -> countDistinctValues(augmented) > countDistinctValues(currentlySelectedValues);
+            case MARCH_7TH -> countPairs(augmented) > countPairs(currentlySelectedValues);
+            case HYACINE -> allDiceEqualSix(augmented);
+            case DAN_HENG -> true;
+            case PHAINON -> true;
+            case SPARXIE -> hasIdenticalNumbers(augmented);
+            case THE_HERTA, CYRENE, CASTORICE, YAO_GUANG -> false;
+            default -> false;
+        };
     }
 
     private static void evaluateAventurine(PassiveResult result, List<Integer> values, boolean isAttacking, int currentToughnessLayers) {
