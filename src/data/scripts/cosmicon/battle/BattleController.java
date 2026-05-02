@@ -1,8 +1,12 @@
 package data.scripts.cosmicon.battle;
 
+import java.util.Map;
+
 import data.scripts.cosmicon.ai.DiceProbabilityCalculator;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
+import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.state.CosmiconPlayerState;
+import data.scripts.cosmicon.state.CosmiconStats;
 import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class BattleController implements BattleState.DamageAnimationCallback {
@@ -42,21 +46,43 @@ public class BattleController implements BattleState.DamageAnimationCallback {
         CosmiconLogger.info("Initializing battle with player selection");
 
         CharacterCard playerCard = CosmiconPlayerState.getConfiguredPlayerCard();
-        CharacterCard opponentCard = CharacterRegistry.getRandomOpponent();
+
+        CharacterCard opponentCard;
+        if (CosmiconEventState.isBarEvent()) {
+            opponentCard = CharacterRegistry.getCharacterById(CosmiconEventState.getOpponentCharacter());
+        } else {
+            opponentCard = CharacterRegistry.getRandomOpponent();
+            CosmiconEventState.setOpponentCharacter(opponentCard.getId());
+        }
 
         if (playerCard == null || opponentCard == null) {
             CosmiconLogger.error("Failed to load character cards for battle");
             throw new IllegalStateException("Failed to load character cards");
         }
 
-        String savedPrismaticId = CosmiconPlayerState.loadPrismaticDice();
-        String defaultPrismaticId = CosmiconPlayerState.getDefaultPrismaticForCharacter(playerCard.getId());
+        boolean isTutorial = CosmiconEventState.isTutorialMode() || CosmiconStats.isInTutorialMode();
 
-        if (savedPrismaticId != null && !savedPrismaticId.isEmpty()
-            && !savedPrismaticId.equals(defaultPrismaticId)) {
-            int uses = playerCard.getPrismaticDiceIds().getOrDefault(savedPrismaticId, 2);
-            playerCard = playerCard.withPrismaticDice(savedPrismaticId, uses);
-            CosmiconLogger.info("Applied custom prismatic dice: %s", savedPrismaticId);
+        if (!isTutorial) {
+            String savedPrismaticId = CosmiconPlayerState.loadPrismaticDice();
+            String defaultPrismaticId = CosmiconPlayerState.getDefaultPrismaticForCharacter(playerCard.getId());
+
+            if (savedPrismaticId != null && !savedPrismaticId.isEmpty()
+                && !savedPrismaticId.equals(defaultPrismaticId)) {
+                int uses = playerCard.getPrismaticDiceIds().getOrDefault(savedPrismaticId, 2);
+                playerCard = playerCard.withPrismaticDice(savedPrismaticId, uses);
+                CosmiconLogger.info("Applied custom prismatic dice: %s", savedPrismaticId);
+            } else if (defaultPrismaticId != null) {
+                int uses = playerCard.getPrismaticDiceIds().getOrDefault(defaultPrismaticId, 2);
+                playerCard = playerCard.withPrismaticDice(defaultPrismaticId, uses);
+            }
+
+            Map<String, Integer> oppPrismatic = opponentCard.getPrismaticDiceIds();
+            if (!oppPrismatic.isEmpty()) {
+                String oppPrismaticId = oppPrismatic.keySet().iterator().next();
+                CosmiconEventState.setOpponentPrismatic(oppPrismaticId);
+            }
+        } else {
+            CosmiconLogger.info("Tutorial mode: prismatic dice disabled");
         }
 
         CosmiconLogger.info("Selected characters - Player: %s, Opponent: %s",

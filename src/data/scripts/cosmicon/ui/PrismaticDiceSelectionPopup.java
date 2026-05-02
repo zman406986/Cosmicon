@@ -26,6 +26,7 @@ import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticEffect;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
+import data.scripts.cosmicon.state.CosmiconStats;
 import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.PopupRenderer;
 import data.scripts.cosmicon.util.PrismaticDisplayHelper;
@@ -150,6 +151,8 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
             String diceId = entry.getKey();
             PrismaticDiceType type = PrismaticDiceRegistry.get(diceId);
             if (type == null) continue;
+
+            if (!CosmiconStats.isPrismaticDiceUnlocked(diceId)) continue;
 
             int uses = manager != null ? manager.getUsesByType(type, true) : entry.getValue();
             boolean isAvailable = type.isAvailable(context);

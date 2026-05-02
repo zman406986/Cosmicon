@@ -6,15 +6,22 @@ import java.util.List;
 
 import org.lwjgl.opengl.GL11;
 
+import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.BaseCustomUIPanelPlugin;
 import com.fs.starfarer.api.campaign.CustomVisualDialogDelegate.DialogCallbacks;
 import com.fs.starfarer.api.graphics.SpriteAPI;
+import com.fs.starfarer.api.ui.Alignment;
 import com.fs.starfarer.api.ui.CustomPanelAPI;
+import com.fs.starfarer.api.ui.Fonts;
+import com.fs.starfarer.api.ui.LabelAPI;
 import com.fs.starfarer.api.ui.PositionAPI;
+import com.fs.starfarer.api.ui.UIComponentAPI;
 
 import data.scripts.CosmiconConfig;
+import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleState.BattleEventListener;
 import data.scripts.cosmicon.battle.BattleState.Phase;
+import data.scripts.cosmicon.state.CosmiconStats;
 import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.UnifiedCoord;
 import data.scripts.cosmicon.util.CosmiconLogger;
@@ -31,6 +38,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     private BattleController battleController;
     private BattleState battleState;
     private DiceRollManager diceRollManager;
+
+    private LabelAPI tutorialLabel;
 
     private BattleUILabels labels;
     private BattleUIButtons buttons;
@@ -136,6 +145,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         battleController = null;
         opponentAutoRollDelay = 0f;
         preClashTimer = 0f;
+        tutorialLabel = null;
     }
 
     public void init(CustomPanelAPI panel, DialogCallbacks callbacks) {
@@ -168,6 +178,17 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             inputHandler, diceZoneCenterX, diceZoneCenterY);
         inputHandler.init(battleController, battleState, diceRollManager, labels, buttons,
             diceZoneCenterX, diceZoneCenterY);
+
+        if (CosmiconStats.isInTutorialMode()) {
+            tutorialLabel = Global.getSettings().createLabel(
+                Strings.format("tutorial.games_remaining", CosmiconStats.getRemainingTutorialGames()),
+                Fonts.INSIGNIA_LARGE);
+            tutorialLabel.setAlignment(Alignment.MID);
+            tutorialLabel.setColor(new Color(255, 200, 80, 255));
+            float labelW = 400f;
+            float labelX = (BattleRenderingUtils.PANEL_WIDTH - labelW) / 2f;
+            panel.addComponent((UIComponentAPI) tutorialLabel).setSize(labelW, 24f).inTL(labelX, 10f);
+        }
 
         if (battleState != null) {
             labels.updateLabelsFromState();

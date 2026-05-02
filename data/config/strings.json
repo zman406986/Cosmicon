@@ -443,5 +443,26 @@
         "decision_selected": "Selected: {0}",
         "decision_passive": " (+{0} passive)",
         "decision_reroll": ", Reroll: {0} dice"
+    },
+    "bar_event": {
+        "tutorial_prompt": "A cloaked figure approaches you in the bar, dice clicking in their palms. 'Care for a game, rookie? I'll go easy on you.'\n\nTutorial games remaining: {0}",
+        "standard_prompt": "A mysterious figure at the back of the bar beckons you over. The Cosmicon board is already set. 'The stakes are high...'"
+    },
+    "victory": {
+        "absolute_six_unlocked": "You have completed your training! The Absolute Six prismatic dice has been unlocked."
+    },
+    "tutorial": {
+        "no_prismatic_allowed": "Tutorial mode: Prismatic dice are disabled for this game.",
+        "games_remaining": "Tutorial mode - {0} games remaining"
+    },
+    "gallery": {
+        "no_prismatic_unlocked": "No prismatic dice unlocked. Complete 5 tutorial games to unlock Absolute Six."
+    },
+    "reward": {
+        "unlock_character": "Unlock {0}",
+        "unlock_prismatic": "Unlock {0}",
+        "take_credits": "Take credits instead",
+        "character_unlocked": "Character unlocked!",
+        "prismatic_unlocked": "Prismatic dice unlocked!"
     }
 }

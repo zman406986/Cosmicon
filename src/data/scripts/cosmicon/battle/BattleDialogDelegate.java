@@ -15,12 +15,23 @@ public class BattleDialogDelegate implements com.fs.starfarer.api.campaign.Custo
     private final InteractionDialogAPI dialog;
     private final Map<String, MemoryAPI> memoryMap;
     private final Runnable onDismissCallback;
+    private final Runnable onVictoryCallback;
+    private final Runnable onDefeatCallback;
     private final boolean playerIsAttacker;
 
-    public BattleDialogDelegate(InteractionDialogAPI dialog, Map<String, MemoryAPI> memoryMap, Runnable onDismissCallback, boolean playerIsAttacker) {
+    public BattleDialogDelegate(InteractionDialogAPI dialog, Map<String, MemoryAPI> memoryMap,
+            Runnable onDismissCallback, boolean playerIsAttacker) {
+        this(dialog, memoryMap, onDismissCallback, null, null, playerIsAttacker);
+    }
+
+    public BattleDialogDelegate(InteractionDialogAPI dialog, Map<String, MemoryAPI> memoryMap,
+            Runnable onDismissCallback, Runnable onVictoryCallback, Runnable onDefeatCallback,
+            boolean playerIsAttacker) {
         this.dialog = dialog;
         this.memoryMap = memoryMap;
         this.onDismissCallback = onDismissCallback;
+        this.onVictoryCallback = onVictoryCallback;
+        this.onDefeatCallback = onDefeatCallback;
         this.playerIsAttacker = playerIsAttacker;
 
         this.battleController = new BattleController();
@@ -52,11 +63,24 @@ public class BattleDialogDelegate implements com.fs.starfarer.api.campaign.Custo
     @Override
     public void reportDismissed(int option) {
         battlePanel.cleanup();
+
+        String winner = battleController.getState().getWinner();
+        boolean playerWon = "player".equals(winner);
+
         battleController.cleanup();
 
         if (memoryMap != null) {
             com.fs.starfarer.api.impl.campaign.rulecmd.FireBest.fire(null, dialog, memoryMap, COMPLETION_STR);
         }
-        onDismissCallback.run();
+
+        if (playerWon && onVictoryCallback != null) {
+            onVictoryCallback.run();
+        } else if (!playerWon && onDefeatCallback != null) {
+            onDefeatCallback.run();
+        }
+
+        if (onDismissCallback != null) {
+            onDismissCallback.run();
+        }
     }
 }

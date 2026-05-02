@@ -14,7 +14,9 @@ import data.scripts.cosmicon.battle.BattleRenderingUtils;
 import data.scripts.cosmicon.battle.CoinFlipPanelUI;
 import data.scripts.cosmicon.setup.CharacterSetupDialogDelegate;
 import data.scripts.cosmicon.setup.CharacterSetupPanelUI;
+import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.state.CosmiconPlayerState;
+import data.scripts.cosmicon.state.CosmiconStats;
 
 import java.awt.Color;
 
@@ -27,10 +29,14 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
     private State currentState = State.MAIN_MENU;
 
+    private String pendingRewardCharId;
+    private String pendingRewardPrismaticId;
+
     public enum State {
         MAIN_MENU,
         PLAY,
-        HELP
+        HELP,
+        REWARD_SELECTION
     }
 
     public static void startInteraction(InteractionDialogAPI dialog) {
@@ -64,6 +70,12 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         textPanel.addPara(Strings.get("menu.welcome"), Color.CYAN);
 
+        if (CosmiconStats.isInTutorialMode()) {
+            textPanel.addPara(Strings.format("tutorial.games_remaining",
+                CosmiconStats.getRemainingTutorialGames()));
+            options.addOption("[Debug] Skip Tutorial", "debug_skip_tutorial");
+        }
+
         options.addOption(Strings.get("menu.start_game"), "start_game");
         options.addOption(Strings.get("menu.character_setup"), "character_setup");
         options.addOption(Strings.get("menu.help"), "help");
@@ -80,15 +92,17 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         switch (currentState) {
             case MAIN_MENU:
-                switch (data)
-                {
+                switch (data) {
                     case "start_game" -> startBattleWithSelection();
                     case "character_setup" -> showCharacterSetup();
                     case "help" -> showHelp();
-                    case "leave" ->
-                    {
+                    case "leave" -> {
                         CosmiconMusicPlugin.stopMusic();
                         dialog.dismiss();
+                    }
+                    case "debug_skip_tutorial" -> {
+                        CosmiconStats.forceCompleteTutorial();
+                        showMenu();
                     }
                 }
                 break;
@@ -97,6 +111,10 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 if ("back".equals(data)) {
                     showMenu();
                 }
+                break;
+
+            case REWARD_SELECTION:
+                handleRewardSelection(data);
                 break;
 
             default:
@@ -165,7 +183,11 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     }
 
     private void showBattleDialog(boolean playerIsAttacker) {
-        BattleDialogDelegate delegate = new BattleDialogDelegate(dialog, memoryMap, this::showMenu, playerIsAttacker);
+        BattleDialogDelegate delegate = new BattleDialogDelegate(dialog, memoryMap,
+            null,
+            this::handleVictory,
+            this::handleDefeat,
+            playerIsAttacker);
 
         dialog.showCustomVisualDialog(
             BattleRenderingUtils.PANEL_WIDTH,
@@ -185,6 +207,104 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         textPanel.addPara(Strings.get("help.rule_5"));
         options.addOption(Strings.get("help.back"), "back");
         setState(State.HELP);
+    }
+
+    private void handleVictory() {
+        CosmiconStats.incrementGamesPlayed();
+        CosmiconStats.incrementGamesWon();
+
+        boolean tutorialJustCompleted = CosmiconStats.getGamesPlayed() == 5;
+
+        pendingRewardCharId = CosmiconEventState.getOpponentCharacter();
+        pendingRewardPrismaticId = CosmiconEventState.getOpponentPrismatic();
+        CosmiconEventState.clearAll();
+
+        if (tutorialJustCompleted) {
+            textPanel.addPara(Strings.get("victory.absolute_six_unlocked"));
+        }
+
+        if (CosmiconStats.isInTutorialMode()) {
+            showTutorialReward();
+        } else {
+            showVictoryRewardMenu();
+        }
+    }
+
+    private void handleDefeat() {
+        CosmiconStats.incrementGamesPlayed();
+
+        boolean tutorialJustCompleted = CosmiconStats.getGamesPlayed() == 5;
+
+        if (tutorialJustCompleted) {
+            textPanel.addPara(Strings.get("victory.absolute_six_unlocked"));
+        }
+
+        showDefeatMenu();
+        CosmiconEventState.clearAll();
+    }
+
+    private void showTutorialReward() {
+        options.clearOptions();
+        textPanel.addPara(Strings.get("battle.you_won"));
+        int remaining = CosmiconStats.getRemainingTutorialGames();
+        if (remaining > 0) {
+            textPanel.addPara(Strings.format("tutorial.games_remaining", remaining));
+        }
+        options.addOption(Strings.get("menu.back"), "back");
+        setState(State.REWARD_SELECTION);
+    }
+
+    private void showVictoryRewardMenu() {
+        options.clearOptions();
+        textPanel.addPara(Strings.get("battle.you_won"));
+
+        if (pendingRewardCharId != null && !CosmiconStats.isCharacterUnlocked(pendingRewardCharId)) {
+            options.addOption(Strings.format("reward.unlock_character",
+                data.scripts.cosmicon.battle.CharacterRegistry.getCharacterById(pendingRewardCharId).getName()),
+                "unlock_character");
+        }
+
+        if (pendingRewardPrismaticId != null && !CosmiconStats.isPrismaticDiceUnlocked(pendingRewardPrismaticId)) {
+            options.addOption(Strings.format("reward.unlock_prismatic",
+                data.scripts.cosmicon.util.PrismaticDisplayHelper.getDiceDisplayName(pendingRewardPrismaticId)),
+                "unlock_prismatic");
+        }
+
+        options.addOption(Strings.get("reward.take_credits"), "take_credits");
+        setState(State.REWARD_SELECTION);
+    }
+
+    private void showDefeatMenu() {
+        options.clearOptions();
+        textPanel.addPara(Strings.get("battle.you_lost"));
+        int remaining = CosmiconStats.getRemainingTutorialGames();
+        if (CosmiconStats.isInTutorialMode() && remaining > 0) {
+            textPanel.addPara(Strings.format("tutorial.games_remaining", remaining));
+        }
+        options.addOption(Strings.get("menu.back"), "back");
+        setState(State.REWARD_SELECTION);
+    }
+
+    private void handleRewardSelection(String data) {
+        switch (data) {
+            case "unlock_character" -> {
+                if (pendingRewardCharId != null) {
+                    CosmiconStats.unlockCharacter(pendingRewardCharId);
+                    textPanel.addPara(Strings.get("reward.character_unlocked"));
+                }
+                showMenu();
+            }
+            case "unlock_prismatic" -> {
+                if (pendingRewardPrismaticId != null) {
+                    CosmiconStats.unlockPrismaticDice(pendingRewardPrismaticId);
+                    textPanel.addPara(Strings.get("reward.prismatic_unlocked"));
+                }
+                showMenu();
+            }
+            case "take_credits" -> showMenu();
+            case "back" -> showMenu();
+            default -> showMenu();
+        }
     }
 
     @Override

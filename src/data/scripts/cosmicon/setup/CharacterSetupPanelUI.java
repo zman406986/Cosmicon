@@ -35,6 +35,7 @@ import data.scripts.cosmicon.util.UnifiedCoord;
 import data.scripts.cosmicon.util.GLStateUtil;
 import data.scripts.cosmicon.util.UIComponentFactory;
 import data.scripts.cosmicon.state.CosmiconPlayerState;
+import data.scripts.cosmicon.state.CosmiconStats;
 
 public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements ActionListenerDelegate {
 
@@ -135,9 +136,24 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
     public CharacterSetupPanelUI(CharacterSetupCallback callback) {
         this.callback = callback;
-        this.characters = CharacterRegistry.getAllCards();
 
-        List<String> allDiceIds = new ArrayList<>(PrismaticDiceRegistry.getAll().keySet());
+        List<CharacterCard> allCards = CharacterRegistry.getAllCards();
+        this.characters = new ArrayList<>();
+        for (CharacterCard card : allCards) {
+            if (CosmiconStats.isCharacterUnlocked(card.getId())) {
+                this.characters.add(card);
+            }
+        }
+        if (this.characters.isEmpty()) {
+            this.characters.addAll(allCards);
+        }
+
+        List<String> allDiceIds = new ArrayList<>();
+        for (Map.Entry<String, PrismaticDiceType> entry : PrismaticDiceRegistry.getAll().entrySet()) {
+            if (CosmiconStats.isPrismaticDiceUnlocked(entry.getKey())) {
+                allDiceIds.add(entry.getKey());
+            }
+        }
         if (!allDiceIds.isEmpty()) {
             selectedPrismaticDiceId = allDiceIds.get(0);
             selectedDiceEntryIndex = 0;
@@ -221,7 +237,12 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         diceEntryLabels.clear();
         Map<String, PrismaticDiceType> allDice = PrismaticDiceRegistry.getAll();
-        List<PrismaticDiceType> diceList = new ArrayList<>(allDice.values());
+        List<PrismaticDiceType> diceList = new ArrayList<>();
+        for (PrismaticDiceType type : allDice.values()) {
+            if (CosmiconStats.isPrismaticDiceUnlocked(type.getId())) {
+                diceList.add(type);
+            }
+        }
 
         float listStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 15f;
         float titleOffset = 20f;
@@ -584,7 +605,12 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         versionClickRegions.clear();
 
         Map<String, PrismaticDiceType> allDice = PrismaticDiceRegistry.getAll();
-        List<PrismaticDiceType> diceList = new ArrayList<>(allDice.values());
+        List<PrismaticDiceType> diceList = new ArrayList<>();
+        for (PrismaticDiceType type : allDice.values()) {
+            if (CosmiconStats.isPrismaticDiceUnlocked(type.getId())) {
+                diceList.add(type);
+            }
+        }
 
         float titleOffset = 20f;
         float totalContentHeight = titleOffset + diceList.size() * DICE_ENTRY_HEIGHT;
@@ -885,9 +911,18 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         updateLabels();
     }
 
+    private List<PrismaticDiceType> getFilteredDiceList() {
+        List<PrismaticDiceType> filtered = new ArrayList<>();
+        for (PrismaticDiceType type : PrismaticDiceRegistry.getAll().values()) {
+            if (CosmiconStats.isPrismaticDiceUnlocked(type.getId())) {
+                filtered.add(type);
+            }
+        }
+        return filtered;
+    }
+
     private void handleDiceSelection(int entryIndex) {
-        Map<String, PrismaticDiceType> allDice = PrismaticDiceRegistry.getAll();
-        List<PrismaticDiceType> diceList = new ArrayList<>(allDice.values());
+        List<PrismaticDiceType> diceList = getFilteredDiceList();
         if (entryIndex < 0 || entryIndex >= diceList.size()) return;
 
         selectedDiceEntryIndex = entryIndex;
@@ -901,8 +936,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     }
 
     private void handleVersionToggle(int entryIndex, boolean useTrue) {
-        Map<String, PrismaticDiceType> allDice = PrismaticDiceRegistry.getAll();
-        List<PrismaticDiceType> diceList = new ArrayList<>(allDice.values());
+        List<PrismaticDiceType> diceList = getFilteredDiceList();
         if (entryIndex < 0 || entryIndex >= diceList.size()) return;
 
         selectedDiceEntryIndex = entryIndex;
@@ -946,8 +980,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             }
         }
 
-        Map<String, PrismaticDiceType> allDice = PrismaticDiceRegistry.getAll();
-        List<PrismaticDiceType> diceList = new ArrayList<>(allDice.values());
+        List<PrismaticDiceType> diceList = getFilteredDiceList();
         for (int i = 0; i < diceList.size(); i++) {
             if (diceList.get(i).getId().equals(diceId)) {
                 selectedDiceEntryIndex = i;
@@ -966,8 +999,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             String defaultDice = CosmiconPlayerState.getDefaultPrismaticForCharacter(firstCard.getId());
             if (defaultDice != null) {
                 selectedPrismaticDiceId = defaultDice;
-                Map<String, PrismaticDiceType> allDice = PrismaticDiceRegistry.getAll();
-                List<PrismaticDiceType> diceList = new ArrayList<>(allDice.values());
+                List<PrismaticDiceType> diceList = getFilteredDiceList();
                 for (int i = 0; i < diceList.size(); i++) {
                     if (diceList.get(i).getId().equals(defaultDice)) {
                         selectedDiceEntryIndex = i;
