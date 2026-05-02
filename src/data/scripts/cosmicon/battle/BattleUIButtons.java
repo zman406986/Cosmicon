@@ -16,7 +16,6 @@ import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.ui.PrismaticDiceSelectionPopup;
-import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.util.UIComponentFactory;
 
 public class BattleUIButtons implements ActionListenerDelegate {
@@ -37,6 +36,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
 
     private ButtonAPI rerollButton;
     private ButtonAPI confirmButton;
+    private ButtonAPI weatherButton;
     private boolean buttonsCreated = false;
 
     private PrismaticDiceSelectionPopup prismaticPopup;
@@ -144,6 +144,8 @@ public class BattleUIButtons implements ActionListenerDelegate {
         playerPrismaticBtnX = BattleRenderingUtils.MARGIN + 60f;
         playerPrismaticBtnY = BattleRenderingUtils.PANEL_HEIGHT - 100f;
 
+        createWeatherButton();
+
         createStatusTooltips();
 
         buttonsCreated = true;
@@ -219,6 +221,67 @@ public class BattleUIButtons implements ActionListenerDelegate {
         }
     }
 
+    private void createWeatherButton() {
+        float btnWidth = 170f;
+        float btnHeight = 22f;
+        float playerCardUiX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
+        float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        float weatherX = playerCardUiX + 5f;
+        float weatherY = playerCardY - PASSIVE_BTN_HEIGHT - btnHeight - 14f;
+
+        TooltipMakerAPI weatherTp = UIComponentFactory.createTooltipForButtons(panel, this,
+            btnWidth, btnHeight, weatherX, weatherY);
+
+        weatherButton = weatherTp.addButton(Strings.get("battle.weather_none"), "weather_info",
+            btnWidth, btnHeight, 0f);
+        weatherButton.setQuickMode(true);
+
+        weatherTp.addTooltipToPrevious(new TooltipCreator() {
+            @Override
+            public boolean isTooltipExpandable(Object tooltipParam) { return false; }
+            @Override
+            public float getTooltipWidth(Object tooltipParam) { return 350f; }
+            @Override
+            public void createTooltip(TooltipMakerAPI tooltip, boolean expanded, Object tooltipParam) {
+                if (battleState != null && battleState.getWeatherController() != null) {
+                    WeatherType weather = battleState.getWeatherController().getCurrentWeather();
+                    if (weather != null) {
+                        String descKey = "weather." + weather.name().toLowerCase() + "_desc";
+                        try {
+                            tooltip.addPara(Strings.get(descKey), 5f);
+                        } catch (Exception e) {
+                            tooltip.addPara(weather.getDescription(), 5f);
+                        }
+                        tooltip.addPara(Strings.format("battle.weather_category",
+                            Strings.get("weather_category." + weather.getCategory().name().toLowerCase())), 3f);
+                    } else {
+                        tooltip.addPara(Strings.get("battle.weather_none_desc"), 5f);
+                    }
+                }
+            }
+        }, TooltipLocation.LEFT, false);
+
+        updateWeatherButton();
+    }
+
+    public void updateWeatherButton() {
+        if (weatherButton == null || battleState == null) return;
+        WeatherController wc = battleState.getWeatherController();
+        if (wc == null) {
+            weatherButton.setText(Strings.get("battle.weather_none"));
+            weatherButton.setEnabled(false);
+            return;
+        }
+        WeatherType weather = wc.getCurrentWeather();
+        if (weather == null) {
+            weatherButton.setText(Strings.get("battle.weather_none"));
+            weatherButton.setEnabled(false);
+        } else {
+            weatherButton.setText(Strings.get("weather." + weather.name().toLowerCase()));
+            weatherButton.setEnabled(true);
+        }
+    }
+
     private String getEffectDescriptionAtIndex(int targetIndex, boolean forPlayer) {
         if (battleState == null) return null;
         StatusEffectProcessor effects = battleState.getEffects(forPlayer);
@@ -246,31 +309,26 @@ public class BattleUIButtons implements ActionListenerDelegate {
 
             switch (action) {
                 case ACTION_REROLL -> {
-                    CosmiconLogger.info("Player clicked Reroll button");
                     if (battleController != null) {
                         battleController.onPlayerReroll();
                     }
                 }
                 case ACTION_END_TURN -> {
-                    CosmiconLogger.info("Player clicked Confirm button");
                     if (battleController != null) {
                         battleController.onPlayerConfirmSelection();
                     }
                 }
                 case ACTION_CONTINUE -> {
-                    CosmiconLogger.info("Player clicked Continue button");
                     if (battleController != null) {
                         battleController.onContinueToNextTurn();
                     }
                 }
                 case "close" -> {
-                    CosmiconLogger.info("Player clicked Close button - dismissing dialog");
                     if (callbacks != null) {
                         callbacks.dismissDialog();
                     }
                 }
                 case ACTION_EXIT -> {
-                    CosmiconLogger.info("Player clicked Exit button - dismissing dialog");
                     if (callbacks != null) {
                         callbacks.dismissDialog();
                     }
@@ -319,7 +377,6 @@ public class BattleUIButtons implements ActionListenerDelegate {
         prismaticPopup = new PrismaticDiceSelectionPopup(battleState, new PrismaticDiceSelectionPopup.PrismaticDiceSelectionCallback() {
             @Override
             public void onPrismaticDiceSelected(PrismaticDiceType type, PrismaticDiceInstance instance) {
-                CosmiconLogger.info("Player selected Prismatic dice: %s, face: %d", type.getId(), instance.rolledFace);
                 battleState.addPrismaticDiceToPool(instance, true);
                 int animatorIndex = diceRollManager.getAnimatorCount();
                 labels.setPendingPrismatic(instance, animatorIndex);
@@ -331,7 +388,6 @@ public class BattleUIButtons implements ActionListenerDelegate {
 
             @Override
             public void onPopupClosed() {
-                CosmiconLogger.info("Prismatic popup closed without selection");
                 closePrismaticPopup();
             }
         });
@@ -365,6 +421,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
         battleState = null;
         diceRollManager = null;
         labels = null;
+        weatherButton = null;
         buttonsCreated = false;
     }
 

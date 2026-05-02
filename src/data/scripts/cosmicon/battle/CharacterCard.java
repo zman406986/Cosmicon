@@ -15,10 +15,17 @@ public class CharacterCard {
     private final List<DiceType> dicePool;
     private final String passiveDescription;
     private final Map<String, Integer> prismaticDiceIds;
+    private final boolean useTruePrismatic;
 
-    public CharacterCard(String id, String name, int maxHp, int atkLevel, int defLevel, 
+    public CharacterCard(String id, String name, int maxHp, int atkLevel, int defLevel,
                          List<DiceType> dicePool, String passiveDescription,
                          Map<String, Integer> prismaticDiceIds) {
+        this(id, name, maxHp, atkLevel, defLevel, dicePool, passiveDescription, prismaticDiceIds, false);
+    }
+
+    public CharacterCard(String id, String name, int maxHp, int atkLevel, int defLevel,
+                         List<DiceType> dicePool, String passiveDescription,
+                         Map<String, Integer> prismaticDiceIds, boolean useTruePrismatic) {
         this.id = id;
         this.name = name;
         this.maxHp = maxHp;
@@ -27,6 +34,7 @@ public class CharacterCard {
         this.dicePool = new ArrayList<>(dicePool);
         this.passiveDescription = passiveDescription;
         this.prismaticDiceIds = prismaticDiceIds != null ? prismaticDiceIds : Collections.emptyMap();
+        this.useTruePrismatic = useTruePrismatic;
     }
 
     public String getId() {
@@ -69,13 +77,21 @@ public class CharacterCard {
         return Collections.unmodifiableMap(prismaticDiceIds);
     }
 
-    public CharacterCard withPrismaticDice(String diceId, int uses) {
+    public boolean isUseTruePrismatic() {
+        return useTruePrismatic;
+    }
+
+    public CharacterCard withPrismaticDice(String diceId, int uses, boolean useTruePrismatic) {
         Map<String, Integer> newPrismatic = new java.util.HashMap<>();
         newPrismatic.put(diceId, uses);
-        return new CharacterCard(id, name, maxHp, atkLevel, defLevel, dicePool, passiveDescription, newPrismatic);
+        return new CharacterCard(id, name, maxHp, atkLevel, defLevel, dicePool, passiveDescription, newPrismatic, useTruePrismatic);
+    }
+
+    public CharacterCard withPrismaticDice(String diceId, int uses) {
+        return withPrismaticDice(diceId, uses, useTruePrismatic);
     }
 
     public CharacterCard copy() {
-        return new CharacterCard(id, name, maxHp, atkLevel, defLevel, dicePool, passiveDescription, prismaticDiceIds);
+        return new CharacterCard(id, name, maxHp, atkLevel, defLevel, dicePool, passiveDescription, prismaticDiceIds, useTruePrismatic);
     }
 }

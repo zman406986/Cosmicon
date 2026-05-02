@@ -260,7 +260,8 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
         showingConfirmation = true;
 
         Random random = new Random();
-        rolledInstance = PrismaticDiceInstance.roll(type, false, random);
+        boolean useTrueVersion = battleState.getPlayerCard() != null && battleState.getPlayerCard().isUseTruePrismatic();
+        rolledInstance = PrismaticDiceInstance.roll(type, useTrueVersion, random);
 
         String diceName = PrismaticDisplayHelper.getDiceDisplayName(type);
         confirmTitleLabel.setText(Strings.format("prismatic.popup.about_to_roll", diceName));

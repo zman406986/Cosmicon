@@ -35,7 +35,10 @@
         "prismatic_click_hint": "点击图标使用",
         "selected_values": "已选择：{0}",
         "no_selection": "选择骰子...",
-        "prismatic_effect_none": ""
+        "prismatic_effect_none": "",
+        "weather_none": "无天气",
+        "weather_none_desc": "暂无天气激活。天气将从第2回合开始出现。",
+        "weather_category": "类别：{0}"
     },
     "coinflip": {
         "flipping": "投掷硬币决定先手...",

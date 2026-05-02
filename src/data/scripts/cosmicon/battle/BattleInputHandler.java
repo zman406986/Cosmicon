@@ -7,7 +7,6 @@ import org.lwjgl.input.Mouse;
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleState.Phase;
 import data.scripts.cosmicon.util.UnifiedCoord;
-import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class BattleInputHandler {
     private static final float DICE_SPACING = 90f;
@@ -84,12 +83,7 @@ public class BattleInputHandler {
         int currentButton = Mouse.isButtonDown(0) ? 1 : 0;
 
         if (currentButton == 1 && lastMouseButtonState == 0) {
-            CosmiconLogger.debug("[CLICK] Mouse clicked - Phase: %s, panelX=%.0f, panelY=%.0f",
-                battleState.getCurrentPhase().name(), panelX, panelY);
-
             UnifiedCoord mousePos = UnifiedCoord.fromMouse();
-            float panelUiX = mousePos.uiX();
-            float panelUiY = mousePos.uiY();
 
             if (!buttons.isPrismaticPopupActive()) {
                 boolean playerShouldSelect = (battleState.isAttacker(true) &&
@@ -105,7 +99,6 @@ public class BattleInputHandler {
                         PRISMATIC_BTN_SIZE, PRISMATIC_BTN_SIZE);
 
                     if (insidePrismatic) {
-                        CosmiconLogger.info("Player clicked Prismatic button via processInput");
                         buttons.showPrismaticSelectionPopup();
                         lastMouseButtonState = currentButton;
                         UnifiedCoord.clearCurrent();
@@ -122,15 +115,10 @@ public class BattleInputHandler {
 
             if (battleState.getCurrentPhase() == Phase.ROLLING) {
                 if (waitingForClickToRoll && diceRollManager.isWaitingForRollTrigger()) {
-                    CosmiconLogger.info("Player clicked to trigger dice roll");
                     diceRollManager.triggerRollFromStationary();
                     waitingForClickToRoll = false;
                     labels.hideClickHint();
                 } else if (diceRollManager.hasAnimators() || diceRollManager.isWaitingForRollTrigger()) {
-                    CosmiconLogger.debug("Player clicked to skip dice roll animation");
-
-                    // Create hitboxes BEFORE force-completing so animator target
-                    // slot coordinates are still valid and not zeroed
                     boolean showPlayerDice = battleState.isDefenderRolling() != battleState.isPlayerAttacker();
                     if (showPlayerDice && diceHitboxes.isEmpty()) {
                         List<DiceType> types = battleState.getPlayerDiceTypes();
@@ -156,7 +144,6 @@ public class BattleInputHandler {
             }
 
             if (damageAnimator != null) {
-                CosmiconLogger.debug("Player clicked to skip damage animation");
                 damageAnimator.forceComplete();
                 lastMouseButtonState = currentButton;
                 UnifiedCoord.clearCurrent();
@@ -165,7 +152,6 @@ public class BattleInputHandler {
 
             if (battleState.getCurrentPhase() != Phase.SELECTING_ATTACK &&
                 battleState.getCurrentPhase() != Phase.SELECTING_DEFENSE) {
-                CosmiconLogger.debug("[CLICK] Wrong phase for dice selection: %s", battleState.getCurrentPhase().name());
                 lastMouseButtonState = currentButton;
                 UnifiedCoord.clearCurrent();
                 return;
@@ -177,22 +163,15 @@ public class BattleInputHandler {
                                            battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE);
 
             if (!playerShouldSelect) {
-                CosmiconLogger.debug("[CLICK] Player should not select");
                 lastMouseButtonState = currentButton;
                 UnifiedCoord.clearCurrent();
                 return;
             }
 
-            CosmiconLogger.debug("[CLICK] Mouse screen: (%d, %d), Panel UI: (%.0f, %.0f), hitboxCount=%d",
-                Mouse.getX(), Mouse.getY(), panelUiX, panelUiY, diceHitboxes.size());
-
             for (int i = 0; i < diceHitboxes.size(); i++) {
                 float[] hb = diceHitboxes.get(i);
                 boolean inside = mousePos.isInsideRect(hb[0], hb[1], hb[2], hb[3]);
-                CosmiconLogger.debug("[CLICK] Hitbox %d: UI(%.0f,%.0f) size(%.0f,%.0f) - point (%.0f,%.0f) inside=%s",
-                    i, hb[0], hb[1], hb[2], hb[3], panelUiX, panelUiY, inside);
                 if (inside) {
-                    logDiceSelection(i);
                     battleController.onPlayerSelectDice(i);
                     buttons.updateButtons(battleState.getCurrentPhase());
                     labels.updateSelectionDisplayLabels();
@@ -202,24 +181,6 @@ public class BattleInputHandler {
         }
         lastMouseButtonState = currentButton;
         UnifiedCoord.clearCurrent();
-    }
-
-    private void logDiceSelection(int diceIndex) {
-        List<DiceType> types = battleState.getPlayerDiceTypes();
-        List<Integer> values = battleState.getPlayerDiceValues();
-        List<Boolean> selected = battleState.getPlayerDiceSelected();
-
-        if (types == null || values == null || diceIndex >= types.size()) {
-            CosmiconLogger.debug("Player clicked dice %d", diceIndex);
-            return;
-        }
-
-        DiceType type = types.get(diceIndex);
-        int value = values.get(diceIndex);
-        boolean wasSelected = selected != null && diceIndex < selected.size() && selected.get(diceIndex);
-        String action = wasSelected ? "deselected" : "selected";
-
-        CosmiconLogger.info("Player %s dice %d (%s, value: %d)", action, diceIndex, type.name(), value);
     }
 
     public void createDiceHitboxes(List<DiceType> types) {

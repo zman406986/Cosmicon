@@ -214,27 +214,28 @@ public final class RerollOptimizer {
         
         List<RerollCandidate> candidates = new ArrayList<>();
 
-        List<Integer> indices = new ArrayList<>();
+        List<Integer> sortedIndices = new ArrayList<>();
         for (int i = 0; i < currentValues.size(); i++) {
             if (!shouldSkipPrismaticReroll(i, diceTypes.get(i), prismaticMap)) {
-                indices.add(i);
+                sortedIndices.add(i);
             }
         }
+        sortedIndices.sort(Comparator.comparingInt(currentValues::get));
 
-        for (int i = 0; i < Math.min(maxReroll, indices.size()); i++) {
-            Set<Integer> rerollSet = new HashSet<>();
-            
-            for (int j = 0; j <= i; j++) {
-                int idx = indices.get(j);
-                if (!currentSelection.contains(idx)) {
-                    rerollSet.add(idx);
-                }
+        Set<Integer> cumulativeRerollSet = new HashSet<>();
+        int triedCount = 0;
+        for (int idx : sortedIndices) {
+            if (triedCount >= maxReroll) break;
+            triedCount++;
+
+            if (!currentSelection.contains(idx)) {
+                cumulativeRerollSet.add(idx);
             }
 
-            if (!rerollSet.isEmpty()) {
-                float improvement = calculateExpectedImprovement(currentValues, diceTypes, rerollSet,
+            if (!cumulativeRerollSet.isEmpty()) {
+                float improvement = calculateExpectedImprovement(currentValues, diceTypes, cumulativeRerollSet,
                                                                  currentSelection, requiredCount, targetSum);
-                candidates.add(new RerollCandidate(rerollSet, improvement));
+                candidates.add(new RerollCandidate(new HashSet<>(cumulativeRerollSet), improvement));
             }
         }
 
@@ -274,18 +275,16 @@ public final class RerollOptimizer {
         
         List<RerolledDieValue> candidates = new ArrayList<>();
         
-        for (int idx : currentSelection) {
-            if (!rerollIndices.contains(idx)) {
-                candidates.add(new RerolledDieValue(idx, currentValues.get(idx), false));
+        for (int i = 0; i < currentValues.size(); i++) {
+            if (rerollIndices.contains(i)) {
+                float expectedVal = DiceProbabilityCalculator.expectedValue(diceTypes.get(i));
+                candidates.add(new RerolledDieValue(i, expectedVal, true));
+            } else {
+                candidates.add(new RerolledDieValue(i, currentValues.get(i), false));
             }
         }
-        
-        for (int idx : rerollIndices) {
-            int expectedVal = (int) DiceProbabilityCalculator.expectedValue(diceTypes.get(idx));
-            candidates.add(new RerolledDieValue(idx, expectedVal, true));
-        }
 
-        candidates.sort(Comparator.comparingInt(RerolledDieValue::value).reversed());
+        candidates.sort(Comparator.comparingDouble(RerolledDieValue::value).reversed());
 
         Set<Integer> newSelection = new HashSet<>();
         for (int i = 0; i < Math.min(required, candidates.size()); i++) {
@@ -314,5 +313,5 @@ public final class RerollOptimizer {
 
     private record RerollCandidate(Set<Integer> rerollIndices, float expectedImprovement) {}
 
-    private record RerolledDieValue(int index, int value, boolean isRerolled) {}
+    private record RerolledDieValue(int index, float value, boolean isRerolled) {}
 }

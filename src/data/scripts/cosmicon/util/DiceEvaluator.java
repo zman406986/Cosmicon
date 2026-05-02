@@ -1,5 +1,6 @@
 package data.scripts.cosmicon.util;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,5 +98,14 @@ public class DiceEvaluator {
             if (counts.get(v) >= 2) return true;
         }
         return false;
+    }
+
+    public static Map<Integer, Integer> computeFrequencyMap(List<Integer> values) {
+        if (values == null || values.isEmpty()) return Collections.emptyMap();
+        Map<Integer, Integer> counts = new HashMap<>();
+        for (int v : values) {
+            counts.merge(v, 1, Integer::sum);
+        }
+        return counts;
     }
 }

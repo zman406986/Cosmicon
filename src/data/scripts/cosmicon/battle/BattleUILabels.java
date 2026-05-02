@@ -2,7 +2,9 @@ package data.scripts.cosmicon.battle;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 import com.fs.starfarer.api.ui.Alignment;
 import com.fs.starfarer.api.ui.CustomPanelAPI;
@@ -17,6 +19,7 @@ import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticFaceDisplay;
 import data.scripts.cosmicon.util.ColorHelper;
+import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.util.UIComponentFactory;
 
 public class BattleUILabels {
@@ -64,6 +67,12 @@ public class BattleUILabels {
     private List<LabelAPI> opponentStatusLabels;
     static final int MAX_STATUS_EFFECTS = 12;
 
+    private Map<StatusEffectProcessor.StatusEffect, Integer> previousPlayerLayers;
+    private Map<StatusEffectProcessor.StatusEffect, Integer> previousOpponentLayers;
+    private Map<StatusEffectProcessor.StatusEffect, Integer> playerEffectDisplayIndex;
+    private Map<StatusEffectProcessor.StatusEffect, Integer> opponentEffectDisplayIndex;
+    private StatusEffectAnimator statusEffectAnimator;
+
     private ValueChangeAnimator attackerValueAnimator;
     private ValueChangeAnimator defenderValueAnimator;
 
@@ -92,6 +101,11 @@ public class BattleUILabels {
         
         createLabels();
         createValueAnimators();
+        previousPlayerLayers = new EnumMap<>(StatusEffectProcessor.StatusEffect.class);
+        previousOpponentLayers = new EnumMap<>(StatusEffectProcessor.StatusEffect.class);
+        playerEffectDisplayIndex = new EnumMap<>(StatusEffectProcessor.StatusEffect.class);
+        opponentEffectDisplayIndex = new EnumMap<>(StatusEffectProcessor.StatusEffect.class);
+        statusEffectAnimator = new StatusEffectAnimator();
     }
 
     public void cleanup() {
@@ -364,16 +378,15 @@ public class BattleUILabels {
             Fonts.DEFAULT_SMALL, ColorHelper.PRISMATIC_GOLD, Alignment.MID, labelWidth, 20f,
             centerX - labelWidth / 2f, topIconCenterY - iconSize / 2f - 5f, 0f);
 
-        float rightCenterX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH / 2f - BattleRenderingUtils.MARGIN;
         float confirmedLabelWidth = 150f;
 
         attackerConfirmedSelectionLabel = UIComponentFactory.createLabelWithOpacity(panel, "", 
             Fonts.DEFAULT_SMALL, ColorHelper.ATTACK_VALUE, Alignment.MID, confirmedLabelWidth, 20f,
-            rightCenterX - confirmedLabelWidth / 2f, bottomIconCenterY + iconSize / 2f + 25f, 0f);
+            centerX - confirmedLabelWidth / 2f, bottomIconCenterY + iconSize / 2f + 25f, 0f);
 
         attackerConfirmedEffectLabel = UIComponentFactory.createLabelWithOpacity(panel, "", 
             Fonts.DEFAULT_SMALL, ColorHelper.PRISMATIC_GOLD, Alignment.MID, confirmedLabelWidth, 20f,
-            rightCenterX - confirmedLabelWidth / 2f, bottomIconCenterY + iconSize / 2f + 5f, 0f);
+            centerX - confirmedLabelWidth / 2f, bottomIconCenterY + iconSize / 2f + 5f, 0f);
 
         attackerIconValueLabel = UIComponentFactory.createLabelWithOpacity(panel, "", 
             Fonts.INSIGNIA_VERY_LARGE, ColorHelper.ATTACK_VALUE, Alignment.MID, 80f, 35f, 0f, 0f, 0f);
@@ -458,11 +471,24 @@ public class BattleUILabels {
         StatusEffectProcessor playerEffects = battleState.getPlayerEffects();
         StatusEffectProcessor opponentEffects = battleState.getOpponentEffects();
 
+        playerEffectDisplayIndex.clear();
+        opponentEffectDisplayIndex.clear();
+
         int playerIdx = 0;
         for (StatusEffectProcessor.StatusEffect effect : StatusEffectProcessor.StatusEffect.values()) {
             if (playerIdx >= playerStatusLabels.size()) break;
             int layers = playerEffects.getLayers(effect);
             if (layers > 0) {
+                playerEffectDisplayIndex.put(effect, playerIdx);
+
+                int previousLayers = previousPlayerLayers.getOrDefault(effect, 0);
+                if (layers > previousLayers) {
+                    CosmiconLogger.debug("[StatusAnim] Player %s layers %d > prev %d, triggering ADD at idx=%d",
+                        effect.name(), layers, previousLayers, playerIdx);
+                    float[] pos = getPlayerStatusLabelPosition(playerIdx);
+                    statusEffectAnimator.triggerAddAnimation(pos[0], pos[1], pos[2], pos[3]);
+                }
+
                 LabelAPI label = playerStatusLabels.get(playerIdx);
                 int duration = playerEffects.getDuration(effect);
                 String effectName = Strings.get("status." + effect.name().toLowerCase());
@@ -473,9 +499,15 @@ public class BattleUILabels {
                 label.setOpacity(1f);
                 playerIdx++;
             }
+            previousPlayerLayers.put(effect, layers);
         }
         for (int i = playerIdx; i < playerStatusLabels.size(); i++) {
             playerStatusLabels.get(i).setOpacity(0f);
+        }
+        for (StatusEffectProcessor.StatusEffect effect : StatusEffectProcessor.StatusEffect.values()) {
+            if (!playerEffectDisplayIndex.containsKey(effect)) {
+                previousPlayerLayers.remove(effect);
+            }
         }
 
         int opponentIdx = 0;
@@ -483,6 +515,16 @@ public class BattleUILabels {
             if (opponentIdx >= opponentStatusLabels.size()) break;
             int layers = opponentEffects.getLayers(effect);
             if (layers > 0) {
+                opponentEffectDisplayIndex.put(effect, opponentIdx);
+
+                int previousLayers = previousOpponentLayers.getOrDefault(effect, 0);
+                if (layers > previousLayers) {
+                    CosmiconLogger.debug("[StatusAnim] Opponent %s layers %d > prev %d, triggering ADD at idx=%d",
+                        effect.name(), layers, previousLayers, opponentIdx);
+                    float[] pos = getOpponentStatusLabelPosition(opponentIdx);
+                    statusEffectAnimator.triggerAddAnimation(pos[0], pos[1], pos[2], pos[3]);
+                }
+
                 LabelAPI label = opponentStatusLabels.get(opponentIdx);
                 int duration = opponentEffects.getDuration(effect);
                 String effectName = Strings.get("status." + effect.name().toLowerCase());
@@ -493,10 +535,51 @@ public class BattleUILabels {
                 label.setOpacity(1f);
                 opponentIdx++;
             }
+            previousOpponentLayers.put(effect, layers);
         }
         for (int i = opponentIdx; i < opponentStatusLabels.size(); i++) {
             opponentStatusLabels.get(i).setOpacity(0f);
         }
+        for (StatusEffectProcessor.StatusEffect effect : StatusEffectProcessor.StatusEffect.values()) {
+            if (!opponentEffectDisplayIndex.containsKey(effect)) {
+                previousOpponentLayers.remove(effect);
+            }
+        }
+    }
+
+    private float[] getPlayerStatusLabelPosition(int displayIndex) {
+        float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
+        float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        float playerBoxX = playerCardX - BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
+        float x = playerBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
+        float y = playerCardY + BattleRenderingUtils.STATUS_BOX_PADDING + displayIndex * 20f;
+        float w = BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
+        float h = 18f;
+        return new float[]{x, y, w, h};
+    }
+
+    private float[] getOpponentStatusLabelPosition(int displayIndex) {
+        float opponentCardX = BattleRenderingUtils.MARGIN;
+        float opponentCardY = BattleRenderingUtils.MARGIN;
+        float opponentBoxX = opponentCardX + BattleRenderingUtils.CARD_WIDTH + 20f;
+        float x = opponentBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
+        float y = opponentCardY + BattleRenderingUtils.STATUS_BOX_PADDING + displayIndex * 20f;
+        float w = BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
+        float h = 18f;
+        return new float[]{x, y, w, h};
+    }
+
+    public Integer getEffectDisplayIndex(boolean isPlayer, StatusEffectProcessor.StatusEffect effect) {
+        Map<StatusEffectProcessor.StatusEffect, Integer> map = isPlayer ? playerEffectDisplayIndex : opponentEffectDisplayIndex;
+        return map.get(effect);
+    }
+
+    public float[] getStatusEffectLabelPosition(boolean isPlayer, int displayIndex) {
+        return isPlayer ? getPlayerStatusLabelPosition(displayIndex) : getOpponentStatusLabelPosition(displayIndex);
+    }
+
+    public StatusEffectAnimator getStatusEffectAnimator() {
+        return statusEffectAnimator;
     }
 
     public void updateLabelsFromState() {
@@ -668,23 +751,19 @@ public class BattleUILabels {
         float atkCenterY = playerIsAttacker ? bottomIconCenterY : topIconCenterY;
         float defCenterY = playerIsAttacker ? topIconCenterY : bottomIconCenterY;
 
-        float rightX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH / 2f - BattleRenderingUtils.MARGIN;
-        float leftX = BattleRenderingUtils.CARD_WIDTH / 2f + BattleRenderingUtils.MARGIN;
+        float centerX = BattleRenderingUtils.PANEL_WIDTH / 2f;
         float confirmedLabelWidth = 150f;
-
-        float attackerX = playerIsAttacker ? rightX : leftX;
-        float defenderX = playerIsAttacker ? leftX : rightX;
 
         float atkSelectionY = atkCenterY > halfH ? atkCenterY + iconSize / 2f + 25f : atkCenterY - iconSize / 2f - 25f;
         float atkEffectY = atkCenterY > halfH ? atkCenterY + iconSize / 2f + 5f : atkCenterY - iconSize / 2f - 5f;
         float defSelectionY = defCenterY > halfH ? defCenterY + iconSize / 2f + 25f : defCenterY - iconSize / 2f - 25f;
         float defEffectY = defCenterY > halfH ? defCenterY + iconSize / 2f + 5f : defCenterY - iconSize / 2f - 5f;
 
-        attackerConfirmedSelectionLabel.getPosition().inTL(attackerX - confirmedLabelWidth / 2f, atkSelectionY);
-        attackerConfirmedEffectLabel.getPosition().inTL(attackerX - confirmedLabelWidth / 2f, atkEffectY);
+        attackerConfirmedSelectionLabel.getPosition().inTL(centerX - confirmedLabelWidth / 2f, atkSelectionY);
+        attackerConfirmedEffectLabel.getPosition().inTL(centerX - confirmedLabelWidth / 2f, atkEffectY);
 
-        defenderSelectionLabel.getPosition().inTL(defenderX - confirmedLabelWidth / 2f, defSelectionY);
-        defenderEffectLabel.getPosition().inTL(defenderX - confirmedLabelWidth / 2f, defEffectY);
+        defenderSelectionLabel.getPosition().inTL(centerX - confirmedLabelWidth / 2f, defSelectionY);
+        defenderEffectLabel.getPosition().inTL(centerX - confirmedLabelWidth / 2f, defEffectY);
     }
 
     public void updateIconValueLabels() {
@@ -856,7 +935,7 @@ public class BattleUILabels {
             playerPrismaticEffectLabel.setOpacity(1f);
         }
 
-        String mappingText = PrismaticFaceDisplay.formatFaceMappingCompact(type, false);
+        String mappingText = PrismaticFaceDisplay.formatFaceMappingCompact(type, playerCard.isUseTruePrismatic());
         playerPrismaticFaceMappingLabel.setText(mappingText);
 
         String effectText = PrismaticFaceDisplay.getEffectDescription(type);
@@ -896,7 +975,7 @@ public class BattleUILabels {
         opponentPrismaticFaceMappingLabel.setOpacity(opacity);
         opponentPrismaticEffectLabel.setOpacity(opacity);
 
-        String mappingText = PrismaticFaceDisplay.formatFaceMappingCompact(type, false);
+        String mappingText = PrismaticFaceDisplay.formatFaceMappingCompact(type, opponentCard.isUseTruePrismatic());
         opponentPrismaticFaceMappingLabel.setText(mappingText);
 
         String effectText = PrismaticFaceDisplay.getEffectDescription(type);

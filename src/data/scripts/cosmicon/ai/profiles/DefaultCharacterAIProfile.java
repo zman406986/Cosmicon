@@ -19,7 +19,7 @@ public class DefaultCharacterAIProfile implements CharacterAIProfile {
 
     @Override
     public boolean prefersHighValues(boolean isAttacking) {
-        return isAttacking;
+        return true;
     }
 
     @Override

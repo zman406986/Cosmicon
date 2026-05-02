@@ -53,7 +53,8 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private static final float GALLERY_WIDTH = 595f;
     private static final float DICE_LIST_X = GALLERY_WIDTH + MARGIN + 10f;
     private static final float DICE_LIST_WIDTH = PANEL_WIDTH - DICE_LIST_X - MARGIN;
-    private static final float DICE_ENTRY_HEIGHT = 55f;
+    private static final float DICE_ENTRY_HEIGHT = 65f;
+    private static final float DICE_LEFT_COL_WIDTH = 130f;
 
     private static final float BUTTON_AREA_HEIGHT = 50f;
     private static final float BUTTON_WIDTH = 140f;
@@ -127,10 +128,10 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                               LabelAPI orangeLabel, LabelAPI purpleLabel, LabelAPI blueLabel, LabelAPI prismaticLabel) {}
     private record DiceClickRegion(float x, float y, float width, float height, int entryIndex) {}
     private record VersionClickRegion(float x, float y, float width, float height, int entryIndex, boolean useTrue) {}
-    private record DiceEntryLabels(LabelAPI nameLabel, LabelAPI facesLabel, String diceId, boolean hasBothVersions) {}
+    private record DiceEntryLabels(LabelAPI nameLabel, LabelAPI facesLabel, LabelAPI descLabel, String diceId, boolean hasBothVersions) {}
 
     public interface CharacterSetupCallback {
-        void onConfirm(String charId, String prismaticDiceId);
+        void onConfirm(String charId, String prismaticDiceId, boolean useTrueVersion);
         void onCancel();
     }
 
@@ -244,8 +245,13 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             }
         }
 
-        float listStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 15f;
+        float listStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 50f;
         float titleOffset = 20f;
+
+        float labelX = DICE_LIST_X + 8f;
+        float leftLabelW = DICE_LEFT_COL_WIDTH - 8f;
+        float descX = DICE_LIST_X + DICE_LEFT_COL_WIDTH;
+        float descW = DICE_LIST_WIDTH - DICE_LEFT_COL_WIDTH - 8f;
 
         for (int i = 0; i < diceList.size(); i++) {
             PrismaticDiceType type = diceList.get(i);
@@ -253,19 +259,21 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             boolean hasBoth = PrismaticDisplayHelper.hasDistinctDefaultFaces(type);
             float entryY = listStartY + titleOffset + i * DICE_ENTRY_HEIGHT;
 
-            float labelX = DICE_LIST_X + 8f;
-            float labelW = DICE_LIST_WIDTH - 16f;
-
             LabelAPI nameLabel = UIComponentFactory.createLabelSmall(panel,
                 PrismaticDisplayHelper.getDiceDisplayName(diceId),
-                ColorHelper.PRISMATIC_BRIGHT, Alignment.LMID, labelW, 16f,
+                ColorHelper.PRISMATIC_BRIGHT, Alignment.LMID, leftLabelW, 16f,
                 labelX, entryY + 2f);
 
             LabelAPI facesLabel = UIComponentFactory.createLabelSmall(panel,
-                "", Color.LIGHT_GRAY, Alignment.LMID, labelW, 16f,
+                "", Color.LIGHT_GRAY, Alignment.LMID, leftLabelW, 16f,
                 labelX, entryY + 20f);
 
-            diceEntryLabels.add(new DiceEntryLabels(nameLabel, facesLabel, diceId, hasBoth));
+            LabelAPI descLabel = UIComponentFactory.createLabelSmall(panel,
+                PrismaticDisplayHelper.getEffectDescription(type),
+                Color.LIGHT_GRAY, Alignment.LMID, descW, 48f,
+                descX, entryY + 2f);
+
+            diceEntryLabels.add(new DiceEntryLabels(nameLabel, facesLabel, descLabel, diceId, hasBoth));
         }
     }
 
@@ -289,17 +297,20 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private void repositionDiceListLabels(float listStartY, float listHeight) {
         float titleOffset = 20f;
 
+        float labelX = DICE_LIST_X + 8f;
+        float descX = DICE_LIST_X + DICE_LEFT_COL_WIDTH;
+
         for (int i = 0; i < diceEntryLabels.size(); i++) {
             DiceEntryLabels labels = diceEntryLabels.get(i);
 
             float entryY = listStartY + titleOffset + i * DICE_ENTRY_HEIGHT - diceScrollOffset;
 
-            float labelX = DICE_LIST_X + 8f;
-
             labels.nameLabel().getPosition().inTL(labelX, entryY + 2f);
             labels.nameLabel().setOpacity(labelOpacity(entryY + 2f, 16f, listStartY, listHeight));
             labels.facesLabel().getPosition().inTL(labelX, entryY + 20f);
             labels.facesLabel().setOpacity(labelOpacity(entryY + 20f, 16f, listStartY, listHeight));
+            labels.descLabel().getPosition().inTL(descX, entryY + 2f);
+            labels.descLabel().setOpacity(labelOpacity(entryY + 2f, 48f, listStartY, listHeight));
         }
     }
 
@@ -478,7 +489,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         UnifiedCoord.clearCurrent();
 
         repositionCardLabels(galleryStartY, galleryHeight);
-        float diceListStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 15f;
+        float diceListStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 50f;
         float diceListHeight = PANEL_HEIGHT - diceListStartY - BUTTON_AREA_HEIGHT - 20f;
         repositionDiceListLabels(diceListStartY, diceListHeight);
         updateLabels();
@@ -567,7 +578,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     // --- Dice list rendering ---
 
     private void renderDiceList(float alphaMult, float panelX, float panelY, float scale) {
-        float listStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 15f;
+        float listStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 50f;
         float listHeight = PANEL_HEIGHT - listStartY - BUTTON_AREA_HEIGHT - 20f;
 
         GLStateUtil.resetBlendState();
@@ -958,7 +969,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                 if (selectedIndex >= 0 && selectedIndex < characters.size()) {
                     CharacterCard card = characters.get(selectedIndex);
                     if (callback != null) {
-                        callback.onConfirm(card.getId(), selectedPrismaticDiceId);
+                        callback.onConfirm(card.getId(), selectedPrismaticDiceId, selectedUseTrueVersion);
                     }
                     callbacks.dismissDialog();
                 }
@@ -973,6 +984,10 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     }
 
     public void setSelection(String charId, String diceId) {
+        setSelection(charId, diceId, false);
+    }
+
+    public void setSelection(String charId, String diceId, boolean useTrueVersion) {
         for (int i = 0; i < characters.size(); i++) {
             if (characters.get(i).getId().equals(charId)) {
                 selectedIndex = i;
@@ -985,6 +1000,13 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             if (diceList.get(i).getId().equals(diceId)) {
                 selectedDiceEntryIndex = i;
                 selectedPrismaticDiceId = diceId;
+                PrismaticDiceType type = diceList.get(i);
+                boolean hasBoth = PrismaticDisplayHelper.hasDistinctDefaultFaces(type);
+                if (!hasBoth) {
+                    selectedUseTrueVersion = true;
+                } else {
+                    selectedUseTrueVersion = useTrueVersion;
+                }
                 break;
             }
         }
@@ -1003,6 +1025,10 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                 for (int i = 0; i < diceList.size(); i++) {
                     if (diceList.get(i).getId().equals(defaultDice)) {
                         selectedDiceEntryIndex = i;
+                        PrismaticDiceType type = diceList.get(i);
+                        if (!PrismaticDisplayHelper.hasDistinctDefaultFaces(type)) {
+                            selectedUseTrueVersion = true;
+                        }
                         break;
                     }
                 }

@@ -47,7 +47,7 @@ In all story battles (except for Hook's first battle), the player moves first.
 ### Dice Soul: A 1700-Year Obsession (Four Heavenly Kings)
 - **Character Card**: Yao Guang (Prismatic)
 - **Opponent Level**: 8
-- **Weather**: Turn 2: Parhelion, Turn 4: Thunderstorm, Turn 6: Sea of Clouds, Turn 8: Sunny
+- **Weather**: Turn 2: Parhelion, Turn 4: Sea of Clouds, Turn 6: Sunny
 
 ### Phantasmagoria Butterfly: Seele (Grand Finale)
 - **Character Card**: Cyrene (Prismatic)

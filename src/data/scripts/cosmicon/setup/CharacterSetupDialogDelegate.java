@@ -22,9 +22,10 @@ public class CharacterSetupDialogDelegate implements com.fs.starfarer.api.campai
         
         String savedChar = data.scripts.cosmicon.state.CosmiconPlayerState.loadCharacter();
         String savedDice = data.scripts.cosmicon.state.CosmiconPlayerState.loadPrismaticDice();
+        boolean savedTrueVersion = data.scripts.cosmicon.state.CosmiconPlayerState.loadPrismaticDiceTrueVersion();
         
         if (savedChar != null) {
-            panelUI.setSelection(savedChar, savedDice);
+            panelUI.setSelection(savedChar, savedDice, savedTrueVersion);
         } else {
             panelUI.setDefaultSelection();
         }

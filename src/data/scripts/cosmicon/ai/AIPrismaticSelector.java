@@ -26,15 +26,17 @@ public class AIPrismaticSelector {
 
         boolean isAttacking = state.isAttacker(forPlayer);
         int currentSelectionSum = state.calculateSelectedSum(forPlayer);
+        CharacterCard card = state.getCard(forPlayer);
+        boolean useTrueVersion = card != null && card.isUseTruePrismatic();
 
         PrismaticDecision bestDecision = null;
         float bestScore = 0f;
 
         for (PrismaticDiceType type : available) {
-            float score = evaluatePrismaticValue(type, state, isAttacking, currentSelectionSum, forPlayer);
+            float score = evaluatePrismaticValue(type, state, isAttacking, currentSelectionSum, forPlayer, useTrueVersion);
             if (score > bestScore) {
                 bestScore = score;
-                PrismaticDiceInstance instance = PrismaticDiceInstance.roll(type, false);
+                PrismaticDiceInstance instance = PrismaticDiceInstance.roll(type, useTrueVersion);
                 bestDecision = new PrismaticDecision(instance, score, score >= USE_THRESHOLD);
             }
         }
@@ -42,10 +44,10 @@ public class AIPrismaticSelector {
         return bestDecision;
     }
 
-    private static float evaluatePrismaticValue(PrismaticDiceType type, BattleState state, 
-                                                 boolean isAttacking, int currentSelectionSum, 
-                                                 boolean forPlayer) {
-        float baseValue = (float) Arrays.stream(type.getFaces(false)).average().orElse(0f);
+    private static float evaluatePrismaticValue(PrismaticDiceType type, BattleState state,
+                                                 boolean isAttacking, int currentSelectionSum,
+                                                 boolean forPlayer, boolean useTrueVersion) {
+        float baseValue = (float) Arrays.stream(type.getFaces(useTrueVersion)).average().orElse(0f);
 
         PrismaticEffect effect = type.getEffect();
         float effectBonus = calculateEffectBonus(effect, state, isAttacking, currentSelectionSum, forPlayer);

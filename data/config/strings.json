@@ -35,7 +35,10 @@
         "prismatic_click_hint": "click icon to use",
         "selected_values": "Selected: {0}",
         "no_selection": "Select dice...",
-        "prismatic_effect_none": ""
+        "prismatic_effect_none": "",
+        "weather_none": "No Weather",
+        "weather_none_desc": "No weather is active yet. Weather will appear starting from turn 2.",
+        "weather_category": "Category: {0}"
     },
     "coinflip": {
         "flipping": "Flipping for first turn...",

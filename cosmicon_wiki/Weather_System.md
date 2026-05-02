@@ -44,4 +44,3 @@ Weather affects both players and changes at start of turn 2/4/6/8. Effects are p
 | Lunisolar Luminance | 日月同辉    | Reversal  | 6    | Current HP ≤3: Attack doubles                                               | 攻击方选定骰子时，若当前生命值≤3，攻击值翻倍           |
 | Crepuscular Rays    | 云隙光     | Attack    | 6    | Player with less HP: gain Combo when attacking                              | 生命值更少的玩家，攻击时获得连击                  |
 | Parhelion           | 幻日      | Attack    | 2    | Gain 2 rerolls, each reroll = 2 Thorns                                      | 额外多2次重投机会，但重投时会被施加2层荆棘            |
-| Thunderstorm        | 雷雨      | Help      | 2    | Gliding adds +2 ATK/DEF per level                                           | 在此天气下，卡片每经过一次镀闪，攻击值/防御值+2         |

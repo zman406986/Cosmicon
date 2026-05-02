@@ -135,9 +135,10 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     private void showCharacterSetup() {
         CharacterSetupPanelUI.CharacterSetupCallback callback = new CharacterSetupPanelUI.CharacterSetupCallback() {
             @Override
-            public void onConfirm(String charId, String prismaticDiceId) {
+            public void onConfirm(String charId, String prismaticDiceId, boolean useTrueVersion) {
                 CosmiconPlayerState.saveCharacter(charId);
                 CosmiconPlayerState.savePrismaticDice(prismaticDiceId);
+                CosmiconPlayerState.savePrismaticDiceTrueVersion(useTrueVersion);
                 showMenu();
             }
 

@@ -437,6 +437,7 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             advanceToDefensePhase();
         } else if (!aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
             state.setDefenderConfirmedSelection(state.getSelectedDiceValuesFormatted(false));
+            weatherController.applyDefenderSelectionPhase(state, false);
             resolveDamage();
         }
         
@@ -497,7 +498,7 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
             advanceToDefensePhase();
         } else if (!aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
             state.setDefenderConfirmedSelection(state.getSelectedDiceValuesFormatted(false));
-            weatherController.applyDefenderSelectionPhase(state);
+            weatherController.applyDefenderSelectionPhase(state, false);
             resolveDamage();
         }
     }
@@ -905,7 +906,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
             advanceToDefensePhase();
         } else if (!state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
             state.setDefenderConfirmedSelection(state.getSelectedDiceValuesFormatted(true));
-            weatherController.applyDefenderSelectionPhase(state);
+            weatherController.applyDefenderSelectionPhase(state, true);
             resolveDamage();
         }
     }

@@ -208,7 +208,21 @@ public class DicePathPlanner {
         }
         
         if (!foundValid) {
-            System.out.println("[DicePathPlanner] Warning: Could not find clear path after all retries, using direct path to target");
+            float dx2 = targetCenterX - currentStartX;
+            float dy2 = targetCenterY - currentStartY;
+            bestRotation = (float)Math.toDegrees(Math.atan2(dy2, dx2));
+            bestTravelDistance = (float)Math.sqrt(dx2 * dx2 + dy2 * dy2);
+            
+            float rawEndX = currentStartX + (float)Math.cos(Math.toRadians(bestRotation)) * bestTravelDistance;
+            float rawEndY = currentStartY + (float)Math.sin(Math.toRadians(bestRotation)) * bestTravelDistance;
+            float[] clampedEndpoint = clampToBounds(rawEndX, rawEndY, panelW, panelH);
+            
+            float cdx = clampedEndpoint[0] - currentStartX;
+            float cdy = clampedEndpoint[1] - currentStartY;
+            bestRotation = (float)Math.toDegrees(Math.atan2(cdy, cdx));
+            bestTravelDistance = (float)Math.sqrt(cdx * cdx + cdy * cdy);
+            
+            System.out.println("[DicePathPlanner] Warning: Could not find clear path after all retries, using clamped path to target");
         }
         
         int bounceCount = rand.nextInt(3);
@@ -373,7 +387,7 @@ float angle = rand.nextFloat() * 360f;
             for (float[] pos : existingPositions) {
                 if (pos[0] > maxX) maxX = pos[0];
             }
-            targetX = maxX + spacing;
+            targetX = Math.min(maxX + spacing, panelW - SCATTER_MARGIN);
         }
         
         float delay = diceIndex * 0.05f;

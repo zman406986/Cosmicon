@@ -85,15 +85,16 @@ public class BattleController implements BattleState.DamageAnimationCallback {
         if (!isTutorial) {
             String savedPrismaticId = CosmiconPlayerState.loadPrismaticDice();
             String defaultPrismaticId = CosmiconPlayerState.getDefaultPrismaticForCharacter(playerCard.getId());
+            boolean useTrueVersion = CosmiconPlayerState.loadPrismaticDiceTrueVersion();
 
             if (savedPrismaticId != null && !savedPrismaticId.isEmpty()
                 && !savedPrismaticId.equals(defaultPrismaticId)) {
                 int uses = playerCard.getPrismaticDiceIds().getOrDefault(savedPrismaticId, 2);
-                playerCard = playerCard.withPrismaticDice(savedPrismaticId, uses);
-                CosmiconLogger.info("Applied custom prismatic dice: %s", savedPrismaticId);
+                playerCard = playerCard.withPrismaticDice(savedPrismaticId, uses, useTrueVersion);
+                CosmiconLogger.info("Applied custom prismatic dice: %s (true: %b)", savedPrismaticId, useTrueVersion);
             } else if (defaultPrismaticId != null) {
                 int uses = playerCard.getPrismaticDiceIds().getOrDefault(defaultPrismaticId, 2);
-                playerCard = playerCard.withPrismaticDice(defaultPrismaticId, uses);
+                playerCard = playerCard.withPrismaticDice(defaultPrismaticId, uses, useTrueVersion);
             }
 
             Map<String, Integer> oppPrismatic = opponentCard.getPrismaticDiceIds();

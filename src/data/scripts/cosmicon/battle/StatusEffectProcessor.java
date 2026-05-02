@@ -50,7 +50,11 @@ public class StatusEffectProcessor {
     private final Map<StatusEffect, Integer> durations;
     private int lastStandHpReduction;
 
+    private final List<ProcessedEffect> processedEffects = new ArrayList<>();
+
     public static final int PERMANENT_DURATION = Integer.MAX_VALUE;
+
+    public record ProcessedEffect(StatusEffect effect, int layers) {}
 
     public StatusEffectProcessor() {
         this.effects = new EnumMap<>(StatusEffect.class);
@@ -112,6 +116,12 @@ public class StatusEffectProcessor {
         }
     }
 
+    public List<ProcessedEffect> getAndClearProcessedEffects() {
+        List<ProcessedEffect> result = new ArrayList<>(processedEffects);
+        processedEffects.clear();
+        return result;
+    }
+
     public int processPhase(Phase phase, TurnType turnType, BattleContext context) {
         int totalDamage = 0;
 
@@ -130,8 +140,10 @@ public class StatusEffectProcessor {
 
     private int processStartOfTurn(TurnType turnType, BattleContext context) {
         if (turnType == TurnType.ATTACK && hasEffect(StatusEffect.LAST_STAND)) {
+            int layers = getLayers(StatusEffect.LAST_STAND);
             lastStandHpReduction = context.getCurrentHp() - 1;
             context.setCurrentHp(1);
+            processedEffects.add(new ProcessedEffect(StatusEffect.LAST_STAND, layers));
             effects.remove(StatusEffect.LAST_STAND);
             durations.remove(StatusEffect.LAST_STAND);
             CosmiconLogger.debug("LAST_STAND: HP reduced from %d to 1, bonus = %d", 
@@ -145,28 +157,33 @@ public class StatusEffectProcessor {
             int tacticsLayers = getLayers(StatusEffect.TACTICS);
             if (tacticsLayers > 0) {
                 context.addRerolls(tacticsLayers);
+                processedEffects.add(new ProcessedEffect(StatusEffect.TACTICS, tacticsLayers));
             }
             
             int yaoGuangRerolls = getLayers(StatusEffect.YAO_GUANG_REROLLS);
             if (yaoGuangRerolls > 0) {
                 context.addRerolls(yaoGuangRerolls);
+                processedEffects.add(new ProcessedEffect(StatusEffect.YAO_GUANG_REROLLS, yaoGuangRerolls));
             }
         }
 
         int deterrenceLayers = getLayers(StatusEffect.DETERRENCE);
         if (deterrenceLayers > 0) {
             context.reduceRerolls(deterrenceLayers);
+            processedEffects.add(new ProcessedEffect(StatusEffect.DETERRENCE, deterrenceLayers));
         }
     }
 
     private void processAfterRoll(BattleContext context) {
         if (hasEffect(StatusEffect.DESTINED)) {
+            processedEffects.add(new ProcessedEffect(StatusEffect.DESTINED, getLayers(StatusEffect.DESTINED)));
             context.markDestinedDice();
         }
     }
 
     private void processAfterSelect(BattleContext context) {
         if (hasEffect(StatusEffect.ARISE)) {
+            processedEffects.add(new ProcessedEffect(StatusEffect.ARISE, getLayers(StatusEffect.ARISE)));
             context.applyArise();
             effects.remove(StatusEffect.ARISE);
             durations.remove(StatusEffect.ARISE);
@@ -174,12 +191,14 @@ public class StatusEffectProcessor {
 
         if (hasEffect(StatusEffect.LEVEL_UP)) {
             int layers = getLayers(StatusEffect.LEVEL_UP);
+            processedEffects.add(new ProcessedEffect(StatusEffect.LEVEL_UP, layers));
             context.applyLevelUp(layers);
             effects.remove(StatusEffect.LEVEL_UP);
             durations.remove(StatusEffect.LEVEL_UP);
         }
 
         if (hasEffect(StatusEffect.AWAKENING)) {
+            processedEffects.add(new ProcessedEffect(StatusEffect.AWAKENING, getLayers(StatusEffect.AWAKENING)));
             context.applyAwakening();
             effects.remove(StatusEffect.AWAKENING);
             durations.remove(StatusEffect.AWAKENING);
@@ -191,6 +210,7 @@ public class StatusEffectProcessor {
 
         if (hasEffect(StatusEffect.THORNS)) {
             int thornsDamage = getLayers(StatusEffect.THORNS);
+            processedEffects.add(new ProcessedEffect(StatusEffect.THORNS, thornsDamage));
             damage += thornsDamage;
             effects.remove(StatusEffect.THORNS);
             durations.remove(StatusEffect.THORNS);
@@ -198,6 +218,7 @@ public class StatusEffectProcessor {
 
         if (hasEffect(StatusEffect.INSTANT_DAMAGE)) {
             int instantDamage = getLayers(StatusEffect.INSTANT_DAMAGE);
+            processedEffects.add(new ProcessedEffect(StatusEffect.INSTANT_DAMAGE, instantDamage));
             context.addInstantDamageToOpponent(instantDamage);
             effects.remove(StatusEffect.INSTANT_DAMAGE);
             durations.remove(StatusEffect.INSTANT_DAMAGE);
@@ -218,6 +239,7 @@ public class StatusEffectProcessor {
             } else {
                 CosmiconLogger.debug("POISON ticked: %d damage", poisonDamage);
             }
+            processedEffects.add(new ProcessedEffect(StatusEffect.POISON, poisonLayers));
             damage += poisonDamage;
             setEffect(StatusEffect.POISON, poisonLayers - 1);
         }

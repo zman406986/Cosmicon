@@ -70,6 +70,7 @@ public class DamageResolutionAnimator {
     private int resultValue;
     private boolean perforation;
     private boolean combo;
+    private boolean comboWillHit;
     private boolean attackWins;
     private boolean isDraw;
     
@@ -147,16 +148,29 @@ public class DamageResolutionAnimator {
         
         this.resultValue = Math.max(0, attackValue - defenseValue);
         
+        boolean primaryDamageTriggersForcefield = defenderEffects.isForcefieldActive() && resultValue > 0;
+        if (primaryDamageTriggersForcefield) {
+            int forcefieldLayers = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.FORCEFIELD);
+            resultValue = Math.max(1, resultValue - forcefieldLayers);
+        }
+        
         this.isDraw = (resultValue == 0 && !perforation);
         
         this.attackWins = attackValue > defenseValue;
         
         this.combo = hasCombo(state);
         if (combo) {
-            this.comboDamage = resultValue;
+            int attackerPrismaticValue = state.getPrismaticDiceTotalValue(state.isPlayerAttacker());
+            this.comboDamage = attackValue - attackerPrismaticValue;
+            if (!primaryDamageTriggersForcefield && defenderEffects.isForcefieldActive() && this.comboDamage > 0) {
+                int forcefieldLayers = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.FORCEFIELD);
+                this.comboDamage = Math.max(1, this.comboDamage - forcefieldLayers);
+            }
         } else {
             this.comboDamage = 0;
         }
+        
+        this.comboWillHit = combo && comboDamage > 0;
         
         calculateStaticIconPositions(state);
         createFlyingNumbers();
@@ -349,7 +363,7 @@ public class DamageResolutionAnimator {
             if (defFlyingIcon != null) {
                 defFlyingIcon.setLabelOpacity(0f);
             }
-        } else {
+        } else if (!comboWillHit) {
             shatterEffect.trigger(centerX, centerY, 
                 ColorHelper.ATTACK_VALUE, iconSize);
             splitEffect.trigger(
@@ -373,6 +387,14 @@ public class DamageResolutionAnimator {
             atkFlyingIcon.setValue(resultValue);
             atkFlyingIcon.flyDirectTo(defenderTargetX, defenderTargetY, WINNER_IMPACT_DURATION);
             phase = Phase.WINNER_IMPACT;
+        } else if (comboWillHit) {
+            if (defFlyingIcon != null) {
+                defFlyingIcon.flyDirectTo(defIconCenterX, defIconCenterY, ICON_RETREAT_DURATION);
+            }
+            if (atkFlyingIcon != null) {
+                atkFlyingIcon.flyDirectTo(atkIconCenterX, atkIconCenterY, ICON_RETREAT_DURATION);
+            }
+            phase = Phase.ICON_RETREAT;
         } else {
             if (defFlyingIcon != null) {
                 defFlyingIcon.flyDirectTo(defIconCenterX, defIconCenterY, ICON_RETREAT_DURATION);
@@ -431,7 +453,11 @@ public class DamageResolutionAnimator {
         boolean defDone = defFlyingIcon == null || defFlyingIcon.isComplete();
         
         if (phaseElapsed >= ICON_RETREAT_DURATION || (atkDone && defDone)) {
-            phase = Phase.SHATTER_RESTORE;
+            if (comboWillHit && !attackWins) {
+                phase = Phase.POST_IMPACT_PAUSE;
+            } else {
+                phase = Phase.SHATTER_RESTORE;
+            }
             phaseElapsed = 0f;
         }
     }
@@ -455,7 +481,7 @@ public class DamageResolutionAnimator {
         if (phaseElapsed >= SHATTER_RESTORE_DURATION && atkDone && defDone && splitDone) {
             shatterRestoreAlpha = 1f;
             
-            boolean atkShattered = !attackWins || isDraw;
+            boolean atkShattered = (!attackWins || isDraw) && !comboWillHit;
             if (atkShattered && atkFlyingIcon != null) {
                 atkFlyingIcon.setRotation(0f);
                 atkFlyingIcon.setLabelOpacity(1f);
@@ -625,7 +651,7 @@ public class DamageResolutionAnimator {
             return;
         }
         
-        boolean atkShattered = !attackWins || isDraw;
+        boolean atkShattered = (!attackWins || isDraw) && !comboWillHit;
         boolean defShattered = attackWins;
         boolean restoring = phase == Phase.SHATTER_RESTORE;
         boolean splitDone = !splitEffect.isActive();
@@ -763,6 +789,7 @@ public class DamageResolutionAnimator {
         
         perforation = false;
         combo = false;
+        comboWillHit = false;
         attackWins = false;
         isDraw = false;
         playerAttacker = false;

@@ -300,19 +300,29 @@ public class DiceRollManager {
         float panelW = BattleRenderingUtils.PANEL_WIDTH;
         float panelH = BattleRenderingUtils.PANEL_HEIGHT;
         
-        List<float[]> allPositions = collectAllDicePositions();
-        List<PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, allPositions, panelW, panelH);
-        
-        float[][] scatters = DicePathPlanner.planScatterDestinations(rerollPaths.size(), panelW, panelH);
-        
         List<Integer> sortedIndices = new ArrayList<>(indices);
         Collections.sort(sortedIndices);
         
+        float[][] scatters = DicePathPlanner.planScatterDestinations(sortedIndices.size(), panelW, panelH);
+        
+        float[] targetXs = new float[sortedIndices.size()];
+        float[] targetYs = new float[sortedIndices.size()];
+        for (int i = 0; i < sortedIndices.size(); i++) {
+            int idx = sortedIndices.get(i);
+            if (idx >= 0 && idx < animators.size()) {
+                DiceAnimator animator = animators.get(idx);
+                targetXs[i] = animator.getTargetSlotX();
+                targetYs[i] = animator.getTargetSlotY();
+            }
+        }
+        
+        List<PlannedPath> travelPaths = DicePathPlanner.planTravelPaths(scatters, targetXs, targetYs, panelW, panelH);
+        
         for (int i = 0; i < sortedIndices.size(); i++) {
             int animatorIndex = sortedIndices.get(i);
-            if (animatorIndex < 0 || animatorIndex >= animators.size() || i >= rerollPaths.size()) continue;
+            if (animatorIndex < 0 || animatorIndex >= animators.size() || i >= travelPaths.size()) continue;
             
-            PlannedPath path = rerollPaths.get(i);
+            PlannedPath path = travelPaths.get(i);
             if (path == null) continue;
             
             DiceAnimator animator = animators.get(animatorIndex);
@@ -353,19 +363,29 @@ public class DiceRollManager {
         float panelW = BattleRenderingUtils.PANEL_WIDTH;
         float panelH = BattleRenderingUtils.PANEL_HEIGHT;
         
-        List<float[]> allPositions = collectAllOpponentDicePositions();
-        List<PlannedPath> rerollPaths = DicePathPlanner.planRerollPaths(indices, allPositions, panelW, panelH);
-        
-        float[][] scatters = DicePathPlanner.planScatterDestinations(rerollPaths.size(), panelW, panelH);
-        
         List<Integer> sortedIndices = new ArrayList<>(indices);
         Collections.sort(sortedIndices);
         
+        float[][] scatters = DicePathPlanner.planScatterDestinations(sortedIndices.size(), panelW, panelH);
+        
+        float[] targetXs = new float[sortedIndices.size()];
+        float[] targetYs = new float[sortedIndices.size()];
+        for (int i = 0; i < sortedIndices.size(); i++) {
+            int idx = sortedIndices.get(i);
+            if (idx >= 0 && idx < opponentAnimators.size()) {
+                DiceAnimator animator = opponentAnimators.get(idx);
+                targetXs[i] = animator.getTargetSlotX();
+                targetYs[i] = animator.getTargetSlotY();
+            }
+        }
+        
+        List<PlannedPath> travelPaths = DicePathPlanner.planTravelPaths(scatters, targetXs, targetYs, panelW, panelH);
+        
         for (int i = 0; i < sortedIndices.size(); i++) {
             int animatorIndex = sortedIndices.get(i);
-            if (animatorIndex < 0 || animatorIndex >= opponentAnimators.size() || i >= rerollPaths.size()) continue;
+            if (animatorIndex < 0 || animatorIndex >= opponentAnimators.size() || i >= travelPaths.size()) continue;
             
-            PlannedPath path = rerollPaths.get(i);
+            PlannedPath path = travelPaths.get(i);
             if (path == null) continue;
             
             DiceAnimator animator = opponentAnimators.get(animatorIndex);

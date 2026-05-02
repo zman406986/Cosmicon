@@ -360,6 +360,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
     @Override
     public void onWeatherChange(WeatherType newWeather) {
+        if (buttons != null) {
+            buttons.updateWeatherButton();
+        }
     }
 
     @Override
@@ -463,6 +466,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         labels.updateConfirmedSelectionLabels();
         labels.updateIconValueLabels();
         labels.updateStatusEffectLabels();
+        checkProcessedEffects();
+        if (labels.getStatusEffectAnimator() != null) {
+            labels.getStatusEffectAnimator().advance(amount);
+        }
         updatePrismaticClickHint();
 
         if (battleController != null) {
@@ -788,6 +795,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             renderOpponentHpCircle(alphaMult);
             renderStatusEffectBoxes(alphaMult);
 
+            if (labels.getStatusEffectAnimator() != null && labels.getStatusEffectAnimator().hasActiveAnimations()) {
+                labels.getStatusEffectAnimator().render(x, y, w, h, alphaMult);
+            }
+
             ValueChangeAnimator attackerAnimator = labels.getAttackerValueAnimator();
             ValueChangeAnimator defenderAnimator = labels.getDefenderValueAnimator();
 
@@ -809,6 +820,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             }
 
             renderDiceSelectionHighlights(alphaMult);
+            PassiveIndicationRenderer.renderIndications(battleState, diceRollManager, alphaMult);
             renderOpponentPrismaticButton(alphaMult);
             renderPrismaticButton(alphaMult);
 
@@ -902,6 +914,58 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         BattleRenderingUtils.renderStatusEffectBox(opponentBoxGlX, opponentBoxGlY,
             BattleRenderingUtils.STATUS_BOX_WIDTH, BattleRenderingUtils.CARD_HEIGHT, alphaMult);
+    }
+
+    private void checkProcessedEffects() {
+        if (battleState == null || labels.getStatusEffectAnimator() == null) return;
+
+        StatusEffectAnimator animator = labels.getStatusEffectAnimator();
+
+        List<StatusEffectProcessor.ProcessedEffect> playerProcessed =
+            battleState.getPlayerEffects().getAndClearProcessedEffects();
+        CosmiconLogger.debug("[StatusAnim] Player processed effects: %d", playerProcessed.size());
+        for (StatusEffectProcessor.ProcessedEffect pe : playerProcessed) {
+            CosmiconLogger.debug("[StatusAnim] Player processed: %s layers=%d", pe.effect().name(), pe.layers());
+            Integer idx = labels.getEffectDisplayIndex(true, pe.effect());
+            if (idx == null) {
+                idx = computeDisplayIndex(true, pe.effect());
+                CosmiconLogger.debug("[StatusAnim] Fallback computeDisplayIndex for %s = %d", pe.effect().name(), idx);
+            }
+            if (idx != null) {
+                float[] pos = labels.getStatusEffectLabelPosition(true, idx);
+                animator.triggerProcessAnimation(pos[0], pos[1], pos[2], pos[3]);
+            } else {
+                CosmiconLogger.debug("[StatusAnim] Could not find display index for player %s", pe.effect().name());
+            }
+        }
+
+        List<StatusEffectProcessor.ProcessedEffect> opponentProcessed =
+            battleState.getOpponentEffects().getAndClearProcessedEffects();
+        CosmiconLogger.debug("[StatusAnim] Opponent processed effects: %d", opponentProcessed.size());
+        for (StatusEffectProcessor.ProcessedEffect pe : opponentProcessed) {
+            CosmiconLogger.debug("[StatusAnim] Opponent processed: %s layers=%d", pe.effect().name(), pe.layers());
+            Integer idx = labels.getEffectDisplayIndex(false, pe.effect());
+            if (idx == null) {
+                idx = computeDisplayIndex(false, pe.effect());
+                CosmiconLogger.debug("[StatusAnim] Fallback computeDisplayIndex for %s = %d", pe.effect().name(), idx);
+            }
+            if (idx != null) {
+                float[] pos = labels.getStatusEffectLabelPosition(false, idx);
+                animator.triggerProcessAnimation(pos[0], pos[1], pos[2], pos[3]);
+            } else {
+                CosmiconLogger.debug("[StatusAnim] Could not find display index for opponent %s", pe.effect().name());
+            }
+        }
+    }
+
+    private Integer computeDisplayIndex(boolean isPlayer, StatusEffectProcessor.StatusEffect targetEffect) {
+        StatusEffectProcessor effects = isPlayer ? battleState.getPlayerEffects() : battleState.getOpponentEffects();
+        int idx = 0;
+        for (StatusEffectProcessor.StatusEffect effect : StatusEffectProcessor.StatusEffect.values()) {
+            if (effect == targetEffect) return idx;
+            if (effects.getLayers(effect) > 0) idx++;
+        }
+        return null;
     }
 
     private void renderDiceZone(float panelX, float panelY, float alphaMult) {

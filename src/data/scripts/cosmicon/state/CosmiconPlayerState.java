@@ -11,6 +11,7 @@ public class CosmiconPlayerState {
 
     private static final String KEY_SELECTED_CHARACTER = "$cos_selected_character";
     private static final String KEY_EQUIPPED_PRISMATIC = "$cos_equipped_prismatic";
+    private static final String KEY_EQUIPPED_PRISMATIC_TRUE = "$cos_equipped_prismatic_true";
 
     private static MemoryAPI getMemory() {
         return Global.getSector().getMemory();
@@ -32,6 +33,15 @@ public class CosmiconPlayerState {
 
     public static String loadPrismaticDice() {
         return getMemory().getString(KEY_EQUIPPED_PRISMATIC);
+    }
+
+    public static void savePrismaticDiceTrueVersion(boolean useTrue) {
+        getMemory().set(KEY_EQUIPPED_PRISMATIC_TRUE, useTrue);
+    }
+
+    public static boolean loadPrismaticDiceTrueVersion() {
+        Boolean val = getMemory().getBoolean(KEY_EQUIPPED_PRISMATIC_TRUE);
+        return val != null && val;
     }
 
     public static String getDefaultPrismaticForCharacter(String charId) {

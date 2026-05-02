@@ -190,30 +190,38 @@ public class WeatherController {
         }
     }
     
-    public void applyDefenderSelectionPhase(BattleState state) {
+    public void applyDefenderSelectionPhase(BattleState state, boolean isPlayer) {
         WeatherType weather = getCurrentWeather();
         if (weather == null) return;
         
-        List<Integer> values = state.getOpponentDiceValues();
-        List<Boolean> selected = state.getOpponentDiceSelected();
+        List<Integer> values = isPlayer ? state.getPlayerDiceValues() : state.getOpponentDiceValues();
+        List<Boolean> selected = isPlayer ? state.getPlayerDiceSelected() : state.getOpponentDiceSelected();
         
         switch (weather) {
             case BLIZZARD -> {
                 if (state.getDefenseValue() <= 8) {
-                    state.getOpponentEffects().addEffect(StatusEffect.FORCEFIELD, 1);
+                    state.getEffects(isPlayer).addEffect(StatusEffect.FORCEFIELD, 1);
+                    CosmiconLogger.debug("%s: FORCEFIELD granted to defender (%s)", weather, isPlayer ? "Player" : "Opponent");
                 }
             }
             case FROST -> {
                 Map<Integer, Integer> counts = countSelectedValues(values, selected);
                 boolean hasMatch = counts.values().stream().anyMatch(c -> c >= 2);
                 if (hasMatch) {
-                    state.getOpponentCard().setDefLevel(state.getOpponentCard().getDefLevel() + 1);
+                    CharacterCard card = state.getCard(isPlayer);
+                    if (card != null) {
+                        card.setDefLevel(card.getDefLevel() + 1);
+                        CosmiconLogger.debug("%s: DEF level +1 for defender (%s)", weather, isPlayer ? "Player" : "Opponent");
+                    }
                 }
             }
             case SLEET -> {
-                if (state.getOpponentHp() < state.getOpponentCard().getMaxHp()) {
-                    state.getOpponentEffects().addEffect(StatusEffect.COUNTER, 1);
-                    state.getOpponentCard().setDefLevel(state.getOpponentCard().getDefLevel() + 2);
+                int hp = isPlayer ? state.getPlayerHp() : state.getOpponentHp();
+                CharacterCard card = state.getCard(isPlayer);
+                if (card != null && hp < card.getMaxHp()) {
+                    state.getEffects(isPlayer).addEffect(StatusEffect.COUNTER, 1);
+                    card.setDefLevel(card.getDefLevel() + 2);
+                    CosmiconLogger.debug("%s: COUNTER + DEF+2 for defender (%s)", weather, isPlayer ? "Player" : "Opponent");
                 }
             }
             default -> {}
