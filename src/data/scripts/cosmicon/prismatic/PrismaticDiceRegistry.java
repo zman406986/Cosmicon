@@ -37,6 +37,10 @@ public final class PrismaticDiceRegistry {
         register(createBerserker());
         register(createGambler());
         register(createMagicBullet());
+        register(createMirror());
+        register(createSanctions());
+        register(createStrategy());
+        register(createToxic());
     }
     
     private static void register(PrismaticDiceType type) {
@@ -267,6 +271,49 @@ public final class PrismaticDiceRegistry {
             indices(4, 5),
             indices(3, 4, 5),
             PrismaticEffect.instantDamage(3),
+            AlwaysAvailableCondition.INSTANCE
+        );
+    }
+
+    private static PrismaticDiceType createMirror() {
+        return PrismaticDiceType.createWithVersions(
+            "mirror",
+            new int[]{2, 3, 4, 4, 5, 6},
+            new int[]{3, 4, 5, 5, 6, 7},
+            indices(3, 4, 5),
+            PrismaticEffect.grantStatus(StatusEffect.REFLECT, 1),
+            ActionTypeCondition.defenseOnly()
+        );
+    }
+
+    private static PrismaticDiceType createSanctions() {
+        return PrismaticDiceType.createWithVersions(
+            "sanctions",
+            new int[]{3, 4, 4, 5, 5, 6},
+            new int[]{4, 5, 5, 6, 6, 7},
+            indices(3, 4, 5),
+            PrismaticEffect.grantStatus(StatusEffect.DETERRENCE, 1),
+            AlwaysAvailableCondition.INSTANCE
+        );
+    }
+
+    private static PrismaticDiceType createStrategy() {
+        return PrismaticDiceType.createWithSpecialFaces(
+            "strategy",
+            new int[]{1, 2, 3, 4, 5, 6},
+            allIndices(),
+            PrismaticEffect.grantStatus(StatusEffect.TACTICS, 1),
+            TurnCountCondition.fromTurn(2)
+        );
+    }
+
+    private static PrismaticDiceType createToxic() {
+        return PrismaticDiceType.createWithVersions(
+            "toxic",
+            new int[]{2, 3, 3, 4, 4, 5},
+            new int[]{3, 4, 4, 5, 5, 6},
+            indices(3, 4, 5),
+            PrismaticEffect.grantStatus(StatusEffect.POISON, 0, true),
             AlwaysAvailableCondition.INSTANCE
         );
     }

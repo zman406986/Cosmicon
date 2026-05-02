@@ -930,10 +930,6 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         }
     }
 
-    public boolean isValueChangeAnimationInProgress() {
-        return valueChangeAnimationInProgress;
-    }
-
     public void notifyValueChange(boolean isPlayer, String changeType, int oldValue, int newValue, int delta) {
         for (BattleEventListener l : listeners) {
             l.onValueChange(isPlayer, changeType, oldValue, newValue, delta);

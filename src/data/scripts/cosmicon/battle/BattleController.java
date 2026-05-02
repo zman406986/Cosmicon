@@ -34,10 +34,6 @@ public class BattleController implements BattleState.DamageAnimationCallback {
         turnProcessor.onDamageAnimationComplete();
     }
 
-    public void initRandomBattle() {
-        initBattleWithSelection();
-    }
-
     public void initBattleWithSelection() {
         initBattleWithSelection(true);
     }

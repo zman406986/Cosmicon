@@ -56,22 +56,6 @@ public final class PrismaticDisplayHelper {
         }
     }
 
-    public static String getEffectDescriptionForDiceId(String diceId) {
-        if (diceId == null || diceId.isEmpty()) {
-            return Strings.get("prismatic.equip.none_effect");
-        }
-        String key = "prismatic." + diceId + ".description";
-        try {
-            return Strings.get(key);
-        } catch (Exception e) {
-            PrismaticDiceType type = data.scripts.cosmicon.prismatic.PrismaticDiceRegistry.get(diceId);
-            if (type != null) {
-                return getEffectDescription(type);
-            }
-            return Strings.get("prismatic.equip.no_effect");
-        }
-    }
-
     public static String getFaceValuesDisplay(PrismaticDiceType type, boolean useTrueVersion) {
         if (type == null) return "";
         int[] faces = type.getFaces(useTrueVersion);

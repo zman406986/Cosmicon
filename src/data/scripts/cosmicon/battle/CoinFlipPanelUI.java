@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.util.List;
 
 import org.lwjgl.input.Mouse;
-import org.lwjgl.opengl.GL11;
 
 import com.fs.starfarer.api.campaign.BaseCustomUIPanelPlugin;
 import com.fs.starfarer.api.campaign.CustomVisualDialogDelegate.DialogCallbacks;
@@ -62,7 +61,6 @@ public class CoinFlipPanelUI extends BaseCustomUIPanelPlugin {
         float w = pos.getWidth();
         float h = pos.getHeight();
 
-        float centerX = w / 2f;
         float flipHintY = h / 2f - FLIP_HINT_Y_OFFSET;
 
         flipHintLabel = UIComponentFactory.createLabel(

@@ -270,7 +270,6 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         for (int i = 0; i < diceEntryLabels.size(); i++) {
             DiceEntryLabels labels = diceEntryLabels.get(i);
-            boolean hasBoth = labels.hasBothVersions();
 
             float entryY = listStartY + titleOffset + i * DICE_ENTRY_HEIGHT - diceScrollOffset;
 

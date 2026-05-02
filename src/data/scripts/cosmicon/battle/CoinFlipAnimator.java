@@ -66,10 +66,6 @@ public class CoinFlipAnimator {
         return playerIsAttacker;
     }
 
-    public Face getWinningFace() {
-        return winningFace;
-    }
-
     public boolean isComplete() {
         return complete;
     }
@@ -177,10 +173,6 @@ public class CoinFlipAnimator {
         renderShadow(centerX, centerY, alphaMult);
         renderCoin(centerX, centerY, alphaMult);
 
-        if (resultTextAlpha > 0f) {
-            renderResultText(centerX, centerY, alphaMult);
-        }
-
         GLStateUtil.resetColor();
     }
 
@@ -194,7 +186,7 @@ public class CoinFlipAnimator {
         float[] c = new float[] { 0f, 0f, 0f, shadowAlpha * alphaMult * 0.5f };
         GL11.glColor4f(c[0], c[1], c[2], c[3]);
 
-        drawEllipse(centerX - shadowW / 2f, shadowY - shadowH / 2f, shadowW, shadowH, 16);
+        drawEllipse(centerX - shadowW / 2f, shadowY - shadowH / 2f, shadowW, shadowH);
 
         GLStateUtil.resetColor();
     }
@@ -249,10 +241,8 @@ public class CoinFlipAnimator {
         GLStateUtil.resetColor();
     }
 
-    private void renderResultText(float centerX, float centerY, float alphaMult) {
-    }
-
-    private void drawEllipse(float x, float y, float w, float h, int segments) {
+    private void drawEllipse(float x, float y, float w, float h) {
+        int segments = 16;
         GL11.glBegin(GL11.GL_TRIANGLE_FAN);
         GL11.glVertex2f(x + w / 2f, y + h / 2f);
         for (int i = 0; i <= segments; i++) {
@@ -265,9 +255,5 @@ public class CoinFlipAnimator {
 
     public float getResultTextAlpha() {
         return resultTextAlpha;
-    }
-
-    public float getCoinScale() {
-        return coinScale;
     }
 }

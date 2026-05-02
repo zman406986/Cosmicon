@@ -25,9 +25,12 @@ public class PrismaticDiceProcessor {
         if (effect.isGrantStatus()) {
             StatusEffect statusEffect = effect.getGrantedEffect();
             int layers = effect.calculateLayers(dice.rolledFace);
-            state.applyEffect(statusEffect, layers, forPlayer);
+            boolean applyToOpponent = statusEffect == StatusEffect.POISON
+                || statusEffect == StatusEffect.DETERRENCE;
+            boolean target = applyToOpponent ? !forPlayer : forPlayer;
+            state.applyEffect(statusEffect, layers, target);
             CosmiconLogger.debug("Prismatic effect applied: %s x%d to %s", 
-                statusEffect.name(), layers, forPlayer ? "Player" : "Opponent");
+                statusEffect.name(), layers, target ? "Player" : "Opponent");
             return;
         }
         

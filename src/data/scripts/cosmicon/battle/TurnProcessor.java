@@ -445,10 +445,11 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
     private void performAiSelection() {
         boolean isAttackPhase = state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK;
         boolean aiIsAttacker = !state.isPlayerAttacker();
+        boolean forPlayer = isAttackPhase != aiIsAttacker;
         
-        aiEngine.executeSelection(state, isAttackPhase != aiIsAttacker);
+        aiEngine.executeSelection(state, forPlayer);
         
-        processPassiveEffects(false);
+        processPassiveEffects(forPlayer);
         
         StatusEffectProcessor.BattleContext opponentContext = createBattleContext(false);
         TurnType opponentTurnType = state.isPlayerAttacker() ? TurnType.DEFENSE : TurnType.ATTACK;

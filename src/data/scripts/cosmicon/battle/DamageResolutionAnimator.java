@@ -437,7 +437,8 @@ public class DamageResolutionAnimator {
         }
         
         if (splitEffect.isRestoring()) {
-            shatterRestoreAlpha = 0f;
+            float progress = splitEffect.getRestoreProgress();
+            shatterRestoreAlpha = progress;
         } else {
             shatterRestoreAlpha = 1f;
         }
