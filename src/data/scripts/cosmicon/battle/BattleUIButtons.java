@@ -39,6 +39,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
     private ButtonAPI rerollButton;
     private ButtonAPI confirmButton;
     private LabelAPI weatherLabel;
+    private LabelAPI weatherTitleLabel;
     private boolean buttonsCreated = false;
 
     private PrismaticDiceSelectionPopup prismaticPopup;
@@ -225,15 +226,24 @@ public class BattleUIButtons implements ActionListenerDelegate {
     }
 
     private void createWeatherLabel() {
-        float labelWidth = 170f;
-        float labelHeight = 22f;
+        float boxWidth = 170f;
+        float boxHeight = 30f;
+        float titleHeight = 18f;
         float playerCardUiX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
         float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
-        float weatherX = playerCardUiX + 5f;
-        float weatherY = playerCardY - PASSIVE_BTN_HEIGHT - labelHeight - 10f;
 
-        weatherLabel = UIComponentFactory.createLabelSmall(panel, Strings.get("battle.weather_none"),
-            java.awt.Color.LIGHT_GRAY, com.fs.starfarer.api.ui.Alignment.MID, labelWidth, labelHeight, weatherX, weatherY);
+        float weatherX = playerCardUiX + 5f;
+        float titleY = playerCardY - PASSIVE_BTN_HEIGHT - titleHeight - boxHeight - 15f;
+        float boxY = titleY + titleHeight + 2f;
+
+        weatherTitleLabel = UIComponentFactory.createLabelSmall(panel, Strings.get("battle.weather_effects"),
+            java.awt.Color.LIGHT_GRAY, com.fs.starfarer.api.ui.Alignment.MID, boxWidth, titleHeight, weatherX, titleY);
+
+        TooltipMakerAPI weatherTp = panel.createUIElement(boxWidth, boxHeight, false);
+        panel.addUIElement(weatherTp).inTL(weatherX, boxY);
+
+        weatherLabel = weatherTp.addPara(Strings.get("battle.weather_none"), 0f);
+        weatherLabel.setAlignment(com.fs.starfarer.api.ui.Alignment.MID);
 
         updateWeatherLabel();
     }
@@ -417,6 +427,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
         diceRollManager = null;
         labels = null;
         weatherLabel = null;
+        weatherTitleLabel = null;
         buttonsCreated = false;
     }
 
