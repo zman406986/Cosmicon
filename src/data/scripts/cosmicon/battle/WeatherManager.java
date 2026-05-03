@@ -41,7 +41,7 @@ public class WeatherManager {
         STORY_BATTLE_WEATHERS.put("rappa", Arrays.asList(
             WeatherType.SCORCHING_SUN, WeatherType.RAINBOW, WeatherType.DROUGHT, WeatherType.DRY_THUNDERSTORM));
         STORY_BATTLE_WEATHERS.put(CharacterIds.YAO_GUANG, Arrays.asList(
-            WeatherType.PARHELION, WeatherType.THUNDERSTORM, WeatherType.SEA_OF_CLOUDS, WeatherType.SUNNY));
+            WeatherType.PARHELION, WeatherType.SEA_OF_CLOUDS, WeatherType.SUNNY));
         STORY_BATTLE_WEATHERS.put("seele", Arrays.asList(
             WeatherType.FROG_RAIN, WeatherType.HIGH_TEMPERATURE, WeatherType.CREPUSCULAR_RAYS, WeatherType.SUNNY));
     }

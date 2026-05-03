@@ -268,14 +268,6 @@ public class WeatherController {
     }
     
     public void applyRerollGlidingEffect(BattleState state, boolean isPlayer) {
-        WeatherType weather = getCurrentWeather();
-        if (weather == WeatherType.THUNDERSTORM) {
-            state.modifyCardAtkLevel(isPlayer, 2);
-            CharacterCard card = state.getCard(isPlayer);
-            if (card != null) {
-                card.setDefLevel(card.getDefLevel() + 2);
-            }
-        }
     }
     
     public boolean shouldPreventMinimumRoll() {

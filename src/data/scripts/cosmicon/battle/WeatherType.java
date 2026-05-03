@@ -13,7 +13,6 @@ public enum WeatherType {
     CYCLONIC_SWARM(WeatherCategory.ATTACK, 2),
     SLEET(WeatherCategory.HELP, 2),
     SOLAR_ECLIPSE(WeatherCategory.ATTACK, 2),
-    THUNDERSTORM(WeatherCategory.HELP, 2),
     BLIZZARD(WeatherCategory.SAFEGUARD, 4),
     SCORCHING_SUN(WeatherCategory.ATTACK, 4),
     ACID_RAIN(WeatherCategory.HELP, 4),
