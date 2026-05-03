@@ -17,6 +17,10 @@ public class WeatherController {
         this.schedule = new WeatherManager();
     }
     
+    public WeatherManager getWeatherManager() {
+        return schedule;
+    }
+    
     public WeatherType getCurrentWeather() {
         return schedule.getCurrentWeather();
     }
@@ -73,16 +77,10 @@ public class WeatherController {
                 }
             }
             case STORM -> {
-                state.modifyCardAtkLevel(true, 1);
-                CharacterCard playerCard = state.getPlayerCard();
-                if (playerCard != null) {
-                    playerCard.setDefLevel(playerCard.getDefLevel() + 1);
-                }
-                state.modifyCardAtkLevel(false, 1);
-                CharacterCard opponentCard = state.getOpponentCard();
-                if (opponentCard != null) {
-                    opponentCard.setDefLevel(opponentCard.getDefLevel() + 1);
-                }
+                state.modifyWeatherAtkMod(true, 1);
+                state.modifyWeatherDefMod(true, 1);
+                state.modifyWeatherAtkMod(false, 1);
+                state.modifyWeatherDefMod(false, 1);
             }
             default -> {}
         }
@@ -156,7 +154,7 @@ public class WeatherController {
             }
             case DROUGHT -> {
                 if (isAttacker) {
-                    int defLevel = isPlayer ? state.getOpponentCard().getDefLevel() : state.getPlayerCard().getDefLevel();
+                    int defLevel = state.getEffectiveDefLevel(!isPlayer);
                     int extraAttack = defLevel * 3;
                     state.modifyAttackValue(extraAttack);
                 }
@@ -208,11 +206,8 @@ public class WeatherController {
                 Map<Integer, Integer> counts = countSelectedValues(values, selected);
                 boolean hasMatch = counts.values().stream().anyMatch(c -> c >= 2);
                 if (hasMatch) {
-                    CharacterCard card = state.getCard(isPlayer);
-                    if (card != null) {
-                        card.setDefLevel(card.getDefLevel() + 1);
-                        CosmiconLogger.debug("%s: DEF level +1 for defender (%s)", weather, isPlayer ? "Player" : "Opponent");
-                    }
+                    state.modifyWeatherDefMod(isPlayer, 1);
+                    CosmiconLogger.debug("%s: DEF level +1 for defender (%s)", weather, isPlayer ? "Player" : "Opponent");
                 }
             }
             case SLEET -> {
@@ -220,7 +215,7 @@ public class WeatherController {
                 CharacterCard card = state.getCard(isPlayer);
                 if (card != null && hp < card.getMaxHp()) {
                     state.getEffects(isPlayer).addEffect(StatusEffect.COUNTER, 1);
-                    card.setDefLevel(card.getDefLevel() + 2);
+                    state.modifyWeatherDefMod(isPlayer, 2);
                     CosmiconLogger.debug("%s: COUNTER + DEF+2 for defender (%s)", weather, isPlayer ? "Player" : "Opponent");
                 }
             }

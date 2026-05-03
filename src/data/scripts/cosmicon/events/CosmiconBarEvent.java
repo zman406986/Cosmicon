@@ -19,6 +19,11 @@ import data.scripts.cosmicon.state.CosmiconStats;
 
 public class CosmiconBarEvent extends BaseBarEvent {
 
+    public enum OptionId {
+        PLAY,
+        DECLINE
+    }
+
     @Override
     public boolean shouldShowAtMarket(MarketAPI market) {
         if (!super.shouldShowAtMarket(market)) return false;
@@ -44,13 +49,13 @@ public class CosmiconBarEvent extends BaseBarEvent {
             text.addPara(Strings.get("bar_event.standard_prompt"));
         }
 
-        options.addOption(Strings.get("bar_event.accept"), "cosmicon_play");
-        options.addOption(Strings.get("bar_event.decline"), "cosmicon_decline");
+        options.addOption(Strings.get("bar_event.accept"), OptionId.PLAY);
+        options.addOption(Strings.get("bar_event.decline"), OptionId.DECLINE);
     }
 
     @Override
     public void optionSelected(String optionText, Object optionData) {
-        if ("cosmicon_play".equals(optionData)) {
+        if (optionData == OptionId.PLAY) {
             boolean isTutorial = CosmiconStats.isInTutorialMode();
 
             if (isTutorial) {
@@ -79,7 +84,7 @@ public class CosmiconBarEvent extends BaseBarEvent {
             BarEventManager.getInstance().notifyWasInteractedWith(this);
 
             CosmiconInteraction.startInteraction(dialog);
-        } else if ("cosmicon_decline".equals(optionData)) {
+        } else if (optionData == OptionId.DECLINE) {
             text.addPara(Strings.get("bar_event.declined"));
             done = true;
         }

@@ -63,6 +63,10 @@ public class TurnProcessor {
         this.diceRoller = diceRoller;
     }
     
+    public DiceRoller getDiceRoller() {
+        return diceRoller;
+    }
+    
     public void setDamageResolver(DamageResolver resolver) {
         this.damageResolver = resolver;
     }
@@ -723,10 +727,8 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         StatusEffectProcessor defenderEffects = state.getEffects(defenderIsPlayer);
         int comboDamage = modifiedAttack;
         
-        int forcefieldReduction = 0;
         if (defenderEffects.isForcefieldActive() && comboDamage > 0) {
-            forcefieldReduction = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.FORCEFIELD);
-            comboDamage = Math.max(1, comboDamage - forcefieldReduction);
+            comboDamage = 0;
             defenderEffects.removeEffect(StatusEffectProcessor.StatusEffect.FORCEFIELD);
         }
         
@@ -735,8 +737,8 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         if (comboDamage > 0) {
             state.applyDamageTo(defenderIsPlayer, comboDamage);
             
-            CosmiconLogger.info("COMBO attack: %d damage (Attack=%d, modified=%d, Forcefield reduction=%d)",
-                comboDamage, attackValue, modifiedAttack, forcefieldReduction);
+            CosmiconLogger.info("COMBO attack: %d damage (Attack=%d, modified=%d)",
+                comboDamage, attackValue, modifiedAttack);
             
             int reflectDamage = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.REFLECT);
             if (reflectDamage > 0) {
@@ -803,9 +805,12 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         weatherController.advanceTurn();
         WeatherType newWeather = weatherController.getCurrentWeather();
         
-        if (newWeather != oldWeather && newWeather != null) {
-            state.notifyWeatherChange(newWeather);
-            weatherController.applyWeatherTransitionEffect(state, oldWeather, newWeather);
+        if (newWeather != oldWeather) {
+            state.clearWeatherMods();
+            if (newWeather != null) {
+                state.notifyWeatherChange(newWeather);
+                weatherController.applyWeatherTransitionEffect(state, oldWeather, newWeather);
+            }
         }
         
         state.clearDiceSelection(true);

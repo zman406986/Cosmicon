@@ -36,7 +36,7 @@
         "selected_values": "Selected: {0}",
         "no_selection": "Select dice...",
         "prismatic_effect_none": "",
-        "weather_none": "No Weather",
+        "weather_none": "non active",
         "weather_none_desc": "No weather is active yet. Weather will appear starting from turn 2.",
         "weather_category": "Category: {0}"
     },
@@ -463,7 +463,32 @@
     },
     "tutorial": {
         "no_prismatic_allowed": "Tutorial mode: Prismatic dice are disabled for this game.",
-        "games_remaining": "Tutorial mode - {0} games remaining"
+        "games_remaining": "Tutorial mode - {0} games remaining",
+        "g1_t1_attack_roll": "You are the attacker! Roll the dice by clicking anywhere.",
+        "g1_t1_attack_select": "Select your highest dice to deal more damage. Pick the 4 biggest numbers.",
+        "g1_t1_attack_confirm": "Click 'Confirm Attack' when you're ready!",
+        "g1_t1_defense_roll": "Now you are defending! The opponent is attacking. Roll the dice!",
+        "g1_t1_defense_select": "You rolled matching numbers! Select the pair to trigger Sparxie's Hack ability.",
+        "g1_t1_defense_confirm": "Click 'Confirm Defense' to block the attack.",
+        "g1_t2_attack_roll": "Your turn to attack again! Roll the dice.",
+        "g1_t2_attack_reroll": "These rolls are low. Select the small dice and click 'Reroll Selected' for better numbers!",
+        "g1_t2_attack_select": "Much better! Now select your best dice and confirm to win!",
+        "g1_t2_attack_confirm": "Confirm your attack to win!",
+        "g1_victory": "Victory! You've learned the basics of rolling, selecting, and rerolling! You unlocked Sparxie. Continue playing encounters at the bar to unlock more characters and abilities.",
+        "g2_t1_defense_roll": "Meet Acheron! Her ability triggers when she selects all 4s on attack. For now, defend first - roll the dice!",
+        "g2_t1_defense_select": "You rolled two 4s! Select them - Acheron remembers 4s for her next attack's ability.",
+        "g2_t1_defense_confirm": "Confirm your defense selection.",
+        "g2_t2_attack_roll": "Now you attack! Notice the prismatic dice icon. Roll first!",
+        "g2_t2_attack_prismatic": "Click the prismatic dice icon to add a special die to your pool!",
+        "g2_t2_attack_select": "Select the 4s to trigger Perforation. Keep the prismatic die in your selection!",
+        "g2_t2_attack_confirm": "Confirm your attack!",
+        "g2_t2_defense_roll": "Defend again! The opponent is getting stronger.",
+        "g2_t2_defense_select": "Select dice to defend yourself.",
+        "g2_t2_defense_confirm": "Confirm your defense.",
+        "g2_t3_attack_roll": "The weather changed! Roll your dice.",
+        "g2_t3_attack_select": "Select your 4s and use prismatic dice to finish the opponent!",
+        "g2_t3_attack_confirm": "Confirm to win!",
+        "g2_victory": "Victory! You mastered abilities, prismatic dice, and weather! You unlocked Acheron and prismatic dice. Play more encounters at the bar to discover additional characters and special dice."
     },
     "gallery": {
         "no_prismatic_unlocked": "No prismatic dice unlocked. Complete 2 tutorial games to unlock Absolute Six."

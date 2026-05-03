@@ -492,9 +492,16 @@ public class BattleUILabels {
                 LabelAPI label = playerStatusLabels.get(playerIdx);
                 int duration = playerEffects.getDuration(effect);
                 String effectName = Strings.get("status." + effect.name().toLowerCase());
-                String text = duration < StatusEffectProcessor.PERMANENT_DURATION
-                    ? String.format("%s (%d, %d turns)", effectName, layers, duration)
-                    : String.format("%s (%d)", effectName, layers);
+                String text;
+                if (effect == StatusEffectProcessor.StatusEffect.SIPHON) {
+                    text = duration < StatusEffectProcessor.PERMANENT_DURATION
+                        ? String.format("%s (%d%%, %d turns)", effectName, layers, duration)
+                        : String.format("%s (%d%%)", effectName, layers);
+                } else {
+                    text = duration < StatusEffectProcessor.PERMANENT_DURATION
+                        ? String.format("%s (%d, %d turns)", effectName, layers, duration)
+                        : String.format("%s (%d)", effectName, layers);
+                }
                 label.setText(text);
                 label.setOpacity(1f);
                 playerIdx++;
@@ -528,9 +535,16 @@ public class BattleUILabels {
                 LabelAPI label = opponentStatusLabels.get(opponentIdx);
                 int duration = opponentEffects.getDuration(effect);
                 String effectName = Strings.get("status." + effect.name().toLowerCase());
-                String text = duration < StatusEffectProcessor.PERMANENT_DURATION
-                    ? String.format("%s (%d, %d turns)", effectName, layers, duration)
-                    : String.format("%s (%d)", effectName, layers);
+                String text;
+                if (effect == StatusEffectProcessor.StatusEffect.SIPHON) {
+                    text = duration < StatusEffectProcessor.PERMANENT_DURATION
+                        ? String.format("%s (%d%%, %d turns)", effectName, layers, duration)
+                        : String.format("%s (%d%%)", effectName, layers);
+                } else {
+                    text = duration < StatusEffectProcessor.PERMANENT_DURATION
+                        ? String.format("%s (%d, %d turns)", effectName, layers, duration)
+                        : String.format("%s (%d)", effectName, layers);
+                }
                 label.setText(text);
                 label.setOpacity(1f);
                 opponentIdx++;
@@ -591,15 +605,15 @@ public class BattleUILabels {
         if (playerCard != null) {
             playerNameLabel.setText(playerCard.getName());
             playerHpLabel.setText(String.format("%d/%d", battleState.getPlayerHp(), playerCard.getMaxHp()));
-            playerAtkLabel.setText(String.valueOf(playerCard.getAtkLevel()));
-            playerDefLabel.setText(String.valueOf(playerCard.getDefLevel()));
+            playerAtkLabel.setText(String.valueOf(battleState.getEffectiveAtkLevel(true)));
+            playerDefLabel.setText(String.valueOf(battleState.getEffectiveDefLevel(true)));
         }
 
         if (opponentCard != null) {
             opponentNameLabel.setText(opponentCard.getName());
             opponentHpLabel.setText(String.format("%d/%d", battleState.getOpponentHp(), opponentCard.getMaxHp()));
-            opponentAtkLabel.setText(String.valueOf(opponentCard.getAtkLevel()));
-            opponentDefLabel.setText(String.valueOf(opponentCard.getDefLevel()));
+            opponentAtkLabel.setText(String.valueOf(battleState.getEffectiveAtkLevel(false)));
+            opponentDefLabel.setText(String.valueOf(battleState.getEffectiveDefLevel(false)));
         }
 
         DicePoolCounts playerCounts = battleState.getPlayerDicePoolCounts();

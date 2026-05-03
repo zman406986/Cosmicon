@@ -7,12 +7,15 @@ import data.scripts.cosmicon.prismatic.PrismaticManager;
 import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.state.CosmiconPlayerState;
 import data.scripts.cosmicon.state.CosmiconStats;
+import data.scripts.cosmicon.tutorial.TutorialController;
+import data.scripts.cosmicon.tutorial.TutorialDiceRoller;
 import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class BattleController implements BattleState.DamageAnimationCallback {
 
     private final BattleState state;
     private final TurnProcessor turnProcessor;
+    private TutorialController tutorialController;
 
     public BattleController() {
         WeatherController weatherController = new WeatherController();
@@ -125,6 +128,21 @@ public class BattleController implements BattleState.DamageAnimationCallback {
 
         state.init(playerCard, opponentCard, playerIsAttacker);
 
+        if (isTutorial) {
+            TutorialController.TutorialGame game = TutorialController.determineTutorialGame();
+            tutorialController = new TutorialController(game, state);
+            TutorialDiceRoller tutorialDiceRoller = new TutorialDiceRoller(tutorialController);
+            turnProcessor.getDiceRoller().setTutorialDiceRoller(tutorialDiceRoller);
+            CosmiconLogger.info("Tutorial controller initialized for game: %s", game);
+
+            if (game == TutorialController.TutorialGame.GAME_2_ACHERON) {
+                java.util.Map<Integer, WeatherType> forcedWeather = new java.util.HashMap<>();
+                forcedWeather.put(2, WeatherType.CREPUSCULAR_RAYS);
+                state.getWeatherController().getWeatherManager().setForcedWeatherSchedule(forcedWeather);
+                CosmiconLogger.info("Tutorial Game 2: Forced CREPUSCULAR_RAYS weather at turn 2");
+            }
+        }
+
         CosmiconLogger.debug("Battle state initialized, starting turn processor");
         turnProcessor.startBattle();
     }
@@ -147,6 +165,10 @@ public class BattleController implements BattleState.DamageAnimationCallback {
 
     public BattleState getState() {
         return state;
+    }
+
+    public TutorialController getTutorialController() {
+        return tutorialController;
     }
 
     public void advanceAiSelection(float amount) {

@@ -5,6 +5,7 @@ import org.lwjgl.input.Keyboard;
 import com.fs.starfarer.api.campaign.CustomVisualDialogDelegate.DialogCallbacks;
 import com.fs.starfarer.api.ui.ButtonAPI;
 import com.fs.starfarer.api.ui.CustomPanelAPI;
+import com.fs.starfarer.api.ui.LabelAPI;
 import com.fs.starfarer.api.ui.TooltipMakerAPI;
 import com.fs.starfarer.api.ui.TooltipMakerAPI.ActionListenerDelegate;
 import com.fs.starfarer.api.ui.TooltipMakerAPI.TooltipCreator;
@@ -15,6 +16,7 @@ import data.scripts.cosmicon.battle.BattleState.Phase;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
+import data.scripts.cosmicon.tutorial.TutorialController;
 import data.scripts.cosmicon.ui.PrismaticDiceSelectionPopup;
 import data.scripts.cosmicon.util.UIComponentFactory;
 
@@ -36,7 +38,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
 
     private ButtonAPI rerollButton;
     private ButtonAPI confirmButton;
-    private ButtonAPI weatherButton;
+    private LabelAPI weatherLabel;
     private boolean buttonsCreated = false;
 
     private PrismaticDiceSelectionPopup prismaticPopup;
@@ -47,6 +49,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
     private float diceZoneCenterY;
     private float playerPrismaticBtnX;
     private float playerPrismaticBtnY;
+    private TutorialController tutorialController;
 
     public void init(CustomPanelAPI panel, DialogCallbacks callbacks, BattleController controller,
             BattleState state, DiceRollManager diceRollManager, BattleUILabels labels,
@@ -144,7 +147,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
         playerPrismaticBtnX = BattleRenderingUtils.MARGIN + 60f;
         playerPrismaticBtnY = BattleRenderingUtils.PANEL_HEIGHT - 100f;
 
-        createWeatherButton();
+        createWeatherLabel();
 
         createStatusTooltips();
 
@@ -221,64 +224,32 @@ public class BattleUIButtons implements ActionListenerDelegate {
         }
     }
 
-    private void createWeatherButton() {
-        float btnWidth = 170f;
-        float btnHeight = 22f;
+    private void createWeatherLabel() {
+        float labelWidth = 170f;
+        float labelHeight = 22f;
         float playerCardUiX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
         float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
         float weatherX = playerCardUiX + 5f;
-        float weatherY = playerCardY - PASSIVE_BTN_HEIGHT - btnHeight - 14f;
+        float weatherY = playerCardY - PASSIVE_BTN_HEIGHT - labelHeight - 10f;
 
-        TooltipMakerAPI weatherTp = UIComponentFactory.createTooltipForButtons(panel, this,
-            btnWidth, btnHeight, weatherX, weatherY);
+        weatherLabel = UIComponentFactory.createLabelSmall(panel, Strings.get("battle.weather_none"),
+            java.awt.Color.LIGHT_GRAY, com.fs.starfarer.api.ui.Alignment.MID, labelWidth, labelHeight, weatherX, weatherY);
 
-        weatherButton = weatherTp.addButton(Strings.get("battle.weather_none"), "weather_info",
-            btnWidth, btnHeight, 0f);
-        weatherButton.setQuickMode(true);
-
-        weatherTp.addTooltipToPrevious(new TooltipCreator() {
-            @Override
-            public boolean isTooltipExpandable(Object tooltipParam) { return false; }
-            @Override
-            public float getTooltipWidth(Object tooltipParam) { return 350f; }
-            @Override
-            public void createTooltip(TooltipMakerAPI tooltip, boolean expanded, Object tooltipParam) {
-                if (battleState != null && battleState.getWeatherController() != null) {
-                    WeatherType weather = battleState.getWeatherController().getCurrentWeather();
-                    if (weather != null) {
-                        String descKey = "weather." + weather.name().toLowerCase() + "_desc";
-                        try {
-                            tooltip.addPara(Strings.get(descKey), 5f);
-                        } catch (Exception e) {
-                            tooltip.addPara(weather.getDescription(), 5f);
-                        }
-                        tooltip.addPara(Strings.format("battle.weather_category",
-                            Strings.get("weather_category." + weather.getCategory().name().toLowerCase())), 3f);
-                    } else {
-                        tooltip.addPara(Strings.get("battle.weather_none_desc"), 5f);
-                    }
-                }
-            }
-        }, TooltipLocation.LEFT, false);
-
-        updateWeatherButton();
+        updateWeatherLabel();
     }
 
-    public void updateWeatherButton() {
-        if (weatherButton == null || battleState == null) return;
+    public void updateWeatherLabel() {
+        if (weatherLabel == null || battleState == null) return;
         WeatherController wc = battleState.getWeatherController();
         if (wc == null) {
-            weatherButton.setText(Strings.get("battle.weather_none"));
-            weatherButton.setEnabled(false);
+            weatherLabel.setText(Strings.get("battle.weather_none"));
             return;
         }
         WeatherType weather = wc.getCurrentWeather();
         if (weather == null) {
-            weatherButton.setText(Strings.get("battle.weather_none"));
-            weatherButton.setEnabled(false);
+            weatherLabel.setText(Strings.get("battle.weather_none"));
         } else {
-            weatherButton.setText(Strings.get("weather." + weather.name().toLowerCase()));
-            weatherButton.setEnabled(true);
+            weatherLabel.setText(Strings.get("weather." + weather.name().toLowerCase()));
         }
     }
 
@@ -310,16 +281,31 @@ public class BattleUIButtons implements ActionListenerDelegate {
             switch (action) {
                 case ACTION_REROLL -> {
                     if (battleController != null) {
+                        if (tutorialController != null && !tutorialController.isRerollAllowed()) {
+                            break;
+                        }
                         battleController.onPlayerReroll();
+                        if (tutorialController != null) {
+                            tutorialController.onRerolled();
+                        }
                     }
                 }
                 case ACTION_END_TURN -> {
                     if (battleController != null) {
+                        if (tutorialController != null && !tutorialController.isConfirmAllowed()) {
+                            break;
+                        }
+                        if (tutorialController != null) {
+                            tutorialController.onConfirmed();
+                        }
                         battleController.onPlayerConfirmSelection();
                     }
                 }
                 case ACTION_CONTINUE -> {
                     if (battleController != null) {
+                        if (tutorialController != null && !tutorialController.isContinueAllowed()) {
+                            break;
+                        }
                         battleController.onContinueToNextTurn();
                     }
                 }
@@ -367,9 +353,20 @@ public class BattleUIButtons implements ActionListenerDelegate {
 
         boolean canConfirm = playerShouldSelect && selectedCount == requiredCount
                              && battleState.canConfirmPrismaticSelection(true);
-        confirmButton.setEnabled(canConfirm || phase == Phase.WAITING_NEXT_TURN || phase == Phase.ENDED);
+        if (tutorialController != null) {
+            canConfirm = canConfirm && tutorialController.isConfirmAllowed();
+        }
+        boolean canContinue = phase == Phase.WAITING_NEXT_TURN || phase == Phase.ENDED;
+        if (tutorialController != null && !tutorialController.isContinueAllowed()) {
+            canContinue = false;
+        }
+        confirmButton.setEnabled(canConfirm || canContinue);
 
-        rerollButton.setEnabled(playerShouldSelect && selectedCount > 0 && hasRerolls);
+        boolean canReroll = playerShouldSelect && selectedCount > 0 && hasRerolls;
+        if (tutorialController != null) {
+            canReroll = canReroll && tutorialController.isRerollAllowed();
+        }
+        rerollButton.setEnabled(canReroll);
     }
 
     public void showPrismaticSelectionPopup() {
@@ -382,6 +379,9 @@ public class BattleUIButtons implements ActionListenerDelegate {
                 labels.setPendingPrismatic(instance, animatorIndex);
                 diceRollManager.appendInstantDice(DiceType.PRISMATIC, instance.faceIndex, diceZoneCenterX, diceZoneCenterY);
                 inputHandler.createDiceHitboxes(battleState.getPlayerDiceTypes());
+                if (tutorialController != null) {
+                    tutorialController.onPrismaticUsed();
+                }
                 closePrismaticPopup();
                 updateButtons(battleState.getCurrentPhase());
             }
@@ -421,12 +421,16 @@ public class BattleUIButtons implements ActionListenerDelegate {
         battleState = null;
         diceRollManager = null;
         labels = null;
-        weatherButton = null;
+        weatherLabel = null;
         buttonsCreated = false;
     }
 
     public void setBattleState(BattleState state) {
         this.battleState = state;
+    }
+
+    public void setTutorialController(TutorialController controller) {
+        this.tutorialController = controller;
     }
 
     public void advance(float amount) {

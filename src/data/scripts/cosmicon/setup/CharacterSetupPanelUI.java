@@ -141,12 +141,16 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         List<CharacterCard> allCards = CharacterRegistry.getAllCards();
         this.characters = new ArrayList<>();
         for (CharacterCard card : allCards) {
+            if ("trashcan".equals(card.getId())) continue;
             if (CosmiconStats.isCharacterUnlocked(card.getId())) {
                 this.characters.add(card);
             }
         }
         if (this.characters.isEmpty()) {
-            this.characters.addAll(allCards);
+            for (CharacterCard card : allCards) {
+                if ("trashcan".equals(card.getId())) continue;
+                this.characters.add(card);
+            }
         }
 
         List<String> allDiceIds = new ArrayList<>();

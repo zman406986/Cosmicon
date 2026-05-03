@@ -2,6 +2,7 @@ package data.scripts.cosmicon.battle;
 
 import data.scripts.cosmicon.character.PassiveEventSystem;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
+import data.scripts.cosmicon.tutorial.TutorialDiceRoller;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.util.CosmiconRandom;
 import java.util.ArrayList;
@@ -11,9 +12,14 @@ import java.util.Random;
 public class DiceRoller {
     
     private final WeatherController weatherController;
+    private TutorialDiceRoller tutorialDiceRoller;
     
     public DiceRoller(WeatherController weatherController) {
         this.weatherController = weatherController;
+    }
+    
+    public void setTutorialDiceRoller(TutorialDiceRoller tutorialDiceRoller) {
+        this.tutorialDiceRoller = tutorialDiceRoller;
     }
     
     public void rollForAttacker(BattleState state) {
@@ -27,6 +33,11 @@ public class DiceRoller {
     }
     
     public void rollForParticipant(BattleState state, boolean forPlayer) {
+        if (tutorialDiceRoller != null && tutorialDiceRoller.shouldInterceptRoll(state, forPlayer)) {
+            tutorialDiceRoller.rollForParticipant(state, forPlayer);
+            return;
+        }
+
         CharacterCard card = state.getCard(forPlayer);
         boolean isAttacker = state.isAttacker(forPlayer);
         
@@ -72,6 +83,16 @@ public class DiceRoller {
     }
     
     public void rerollSelected(BattleState state, boolean forPlayer) {
+        if (tutorialDiceRoller != null && tutorialDiceRoller.shouldInterceptReroll(state, forPlayer)) {
+            tutorialDiceRoller.rerollSelected(state, forPlayer);
+            PassiveEventSystem.onRerollCompleted(state, forPlayer);
+            if (weatherController != null) {
+                weatherController.applyRerollThornsEffect(state, forPlayer);
+            }
+            state.notifyDiceRerolled(forPlayer, state.getDiceValues(forPlayer), new ArrayList<>());
+            return;
+        }
+
         List<Integer> values = state.getDiceValues(forPlayer);
         List<Boolean> selected = state.getDiceSelected(forPlayer);
         List<DiceType> types = state.getDiceTypes(forPlayer);

@@ -6,6 +6,7 @@ import org.lwjgl.input.Mouse;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleState.Phase;
+import data.scripts.cosmicon.tutorial.TutorialController;
 import data.scripts.cosmicon.util.UnifiedCoord;
 
 public class BattleInputHandler {
@@ -19,6 +20,7 @@ public class BattleInputHandler {
     private BattleUILabels labels;
     private BattleUIButtons buttons;
     private DamageResolutionAnimator damageAnimator;
+    private TutorialController tutorialController;
 
     private float panelX;
     private float panelY;
@@ -50,6 +52,10 @@ public class BattleInputHandler {
 
     public void setDamageAnimator(DamageResolutionAnimator animator) {
         this.damageAnimator = animator;
+    }
+
+    public void setTutorialController(TutorialController controller) {
+        this.tutorialController = controller;
     }
 
     public void setWaitingForClickToRoll(boolean waiting) {
@@ -94,6 +100,13 @@ public class BattleInputHandler {
                 int uses = battleState.getPlayerPrismaticUses();
 
                 if (playerShouldSelect && uses > 0) {
+                    boolean prismaticAllowed = tutorialController == null || tutorialController.isPrismaticAllowed();
+                    if (!prismaticAllowed) {
+                        lastMouseButtonState = currentButton;
+                        UnifiedCoord.clearCurrent();
+                        return;
+                    }
+
                     boolean insidePrismatic = mousePos.isInsideRect(
                         buttons.getPlayerPrismaticBtnX(), buttons.getPlayerPrismaticBtnY(),
                         PRISMATIC_BTN_SIZE, PRISMATIC_BTN_SIZE);
@@ -114,6 +127,12 @@ public class BattleInputHandler {
             }
 
             if (battleState.getCurrentPhase() == Phase.ROLLING) {
+                if (tutorialController != null && !tutorialController.isClickToRollAllowed()) {
+                    lastMouseButtonState = currentButton;
+                    UnifiedCoord.clearCurrent();
+                    return;
+                }
+
                 if (waitingForClickToRoll && diceRollManager.isWaitingForRollTrigger()) {
                     diceRollManager.triggerRollFromStationary();
                     waitingForClickToRoll = false;
@@ -172,7 +191,15 @@ public class BattleInputHandler {
                 float[] hb = diceHitboxes.get(i);
                 boolean inside = mousePos.isInsideRect(hb[0], hb[1], hb[2], hb[3]);
                 if (inside) {
+                    if (tutorialController != null && !tutorialController.isDiceClickable(i)) {
+                        lastMouseButtonState = currentButton;
+                        UnifiedCoord.clearCurrent();
+                        return;
+                    }
                     battleController.onPlayerSelectDice(i);
+                    if (tutorialController != null) {
+                        tutorialController.onDiceSelected(i);
+                    }
                     buttons.updateButtons(battleState.getCurrentPhase());
                     labels.updateSelectionDisplayLabels();
                     break;

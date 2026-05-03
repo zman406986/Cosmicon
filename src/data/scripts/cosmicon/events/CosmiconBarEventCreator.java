@@ -12,7 +12,7 @@ public class CosmiconBarEventCreator extends BaseBarEventCreator {
 
     @Override
     public float getBarEventFrequencyWeight() {
-        return 5f;
+        return 1000f;
     }
 
     @Override
