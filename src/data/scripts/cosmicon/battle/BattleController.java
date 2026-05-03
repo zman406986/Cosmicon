@@ -97,10 +97,18 @@ public class BattleController implements BattleState.DamageAnimationCallback {
                 playerCard = playerCard.withPrismaticDice(defaultPrismaticId, uses, useTrueVersion);
             }
 
-            Map<String, Integer> oppPrismatic = opponentCard.getPrismaticDiceIds();
-            if (!oppPrismatic.isEmpty()) {
-                String oppPrismaticId = oppPrismatic.keySet().iterator().next();
-                CosmiconEventState.setOpponentPrismatic(oppPrismaticId);
+            if (CosmiconEventState.hasOpponentPrismatic()) {
+                String oppPrismId = CosmiconEventState.getOpponentPrismatic();
+                int uses = opponentCard.getPrismaticDiceIds().getOrDefault(oppPrismId, 2);
+                opponentCard = opponentCard.withPrismaticDice(oppPrismId, uses, false);
+            } else {
+                Map<String, Integer> oppPrismatic = opponentCard.getPrismaticDiceIds();
+                if (!oppPrismatic.isEmpty()) {
+                    String oppPrismaticId = oppPrismatic.keySet().iterator().next();
+                    opponentCard = opponentCard.withPrismaticDice(oppPrismaticId,
+                        oppPrismatic.get(oppPrismaticId), false);
+                    CosmiconEventState.setOpponentPrismatic(oppPrismaticId);
+                }
             }
         } else {
             CosmiconLogger.info("Tutorial mode: prismatic dice disabled");

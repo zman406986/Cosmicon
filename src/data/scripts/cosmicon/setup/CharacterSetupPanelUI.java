@@ -210,7 +210,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private void createPassiveLabel() {
         float passiveY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 5f;
         passiveLabel = UIComponentFactory.createLabelSmall(panel, "",
-            COLOR_TEXT, Alignment.LMID, GALLERY_WIDTH, 40f, MARGIN, passiveY);
+            COLOR_TEXT, Alignment.LMID, GALLERY_WIDTH, 45f, MARGIN, passiveY);
     }
 
     private void createButtons() {
@@ -438,16 +438,10 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         String passive = card.getPassiveDescription();
         if (passive != null && !passive.isEmpty()) {
-            passiveLabel.setText(truncatePassive(passive));
+            passiveLabel.setText(passive);
         } else {
             passiveLabel.setText("");
         }
-    }
-
-    private String truncatePassive(String text) {
-        int maxLen = 120;
-        if (text.length() <= maxLen) return text;
-        return text.substring(0, maxLen - 3) + "...";
     }
 
     // --- Rendering ---

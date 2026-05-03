@@ -2,10 +2,12 @@ package data.scripts.cosmicon;
 
 import java.util.Map;
 
+import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.*;
 import com.fs.starfarer.api.campaign.rules.MemKeys;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import com.fs.starfarer.api.combat.EngagementResultAPI;
+import com.fs.starfarer.api.impl.campaign.rulecmd.AddRemoveCommodity;
 
 import data.scripts.CosmiconMusicPlugin;
 import data.scripts.Strings;
@@ -231,7 +233,6 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         pendingRewardCharId = CosmiconEventState.getOpponentCharacter();
         pendingRewardPrismaticId = CosmiconEventState.getOpponentPrismatic();
-        CosmiconEventState.clearAll();
 
         if (tutorialJustCompleted) {
             textPanel.addPara(Strings.get("victory.absolute_six_unlocked"));
@@ -263,7 +264,6 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         } else {
             showDefeatMenu();
         }
-        CosmiconEventState.clearAll();
     }
 
     private void showTutorialReward() {
@@ -300,6 +300,15 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     private void showDefeatMenu() {
         options.clearOptions();
         textPanel.addPara(Strings.get("battle.you_lost"));
+
+        boolean isReplay = CosmiconEventState.isReplayTutorial();
+        if (!isReplay && !CosmiconStats.isInTutorialMode()) {
+            int playerLevel = Global.getSector().getPlayerStats().getLevel();
+            int consolationCredits = 500 * Math.max(1, playerLevel);
+            Global.getSector().getPlayerFleet().getCargo().getCredits().add(consolationCredits);
+            AddRemoveCommodity.addCreditsGainText(consolationCredits, textPanel);
+        }
+
         int remaining = CosmiconStats.getRemainingTutorialGames();
         if (CosmiconStats.isInTutorialMode() && remaining > 0) {
             textPanel.addPara(Strings.format("tutorial.games_remaining", remaining));
@@ -331,18 +340,35 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                     CosmiconStats.unlockCharacter(pendingRewardCharId);
                     textPanel.addPara(Strings.get("reward.character_unlocked"));
                 }
-                showMenu();
+                finishReward();
             }
             case "unlock_prismatic" -> {
                 if (pendingRewardPrismaticId != null) {
                     CosmiconStats.unlockPrismaticDice(pendingRewardPrismaticId);
                     textPanel.addPara(Strings.get("reward.prismatic_unlocked"));
                 }
-                showMenu();
+                finishReward();
             }
-            case "take_credits" -> showMenu();
-            case "back" -> showMenu();
-            default -> showMenu();
+            case "take_credits" -> {
+                int playerLevel = Global.getSector().getPlayerStats().getLevel();
+                int credits = CosmiconStats.calculateCreditReward(playerLevel);
+                Global.getSector().getPlayerFleet().getCargo().getCredits().add(credits);
+                AddRemoveCommodity.addCreditsGainText(credits, textPanel);
+                finishReward();
+            }
+            case "back" -> finishReward();
+            default -> finishReward();
+        }
+    }
+
+    private void finishReward() {
+        if (CosmiconEventState.isBarEvent()) {
+            CosmiconEventState.clearAll();
+            CosmiconMusicPlugin.stopMusic();
+            dialog.dismiss();
+        } else {
+            CosmiconEventState.clearAll();
+            showMenu();
         }
     }
 

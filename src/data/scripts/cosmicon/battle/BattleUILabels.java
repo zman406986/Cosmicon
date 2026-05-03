@@ -753,11 +753,13 @@ public class BattleUILabels {
 
         float centerX = BattleRenderingUtils.PANEL_WIDTH / 2f;
         float confirmedLabelWidth = 150f;
+        float iconValueLabelH = 35f;
+        float gap = 5f;
 
-        float atkSelectionY = atkCenterY > halfH ? atkCenterY + iconSize / 2f + 25f : atkCenterY - iconSize / 2f - 25f;
-        float atkEffectY = atkCenterY > halfH ? atkCenterY + iconSize / 2f + 5f : atkCenterY - iconSize / 2f - 5f;
-        float defSelectionY = defCenterY > halfH ? defCenterY + iconSize / 2f + 25f : defCenterY - iconSize / 2f - 25f;
-        float defEffectY = defCenterY > halfH ? defCenterY + iconSize / 2f + 5f : defCenterY - iconSize / 2f - 5f;
+        float atkSelectionY = atkCenterY + iconValueLabelH / 2f + gap;
+        float atkEffectY = atkSelectionY + 20f;
+        float defSelectionY = defCenterY + iconValueLabelH / 2f + gap;
+        float defEffectY = defSelectionY + 20f;
 
         attackerConfirmedSelectionLabel.getPosition().inTL(centerX - confirmedLabelWidth / 2f, atkSelectionY);
         attackerConfirmedEffectLabel.getPosition().inTL(centerX - confirmedLabelWidth / 2f, atkEffectY);

@@ -267,9 +267,6 @@ public class WeatherController {
         }
     }
     
-    public void applyRerollGlidingEffect(BattleState state, boolean isPlayer) {
-    }
-    
     public boolean shouldPreventMinimumRoll() {
         WeatherType weather = getCurrentWeather();
         return weather == WeatherType.FROG_RAIN;

@@ -478,7 +478,12 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         buttons.advance(amount);
 
-        if (battleState.getCurrentPhase() == Phase.RESOLVING_PRE_CLASH) {
+        Phase currentPhase = battleState.getCurrentPhase();
+        if (currentPhase == Phase.RESOLVING || currentPhase == Phase.WAITING_NEXT_TURN || damageAnimationPending) {
+            labels.updateLabelsFromState();
+        }
+
+        if (currentPhase == Phase.RESOLVING_PRE_CLASH) {
             preClashTimer += amount;
 
             ValueChangeAnimator attackerAnimator = labels.getAttackerValueAnimator();

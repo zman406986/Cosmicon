@@ -463,7 +463,7 @@ public class DamageResolutionAnimator {
     }
     
     private void advanceShatterRestore() {
-        if (phaseElapsed == 0f && splitEffect.isActive() && !splitEffect.isRestoring()) {
+        if (splitEffect.isActive() && !splitEffect.isRestoring()) {
             splitEffect.startRestore(SHATTER_RESTORE_DURATION);
         }
         

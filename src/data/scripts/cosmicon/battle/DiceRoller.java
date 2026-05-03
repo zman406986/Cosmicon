@@ -114,7 +114,6 @@ public class DiceRoller {
         
         if (weatherController != null) {
             weatherController.applyRerollThornsEffect(state, forPlayer);
-            weatherController.applyRerollGlidingEffect(state, forPlayer);
         }
         
         state.notifyDiceRerolled(forPlayer, values, rerolledIndices);

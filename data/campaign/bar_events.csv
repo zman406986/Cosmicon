@@ -1,0 +1,2 @@
+bar event id,tags,freq,prob,min dur,max dur,min timeout,max timeout,min accepted timeout,max accepted timeout,plugin
+cosmicon_bar_event,,5,1,30,50,10,15,7,10,data.scripts.cosmicon.events.CosmiconBarEvent

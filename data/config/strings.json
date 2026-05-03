@@ -453,7 +453,10 @@
     },
     "bar_event": {
         "tutorial_prompt": "A cloaked figure approaches you in the bar, dice clicking in their palms. 'Care for a game, rookie? I'll go easy on you.'\n\nTutorial games remaining: {0}",
-        "standard_prompt": "A mysterious figure at the back of the bar beckons you over. The Cosmicon board is already set. 'The stakes are high...'"
+        "standard_prompt": "A mysterious figure at the back of the bar beckons you over. The Cosmicon board is already set. 'The stakes are high...'",
+        "accept": "Accept the challenge",
+        "decline": "Politely decline",
+        "declined": "You politely decline and return to your drink."
     },
     "victory": {
         "absolute_six_unlocked": "You have completed your training! The Absolute Six prismatic dice has been unlocked."
