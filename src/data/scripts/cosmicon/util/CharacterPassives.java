@@ -43,40 +43,8 @@ public class CharacterPassives {
         }
     }
 
-    public static boolean wouldDiceTriggerPassive(String characterId, int diceValue, boolean isPrismatic,
-                                                  List<Integer> currentlySelectedValues, boolean isAttacking,
-                                                  int currentHp, int maxHp, int currentToughnessLayers) {
-        if (!isAttacking) {
-            if (PHAINON.equals(characterId)) {
-                List<Integer> augmented = new ArrayList<>(currentlySelectedValues);
-                augmented.add(diceValue);
-                return allSame(augmented);
-            }
-            return false;
-        }
-
-        List<Integer> augmented = new ArrayList<>(currentlySelectedValues);
-        augmented.add(diceValue);
-
-        return switch (characterId) {
-            case ACHERON -> allDiceEqualFour(augmented);
-            case FIREFLY -> hasTwoPairs(augmented);
-            case ROBIN -> allEven(augmented);
-            case AVENTURINE -> diceValue % 2 != 0;
-            case KAFKA -> countDistinctValues(augmented) > countDistinctValues(currentlySelectedValues);
-            case MARCH_7TH -> countPairs(augmented) > countPairs(currentlySelectedValues);
-            case HYACINE -> allDiceEqualSix(augmented);
-            case DAN_HENG -> true;
-            case PHAINON -> true;
-            case SPARXIE -> hasIdenticalNumbers(augmented);
-            case THE_HERTA, CYRENE, CASTORICE, YAO_GUANG -> false;
-            default -> false;
-        };
-    }
-
-    public static boolean isDieIndicativeForPassive(String characterId, int dieValue, boolean isPrismatic,
-                                                     List<Integer> allPoolValues, boolean isAttacking,
-                                                     int currentHp, int maxHp, int currentToughnessLayers) {
+    public static boolean isDieIndicativeForPassive(String characterId, int dieValue,
+                                                     List<Integer> allPoolValues, boolean isAttacking) {
         Map<Integer, Integer> freq = computeFrequencyMap(allPoolValues);
 
         return switch (characterId) {
@@ -84,13 +52,10 @@ public class CharacterPassives {
             case FIREFLY -> isAttacking && freq.getOrDefault(dieValue, 0) >= 2;
             case ROBIN -> isAttacking && dieValue % 2 == 0;
             case AVENTURINE -> isAttacking && dieValue % 2 != 0;
-            case KAFKA -> isAttacking;
-            case MARCH_7TH -> freq.getOrDefault(dieValue, 0) >= 2;
+            case KAFKA, DAN_HENG -> isAttacking;
+            case MARCH_7TH, SPARXIE -> freq.getOrDefault(dieValue, 0) >= 2;
             case HYACINE -> isAttacking && dieValue == 6;
-            case DAN_HENG -> isAttacking;
             case PHAINON -> isAttacking || freq.getOrDefault(dieValue, 0) >= 2;
-            case SPARXIE -> freq.getOrDefault(dieValue, 0) >= 2;
-            case THE_HERTA, CYRENE, CASTORICE, YAO_GUANG -> false;
             default -> false;
         };
     }

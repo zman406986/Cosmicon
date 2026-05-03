@@ -156,7 +156,6 @@ public class CoinFlipAnimator {
         if (phaseElapsed >= SETTLE_DURATION) {
             phase = Phase.REVEAL;
             phaseElapsed = 0f;
-            coinSquash = targetSquash;
             coinScale = 1f;
             coinRotation = 0f;
         }

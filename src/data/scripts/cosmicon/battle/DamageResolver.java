@@ -47,8 +47,7 @@ public class DamageResolver {
         
         boolean forcefieldUsed = false;
         if (defenderEffects.isForcefieldActive() && damage > 0) {
-            int forcefieldLayers = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.FORCEFIELD);
-            damage = Math.max(1, damage - forcefieldLayers);
+            damage = 0;
             forcefieldUsed = true;
         }
         

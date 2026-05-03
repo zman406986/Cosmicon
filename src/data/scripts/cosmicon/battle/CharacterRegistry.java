@@ -163,7 +163,14 @@ public class CharacterRegistry {
 
     public static CharacterCard getRandomOpponent() {
         if (threeStarCards.isEmpty()) return null;
-        return threeStarCards.get(random.nextInt(threeStarCards.size())).copy();
+        List<CharacterCard> eligible = new ArrayList<>();
+        for (CharacterCard card : threeStarCards) {
+            if (!"trashcan".equals(card.getId())) {
+                eligible.add(card);
+            }
+        }
+        if (eligible.isEmpty()) return null;
+        return eligible.get(random.nextInt(eligible.size())).copy();
     }
 
     public static CharacterCard getCharacterById(String id) {

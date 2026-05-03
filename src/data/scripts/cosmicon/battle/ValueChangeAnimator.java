@@ -28,16 +28,8 @@ public class ValueChangeAnimator {
 
     private enum Phase { IDLE, DELTA_SHOW, FLASH, DELTA_FLY, COMPLETE }
 
-    private static class QueuedChange {
-        final String deltaText;
-        final Color color;
-        final int delta;
-        
-        QueuedChange(String deltaText, Color color, int delta) {
-            this.deltaText = deltaText;
-            this.color = color;
-            this.delta = delta;
-        }
+    private record QueuedChange(String deltaText, Color color, int delta)
+    {
     }
 
     private final List<QueuedChange> changeQueue;

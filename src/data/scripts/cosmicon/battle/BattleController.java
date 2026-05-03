@@ -1,18 +1,22 @@
 package data.scripts.cosmicon.battle;
 
 import java.util.Map;
+import java.util.Objects;
 
 import data.scripts.cosmicon.ai.DiceProbabilityCalculator;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
 import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.state.CosmiconPlayerState;
 import data.scripts.cosmicon.state.CosmiconStats;
+import data.scripts.cosmicon.tutorial.TutorialController;
+import data.scripts.cosmicon.tutorial.TutorialDiceRoller;
 import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class BattleController implements BattleState.DamageAnimationCallback {
 
     private final BattleState state;
     private final TurnProcessor turnProcessor;
+    private TutorialController tutorialController;
 
     public BattleController() {
         WeatherController weatherController = new WeatherController();
@@ -42,10 +46,6 @@ public class BattleController implements BattleState.DamageAnimationCallback {
         turnProcessor.onDamageImpacted();
     }
 
-    public void initBattleWithSelection() {
-        initBattleWithSelection(true);
-    }
-
     public void initBattleWithSelection(boolean playerIsAttacker) {
         CosmiconLogger.info("Initializing battle with player selection");
 
@@ -67,12 +67,12 @@ public class BattleController implements BattleState.DamageAnimationCallback {
             } else {
                 opponentCard = CharacterRegistry.getRandomOpponent();
             }
-            CosmiconEventState.setOpponentCharacter(opponentCard.getId());
+            CosmiconEventState.setOpponentCharacter(Objects.requireNonNull(opponentCard).getId());
         } else if (CosmiconEventState.isBarEvent()) {
             opponentCard = CharacterRegistry.getCharacterById(CosmiconEventState.getOpponentCharacter());
         } else {
             opponentCard = CharacterRegistry.getRandomOpponent();
-            CosmiconEventState.setOpponentCharacter(opponentCard.getId());
+            CosmiconEventState.setOpponentCharacter(Objects.requireNonNull(opponentCard).getId());
         }
 
         if (playerCard == null || opponentCard == null) {
@@ -80,7 +80,11 @@ public class BattleController implements BattleState.DamageAnimationCallback {
             throw new IllegalStateException("Failed to load character cards");
         }
 
-        boolean isTutorial = CosmiconEventState.isTutorialMode() || CosmiconStats.isInTutorialMode();
+        boolean isTutorial = TutorialController.shouldActivateTutorial();
+        TutorialController.TutorialGame tutorialGameType = null;
+        if (isTutorial) {
+            tutorialGameType = TutorialController.determineTutorialGame();
+        }
 
         if (!isTutorial) {
             String savedPrismaticId = CosmiconPlayerState.loadPrismaticDice();
@@ -110,6 +114,14 @@ public class BattleController implements BattleState.DamageAnimationCallback {
                     CosmiconEventState.setOpponentPrismatic(oppPrismaticId);
                 }
             }
+        } else if (tutorialGameType == TutorialController.TutorialGame.GAME_2_ACHERON) {
+            Map<String, Integer> prismaticIds = playerCard.getPrismaticDiceIds();
+            if (!prismaticIds.isEmpty()) {
+                String primId = prismaticIds.keySet().iterator().next();
+                int uses = prismaticIds.get(primId);
+                playerCard = playerCard.withPrismaticDice(primId, uses, false);
+                CosmiconLogger.info("Tutorial Game 2: Enabled prismatic dice %s x%d", primId, uses);
+            }
         } else {
             CosmiconLogger.info("Tutorial mode: prismatic dice disabled");
         }
@@ -124,6 +136,20 @@ public class BattleController implements BattleState.DamageAnimationCallback {
         CosmiconLogger.battleStart(playerCard.getName(), opponentCard.getName());
 
         state.init(playerCard, opponentCard, playerIsAttacker);
+
+        if (isTutorial) {
+            tutorialController = new TutorialController(tutorialGameType, state);
+            TutorialDiceRoller tutorialDiceRoller = new TutorialDiceRoller(tutorialController);
+            turnProcessor.getDiceRoller().setTutorialDiceRoller(tutorialDiceRoller);
+            CosmiconLogger.info("Tutorial controller initialized for game: %s", tutorialGameType);
+
+            if (tutorialGameType == TutorialController.TutorialGame.GAME_2_ACHERON) {
+                java.util.Map<Integer, WeatherType> forcedWeather = new java.util.HashMap<>();
+                forcedWeather.put(2, WeatherType.CREPUSCULAR_RAYS);
+                state.getWeatherController().getWeatherManager().setForcedWeatherSchedule(forcedWeather);
+                CosmiconLogger.info("Tutorial Game 2: Forced CREPUSCULAR_RAYS weather at turn 2");
+            }
+        }
 
         CosmiconLogger.debug("Battle state initialized, starting turn processor");
         turnProcessor.startBattle();
@@ -147,6 +173,10 @@ public class BattleController implements BattleState.DamageAnimationCallback {
 
     public BattleState getState() {
         return state;
+    }
+
+    public TutorialController getTutorialController() {
+        return tutorialController;
     }
 
     public void advanceAiSelection(float amount) {

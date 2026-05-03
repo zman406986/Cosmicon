@@ -150,8 +150,7 @@ public class DamageResolutionAnimator {
         
         boolean primaryDamageTriggersForcefield = defenderEffects.isForcefieldActive() && resultValue > 0;
         if (primaryDamageTriggersForcefield) {
-            int forcefieldLayers = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.FORCEFIELD);
-            resultValue = Math.max(1, resultValue - forcefieldLayers);
+            resultValue = 0;
         }
         
         this.isDraw = (resultValue == 0 && !perforation);
@@ -163,8 +162,7 @@ public class DamageResolutionAnimator {
             int attackerPrismaticValue = state.getPrismaticDiceTotalValue(state.isPlayerAttacker());
             this.comboDamage = attackValue - attackerPrismaticValue;
             if (!primaryDamageTriggersForcefield && defenderEffects.isForcefieldActive() && this.comboDamage > 0) {
-                int forcefieldLayers = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.FORCEFIELD);
-                this.comboDamage = Math.max(1, this.comboDamage - forcefieldLayers);
+                this.comboDamage = 0;
             }
         } else {
             this.comboDamage = 0;
@@ -468,8 +466,7 @@ public class DamageResolutionAnimator {
         }
         
         if (splitEffect.isRestoring()) {
-            float progress = splitEffect.getRestoreProgress();
-            shatterRestoreAlpha = progress;
+            shatterRestoreAlpha = splitEffect.getRestoreProgress();
         } else {
             shatterRestoreAlpha = 1f;
         }

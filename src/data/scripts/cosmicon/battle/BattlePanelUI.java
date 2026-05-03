@@ -22,6 +22,8 @@ import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleState.BattleEventListener;
 import data.scripts.cosmicon.battle.BattleState.Phase;
 import data.scripts.cosmicon.state.CosmiconStats;
+import data.scripts.cosmicon.tutorial.TutorialController;
+import data.scripts.cosmicon.tutorial.TutorialUIRenderer;
 import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.UnifiedCoord;
 import data.scripts.cosmicon.util.CosmiconLogger;
@@ -40,6 +42,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     private DiceRollManager diceRollManager;
 
     private LabelAPI tutorialLabel;
+    private TutorialUIRenderer tutorialRenderer;
+    private TutorialController tutorialController;
 
     private BattleUILabels labels;
     private BattleUIButtons buttons;
@@ -108,6 +112,27 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             lastPlayerWasAttacker = battleState.isPlayerAttacker();
             roleTransitionProgress = lastPlayerWasAttacker ? 0f : 1f;
             targetRoleTransition = roleTransitionProgress;
+
+            TutorialController tc = controller.getTutorialController();
+            if (tc != null) {
+                this.tutorialController = tc;
+                if (inputHandler != null) inputHandler.setTutorialController(tc);
+                if (buttons != null) buttons.setTutorialController(tc);
+            }
+        }
+    }
+
+    public void wireTutorial(TutorialController tc) {
+        if (tc == null) return;
+        this.tutorialController = tc;
+        if (inputHandler != null) inputHandler.setTutorialController(tc);
+        if (buttons != null) buttons.setTutorialController(tc);
+        if (panel != null && CosmiconStats.isInTutorialMode()) {
+            tutorialRenderer = new TutorialUIRenderer();
+            tutorialRenderer.init(tc, panel);
+        }
+        if (battleState != null) {
+            tc.onPhaseChange(battleState.getCurrentPhase());
         }
     }
 
@@ -133,6 +158,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         if (inputHandler != null) {
             inputHandler.cleanup();
             inputHandler = null;
+        }
+        if (tutorialRenderer != null) {
+            tutorialRenderer.cleanup();
+            tutorialRenderer = null;
         }
         if (damageAnimator != null) {
             damageAnimator.cleanup();
@@ -226,6 +255,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
     @Override
     public void onPhaseChange(Phase newPhase) {
+        if (tutorialController != null) {
+            tutorialController.onPhaseChange(newPhase);
+        }
+
         if (newPhase == Phase.ROLLING) {
             rollAnimationDelay = 0.3f;
             diceAnimating = true;
@@ -239,8 +272,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             }
             
             inputHandler.setWaitingForClickToRoll(false);
-            
+
             labels.clearPrismaticRolledLabel();
+            labels.updatePrismaticButton();
 
             if (!battleState.isDefenderRolling()) {
                 opponentDiceAnimating = false;
@@ -361,7 +395,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     @Override
     public void onWeatherChange(WeatherType newWeather) {
         if (buttons != null) {
-            buttons.updateWeatherButton();
+            buttons.updateWeatherLabel();
+        }
+        if (labels != null) {
+            labels.updatePrismaticButton();
         }
     }
 
@@ -466,6 +503,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         labels.updateConfirmedSelectionLabels();
         labels.updateIconValueLabels();
         labels.updateStatusEffectLabels();
+        labels.updatePrismaticButton();
         checkProcessedEffects();
         if (labels.getStatusEffectAnimator() != null) {
             labels.getStatusEffectAnimator().advance(amount);
@@ -477,6 +515,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         }
 
         buttons.advance(amount);
+
+        if (tutorialRenderer != null) {
+            tutorialRenderer.advance(amount);
+        }
 
         Phase currentPhase = battleState.getCurrentPhase();
         if (currentPhase == Phase.RESOLVING || currentPhase == Phase.WAITING_NEXT_TURN || damageAnimationPending) {
@@ -708,7 +750,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void updatePrismaticClickHint() {
-        if (battleState == null || CosmiconStats.isInTutorialMode()) return;
+        if (battleState == null) return;
+        if (CosmiconStats.isInTutorialMode() && (tutorialController == null || !tutorialController.isPrismaticAllowed())) return;
 
         int uses = battleState.getPlayerPrismaticUses();
         boolean playerShouldSelect = (battleState.isAttacker(true) &&
@@ -833,6 +876,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                 buttons.getPrismaticPopup().renderBelow(alphaMult);
             }
 
+            if (tutorialRenderer != null) {
+                tutorialRenderer.render(alphaMult);
+            }
+
             GLStateUtil.resetColor();
         } finally {
             UnifiedCoord.clearCurrent();
@@ -928,7 +975,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         List<StatusEffectProcessor.ProcessedEffect> playerProcessed =
             battleState.getPlayerEffects().getAndClearProcessedEffects();
-        CosmiconLogger.debug("[StatusAnim] Player processed effects: %d", playerProcessed.size());
+        if (!playerProcessed.isEmpty()) {
+            CosmiconLogger.debug("[StatusAnim] Player processed effects: %d", playerProcessed.size());
+        }
         for (StatusEffectProcessor.ProcessedEffect pe : playerProcessed) {
             CosmiconLogger.debug("[StatusAnim] Player processed: %s layers=%d", pe.effect().name(), pe.layers());
             Integer idx = labels.getEffectDisplayIndex(true, pe.effect());
@@ -946,7 +995,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         List<StatusEffectProcessor.ProcessedEffect> opponentProcessed =
             battleState.getOpponentEffects().getAndClearProcessedEffects();
-        CosmiconLogger.debug("[StatusAnim] Opponent processed effects: %d", opponentProcessed.size());
+        if (!opponentProcessed.isEmpty()) {
+            CosmiconLogger.debug("[StatusAnim] Opponent processed effects: %d", opponentProcessed.size());
+        }
         for (StatusEffectProcessor.ProcessedEffect pe : opponentProcessed) {
             CosmiconLogger.debug("[StatusAnim] Opponent processed: %s layers=%d", pe.effect().name(), pe.layers());
             Integer idx = labels.getEffectDisplayIndex(false, pe.effect());
@@ -971,15 +1022,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             if (effects.getLayers(effect) > 0) idx++;
         }
         return null;
-    }
-
-    private void renderDiceZone(float panelX, float panelY, float alphaMult) {
-        float zoneW = 400f;
-        float zoneH = 160f;
-        float zoneX = panelX + (BattleRenderingUtils.PANEL_WIDTH - zoneW) / 2f;
-        float zoneY = panelY + (BattleRenderingUtils.PANEL_HEIGHT - zoneH) / 2f - 40f;
-
-        BattleRenderingUtils.renderDiceZone(zoneX, zoneY, zoneW, zoneH, alphaMult);
     }
 
     private void renderDiceSelectionHighlights(float alphaMult) {
@@ -1110,7 +1152,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void renderPrismaticButton(float alphaMult) {
-        if (CosmiconStats.isInTutorialMode()) return;
+        if (CosmiconStats.isInTutorialMode() && (tutorialController == null || !tutorialController.isPrismaticAllowed())) return;
         SpriteAPI sprite = CosmiconSprites.getPrismaticButtonSprite();
         if (sprite == null) return;
 

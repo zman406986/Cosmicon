@@ -34,11 +34,7 @@ public class PassiveIndicationRenderer {
             (battleState.isDefender(true) &&
             phase == BattleState.Phase.SELECTING_DEFENSE);
 
-        if (playerShouldSelect) {
-            renderIndicationsForSide(battleState, diceRollManager, alphaMult, true);
-        } else {
-            renderIndicationsForSide(battleState, diceRollManager, alphaMult, false);
-        }
+        renderIndicationsForSide(battleState, diceRollManager, alphaMult, playerShouldSelect);
     }
 
     private static void renderIndicationsForSide(BattleState battleState, DiceRollManager diceRollManager,
@@ -54,10 +50,6 @@ public class PassiveIndicationRenderer {
         if (values == null || types == null || animators == null) return;
         if (values.size() != types.size()) return;
 
-        int currentHp = forPlayer ? battleState.getPlayerHp() : battleState.getOpponentHp();
-        int maxHp = card.getMaxHp();
-        int currentToughness = (forPlayer ? battleState.getPlayerEffects() : battleState.getOpponentEffects())
-            .getLayers(StatusEffectProcessor.StatusEffect.TOUGHNESS);
         boolean isAttacking = battleState.isAttacker(forPlayer);
 
         GLStateUtil.resetBlendState();
@@ -66,11 +58,9 @@ public class PassiveIndicationRenderer {
         GL11.glLineWidth(LINE_WIDTH);
 
         for (int i = 0; i < Math.min(values.size(), animators.size()); i++) {
-            boolean isPrismatic = types.get(i) == DiceType.PRISMATIC;
             boolean isIndicative = CharacterPassives.isDieIndicativeForPassive(
-                characterId, values.get(i), isPrismatic,
-                values, isAttacking,
-                currentHp, maxHp, currentToughness);
+                characterId, values.get(i),
+                values, isAttacking);
 
             if (!isIndicative) continue;
 
@@ -90,16 +80,16 @@ public class PassiveIndicationRenderer {
             float diceY = dicePos.glY();
             float boxSize = AnimationConstants.DICE_SIZE - INDICATOR_INSET * 2f;
 
-            renderDashedRect(diceX, diceY, boxSize, boxSize, DASH_LEN, GAP_LEN);
+            renderDashedRect(diceX, diceY, boxSize, boxSize);
         }
 
         GLStateUtil.resetColor();
     }
 
-    private static void renderDashedRect(float x, float y, float w, float h, float dashLen, float gapLen) {
-        BattleRenderingUtils.renderDashedLine(x, y, x + w, y, dashLen, gapLen);
-        BattleRenderingUtils.renderDashedLine(x + w, y, x + w, y + h, dashLen, gapLen);
-        BattleRenderingUtils.renderDashedLine(x + w, y + h, x, y + h, dashLen, gapLen);
-        BattleRenderingUtils.renderDashedLine(x, y + h, x, y, dashLen, gapLen);
+    private static void renderDashedRect(float x, float y, float w, float h) {
+        BattleRenderingUtils.renderDashedLine(x, y, x + w, y, DASH_LEN, GAP_LEN);
+        BattleRenderingUtils.renderDashedLine(x + w, y, x + w, y + h, DASH_LEN, GAP_LEN);
+        BattleRenderingUtils.renderDashedLine(x + w, y + h, x, y + h, DASH_LEN, GAP_LEN);
+        BattleRenderingUtils.renderDashedLine(x, y + h, x, y, DASH_LEN, GAP_LEN);
     }
 }

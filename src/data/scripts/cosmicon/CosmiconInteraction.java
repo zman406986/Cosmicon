@@ -356,7 +356,6 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 AddRemoveCommodity.addCreditsGainText(credits, textPanel);
                 finishReward();
             }
-            case "back" -> finishReward();
             default -> finishReward();
         }
     }

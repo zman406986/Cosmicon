@@ -27,7 +27,7 @@ public class PrismaticDiceProcessor {
             int layers = effect.calculateLayers(dice.rolledFace);
             boolean applyToOpponent = statusEffect == StatusEffect.POISON
                 || statusEffect == StatusEffect.DETERRENCE;
-            boolean target = applyToOpponent ? !forPlayer : forPlayer;
+            boolean target = applyToOpponent != forPlayer;
             state.applyEffect(statusEffect, layers, target);
             CosmiconLogger.debug("Prismatic effect applied: %s x%d to %s", 
                 statusEffect.name(), layers, target ? "Player" : "Opponent");

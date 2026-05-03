@@ -18,6 +18,7 @@ public class WeatherManager {
     private final List<WeatherType> weatherSchedule;
     private final boolean isStoryBattle;
     private final String storyBattleId;
+    private Map<Integer, WeatherType> forcedWeatherSchedule;
     
     private static final Map<String, List<WeatherType>> STORY_BATTLE_WEATHERS = new HashMap<>();
     
@@ -56,8 +57,13 @@ public class WeatherManager {
         this.isStoryBattle = isStoryBattle;
         this.storyBattleId = storyBattleId;
         this.weatherSchedule = new ArrayList<>();
+        this.forcedWeatherSchedule = null;
         
         initializeWeatherSchedule();
+    }
+    
+    public void setForcedWeatherSchedule(Map<Integer, WeatherType> schedule) {
+        this.forcedWeatherSchedule = schedule;
     }
     
     private void initializeWeatherSchedule() {
@@ -104,6 +110,11 @@ public class WeatherManager {
     
     public void advanceTurn() {
         currentTurn++;
+        
+        if (forcedWeatherSchedule != null && forcedWeatherSchedule.containsKey(currentTurn)) {
+            setCurrentWeather(forcedWeatherSchedule.get(currentTurn));
+            return;
+        }
         
         int scheduleIndex = WEATHER_TURN_SCHEDULE.indexOf(currentTurn);
         if (scheduleIndex >= 0 && scheduleIndex < weatherSchedule.size()) {

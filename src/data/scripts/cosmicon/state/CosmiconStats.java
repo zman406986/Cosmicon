@@ -35,7 +35,7 @@ public class CosmiconStats {
         MemoryAPI mem = getMemory();
         mem.set(KEY_GAMES_PLAYED, getGamesPlayed() + 1);
         if (getGamesPlayed() >= TUTORIAL_GAMES && !isPrismaticFeatureUnlocked()) {
-            setPrismaticFeatureUnlocked(true);
+            setPrismaticFeatureUnlocked();
             unlockPrismaticDice("absolute_six");
         }
     }
@@ -62,7 +62,7 @@ public class CosmiconStats {
     public static void forceCompleteTutorial() {
         MemoryAPI mem = getMemory();
         mem.set(KEY_GAMES_PLAYED, TUTORIAL_GAMES);
-        setPrismaticFeatureUnlocked(true);
+        setPrismaticFeatureUnlocked();
         unlockAllPrismaticDice();
         unlockAllCharacters();
     }
@@ -72,9 +72,7 @@ public class CosmiconStats {
         Set<String> unlockedChars = getUnlockedCharacters();
         for (CharacterCard card : CharacterRegistry.getAllCards()) {
             String cardId = card.getId();
-            if (!unlockedChars.contains(cardId)) {
-                unlockedChars.add(cardId);
-            }
+            unlockedChars.add(cardId);
         }
         mem.set(KEY_UNLOCKED_CHARACTERS, unlockedChars);
         mem.set(KEY_HAS_GALLERY_CHARACTERS, true);
@@ -92,8 +90,8 @@ public class CosmiconStats {
         return mem.getBoolean(KEY_PRISMATIC_FEATURE_UNLOCKED);
     }
 
-    static void setPrismaticFeatureUnlocked(boolean unlocked) {
-        getMemory().set(KEY_PRISMATIC_FEATURE_UNLOCKED, unlocked);
+    static void setPrismaticFeatureUnlocked() {
+        getMemory().set(KEY_PRISMATIC_FEATURE_UNLOCKED, true);
     }
 
     @SuppressWarnings("unchecked")
@@ -120,7 +118,7 @@ public class CosmiconStats {
     }
 
     public static boolean hasAnyCharacterUnlocked() {
-        return !getUnlockedCharacters().isEmpty();
+        return getUnlockedCharacters().isEmpty();
     }
 
     @SuppressWarnings("unchecked")
@@ -183,7 +181,7 @@ public class CosmiconStats {
 
         java.util.List<data.scripts.cosmicon.battle.CharacterCard> allCards =
             data.scripts.cosmicon.battle.CharacterRegistry.getAllCards();
-        if (!allCards.isEmpty() && !hasAnyCharacterUnlocked()) {
+        if (!allCards.isEmpty() && hasAnyCharacterUnlocked()) {
             String defaultCharId = null;
             for (data.scripts.cosmicon.battle.CharacterCard card : allCards) {
                 if ("sparxie".equals(card.getId())) {

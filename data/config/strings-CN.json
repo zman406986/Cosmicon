@@ -461,7 +461,32 @@
     },
     "tutorial": {
         "no_prismatic_allowed": "教程模式：本局禁用曜彩骰。",
-        "games_remaining": "教程模式 - 剩余 {0} 局"
+        "games_remaining": "教程模式 - 剩余 {0} 局",
+        "g1_t1_attack_roll": "你是攻击方！点击任意位置投骰子。",
+        "g1_t1_attack_select": "选择点数最大的骰子来造成更多伤害。选取4个最大的数字。",
+        "g1_t1_attack_confirm": "准备好后点击「确认攻击」！",
+        "g1_t1_defense_roll": "现在轮到你防御了！对手正在攻击。点击投骰子！",
+        "g1_t1_defense_select": "你掷出了相同点数的骰子！选择它们来触发火花的「骇入」能力。",
+        "g1_t1_defense_confirm": "点击「确认防御」来格挡攻击。",
+        "g1_t2_attack_roll": "又轮到你攻击了！点击投骰子。",
+        "g1_t2_attack_reroll": "这些点数太低了。选中点数小的骰子，点击「重投选定」来获得更好的结果！",
+        "g1_t2_attack_select": "好多了！现在选择你最好的骰子并确认，赢得胜利！",
+        "g1_t2_attack_confirm": "确认攻击以赢得胜利！",
+        "g1_victory": "胜利！你已经学会了投骰、选择和重投的基础操作！你解锁了火花。继续探索酒吧中的奇遇，解锁更多角色和能力。",
+        "g2_t1_defense_roll": "认识黄泉！当她在攻击时选择的骰子全部为4时，可触发能力。现在先防御——点击投骰子！",
+        "g2_t1_defense_select": "你掷出了两个4！选中它们——黄泉会记住这些4，为下次攻击的能力做准备。",
+        "g2_t1_defense_confirm": "确认你的防御选择。",
+        "g2_t2_attack_roll": "现在你攻击！注意曜彩骰的图标。先投骰子！",
+        "g2_t2_attack_prismatic": "点击曜彩骰图标，为你的骰子池添加一颗特殊骰子！",
+        "g2_t2_attack_select": "选择4点来触发洞穿。将曜彩骰保留在已选区域！",
+        "g2_t2_attack_confirm": "确认你的攻击！",
+        "g2_t2_defense_roll": "再次防御！对手越来越强了。",
+        "g2_t2_defense_select": "选择骰子来保护自己。",
+        "g2_t2_defense_confirm": "确认你的防御。",
+        "g2_t3_attack_roll": "天气变化了！点击投骰子。",
+        "g2_t3_attack_select": "选择4点并使用曜彩骰终结对手！",
+        "g2_t3_attack_confirm": "确认以赢得胜利！",
+        "g2_victory": "胜利！你已经掌握了能力、曜彩骰和天气！你解锁了黄泉和曜彩骰。继续在酒吧中体验更多奇遇，发现更多角色和特殊骰子。"
     },
     "gallery": {
         "no_prismatic_unlocked": "尚未解锁曜彩骰。完成 2 局教程对局即可解锁真-6-6。"

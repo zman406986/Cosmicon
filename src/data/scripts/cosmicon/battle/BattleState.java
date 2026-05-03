@@ -63,6 +63,11 @@ public class BattleState {
     private int playerOriginalDefLevel;
     private int opponentOriginalDefLevel;
 
+    private int playerWeatherAtkMod;
+    private int opponentWeatherAtkMod;
+    private int playerWeatherDefMod;
+    private int opponentWeatherDefMod;
+
     private int playerRemainingRerolls;
     private int opponentRemainingRerolls;
     private int playerRerollsUsedThisTurn;
@@ -239,7 +244,11 @@ public class BattleState {
     public int getRequiredDiceCount(boolean isPlayer) {
         CharacterCard card = isPlayer ? playerCard : opponentCard;
         if (card == null) return 0;
-        return (isPlayer == playerIsAttacker) ? card.getAtkLevel() : card.getDefLevel();
+        int baseLevel = (isPlayer == playerIsAttacker) ? card.getAtkLevel() : card.getDefLevel();
+        int weatherMod = (isPlayer == playerIsAttacker) 
+            ? (isPlayer ? playerWeatherAtkMod : opponentWeatherAtkMod)
+            : (isPlayer ? playerWeatherDefMod : opponentWeatherDefMod);
+        return Math.max(1, Math.min(baseLevel + weatherMod, 5));
     }
 
     public int countSelected(List<Boolean> selected) {
@@ -675,6 +684,43 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
             card.setAtkLevel(card.getAtkLevel() + delta);
         }
     }
+
+    public int getEffectiveAtkLevel(boolean forPlayer) {
+        CharacterCard card = getCard(forPlayer);
+        if (card == null) return 1;
+        int mod = forPlayer ? playerWeatherAtkMod : opponentWeatherAtkMod;
+        return Math.max(1, Math.min(card.getAtkLevel() + mod, 5));
+    }
+
+    public int getEffectiveDefLevel(boolean forPlayer) {
+        CharacterCard card = getCard(forPlayer);
+        if (card == null) return 1;
+        int mod = forPlayer ? playerWeatherDefMod : opponentWeatherDefMod;
+        return Math.max(1, Math.min(card.getDefLevel() + mod, 5));
+    }
+
+    public void modifyWeatherAtkMod(boolean forPlayer, int delta) {
+        if (forPlayer) {
+            playerWeatherAtkMod += delta;
+        } else {
+            opponentWeatherAtkMod += delta;
+        }
+    }
+
+    public void modifyWeatherDefMod(boolean forPlayer, int delta) {
+        if (forPlayer) {
+            playerWeatherDefMod += delta;
+        } else {
+            opponentWeatherDefMod += delta;
+        }
+    }
+
+    public void clearWeatherMods() {
+        playerWeatherAtkMod = 0;
+        opponentWeatherAtkMod = 0;
+        playerWeatherDefMod = 0;
+        opponentWeatherDefMod = 0;
+    }
     
     public List<Integer> getDiceValues(boolean forPlayer) {
         return forPlayer ? playerDiceValues : opponentDiceValues;
@@ -1073,6 +1119,10 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         opponentPendingDefLevelBoost = 0;
         playerOriginalDefLevel = 0;
         opponentOriginalDefLevel = 0;
+        playerWeatherAtkMod = 0;
+        opponentWeatherAtkMod = 0;
+        playerWeatherDefMod = 0;
+        opponentWeatherDefMod = 0;
         
         aiSelectionVisualizer.reset();
         

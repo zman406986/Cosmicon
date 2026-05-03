@@ -40,8 +40,7 @@ public class CosmiconPlayerState {
     }
 
     public static boolean loadPrismaticDiceTrueVersion() {
-        Boolean val = getMemory().getBoolean(KEY_EQUIPPED_PRISMATIC_TRUE);
-        return val != null && val;
+        return getMemory().getBoolean(KEY_EQUIPPED_PRISMATIC_TRUE);
     }
 
     public static String getDefaultPrismaticForCharacter(String charId) {
@@ -68,13 +67,5 @@ public class CosmiconPlayerState {
         return CharacterRegistry.getCharacterById(charId);
     }
 
-    public static String getPrismaticDiceIdForBattle() {
-        String diceId = loadPrismaticDice();
-        if (diceId != null && !diceId.isEmpty()) {
-            return diceId;
-        }
-        
-        String charId = loadCharacter();
-        return getDefaultPrismaticForCharacter(charId);
-    }
+
 }

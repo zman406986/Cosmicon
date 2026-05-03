@@ -192,6 +192,12 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.useDirectionalAnimation = true;
         this.phase = Phase.SCATTER_PICKUP;
         this.scale = 1f;
+        this.stationaryFrameIndex = 0;
+        if (type == DiceType.PRISMATIC) {
+            this.stationaryResultIndex = (int)(Math.random() * 6);
+        } else if (type != null) {
+            this.stationaryResultIndex = type.getMaxFace();
+        }
         this.targetCenterX = targetCenterX;
         this.targetCenterY = targetCenterY;
     }
