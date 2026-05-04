@@ -182,6 +182,8 @@ public class StatusEffectProcessor {
         if (hasEffect(StatusEffect.DESTINED)) {
             processedEffects.add(new ProcessedEffect(StatusEffect.DESTINED, getLayers(StatusEffect.DESTINED)));
             context.markDestinedDice();
+            effects.remove(StatusEffect.DESTINED);
+            durations.remove(StatusEffect.DESTINED);
         }
     }
 
@@ -421,7 +423,7 @@ public class StatusEffectProcessor {
                 if (diceSelected.get(i) && !diceIsPrismatic.get(i) && diceValues.get(i) < minValue) {
                     minValue = diceValues.get(i);
                     minIndex = i;
-                    minMaxFace = getDiceMaxFace(i);
+                    minMaxFace = (i < diceMaxFaces.size()) ? diceMaxFaces.get(i) : getDiceMaxFace(i);
                 }
             }
             if (minIndex >= 0) {

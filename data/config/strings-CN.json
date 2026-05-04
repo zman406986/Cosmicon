@@ -126,7 +126,8 @@
         "tactics_desc": "重投次数增加",
         "awakening_desc": "选定后，将所有点数翻倍",
         "heal_desc": "回复指定点数的生命值",
-        "reflect_desc": "受到伤害后，立刻造成瞬伤"
+        "reflect_desc": "受到伤害后，立刻造成瞬伤",
+        "yao_guang_rerolls_desc": "获得等同于层数的额外重投次数"
     },
     "weather_category": {
         "safeguard": "坚守",

@@ -10,6 +10,7 @@ import com.fs.starfarer.api.ui.TooltipMakerAPI;
 import com.fs.starfarer.api.ui.TooltipMakerAPI.ActionListenerDelegate;
 import com.fs.starfarer.api.ui.TooltipMakerAPI.TooltipCreator;
 import com.fs.starfarer.api.ui.TooltipMakerAPI.TooltipLocation;
+import com.fs.starfarer.api.util.Misc;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleState.Phase;
@@ -192,10 +193,12 @@ public class BattleUIButtons implements ActionListenerDelegate {
                 public float getTooltipWidth(Object tooltipParam) { return 350f; }
                 @Override
                 public void createTooltip(TooltipMakerAPI tooltip, boolean expanded, Object tooltipParam) {
-                    String desc = getEffectDescriptionAtIndex(index, false);
-                    if (desc != null) {
-                        tooltip.addPara(desc, 5f);
-                    }
+                    StatusEffect effect = getEffectAtIndex(index, false);
+                    if (effect == null) return;
+                    String name = Strings.get("status." + effect.name().toLowerCase());
+                    String desc = Strings.get("status_desc." + effect.name().toLowerCase() + "_desc");
+                    tooltip.addPara(name, Misc.getHighlightColor(), 5f);
+                    tooltip.addPara(desc, Misc.getGrayColor(), 3f);
                 }
             }, TooltipLocation.LEFT, false);
         }
@@ -224,10 +227,12 @@ public class BattleUIButtons implements ActionListenerDelegate {
                 public float getTooltipWidth(Object tooltipParam) { return 350f; }
                 @Override
                 public void createTooltip(TooltipMakerAPI tooltip, boolean expanded, Object tooltipParam) {
-                    String desc = getEffectDescriptionAtIndex(index, true);
-                    if (desc != null) {
-                        tooltip.addPara(desc, 5f);
-                    }
+                    StatusEffect effect = getEffectAtIndex(index, true);
+                    if (effect == null) return;
+                    String name = Strings.get("status." + effect.name().toLowerCase());
+                    String desc = Strings.get("status_desc." + effect.name().toLowerCase() + "_desc");
+                    tooltip.addPara(name, Misc.getHighlightColor(), 5f);
+                    tooltip.addPara(desc, Misc.getGrayColor(), 3f);
                 }
             }, TooltipLocation.RIGHT, false);
         }
@@ -264,29 +269,32 @@ public class BattleUIButtons implements ActionListenerDelegate {
         WeatherController wc = battleState.getWeatherController();
         if (wc == null) {
             weatherLabel.setText(Strings.get("battle.weather_none"));
+            weatherLabel.setColor(java.awt.Color.GRAY);
+            if (weatherDescLabel != null) weatherDescLabel.setText("");
             return;
         }
         WeatherType weather = wc.getCurrentWeather();
         if (weather == null) {
             weatherLabel.setText(Strings.get("battle.weather_none"));
+            weatherLabel.setColor(java.awt.Color.GRAY);
+            if (weatherDescLabel != null) weatherDescLabel.setText("");
         } else {
             weatherLabel.setText(Strings.get("weather." + weather.name().toLowerCase()));
+            weatherLabel.setColor(weather.getColor());
+            if (weatherDescLabel != null) {
+                weatherDescLabel.setText(weather.getDescription());
+            }
         }
     }
 
-    private String getEffectDescriptionAtIndex(int targetIndex, boolean forPlayer) {
+    private StatusEffect getEffectAtIndex(int targetIndex, boolean forPlayer) {
         if (battleState == null) return null;
         StatusEffectProcessor effects = battleState.getEffects(forPlayer);
         int idx = 0;
         for (StatusEffect effect : StatusEffect.values()) {
             if (effects.getLayers(effect) > 0) {
                 if (idx == targetIndex) {
-                    String key = "status_desc." + effect.name().toLowerCase() + "_desc";
-                    try {
-                        return Strings.get(key);
-                    } catch (Exception e) {
-                        return null;
-                    }
+                    return effect;
                 }
                 idx++;
             }
@@ -446,6 +454,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
         diceRollManager = null;
         labels = null;
         weatherLabel = null;
+        weatherDescLabel = null;
         weatherTitleLabel = null;
         buttonsCreated = false;
     }

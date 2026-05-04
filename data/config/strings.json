@@ -128,7 +128,8 @@
         "tactics_desc": "Reroll count increased",
         "awakening_desc": "Double all dice values after selection",
         "heal_desc": "Recover specified HP amount",
-        "reflect_desc": "Deal instant damage after receiving damage"
+        "reflect_desc": "Deal instant damage after receiving damage",
+        "yao_guang_rerolls_desc": "Gain extra rerolls equal to layer count"
     },
     "weather_category": {
         "safeguard": "Safeguard",

@@ -27,7 +27,10 @@ public class CosmiconPlayerState {
     }
 
     public static void savePrismaticDice(String diceId) {
-        if (diceId == null || diceId.isEmpty()) return;
+        if (diceId == null || diceId.isEmpty()) {
+            getMemory().unset(KEY_EQUIPPED_PRISMATIC);
+            return;
+        }
         getMemory().set(KEY_EQUIPPED_PRISMATIC, diceId);
     }
 

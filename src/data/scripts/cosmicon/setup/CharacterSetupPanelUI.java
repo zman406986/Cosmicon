@@ -289,10 +289,18 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     }
 
     private void updateDiceListLabels() {
+        boolean canEquip = selectedIndex >= 0 && selectedIndex < characters.size()
+            && !characters.get(selectedIndex).getPrismaticDiceIds().isEmpty();
+
         for (int i = 0; i < diceEntryLabels.size(); i++) {
             DiceEntryLabels labels = diceEntryLabels.get(i);
             PrismaticDiceType type = PrismaticDiceRegistry.get(labels.diceId());
             if (type == null) continue;
+
+            float opacity = canEquip ? 1f : 0f;
+            labels.nameLabel().setOpacity(opacity);
+            labels.facesLabel().setOpacity(opacity);
+            labels.descLabel().setOpacity(opacity);
 
             boolean useTrue = (i == selectedDiceEntryIndex) ? selectedUseTrueVersion : !labels.hasBothVersions();
 
@@ -605,6 +613,18 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         GL11.glVertex2f(bx, by + listHeight + 10f);
         GL11.glEnd();
         GLStateUtil.resetColor();
+
+        boolean canEquip = selectedIndex >= 0 && selectedIndex < characters.size()
+            && !characters.get(selectedIndex).getPrismaticDiceIds().isEmpty();
+
+        if (noPrismaticLabel != null) {
+            noPrismaticLabel.setOpacity(canEquip ? 0f : 1f);
+        }
+
+        if (!canEquip) {
+            renderDiceScrollbar(listStartY, listHeight, alphaMult);
+            return;
+        }
 
         int dsX = Math.round((panelX + DICE_LIST_X) * scale);
         int dsY = Math.round((panelY + PANEL_HEIGHT - listStartY - listHeight) * scale);
@@ -938,6 +958,9 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     }
 
     private void handleDiceSelection(int entryIndex) {
+        if (selectedIndex < 0 || selectedIndex >= characters.size()) return;
+        if (characters.get(selectedIndex).getPrismaticDiceIds().isEmpty()) return;
+
         List<PrismaticDiceType> diceList = getFilteredDiceList();
         if (entryIndex < 0 || entryIndex >= diceList.size()) return;
 
@@ -952,6 +975,9 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     }
 
     private void handleVersionToggle(int entryIndex, boolean useTrue) {
+        if (selectedIndex < 0 || selectedIndex >= characters.size()) return;
+        if (characters.get(selectedIndex).getPrismaticDiceIds().isEmpty()) return;
+
         List<PrismaticDiceType> diceList = getFilteredDiceList();
         if (entryIndex < 0 || entryIndex >= diceList.size()) return;
 

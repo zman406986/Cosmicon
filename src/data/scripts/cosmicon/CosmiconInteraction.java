@@ -380,14 +380,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
     private void finishReward() {
         CosmiconEventState.clearAll();
-        CosmiconMusicPlugin.stopMusic();
-        if (onLeaveAction != null) {
-            onLeaveAction.run();
-        } else if (CosmiconEventState.isBarEvent()) {
-            dialog.dismiss();
-        } else {
-            showMenu();
-        }
+        showMenu();
     }
 
     @Override
