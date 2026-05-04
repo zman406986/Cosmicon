@@ -6,6 +6,7 @@ import java.util.List;
 
 import data.scripts.cosmicon.battle.DicePathPlanner.PlannedPath;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
+import data.scripts.cosmicon.util.ColorHelper;
 
 public class DiceRollManager {
 
@@ -443,30 +444,63 @@ public class DiceRollManager {
         
         if (selected == null || types == null || values == null) return;
         
-        int selectedCount = 0;
-        for (boolean s : selected) {
-            if (s) selectedCount++;
+        int totalCount = Math.min(selected.size(), sourceAnimators.size());
+        if (totalCount == 0) return;
+        
+        int activeCount = 0;
+        int reserveCount = 0;
+        for (int i = 0; i < totalCount; i++) {
+            if (selected.get(i)) activeCount++;
+            else reserveCount++;
         }
-        if (selectedCount == 0) return;
+        if (activeCount == 0 && reserveCount == 0) return;
         
         float spacing = BattleRenderingUtils.REST_GRID_DICE_SPACING;
-        float totalWidth = spacing * (selectedCount - 1);
-        float startX = gridCenterX - totalWidth / 2f;
+        float gap = BattleRenderingUtils.REST_GRID_GROUP_GAP;
+        
+        float activeWidth = activeCount > 0 ? spacing * (activeCount - 1) : 0f;
+        float reserveWidth = reserveCount > 0 ? spacing * (reserveCount - 1) : 0f;
+        float combinedWidth = activeWidth + reserveWidth;
+        if (activeCount > 0 && reserveCount > 0) combinedWidth += gap;
+        
+        float startX = gridCenterX - combinedWidth / 2f;
         float startY = gridCenterY - AnimationConstants.DICE_SIZE / 2f;
         
-        int restIndex = 0;
-        for (int i = 0; i < Math.min(selected.size(), sourceAnimators.size()); i++) {
+        float reserveGroupStartX;
+        float activeGroupStartX;
+        
+        if (forPlayer) {
+            reserveGroupStartX = startX;
+            activeGroupStartX = startX + reserveWidth + (reserveCount > 0 ? gap : 0f);
+        } else {
+            activeGroupStartX = startX;
+            reserveGroupStartX = startX + activeWidth + (activeCount > 0 ? gap : 0f);
+        }
+        
+        int activeIndex = 0;
+        int reserveIndex = 0;
+        
+        for (int i = 0; i < totalCount; i++) {
+            DiceAnimator sourceAnimator = sourceAnimators.get(i);
+            float targetX;
+            boolean isReserve;
+            
             if (selected.get(i)) {
-                DiceAnimator sourceAnimator = sourceAnimators.get(i);
-                float targetX = startX + restIndex * spacing;
-                
-                DiceAnimator restAnimator = new DiceAnimator();
-                restAnimator.init();
-                restAnimator.startTravelToRestFrom(sourceAnimator, types.get(i), values.get(i),
-                    targetX, startY);
-                restList.add(restAnimator);
-                restIndex++;
+                targetX = activeGroupStartX + activeIndex * spacing;
+                isReserve = false;
+                activeIndex++;
+            } else {
+                targetX = reserveGroupStartX + reserveIndex * spacing;
+                isReserve = true;
+                reserveIndex++;
             }
+            
+            DiceAnimator restAnimator = new DiceAnimator();
+            restAnimator.init();
+            restAnimator.startTravelToRestFrom(sourceAnimator, types.get(i), values.get(i),
+                targetX, startY);
+            restAnimator.setReserve(isReserve);
+            restList.add(restAnimator);
         }
         
         if (forPlayer) {
@@ -477,11 +511,73 @@ public class DiceRollManager {
     }
     
     public void renderRestingDice(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
+        renderRestGroupBoxes(playerRestAnimators, panelX, panelY, panelWidth, panelHeight, alphaMult);
+        renderRestGroupBoxes(opponentRestAnimators, panelX, panelY, panelWidth, panelHeight, alphaMult);
+        
         for (DiceAnimator animator : playerRestAnimators) {
             animator.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
         }
         for (DiceAnimator animator : opponentRestAnimators) {
             animator.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
+        }
+    }
+    
+    private void renderRestGroupBoxes(List<DiceAnimator> restList, float panelX, float panelY,
+                                       float panelWidth, float panelHeight, float alphaMult) {
+        if (restList.isEmpty()) return;
+        
+        float padding = BattleRenderingUtils.REST_GRID_BOX_PADDING;
+        float diceSize = AnimationConstants.DICE_SIZE;
+        
+        float activeMinX = Float.MAX_VALUE, activeMinY = Float.MAX_VALUE;
+        float activeMaxX = Float.MIN_VALUE, activeMaxY = Float.MIN_VALUE;
+        float reserveMinX = Float.MAX_VALUE, reserveMinY = Float.MAX_VALUE;
+        float reserveMaxX = Float.MIN_VALUE, reserveMaxY = Float.MIN_VALUE;
+        boolean hasActive = false, hasReserve = false;
+        
+        for (DiceAnimator animator : restList) {
+            float tx = animator.getTargetSlotX();
+            float ty = animator.getTargetSlotY();
+            
+            if (animator.isReserve()) {
+                hasReserve = true;
+                reserveMinX = Math.min(reserveMinX, tx);
+                reserveMinY = Math.min(reserveMinY, ty);
+                reserveMaxX = Math.max(reserveMaxX, tx + diceSize);
+                reserveMaxY = Math.max(reserveMaxY, ty + diceSize);
+            } else {
+                hasActive = true;
+                activeMinX = Math.min(activeMinX, tx);
+                activeMinY = Math.min(activeMinY, ty);
+                activeMaxX = Math.max(activeMaxX, tx + diceSize);
+                activeMaxY = Math.max(activeMaxY, ty + diceSize);
+            }
+        }
+        
+        if (hasActive) {
+            float uiLeft = activeMinX - padding;
+            float uiTop = activeMinY - padding;
+            float uiRight = activeMaxX + padding;
+            float uiBottom = activeMaxY + padding;
+            float glX = panelX + uiLeft;
+            float glY = panelY + panelHeight - uiBottom;
+            float glW = uiRight - uiLeft;
+            float glH = uiBottom - uiTop;
+            BattleRenderingUtils.renderRestGroupBox(glX, glY, glW, glH,
+                ColorHelper.REST_ACTIVE_BG, ColorHelper.REST_ACTIVE_BORDER, alphaMult);
+        }
+        
+        if (hasReserve) {
+            float uiLeft = reserveMinX - padding;
+            float uiTop = reserveMinY - padding;
+            float uiRight = reserveMaxX + padding;
+            float uiBottom = reserveMaxY + padding;
+            float glX = panelX + uiLeft;
+            float glY = panelY + panelHeight - uiBottom;
+            float glW = uiRight - uiLeft;
+            float glH = uiBottom - uiTop;
+            BattleRenderingUtils.renderRestGroupBox(glX, glY, glW, glH,
+                ColorHelper.REST_RESERVE_BG, ColorHelper.REST_RESERVE_BORDER, alphaMult);
         }
     }
     

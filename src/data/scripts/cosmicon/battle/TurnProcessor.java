@@ -1027,14 +1027,9 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         if (!diceRollManager.hasRestAnimators(forPlayer)) return;
         
         int minSize = Math.min(oldValues.size(), newValues.size());
-        List<Boolean> selected = state.getDiceSelected(forPlayer);
-        int restIndex = 0;
         for (int i = 0; i < minSize; i++) {
-            if (selected != null && i < selected.size() && selected.get(i)) {
-                if (!oldValues.get(i).equals(newValues.get(i))) {
-                    diceRollManager.updateRestDiceValue(restIndex, newValues.get(i), forPlayer);
-                }
-                restIndex++;
+            if (!oldValues.get(i).equals(newValues.get(i))) {
+                diceRollManager.updateRestDiceValue(i, newValues.get(i), forPlayer);
             }
         }
     }

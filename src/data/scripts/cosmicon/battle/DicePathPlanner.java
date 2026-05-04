@@ -1,11 +1,6 @@
 package data.scripts.cosmicon.battle;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 public class DicePathPlanner {
 
@@ -75,7 +70,7 @@ public class DicePathPlanner {
             return new AngleResult(-1000f, -1);
         }
 
-        available.sort((a, b) -> Integer.compare(Math.abs(a - 4), Math.abs(b - 4)));
+        available.sort(Comparator.comparingInt(a -> Math.abs(a - 4)));
 
         int chosenFraction = available.get(0);
 

@@ -80,6 +80,8 @@ public class DiceAnimator {
     private int stationaryResultIndex;
     private float rollPickupStartScale;
     
+    private boolean reserve;
+    
     public static float getTotalDuration() {
         return TOTAL_DURATION;
     }
@@ -800,6 +802,14 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
     
     public boolean isRestOrTravel() {
         return phase == Phase.RESTING || phase == Phase.TRAVEL_TO_REST || phase == Phase.REST_DROP || phase == Phase.VALUE_CHANGE;
+    }
+    
+    public boolean isReserve() {
+        return reserve;
+    }
+    
+    public void setReserve(boolean reserve) {
+        this.reserve = reserve;
     }
     
     public void forceComplete() {

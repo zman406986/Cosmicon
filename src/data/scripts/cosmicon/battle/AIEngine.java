@@ -9,7 +9,6 @@ import data.scripts.cosmicon.ai.AIPrismaticSelector;
 import data.scripts.cosmicon.ai.AIPrismaticSelector.PrismaticDecision;
 import data.scripts.cosmicon.ai.CosmiconAICore;
 import data.scripts.cosmicon.ai.CosmiconAICore.AIDecision;
-import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class AIEngine {

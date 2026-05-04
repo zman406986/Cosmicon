@@ -28,6 +28,11 @@ public final class ColorHelper {
     public static final Color OPPONENT_REROLL_HIGHLIGHT = new Color(255, 160, 80, 150);
     public static final Color OPPONENT_DICE_ZONE_BG = new Color(70, 50, 50, 180);
 
+    public static final Color REST_ACTIVE_BG = new Color(200, 210, 230, 60);
+    public static final Color REST_ACTIVE_BORDER = new Color(220, 230, 255, 180);
+    public static final Color REST_RESERVE_BG = new Color(80, 85, 95, 60);
+    public static final Color REST_RESERVE_BORDER = new Color(120, 125, 140, 150);
+
     public static float[] toGLComponents(Color color, float alphaMult) {
         return new float[] {
             color.getRed() / 255f,

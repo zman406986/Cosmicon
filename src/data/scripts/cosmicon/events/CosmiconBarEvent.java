@@ -71,8 +71,7 @@ public class CosmiconBarEvent extends BaseBarEvent {
             return;
         }
 
-        if (optionData instanceof OptionId) {
-            OptionId option = (OptionId) optionData;
+        if (optionData instanceof OptionId option) {
 
             switch (option) {
                 case INIT:
@@ -110,7 +109,7 @@ public class CosmiconBarEvent extends BaseBarEvent {
                     BarEventManager.getInstance().notifyWasInteractedWith(this);
 
                     interaction = new CosmiconInteraction();
-                    interaction.setOnLeaveAction(() -> { done = true; });
+                    interaction.setOnLeaveAction(() -> done = true);
                     interaction.init(dialog);
                     break;
 

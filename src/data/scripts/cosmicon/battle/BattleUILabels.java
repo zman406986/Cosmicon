@@ -653,10 +653,8 @@ public class BattleUILabels {
 
         String phaseText = switch (phase) {
             case ROLLING -> Strings.get("phase.rolling");
-            case SELECTING_ATTACK -> playerAttacking ? Strings.get("phase.your_attack") : Strings.get("phase.opponent_attack");
-            case DICE_DISPLAY_ATTACK -> playerAttacking ? Strings.get("phase.your_attack") : Strings.get("phase.opponent_attack");
-            case SELECTING_DEFENSE -> playerAttacking ? Strings.get("phase.opponent_defense") : Strings.get("phase.your_defense");
-            case DICE_DISPLAY_DEFENSE -> playerAttacking ? Strings.get("phase.opponent_defense") : Strings.get("phase.your_defense");
+            case SELECTING_ATTACK, DICE_DISPLAY_ATTACK -> playerAttacking ? Strings.get("phase.your_attack") : Strings.get("phase.opponent_attack");
+            case SELECTING_DEFENSE, DICE_DISPLAY_DEFENSE -> playerAttacking ? Strings.get("phase.opponent_defense") : Strings.get("phase.your_defense");
             case RESOLVING_PRE_CLASH -> Strings.get("phase.pre_clash");
             case RESOLVING -> Strings.get("phase.resolving");
             case WAITING_NEXT_TURN -> Strings.format("phase.turn_complete", battleState.getTurnNumber());

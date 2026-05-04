@@ -1086,7 +1086,7 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
 
     public boolean isPhainonUnyieldingAvailable(boolean forPlayer) {
-        return forPlayer ? phainonUnyieldingAvailable : opponentPhainonUnyieldingAvailable;
+        return forPlayer ? !phainonUnyieldingAvailable : !opponentPhainonUnyieldingAvailable;
     }
 
     public void consumePhainonUnyielding(boolean forPlayer) {

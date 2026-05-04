@@ -49,6 +49,8 @@ public final class BattleRenderingUtils {
     public static final float OPPONENT_REST_GRID_CENTER_X = 750f;
     public static final float OPPONENT_REST_GRID_CENTER_Y = 175f;
     public static final float REST_GRID_DICE_SPACING = 70f;
+    public static final float REST_GRID_GROUP_GAP = 12f;
+    public static final float REST_GRID_BOX_PADDING = 6f;
 
     public static final float BUTTON_WIDTH = 120f;
     public static final float BUTTON_HEIGHT = 40f;
@@ -417,6 +419,40 @@ public final class BattleRenderingUtils {
         GL11.glVertex2f(x + OPPONENT_DICE_ZONE_W, y);
         GL11.glVertex2f(x + OPPONENT_DICE_ZONE_W, y + OPPONENT_DICE_ZONE_H);
         GL11.glVertex2f(x, y + OPPONENT_DICE_ZONE_H);
+        GL11.glEnd();
+        GLStateUtil.resetColor();
+    }
+
+    public static void renderRestGroupBox(float x, float y, float w, float h, Color bgColor, Color borderColor, float alphaMult) {
+        GLStateUtil.resetBlendState();
+
+        Misc.renderQuad(x, y, w, h, bgColor, alphaMult);
+
+        float radius = 6f;
+        float[] c = ColorHelper.toGLComponents(borderColor, alphaMult);
+        GL11.glColor4f(c[0], c[1], c[2], c[3]);
+        GL11.glLineWidth(1.5f);
+
+        GL11.glBegin(GL11.GL_LINE_LOOP);
+        int segments = 6;
+        float step = (float) Math.PI / 2 / segments;
+
+        for (int i = 0; i <= segments; i++) {
+            float angle = (float) Math.PI + i * step;
+            GL11.glVertex2f(x + radius + (float) Math.cos(angle) * radius, y + radius + (float) Math.sin(angle) * radius);
+        }
+        for (int i = 0; i <= segments; i++) {
+            float angle = (float) Math.PI * 1.5f + i * step;
+            GL11.glVertex2f(x + w - radius + (float) Math.cos(angle) * radius, y + radius + (float) Math.sin(angle) * radius);
+        }
+        for (int i = 0; i <= segments; i++) {
+            float angle = i * step;
+            GL11.glVertex2f(x + w - radius + (float) Math.cos(angle) * radius, y + h - radius + (float) Math.sin(angle) * radius);
+        }
+        for (int i = 0; i <= segments; i++) {
+            float angle = (float) Math.PI / 2 + i * step;
+            GL11.glVertex2f(x + radius + (float) Math.cos(angle) * radius, y + h - radius + (float) Math.sin(angle) * radius);
+        }
         GL11.glEnd();
         GLStateUtil.resetColor();
     }

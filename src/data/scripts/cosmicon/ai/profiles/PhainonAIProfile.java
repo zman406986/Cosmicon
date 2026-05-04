@@ -52,7 +52,7 @@ public class PhainonAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking, BattleState state, boolean forPlayer) {
-        if (!isAttacking && state != null && !state.isPhainonUnyieldingAvailable(forPlayer)) {
+        if (!isAttacking && state != null && state.isPhainonUnyieldingAvailable(forPlayer)) {
             return PassiveEvaluation.notTriggered();
         }
         return evaluatePassiveTrigger(selectedValues, selectedTypes, isAttacking);
@@ -66,7 +66,7 @@ public class PhainonAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking, BattleState state, boolean forPlayer) {
-        if (!isAttacking && state != null && !state.isPhainonUnyieldingAvailable(forPlayer)) {
+        if (!isAttacking && state != null && state.isPhainonUnyieldingAvailable(forPlayer)) {
             return 0f;
         }
         return getPassiveBonusValue(selectedValues, isAttacking);
