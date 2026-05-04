@@ -119,6 +119,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                 if (inputHandler != null) inputHandler.setTutorialController(tc);
                 if (buttons != null) buttons.setTutorialController(tc);
             }
+
+            controller.setOpponentAnimationCompleteChecker(
+                () -> diceRollManager != null && diceRollManager.isOpponentComplete());
         }
     }
 
@@ -1085,6 +1088,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         AISelectionVisualizer viz = battleState.getAiSelectionVisualizer();
         if (viz == null || !viz.hasStarted() || viz.isRerollPhase()) return;
+
+        if (diceRollManager != null && !diceRollManager.isOpponentComplete()) return;
 
         List<Integer> visibleIndices = viz.getVisibleIndices();
         if (visibleIndices.isEmpty()) return;

@@ -22,6 +22,8 @@ public class TutorialController {
         G1_T1_DEFENSE_ROLL,
         G1_T1_DEFENSE_SELECT,
         G1_T1_DEFENSE_CONFIRM,
+        G1_T1_DEFENSE_WAIT,
+        G1_T1_DEFENSE_RESOLVE,
         G1_T2_ATTACK_ROLL,
         G1_T2_ATTACK_REROLL,
         G1_T2_ATTACK_SELECT,
@@ -31,13 +33,19 @@ public class TutorialController {
         G2_T1_DEFENSE_ROLL,
         G2_T1_DEFENSE_SELECT,
         G2_T1_DEFENSE_CONFIRM,
+        G2_T1_DEFENSE_WAIT,
+        G2_T1_DEFENSE_RESOLVE,
         G2_T2_ATTACK_ROLL,
         G2_T2_ATTACK_PRISMATIC,
         G2_T2_ATTACK_SELECT,
         G2_T2_ATTACK_CONFIRM,
+        G2_T2_ATTACK_WAIT,
+        G2_T2_ATTACK_RESOLVE,
         G2_T2_DEFENSE_ROLL,
         G2_T2_DEFENSE_SELECT,
         G2_T2_DEFENSE_CONFIRM,
+        G2_T2_DEFENSE_WAIT,
+        G2_T2_DEFENSE_RESOLVE,
         G2_T3_ATTACK_ROLL,
         G2_T3_ATTACK_SELECT,
         G2_T3_ATTACK_CONFIRM,
@@ -148,7 +156,9 @@ public class TutorialController {
         return !switch (currentStep)
         {
             case G1_VICTORY, G2_VICTORY,
-                 G1_T1_ATTACK_RESOLVE -> true;
+                 G1_T1_ATTACK_RESOLVE, G1_T1_DEFENSE_RESOLVE,
+                 G2_T1_DEFENSE_RESOLVE,
+                 G2_T2_ATTACK_RESOLVE, G2_T2_DEFENSE_RESOLVE -> true;
             default -> false;
         };
     }
@@ -201,11 +211,11 @@ public class TutorialController {
 
         switch (currentStep) {
             case G1_T1_ATTACK_CONFIRM -> currentStep = TutorialStep.G1_T1_ATTACK_WAIT;
-            case G1_T1_DEFENSE_CONFIRM -> currentStep = TutorialStep.G1_T2_ATTACK_ROLL;
+            case G1_T1_DEFENSE_CONFIRM -> currentStep = TutorialStep.G1_T1_DEFENSE_WAIT;
             case G1_T2_ATTACK_CONFIRM -> currentStep = TutorialStep.G1_VICTORY;
-            case G2_T1_DEFENSE_CONFIRM -> currentStep = TutorialStep.G2_T2_ATTACK_ROLL;
-            case G2_T2_ATTACK_CONFIRM -> currentStep = TutorialStep.G2_T2_DEFENSE_ROLL;
-            case G2_T2_DEFENSE_CONFIRM -> currentStep = TutorialStep.G2_T3_ATTACK_ROLL;
+            case G2_T1_DEFENSE_CONFIRM -> currentStep = TutorialStep.G2_T1_DEFENSE_WAIT;
+            case G2_T2_ATTACK_CONFIRM -> currentStep = TutorialStep.G2_T2_ATTACK_WAIT;
+            case G2_T2_DEFENSE_CONFIRM -> currentStep = TutorialStep.G2_T2_DEFENSE_WAIT;
             case G2_T3_ATTACK_CONFIRM -> currentStep = TutorialStep.G2_VICTORY;
             default -> {}
         }
@@ -234,8 +244,13 @@ public class TutorialController {
     public void onContinueClicked() {
         if (complete) return;
 
-        if (currentStep == TutorialStep.G1_T1_ATTACK_RESOLVE) {
-            currentStep = TutorialStep.G1_T1_DEFENSE_ROLL;
+        switch (currentStep) {
+            case G1_T1_ATTACK_RESOLVE -> currentStep = TutorialStep.G1_T1_DEFENSE_ROLL;
+            case G1_T1_DEFENSE_RESOLVE -> currentStep = TutorialStep.G1_T2_ATTACK_ROLL;
+            case G2_T1_DEFENSE_RESOLVE -> currentStep = TutorialStep.G2_T2_ATTACK_ROLL;
+            case G2_T2_ATTACK_RESOLVE -> currentStep = TutorialStep.G2_T2_DEFENSE_ROLL;
+            case G2_T2_DEFENSE_RESOLVE -> currentStep = TutorialStep.G2_T3_ATTACK_ROLL;
+            default -> {}
         }
     }
 
@@ -265,6 +280,8 @@ public class TutorialController {
         } else if (newPhase == Phase.WAITING_NEXT_TURN) {
             if (currentStep == TutorialStep.G1_T1_ATTACK_WAIT) {
                 currentStep = TutorialStep.G1_T1_ATTACK_RESOLVE;
+            } else if (currentStep == TutorialStep.G1_T1_DEFENSE_WAIT) {
+                currentStep = TutorialStep.G1_T1_DEFENSE_RESOLVE;
             }
         }
     }
@@ -283,6 +300,14 @@ public class TutorialController {
                 currentStep = TutorialStep.G2_T2_ATTACK_PRISMATIC;
             } else if (currentStep == TutorialStep.G2_T3_ATTACK_ROLL) {
                 currentStep = TutorialStep.G2_T3_ATTACK_SELECT;
+            }
+        } else if (newPhase == Phase.WAITING_NEXT_TURN) {
+            if (currentStep == TutorialStep.G2_T1_DEFENSE_WAIT) {
+                currentStep = TutorialStep.G2_T1_DEFENSE_RESOLVE;
+            } else if (currentStep == TutorialStep.G2_T2_ATTACK_WAIT) {
+                currentStep = TutorialStep.G2_T2_ATTACK_RESOLVE;
+            } else if (currentStep == TutorialStep.G2_T2_DEFENSE_WAIT) {
+                currentStep = TutorialStep.G2_T2_DEFENSE_RESOLVE;
             }
         }
     }

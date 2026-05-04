@@ -2,6 +2,7 @@ package data.scripts.cosmicon.battle;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BooleanSupplier;
 
 import data.scripts.cosmicon.ai.DiceProbabilityCalculator;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
@@ -188,6 +189,10 @@ public class BattleController implements BattleState.DamageAnimationCallback {
 
     public void advanceAiSelection(float amount) {
         turnProcessor.advanceAiSelection(amount);
+    }
+
+    public void setOpponentAnimationCompleteChecker(BooleanSupplier checker) {
+        turnProcessor.setOpponentAnimationCompleteChecker(checker);
     }
 
     public void advanceToSelectPhase() {

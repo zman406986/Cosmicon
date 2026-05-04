@@ -11,6 +11,7 @@ import data.scripts.cosmicon.util.PassiveEvaluator;
 import data.scripts.cosmicon.util.PassiveResults.PassiveResult;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 public class TurnProcessor {
     
@@ -42,6 +43,7 @@ public class TurnProcessor {
     private AIVisualPhase aiVisualPhase = AIVisualPhase.NONE;
     private List<Integer> aiPlannedIndices;
     private float aiPhaseTimer;
+    private BooleanSupplier opponentAnimationCompleteChecker = () -> true;
     
     public TurnProcessor(BattleState state) {
         this.state = state;
@@ -69,6 +71,12 @@ public class TurnProcessor {
     
     public void setDamageResolver(DamageResolver resolver) {
         this.damageResolver = resolver;
+    }
+
+    public void setOpponentAnimationCompleteChecker(BooleanSupplier checker) {
+        if (checker != null) {
+            this.opponentAnimationCompleteChecker = checker;
+        }
     }
     
     public void startBattle() {
@@ -308,9 +316,9 @@ public class TurnProcessor {
             
             case REROLL_ANIMATING -> {
                 aiPhaseTimer -= amount;
-                if (aiPhaseTimer <= 0f) {
+                if (aiPhaseTimer <= 0f && opponentAnimationCompleteChecker.getAsBoolean()) {
                     if (viz != null) viz.reset();
-                    
+
                     CosmiconLogger.debug("AI reroll complete, transitioning to SELECTION_PLANNING");
                     aiVisualPhase = AIVisualPhase.SELECTION_PLANNING;
                     aiPlannedIndices = null;

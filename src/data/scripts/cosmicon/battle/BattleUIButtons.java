@@ -238,15 +238,15 @@ public class BattleUIButtons implements ActionListenerDelegate {
     }
 
     private void createWeatherLabel() {
-        float boxWidth = 170f;
-        float boxHeight = 70f;
+        float boxWidth = 230f;
+        float boxHeight = 80f;
         float titleHeight = 18f;
         float playerCardUiX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
         float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
 
-        float weatherX = playerCardUiX + 5f;
+        float weatherX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.MARGIN - boxWidth;
         float titleY = playerCardY - PASSIVE_BTN_HEIGHT - titleHeight - boxHeight - 15f;
-        float boxY = titleY + titleHeight + 2f;
+        float boxY = titleY + titleHeight + 8f;
 
         UIComponentFactory.createLabelSmall(panel, Strings.get("battle.weather_effects"),
             java.awt.Color.LIGHT_GRAY, com.fs.starfarer.api.ui.Alignment.MID, boxWidth, titleHeight, weatherX, titleY);
@@ -257,7 +257,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
         weatherLabel = weatherTp.addPara(Strings.get("battle.weather_none"), 0f);
         weatherLabel.setAlignment(com.fs.starfarer.api.ui.Alignment.MID);
 
-        weatherDescLabel = weatherTp.addPara("", java.awt.Color.GRAY, 3f);
+        weatherDescLabel = weatherTp.addPara("", java.awt.Color.GRAY, 8f);
         weatherDescLabel.setAlignment(com.fs.starfarer.api.ui.Alignment.MID);
 
         updateWeatherLabel();

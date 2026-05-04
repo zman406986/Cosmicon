@@ -44,8 +44,7 @@ public class CastoriceAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
-        if (isAttacking) return PassiveEvaluation.notTriggered();
-        return PassiveEvaluation.triggered(10f, Strings.get("character.castorice.passive_desc"));
+        return PassiveEvaluation.notTriggered();
     }
 
     @Override
@@ -56,6 +55,6 @@ public class CastoriceAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     protected float calculatePassiveBonus(List<Integer> selectedValues) {
-        return 10f;
+        return 0f;
     }
 }

@@ -21,7 +21,6 @@ public class PassiveIndicationRenderer {
     public static void renderIndications(BattleState battleState, DiceRollManager diceRollManager,
                                           float alphaMult) {
         if (battleState == null || diceRollManager == null) return;
-        if (!diceRollManager.isComplete()) return;
 
         BattleState.Phase phase = battleState.getCurrentPhase();
         if (phase != BattleState.Phase.SELECTING_ATTACK &&
@@ -39,6 +38,9 @@ public class PassiveIndicationRenderer {
 
     private static void renderIndicationsForSide(BattleState battleState, DiceRollManager diceRollManager,
                                                    float alphaMult, boolean forPlayer) {
+        if (forPlayer && !diceRollManager.isComplete()) return;
+        if (!forPlayer && !diceRollManager.isOpponentComplete()) return;
+
         CharacterCard card = forPlayer ? battleState.getPlayerCard() : battleState.getOpponentCard();
         if (card == null) return;
 
