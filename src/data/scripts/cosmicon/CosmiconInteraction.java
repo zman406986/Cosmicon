@@ -19,6 +19,7 @@ import data.scripts.cosmicon.setup.CharacterSetupPanelUI;
 import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.state.CosmiconPlayerState;
 import data.scripts.cosmicon.state.CosmiconStats;
+import data.scripts.cosmicon.tutorial.TutorialController;
 
 import java.awt.Color;
 
@@ -34,6 +35,12 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     private String pendingRewardCharId;
     private String pendingRewardPrismaticId;
 
+    private Runnable onLeaveAction = null;
+
+    public void setOnLeaveAction(Runnable action) {
+        this.onLeaveAction = action;
+    }
+
     public enum State {
         MAIN_MENU,
         PLAY,
@@ -42,9 +49,16 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     }
 
     public static void startInteraction(InteractionDialogAPI dialog) {
+        com.fs.starfarer.api.Global.getLogger(CosmiconInteraction.class).info(
+            "[DIAG] startInteraction called - dialog=" + dialog +
+            " currentPlugin=" + dialog.getPlugin().getClass().getName());
         CosmiconInteraction plugin = new CosmiconInteraction();
         dialog.setPlugin(plugin);
+        com.fs.starfarer.api.Global.getLogger(CosmiconInteraction.class).info(
+            "[DIAG] setPlugin done. Calling init...");
         plugin.init(dialog);
+        com.fs.starfarer.api.Global.getLogger(CosmiconInteraction.class).info(
+            "[DIAG] init returned. State=" + plugin.currentState);
     }
 
     @Override
@@ -110,7 +124,11 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                     case "help" -> showHelp();
                     case "leave" -> {
                         CosmiconMusicPlugin.stopMusic();
-                        dialog.dismiss();
+                        if (onLeaveAction != null) {
+                            onLeaveAction.run();
+                        } else {
+                            dialog.dismiss();
+                        }
                     }
                     case "debug_skip_tutorial" -> {
                         CosmiconStats.forceCompleteTutorial();
@@ -155,7 +173,13 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     }
 
     private void startBattleWithSelection() {
-        CoinFlipPanelUI coinFlipUI = new CoinFlipPanelUI();
+        Boolean forcedPlayerIsAttacker = null;
+        if (TutorialController.shouldActivateTutorial()) {
+            TutorialController.TutorialGame tutorialGame = TutorialController.determineTutorialGame();
+            forcedPlayerIsAttacker = tutorialGame == TutorialController.TutorialGame.GAME_1_SPARXIE;
+        }
+
+        CoinFlipPanelUI coinFlipUI = new CoinFlipPanelUI(forcedPlayerIsAttacker);
 
         com.fs.starfarer.api.campaign.CustomVisualDialogDelegate coinDelegate =
             new com.fs.starfarer.api.campaign.CustomVisualDialogDelegate() {
@@ -249,14 +273,8 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
     private void handleDefeat() {
         boolean isReplay = CosmiconEventState.isReplayTutorial();
-        if (!isReplay) {
+        if (!isReplay && !CosmiconStats.isInTutorialMode()) {
             CosmiconStats.incrementGamesPlayed();
-        }
-
-        boolean tutorialJustCompleted = !isReplay && CosmiconStats.getGamesPlayed() == 2;
-
-        if (tutorialJustCompleted) {
-            textPanel.addPara(Strings.get("victory.absolute_six_unlocked"));
         }
 
         if (isReplay) {
@@ -361,12 +379,13 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     }
 
     private void finishReward() {
-        if (CosmiconEventState.isBarEvent()) {
-            CosmiconEventState.clearAll();
-            CosmiconMusicPlugin.stopMusic();
+        CosmiconEventState.clearAll();
+        CosmiconMusicPlugin.stopMusic();
+        if (onLeaveAction != null) {
+            onLeaveAction.run();
+        } else if (CosmiconEventState.isBarEvent()) {
             dialog.dismiss();
         } else {
-            CosmiconEventState.clearAll();
             showMenu();
         }
     }

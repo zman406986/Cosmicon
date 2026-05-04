@@ -52,7 +52,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
     private static final float GALLERY_WIDTH = 595f;
     private static final float DICE_LIST_X = GALLERY_WIDTH + MARGIN + 10f;
-    private static final float DICE_LIST_WIDTH = PANEL_WIDTH - DICE_LIST_X - MARGIN;
+    private static final float DICE_LIST_WIDTH = PANEL_WIDTH - DICE_LIST_X - MARGIN - SCROLLBAR_WIDTH;
     private static final float DICE_ENTRY_HEIGHT = 65f;
     private static final float DICE_LEFT_COL_WIDTH = 130f;
 
@@ -120,6 +120,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private final List<DiceClickRegion> diceClickRegions = new ArrayList<>();
     private final List<VersionClickRegion> versionClickRegions = new ArrayList<>();
     private final List<DiceEntryLabels> diceEntryLabels = new ArrayList<>();
+    private LabelAPI noPrismaticLabel;
 
     private final CharacterSetupCallback callback;
 
@@ -208,13 +209,13 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         float barY = MARGIN + HEADER_HEIGHT + 10f;
 
         selectedNameLabel = UIComponentFactory.createLabelSmall(panel, "",
-            COLOR_SELECTED, Alignment.LMID, GALLERY_WIDTH, SELECTION_BAR_HEIGHT, MARGIN, barY);
+            COLOR_SELECTED, Alignment.LMID, PANEL_WIDTH - MARGIN * 2, SELECTION_BAR_HEIGHT, MARGIN, barY);
     }
 
     private void createPassiveLabel() {
         float passiveY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 5f;
         passiveLabel = UIComponentFactory.createLabelSmall(panel, "",
-            COLOR_TEXT, Alignment.LMID, GALLERY_WIDTH, 45f, MARGIN, passiveY);
+            COLOR_TEXT, Alignment.LMID, PANEL_WIDTH - MARGIN * 2, 45f, MARGIN, passiveY);
     }
 
     private void createButtons() {
@@ -279,6 +280,12 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
             diceEntryLabels.add(new DiceEntryLabels(nameLabel, facesLabel, descLabel, diceId, hasBoth));
         }
+
+        noPrismaticLabel = UIComponentFactory.createLabelSmall(panel,
+            Strings.get("setup.prismatic_robin"),
+            new Color(180, 100, 100), Alignment.MID, DICE_LIST_WIDTH, 20f,
+            DICE_LIST_X, listStartY + 40f);
+        noPrismaticLabel.setOpacity(0f);
     }
 
     private void updateDiceListLabels() {
@@ -742,7 +749,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private void renderDiceScrollbar(float trackUiY, float listHeight, float alphaMult) {
         if (diceMaxScroll <= 0f) return;
 
-        float trackX = DICE_LIST_X + DICE_LIST_WIDTH + 2f;
+        float trackX = DICE_LIST_X + DICE_LIST_WIDTH + SCROLLBAR_WIDTH + 2f;
 
         float visibleRatio = listHeight / (listHeight + diceMaxScroll);
         float thumbHeight = Math.max(20f, listHeight * visibleRatio);
@@ -803,7 +810,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         float diceListStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 15f;
         float diceListHeight = PANEL_HEIGHT - diceListStartY - BUTTON_AREA_HEIGHT - 20f;
-        float diceTrackX = DICE_LIST_X + DICE_LIST_WIDTH + 2f;
+        float diceTrackX = DICE_LIST_X + DICE_LIST_WIDTH + SCROLLBAR_WIDTH + 2f;
 
         // Gallery scrollbar drag
         if (isDraggingScrollbar) {
@@ -967,7 +974,8 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                 if (selectedIndex >= 0 && selectedIndex < characters.size()) {
                     CharacterCard card = characters.get(selectedIndex);
                     if (callback != null) {
-                        callback.onConfirm(card.getId(), selectedPrismaticDiceId, selectedUseTrueVersion);
+                        String diceId = card.getPrismaticDiceIds().isEmpty() ? null : selectedPrismaticDiceId;
+                        callback.onConfirm(card.getId(), diceId, selectedUseTrueVersion);
                     }
                     callbacks.dismissDialog();
                 }

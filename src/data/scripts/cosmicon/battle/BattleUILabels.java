@@ -226,11 +226,11 @@ public class BattleUILabels {
     private void createLabels() {
         phaseLabel = UIComponentFactory.createLabelLarge(panel, "", 
             ColorHelper.PHASE_LABEL, Alignment.MID, 400f, 30f, 
-            BattleRenderingUtils.PANEL_WIDTH / 2f - 200f, 30f);
+            BattleRenderingUtils.PANEL_WIDTH / 2f - 200f, BattleRenderingUtils.PANEL_HEIGHT / 2f - 30f);
 
         instructionLabel = UIComponentFactory.createLabelSmall(panel, "", 
             BattleRenderingUtils.COLOR_TEXT, Alignment.MID, 400f, 25f, 
-            BattleRenderingUtils.PANEL_WIDTH / 2f - 200f, 60f);
+            BattleRenderingUtils.PANEL_WIDTH / 2f - 200f, BattleRenderingUtils.PANEL_HEIGHT / 2f);
 
         playerNameLabel = UIComponentFactory.createLabelSmall(panel, Strings.get("battle.player"), 
             ColorHelper.PLAYER_NAME, Alignment.MID, BattleRenderingUtils.CARD_WIDTH, 20f,

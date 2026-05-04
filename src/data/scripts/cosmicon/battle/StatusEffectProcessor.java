@@ -114,6 +114,10 @@ public class StatusEffectProcessor {
             effects.remove(StatusEffect.THORNS);
             durations.remove(StatusEffect.THORNS);
         }
+        if (hasEffect(StatusEffect.LEVEL_UP)) {
+            effects.remove(StatusEffect.LEVEL_UP);
+            durations.remove(StatusEffect.LEVEL_UP);
+        }
     }
 
     public List<ProcessedEffect> getAndClearProcessedEffects() {
@@ -193,8 +197,6 @@ public class StatusEffectProcessor {
             int layers = getLayers(StatusEffect.LEVEL_UP);
             processedEffects.add(new ProcessedEffect(StatusEffect.LEVEL_UP, layers));
             context.applyLevelUp(layers);
-            effects.remove(StatusEffect.LEVEL_UP);
-            durations.remove(StatusEffect.LEVEL_UP);
         }
 
         if (hasEffect(StatusEffect.AWAKENING)) {
@@ -335,6 +337,7 @@ public class StatusEffectProcessor {
         private final List<Integer> diceValues;
         private final List<Boolean> diceSelected;
         private final List<Boolean> diceIsPrismatic;
+        private final List<Integer> diceMaxFaces;
         private int instantDamageToOpponent;
 
         public BattleContext(int hp, int maxHp) {
@@ -344,6 +347,7 @@ public class StatusEffectProcessor {
             this.diceValues = new ArrayList<>();
             this.diceSelected = new ArrayList<>();
             this.diceIsPrismatic = new ArrayList<>();
+            this.diceMaxFaces = new ArrayList<>();
             this.instantDamageToOpponent = 0;
         }
 
@@ -356,6 +360,11 @@ public class StatusEffectProcessor {
             for (int i = 0; i < values.size(); i++) {
                 diceSelected.add(false);
             }
+        }
+
+        public void setDiceMaxFaces(List<Integer> maxFaces) {
+            diceMaxFaces.clear();
+            diceMaxFaces.addAll(maxFaces);
         }
 
         public void setDiceSelected(List<Boolean> selected) {
@@ -431,12 +440,20 @@ public class StatusEffectProcessor {
         public void applyLevelUp(int count) {
             for (int i = 0; i < diceValues.size() && count > 0; i++) {
                 if (diceSelected.get(i) && !diceIsPrismatic.get(i)) {
-                    int current = diceValues.get(i);
-                    int upgraded = upgradeDice(current);
-                    diceValues.set(i, upgraded);
+                    int maxFace = (i < diceMaxFaces.size()) ? diceMaxFaces.get(i) : getDiceMaxFace(i);
+                    if (maxFace >= 12) continue;
+                    int upgradedMaxFace = upgradeDiceMaxFace(maxFace);
+                    diceValues.set(i, upgradedMaxFace);
                     count--;
                 }
             }
+        }
+
+        private int upgradeDiceMaxFace(int currentMaxFace) {
+            if (currentMaxFace <= 4) return 6;
+            if (currentMaxFace <= 6) return 8;
+            if (currentMaxFace <= 8) return 12;
+            return currentMaxFace;
         }
 
         public void applyAwakening() {
@@ -445,12 +462,6 @@ public class StatusEffectProcessor {
                     diceValues.set(i, diceValues.get(i) * 2);
                 }
             }
-        }
-
-        private int upgradeDice(int currentMax) {
-            if (currentMax <= 4) return 6;
-            if (currentMax <= 6) return 8;
-            return 12;
         }
 
         public void markDestinedDice() {

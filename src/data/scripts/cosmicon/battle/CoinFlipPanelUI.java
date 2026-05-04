@@ -40,7 +40,14 @@ public class CoinFlipPanelUI extends BaseCustomUIPanelPlugin {
     private float postRevealTimer;
     private static final float POST_REVEAL_DELAY = 1.0f;
 
+    private final Boolean forcedPlayerIsAttacker;
+
     public CoinFlipPanelUI() {
+        this(null);
+    }
+
+    public CoinFlipPanelUI(Boolean forcedPlayerIsAttacker) {
+        this.forcedPlayerIsAttacker = forcedPlayerIsAttacker;
         this.lastMouseButtonState = 0;
         this.postRevealTimer = 0f;
         this.dismissed = false;
@@ -49,7 +56,9 @@ public class CoinFlipPanelUI extends BaseCustomUIPanelPlugin {
     public void init(CustomPanelAPI panel, DialogCallbacks callbacks) {
         this.panel = panel;
         this.callbacks = callbacks;
-        this.animator = new CoinFlipAnimator();
+        this.animator = forcedPlayerIsAttacker != null
+            ? new CoinFlipAnimator(forcedPlayerIsAttacker)
+            : new CoinFlipAnimator();
 
         callbacks.getPanelFader().setDurationOut(0.3f);
 

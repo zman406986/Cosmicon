@@ -1,8 +1,12 @@
 package data.scripts.cosmicon.character;
 
+import java.util.Map;
+
 import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
+import data.scripts.cosmicon.prismatic.PrismaticDiceType;
+import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.util.CharacterPassives;
 import data.scripts.cosmicon.util.PassiveEvaluator;
 import data.scripts.cosmicon.util.PassiveResults.EndOfTurnPassiveResult;
@@ -94,8 +98,19 @@ public final class PassiveEventSystem {
 
         if (result.hasEffects()) {
             if (result.getPrismaticUseBonus() > 0) {
+                CharacterCard card = state.getCard(forPlayer);
+                Map<String, Integer> prismaticDiceIds = card != null ? card.getPrismaticDiceIds() : Map.of();
                 for (int i = 0; i < result.getPrismaticUseBonus(); i++) {
-                    state.addPrismaticUseByType(null, forPlayer, 1);
+                    if (!prismaticDiceIds.isEmpty()) {
+                        for (String diceId : prismaticDiceIds.keySet()) {
+                            PrismaticDiceType type = PrismaticDiceRegistry.get(diceId);
+                            if (type != null) {
+                                state.addPrismaticUseByType(type, forPlayer, 1);
+                            }
+                        }
+                    } else {
+                        state.addPrismaticUseByType(null, forPlayer, 1);
+                    }
                 }
             }
 

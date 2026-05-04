@@ -84,19 +84,24 @@ public class BattleController implements BattleState.DamageAnimationCallback {
         TutorialController.TutorialGame tutorialGameType = null;
         if (isTutorial) {
             tutorialGameType = TutorialController.determineTutorialGame();
+            String tutorialPlayerId = tutorialGameType == TutorialController.TutorialGame.GAME_1_SPARXIE
+                ? "sparxie" : "acheron";
+            playerCard = CharacterRegistry.getCharacterById(tutorialPlayerId);
+            CosmiconLogger.info("Tutorial game: forced player character = %s", playerCard.getName());
         }
 
         if (!isTutorial) {
             String savedPrismaticId = CosmiconPlayerState.loadPrismaticDice();
             String defaultPrismaticId = CosmiconPlayerState.getDefaultPrismaticForCharacter(playerCard.getId());
             boolean useTrueVersion = CosmiconPlayerState.loadPrismaticDiceTrueVersion();
+            boolean playerHasPrismatic = !playerCard.getPrismaticDiceIds().isEmpty();
 
-            if (savedPrismaticId != null && !savedPrismaticId.isEmpty()
+            if (playerHasPrismatic && savedPrismaticId != null && !savedPrismaticId.isEmpty()
                 && !savedPrismaticId.equals(defaultPrismaticId)) {
                 int uses = playerCard.getPrismaticDiceIds().getOrDefault(savedPrismaticId, 2);
                 playerCard = playerCard.withPrismaticDice(savedPrismaticId, uses, useTrueVersion);
                 CosmiconLogger.info("Applied custom prismatic dice: %s (true: %b)", savedPrismaticId, useTrueVersion);
-            } else if (defaultPrismaticId != null) {
+            } else if (playerHasPrismatic && defaultPrismaticId != null) {
                 int uses = playerCard.getPrismaticDiceIds().getOrDefault(defaultPrismaticId, 2);
                 playerCard = playerCard.withPrismaticDice(defaultPrismaticId, uses, useTrueVersion);
             }
@@ -193,6 +198,14 @@ public class BattleController implements BattleState.DamageAnimationCallback {
 
     public void proceedToClash() {
         turnProcessor.proceedToClash();
+    }
+
+    public void forcePlayerWin() {
+        state.setOpponentHp(0);
+        state.setCurrentPhase(BattleState.Phase.ENDED);
+        state.setWinner("player");
+        state.notifyPhaseChange(BattleState.Phase.ENDED);
+        state.notifyBattleEnd("player");
     }
 
     public void cleanup() {

@@ -101,21 +101,17 @@ public class BattleInputHandler {
 
                 if (playerShouldSelect && uses > 0) {
                     boolean prismaticAllowed = tutorialController == null || tutorialController.isPrismaticAllowed();
-                    if (!prismaticAllowed) {
-                        lastMouseButtonState = currentButton;
-                        UnifiedCoord.clearCurrent();
-                        return;
-                    }
+                    if (prismaticAllowed) {
+                        boolean insidePrismatic = mousePos.isInsideRect(
+                            buttons.getPlayerPrismaticBtnX(), buttons.getPlayerPrismaticBtnY(),
+                            PRISMATIC_BTN_SIZE, PRISMATIC_BTN_SIZE);
 
-                    boolean insidePrismatic = mousePos.isInsideRect(
-                        buttons.getPlayerPrismaticBtnX(), buttons.getPlayerPrismaticBtnY(),
-                        PRISMATIC_BTN_SIZE, PRISMATIC_BTN_SIZE);
-
-                    if (insidePrismatic) {
-                        buttons.showPrismaticSelectionPopup();
-                        lastMouseButtonState = currentButton;
-                        UnifiedCoord.clearCurrent();
-                        return;
+                        if (insidePrismatic) {
+                            buttons.showPrismaticSelectionPopup();
+                            lastMouseButtonState = currentButton;
+                            UnifiedCoord.clearCurrent();
+                            return;
+                        }
                     }
                 }
             }

@@ -723,9 +723,16 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         
         int attackValue = state.getAttackValue();
         int modifiedAttack = attackValue + attackerEffects.calculateAttackBonus(TurnType.ATTACK);
-        
+        int attackerPrismaticValue = state.getPrismaticDiceTotalValue(playerIsAttacker);
+        modifiedAttack += attackerPrismaticValue;
+
         StatusEffectProcessor defenderEffects = state.getEffects(defenderIsPlayer);
-        int comboDamage = modifiedAttack;
+        int defenseValue = state.getDefenseValue();
+        int modifiedDefense = defenseValue + defenderEffects.calculateDefenseBonus(TurnType.DEFENSE);
+        int defenderPrismaticValue = state.getPrismaticDiceTotalValue(defenderIsPlayer);
+        modifiedDefense += defenderPrismaticValue;
+
+        int comboDamage = Math.max(0, modifiedAttack - modifiedDefense);
         
         if (defenderEffects.isForcefieldActive() && comboDamage > 0) {
             comboDamage = 0;
@@ -737,8 +744,8 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         if (comboDamage > 0) {
             state.applyDamageTo(defenderIsPlayer, comboDamage);
             
-            CosmiconLogger.info("COMBO attack: %d damage (Attack=%d, modified=%d)",
-                comboDamage, attackValue, modifiedAttack);
+            CosmiconLogger.info("COMBO attack: %d damage (Attack=%d, Defense=%d, modifiedAtk=%d, modifiedDef=%d)",
+                comboDamage, attackValue, defenseValue, modifiedAttack, modifiedDefense);
             
             int reflectDamage = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.REFLECT);
             if (reflectDamage > 0) {

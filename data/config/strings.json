@@ -453,11 +453,12 @@
         "decision_reroll": ", Reroll: {0} dice"
     },
     "bar_event": {
-        "tutorial_prompt": "A cloaked figure approaches you in the bar, dice clicking in their palms. 'Care for a game, rookie? I'll go easy on you.'\n\nTutorial games remaining: {0}",
+        "tutorial_prompt": "A cloaked figure approaches you in the bar, dice clicking in their palms. 'Care for a game, rookie? I'll go easy on you.'",
         "standard_prompt": "A mysterious figure at the back of the bar beckons you over. The Cosmicon board is already set. 'The stakes are high...'",
         "accept": "Accept the challenge",
         "decline": "Politely decline",
-        "declined": "You politely decline and return to your drink."
+        "declined": "You politely decline and return to your drink.",
+        "approach": "Approach the mysterious figure"
     },
     "victory": {
         "absolute_six_unlocked": "You have completed your training! The Absolute Six prismatic dice has been unlocked."
@@ -466,8 +467,10 @@
         "no_prismatic_allowed": "Tutorial mode: Prismatic dice are disabled for this game.",
         "games_remaining": "Tutorial mode - {0} games remaining",
         "g1_t1_attack_roll": "You are the attacker! Roll the dice by clicking anywhere.",
-        "g1_t1_attack_select": "Select your highest dice to deal more damage. Pick the 4 biggest numbers.",
+        "g1_t1_attack_select": "Select your highest dice to deal more damage. Your attack level is 4, so you can select the 4 highest numbers.",
         "g1_t1_attack_confirm": "Click 'Confirm Attack' when you're ready!",
+        "g1_t1_attack_wait": "Wait for the opponent to select their defending dice...",
+        "g1_t1_attack_resolve": "The difference between attack and defense is dealt as damage. Click 'Continue' to resolve the turn and switch roles.",
         "g1_t1_defense_roll": "Now you are defending! The opponent is attacking. Roll the dice!",
         "g1_t1_defense_select": "You rolled matching numbers! Select the pair to trigger Sparxie's Hack ability.",
         "g1_t1_defense_confirm": "Click 'Confirm Defense' to block the attack.",

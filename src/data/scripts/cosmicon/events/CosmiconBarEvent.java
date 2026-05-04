@@ -7,6 +7,7 @@ import com.fs.starfarer.api.campaign.econ.MarketAPI;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import com.fs.starfarer.api.impl.campaign.intel.bar.events.BarEventManager;
 import com.fs.starfarer.api.impl.campaign.intel.bar.events.BaseBarEvent;
+import com.fs.starfarer.api.campaign.TextPanelAPI;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.CosmiconInteraction;
@@ -20,9 +21,12 @@ import data.scripts.cosmicon.state.CosmiconStats;
 public class CosmiconBarEvent extends BaseBarEvent {
 
     public enum OptionId {
+        INIT,
         PLAY,
         DECLINE
     }
+
+    private CosmiconInteraction interaction;
 
     @Override
     public boolean shouldShowAtMarket(MarketAPI market) {
@@ -35,58 +39,86 @@ public class CosmiconBarEvent extends BaseBarEvent {
 
     @Override
     public void addPromptAndOption(InteractionDialogAPI dialog, Map<String, MemoryAPI> memoryMap) {
-        this.dialog = dialog;
-        this.memoryMap = memoryMap;
-        text = dialog.getTextPanel();
-        options = dialog.getOptionPanel();
+        super.addPromptAndOption(dialog, memoryMap);
 
         boolean isTutorial = CosmiconStats.isInTutorialMode();
+        TextPanelAPI textPanel = dialog.getTextPanel();
 
         if (isTutorial) {
-            int remaining = CosmiconStats.getRemainingTutorialGames();
-            text.addPara(Strings.format("bar_event.tutorial_prompt", remaining));
+            textPanel.addPara(Strings.get("bar_event.tutorial_prompt"));
         } else {
-            text.addPara(Strings.get("bar_event.standard_prompt"));
+            textPanel.addPara(Strings.get("bar_event.standard_prompt"));
         }
 
-        options.addOption(Strings.get("bar_event.accept"), OptionId.PLAY);
-        options.addOption(Strings.get("bar_event.decline"), OptionId.DECLINE);
+        dialog.getOptionPanel().addOption(Strings.get("bar_event.approach"), this);
+    }
+
+    @Override
+    public void init(InteractionDialogAPI dialog, Map<String, MemoryAPI> memoryMap) {
+        super.init(dialog, memoryMap);
+        done = false;
+        optionSelected(null, OptionId.INIT);
     }
 
     @Override
     public void optionSelected(String optionText, Object optionData) {
-        if (optionData == OptionId.PLAY) {
-            boolean isTutorial = CosmiconStats.isInTutorialMode();
+        if (!(optionData instanceof OptionId) && !(optionData instanceof String)) {
+            return;
+        }
 
-            if (isTutorial) {
-                int gamesPlayed = CosmiconStats.getGamesPlayed();
-                String opponentId;
-                if (gamesPlayed == 0) {
-                    opponentId = "trashcan";
-                } else {
-                    opponentId = "robin";
-                }
-                CosmiconEventState.setOpponentCharacter(opponentId);
-                CosmiconEventState.setIsTutorialMode(true);
-            } else {
-                CharacterCard opponentCard = CharacterRegistry.getRandomOpponent();
-                if (opponentCard != null) {
-                    CosmiconEventState.setOpponentCharacter(opponentCard.getId());
-                }
+        if (optionData instanceof String && interaction != null) {
+            interaction.optionSelected(optionText, optionData);
+            return;
+        }
 
-                PrismaticDiceType prismatic = PrismaticDiceRegistry.getRandomPrismatic();
-                if (prismatic != null) {
-                    CosmiconEventState.setOpponentPrismatic(prismatic.getId());
-                }
+        if (optionData instanceof OptionId) {
+            OptionId option = (OptionId) optionData;
+
+            switch (option) {
+                case INIT:
+                    options.clearOptions();
+                    options.addOption(Strings.get("bar_event.accept"), OptionId.PLAY);
+                    options.addOption(Strings.get("bar_event.decline"), OptionId.DECLINE);
+                    break;
+
+                case PLAY:
+                    boolean isTutorial = CosmiconStats.isInTutorialMode();
+
+                    if (isTutorial) {
+                        int gamesPlayed = CosmiconStats.getGamesPlayed();
+                        String opponentId;
+                        if (gamesPlayed == 0) {
+                            opponentId = "trashcan";
+                        } else {
+                            opponentId = "robin";
+                        }
+                        CosmiconEventState.setOpponentCharacter(opponentId);
+                        CosmiconEventState.setIsTutorialMode(true);
+                    } else {
+                        CharacterCard opponentCard = CharacterRegistry.getRandomOpponent();
+                        if (opponentCard != null) {
+                            CosmiconEventState.setOpponentCharacter(opponentCard.getId());
+                        }
+
+                        PrismaticDiceType prismatic = PrismaticDiceRegistry.getRandomPrismatic();
+                        if (prismatic != null) {
+                            CosmiconEventState.setOpponentPrismatic(prismatic.getId());
+                        }
+                    }
+
+                    CosmiconEventState.setIsBarEvent(true);
+                    BarEventManager.getInstance().notifyWasInteractedWith(this);
+
+                    interaction = new CosmiconInteraction();
+                    interaction.setOnLeaveAction(() -> { done = true; });
+                    interaction.init(dialog);
+                    break;
+
+                case DECLINE:
+                    text.addPara(Strings.get("bar_event.declined"));
+                    done = true;
+                    break;
             }
-
-            CosmiconEventState.setIsBarEvent(true);
-            BarEventManager.getInstance().notifyWasInteractedWith(this);
-
-            CosmiconInteraction.startInteraction(dialog);
-        } else if (optionData == OptionId.DECLINE) {
-            text.addPara(Strings.get("bar_event.declined"));
-            done = true;
         }
     }
 }

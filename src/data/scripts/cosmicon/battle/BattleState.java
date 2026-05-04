@@ -273,10 +273,19 @@ public class BattleState {
         List<Integer> values = isPlayer ? playerDiceValues : opponentDiceValues;
         List<Boolean> selected = isPlayer ? playerDiceSelected : opponentDiceSelected;
         List<Boolean> isPrismatic = isPlayer ? getPrismaticFlagsForDice(true) : getPrismaticFlagsForDice(false);
+        List<DiceType> types = isPlayer ? playerDiceTypes : opponentDiceTypes;
         
         if (values != null && selected != null) {
             context.setDiceValues(values, isPrismatic);
             context.setDiceSelected(selected);
+        }
+
+        if (types != null) {
+            List<Integer> maxFaces = new ArrayList<>();
+            for (DiceType type : types) {
+                maxFaces.add(type.getMaxFace());
+            }
+            context.setDiceMaxFaces(maxFaces);
         }
         
         return context;

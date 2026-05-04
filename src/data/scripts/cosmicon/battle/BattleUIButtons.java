@@ -25,6 +25,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
     private static final String ACTION_CONTINUE = "continue";
     private static final String ACTION_REROLL = "reroll";
     private static final String ACTION_EXIT = "exit";
+    private static final String ACTION_DEBUG_WIN = "debug_win";
     private static final float PASSIVE_BTN_WIDTH = 150f;
     private static final float PASSIVE_BTN_HEIGHT = 25f;
 
@@ -39,6 +40,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
     private ButtonAPI rerollButton;
     private ButtonAPI confirmButton;
     private LabelAPI weatherLabel;
+    private LabelAPI weatherDescLabel;
     private LabelAPI weatherTitleLabel;
     private boolean buttonsCreated = false;
 
@@ -97,6 +99,12 @@ public class BattleUIButtons implements ActionListenerDelegate {
             BattleRenderingUtils.PANEL_WIDTH - btnWidth - 10f, 10f);
         ButtonAPI exitButton = exitTp.addButton(Strings.get("phase.close"), ACTION_EXIT, btnWidth, btnHeight, 0f);
         exitButton.setQuickMode(true);
+
+        float debugBtnWidth = 90f;
+        TooltipMakerAPI debugTp = UIComponentFactory.createTooltipForButtons(panel, this, debugBtnWidth, btnHeight,
+            BattleRenderingUtils.PANEL_WIDTH - btnWidth - debugBtnWidth - 20f, 10f);
+        ButtonAPI debugWinButton = debugTp.addButton("[Win]", ACTION_DEBUG_WIN, debugBtnWidth, btnHeight, 0f);
+        debugWinButton.setQuickMode(true);
 
         TooltipMakerAPI abilityTp = UIComponentFactory.createTooltipForButtons(panel, this, 
             PASSIVE_BTN_WIDTH, PASSIVE_BTN_HEIGHT, 0f, 0f);
@@ -227,7 +235,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
 
     private void createWeatherLabel() {
         float boxWidth = 170f;
-        float boxHeight = 30f;
+        float boxHeight = 70f;
         float titleHeight = 18f;
         float playerCardUiX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
         float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
@@ -244,6 +252,9 @@ public class BattleUIButtons implements ActionListenerDelegate {
 
         weatherLabel = weatherTp.addPara(Strings.get("battle.weather_none"), 0f);
         weatherLabel.setAlignment(com.fs.starfarer.api.ui.Alignment.MID);
+
+        weatherDescLabel = weatherTp.addPara("", java.awt.Color.GRAY, 3f);
+        weatherDescLabel.setAlignment(com.fs.starfarer.api.ui.Alignment.MID);
 
         updateWeatherLabel();
     }
@@ -316,12 +327,20 @@ public class BattleUIButtons implements ActionListenerDelegate {
                         if (tutorialController != null && tutorialController.isContinueAllowed()) {
                             break;
                         }
+                        if (tutorialController != null) {
+                            tutorialController.onContinueClicked();
+                        }
                         battleController.onContinueToNextTurn();
                     }
                 }
                 case "close", ACTION_EXIT -> {
                     if (callbacks != null) {
                         callbacks.dismissDialog();
+                    }
+                }
+                case ACTION_DEBUG_WIN -> {
+                    if (battleController != null && battleState.getCurrentPhase() != Phase.ENDED) {
+                        battleController.forcePlayerWin();
                     }
                 }
             }

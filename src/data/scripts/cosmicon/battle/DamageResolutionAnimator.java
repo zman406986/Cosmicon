@@ -159,8 +159,7 @@ public class DamageResolutionAnimator {
         
         this.combo = hasCombo(state);
         if (combo) {
-            int attackerPrismaticValue = state.getPrismaticDiceTotalValue(state.isPlayerAttacker());
-            this.comboDamage = attackValue - attackerPrismaticValue;
+            this.comboDamage = Math.max(0, attackValue - defenseValue);
             if (!primaryDamageTriggersForcefield && defenderEffects.isForcefieldActive() && this.comboDamage > 0) {
                 this.comboDamage = 0;
             }

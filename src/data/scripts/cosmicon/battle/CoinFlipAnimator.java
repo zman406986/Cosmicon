@@ -47,7 +47,11 @@ public class CoinFlipAnimator {
     private float resultTextAlpha;
 
     public CoinFlipAnimator() {
-        this.playerIsAttacker = Math.random() < 0.5f;
+        this(Math.random() < 0.5f);
+    }
+
+    public CoinFlipAnimator(boolean forcedPlayerIsAttacker) {
+        this.playerIsAttacker = forcedPlayerIsAttacker;
         this.winningFace = this.playerIsAttacker ? Face.ATTACK : Face.DEFENSE;
         this.elapsed = 0f;
         this.phase = Phase.SPIN_UP;

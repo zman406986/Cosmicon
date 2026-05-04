@@ -54,7 +54,7 @@ public enum WeatherType {
     }
 
     public String getDescription() {
-        return Strings.get("weather." + name().toLowerCase() + ".desc");
+        return Strings.get("weather." + name().toLowerCase() + "_desc");
     }
 
     public Color getColor() {
