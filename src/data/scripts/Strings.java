@@ -40,9 +40,14 @@ public class Strings {
 
     public static String format(String key, Object... args) {
         String template = get(key);
+        StringBuilder sb = new StringBuilder(template);
         for (int i = 0; i < args.length; i++) {
-            template = template.replace("{" + i + "}", String.valueOf(args[i]));
+            String placeholder = "{" + i + "}";
+            int idx = sb.indexOf(placeholder);
+            if (idx >= 0) {
+                sb.replace(idx, idx + placeholder.length(), String.valueOf(args[i]));
+            }
         }
-        return template;
+        return sb.toString();
     }
 }

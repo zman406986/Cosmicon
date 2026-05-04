@@ -106,7 +106,8 @@ public class DiceRoller {
             if (selected.get(i)) {
                 DiceType type = types.get(i);
                 
-                if (state.isPrismaticDiceAt(i, forPlayer)) {
+                boolean isPrismatic = state.isPrismaticDiceAt(i, forPlayer);
+                if (isPrismatic) {
                     PrismaticDiceInstance existingInstance = state.getPrismaticDiceAt(i, forPlayer);
                     if (existingInstance != null) {
                         Random random = CosmiconRandom.getRandom();
@@ -156,9 +157,8 @@ public class DiceRoller {
             sb.append(type.name()).append("(").append(value).append(")");
         }
         int total = 0;
-        for (Integer value : values)
-        {
-            total += value;
+        for (int i = 0; i < values.size(); i++) {
+            total += values.get(i);
         }
         sb.append(" | New total: ").append(total);
         CosmiconLogger.debug(sb.toString());

@@ -14,6 +14,7 @@ import java.util.Set;
 public final class PrismaticDiceRegistry {
     
     private static final Map<String, PrismaticDiceType> REGISTRY = new HashMap<>();
+    private static final Random RANDOM = new Random();
     
     static {
         registerAllDice();
@@ -71,7 +72,7 @@ public final class PrismaticDiceRegistry {
             }
         }
         if (unlocked.isEmpty()) return null;
-        return unlocked.get(new Random().nextInt(unlocked.size()));
+        return unlocked.get(RANDOM.nextInt(unlocked.size()));
     }
     
     private static Set<Integer> indices(int... indices) {

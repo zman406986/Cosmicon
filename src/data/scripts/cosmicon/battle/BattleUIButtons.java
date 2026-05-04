@@ -42,7 +42,6 @@ public class BattleUIButtons implements ActionListenerDelegate {
     private ButtonAPI confirmButton;
     private LabelAPI weatherLabel;
     private LabelAPI weatherDescLabel;
-    private LabelAPI weatherTitleLabel;
     private boolean buttonsCreated = false;
 
     private PrismaticDiceSelectionPopup prismaticPopup;
@@ -249,7 +248,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
         float titleY = playerCardY - PASSIVE_BTN_HEIGHT - titleHeight - boxHeight - 15f;
         float boxY = titleY + titleHeight + 2f;
 
-        weatherTitleLabel = UIComponentFactory.createLabelSmall(panel, Strings.get("battle.weather_effects"),
+        UIComponentFactory.createLabelSmall(panel, Strings.get("battle.weather_effects"),
             java.awt.Color.LIGHT_GRAY, com.fs.starfarer.api.ui.Alignment.MID, boxWidth, titleHeight, weatherX, titleY);
 
         TooltipMakerAPI weatherTp = panel.createUIElement(boxWidth, boxHeight, false);
@@ -455,7 +454,6 @@ public class BattleUIButtons implements ActionListenerDelegate {
         labels = null;
         weatherLabel = null;
         weatherDescLabel = null;
-        weatherTitleLabel = null;
         buttonsCreated = false;
     }
 

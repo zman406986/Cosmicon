@@ -98,31 +98,32 @@ public class TurnProcessor {
         
         weatherController.applyStartOfTurn(state);
         
+        boolean playerIsAttacker = state.isPlayerAttacker();
         StatusEffectProcessor.BattleContext playerContext = createBattleContext(true);
         StatusEffectProcessor.BattleContext opponentContext = createBattleContext(false);
         
-state.getPlayerEffects().processPhase(Phase.START_OF_TURN, 
-            state.isPlayerAttacker() ? TurnType.ATTACK : TurnType.DEFENSE, playerContext);
+        state.getPlayerEffects().processPhase(Phase.START_OF_TURN, 
+            playerIsAttacker ? TurnType.ATTACK : TurnType.DEFENSE, playerContext);
         state.getOpponentEffects().processPhase(Phase.START_OF_TURN,
-            state.isPlayerAttacker() ? TurnType.DEFENSE : TurnType.ATTACK, opponentContext);
+            playerIsAttacker ? TurnType.DEFENSE : TurnType.ATTACK, opponentContext);
         
         state.setPlayerHp(playerContext.getCurrentHp());
         state.setOpponentHp(opponentContext.getCurrentHp());
         
         state.resetRerollsUsedThisTurn();
         
-        int baseRerolls = state.isPlayerAttacker() ? CosmiconConfig.DEFAULT_REROLLS : 0;
-        int opponentBaseRerolls = state.isPlayerAttacker() ? 0 : CosmiconConfig.DEFAULT_REROLLS;
+        int baseRerolls = playerIsAttacker ? CosmiconConfig.DEFAULT_REROLLS : 0;
+        int opponentBaseRerolls = playerIsAttacker ? 0 : CosmiconConfig.DEFAULT_REROLLS;
         
         CosmiconLogger.debug("[AI_REROLL_DIAG] executeTurn: isPlayerAttacker=%s, baseRerolls=%d, opponentBaseRerolls=%d", 
-            state.isPlayerAttacker(), baseRerolls, opponentBaseRerolls);
+            playerIsAttacker, baseRerolls, opponentBaseRerolls);
         
-        weatherController.applyRerollPhase(state, state.isPlayerAttacker() ? baseRerolls : opponentBaseRerolls);
+        weatherController.applyRerollPhase(state, playerIsAttacker ? baseRerolls : opponentBaseRerolls);
         
         CosmiconLogger.debug("[AI_REROLL_DIAG] After weather: playerRerolls=%d, opponentRerolls=%d", 
             state.getRemainingRerolls(true), state.getRemainingRerolls(false));
         
-        if (state.isPlayerAttacker()) {
+        if (playerIsAttacker) {
             state.setRemainingRerolls(true, baseRerolls);
             state.setRemainingRerolls(false, 0);
         } else {
@@ -133,8 +134,8 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         CosmiconLogger.debug("[AI_REROLL_DIAG] After base assignment: playerRerolls=%d, opponentRerolls=%d", 
             state.getRemainingRerolls(true), state.getRemainingRerolls(false));
         
-        TurnType playerTurnType = state.isPlayerAttacker() ? TurnType.ATTACK : TurnType.DEFENSE;
-        TurnType opponentTurnType = state.isPlayerAttacker() ? TurnType.DEFENSE : TurnType.ATTACK;
+        TurnType playerTurnType = playerIsAttacker ? TurnType.ATTACK : TurnType.DEFENSE;
+        TurnType opponentTurnType = playerIsAttacker ? TurnType.DEFENSE : TurnType.ATTACK;
         
         PassiveEventSystem.onStartOfAttackTurn(state, true);
         PassiveEventSystem.onStartOfAttackTurn(state, false);
@@ -166,11 +167,10 @@ state.getPlayerEffects().processPhase(Phase.START_OF_TURN,
         
         diceRoller.rollForAttacker(state);
         
-        boolean attackerIsPlayer = state.isPlayerAttacker();
-        StatusEffectProcessor.BattleContext attackerContext = createBattleContext(attackerIsPlayer);
+        StatusEffectProcessor.BattleContext attackerContext = createBattleContext(playerIsAttacker);
         TurnType attackerTurnType = TurnType.ATTACK;
-        state.getEffects(attackerIsPlayer).processPhase(Phase.AFTER_ROLL, attackerTurnType, attackerContext);
-        state.setDiceValues(attackerIsPlayer, attackerContext.getDiceValues());
+        state.getEffects(playerIsAttacker).processPhase(Phase.AFTER_ROLL, attackerTurnType, attackerContext);
+        state.setDiceValues(playerIsAttacker, attackerContext.getDiceValues());
         
         state.clearPrismaticState();
     }

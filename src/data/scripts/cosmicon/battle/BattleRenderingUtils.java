@@ -56,6 +56,10 @@ public final class BattleRenderingUtils {
     public static final float HP_CIRCLE_RADIUS = 19f;
     public static final float HP_CIRCLE_INNER_RADIUS = 12f;
     public static final Color COLOR_HP_CIRCLE_BG = new Color(40, 40, 40, 150);
+    private static final Color COLOR_HP_GREEN = new Color(50, 205, 50, 220);
+    private static final Color COLOR_HP_YELLOW = new Color(255, 215, 0, 220);
+    private static final Color COLOR_HP_ORANGE = new Color(255, 140, 0, 220);
+    private static final Color COLOR_HP_RED = new Color(220, 50, 50, 220);
 
     public static final Color COLOR_ATTACK_SIDE = new Color(255, 120, 120, 40);
     public static final Color COLOR_DEFENSE_SIDE = new Color(120, 180, 255, 40);
@@ -121,13 +125,13 @@ public final class BattleRenderingUtils {
 
     private static Color getHpColor(float fillFraction) {
         if (fillFraction > 0.6f) {
-            return new Color(50, 205, 50, 220);
+            return COLOR_HP_GREEN;
         } else if (fillFraction > 0.4f) {
-            return new Color(255, 215, 0, 220);
+            return COLOR_HP_YELLOW;
         } else if (fillFraction > 0.2f) {
-            return new Color(255, 140, 0, 220);
+            return COLOR_HP_ORANGE;
         } else {
-            return new Color(220, 50, 50, 220);
+            return COLOR_HP_RED;
         }
     }
 

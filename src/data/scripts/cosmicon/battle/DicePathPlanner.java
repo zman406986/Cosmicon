@@ -204,7 +204,6 @@ public class DicePathPlanner {
             currentStartX = shifted[0];
             currentStartY = shifted[1];
             ruledOutFractions.clear();
-            System.out.println("[DicePathPlanner] Repositioning dice start to (" + currentStartX + ", " + currentStartY + ")");
         }
         
         if (!foundValid) {
@@ -221,8 +220,6 @@ public class DicePathPlanner {
             float cdy = clampedEndpoint[1] - currentStartY;
             bestRotation = (float)Math.toDegrees(Math.atan2(cdy, cdx));
             bestTravelDistance = (float)Math.sqrt(cdx * cdx + cdy * cdy);
-            
-            System.out.println("[DicePathPlanner] Warning: Could not find clear path after all retries, using clamped path to target");
         }
         
         int bounceCount = rand.nextInt(3);

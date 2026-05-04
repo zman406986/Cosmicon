@@ -24,8 +24,6 @@ public class FireflyAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     protected float calculatePassiveBonus(List<Integer> selectedValues) {
-        float bonus = PassiveEvaluator.hasTwoPairs(selectedValues) ? 15f : 0f;
-        bonus += 5f;
-        return bonus;
+        return PassiveEvaluator.hasTwoPairs(selectedValues) ? 15f : 0f;
     }
 }

@@ -1,6 +1,7 @@
 package data.scripts.cosmicon.character;
 
 import java.util.Map;
+import java.util.List;
 
 import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.CharacterCard;
@@ -100,15 +101,22 @@ public final class PassiveEventSystem {
             if (result.getPrismaticUseBonus() > 0) {
                 CharacterCard card = state.getCard(forPlayer);
                 Map<String, Integer> prismaticDiceIds = card != null ? card.getPrismaticDiceIds() : Map.of();
-                for (int i = 0; i < result.getPrismaticUseBonus(); i++) {
-                    if (!prismaticDiceIds.isEmpty()) {
-                        for (String diceId : prismaticDiceIds.keySet()) {
-                            PrismaticDiceType type = PrismaticDiceRegistry.get(diceId);
-                            if (type != null) {
-                                state.addPrismaticUseByType(type, forPlayer, 1);
-                            }
+                int bonus = result.getPrismaticUseBonus();
+                if (!prismaticDiceIds.isEmpty()) {
+                    List<PrismaticDiceType> types = new java.util.ArrayList<>();
+                    for (String diceId : prismaticDiceIds.keySet()) {
+                        PrismaticDiceType type = PrismaticDiceRegistry.get(diceId);
+                        if (type != null) {
+                            types.add(type);
                         }
-                    } else {
+                    }
+                    for (int i = 0; i < bonus; i++) {
+                        for (PrismaticDiceType type : types) {
+                            state.addPrismaticUseByType(type, forPlayer, 1);
+                        }
+                    }
+                } else {
+                    for (int i = 0; i < bonus; i++) {
                         state.addPrismaticUseByType(null, forPlayer, 1);
                     }
                 }

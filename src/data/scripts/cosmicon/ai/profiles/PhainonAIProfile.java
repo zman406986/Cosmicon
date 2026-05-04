@@ -21,7 +21,12 @@ public class PhainonAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     public boolean shouldOptimizeForPassive(boolean isAttacking) {
-        return !isAttacking;
+        return true;
+    }
+
+    @Override
+    public boolean isAttackPassive() {
+        return true;
     }
 
     @Override
@@ -31,8 +36,12 @@ public class PhainonAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
-        if (isAttacking || selectedValues == null || selectedValues.isEmpty()) {
+        if (selectedValues == null || selectedValues.isEmpty()) {
             return PassiveEvaluation.notTriggered();
+        }
+        
+        if (isAttacking) {
+            return PassiveEvaluation.triggered(15f, Strings.get("character.phainon.passive_desc"));
         }
         
         PassiveResult result = PassiveEvaluator.evaluateForCharacter(CharacterIds.PHAINON, selectedValues, false);
@@ -42,7 +51,7 @@ public class PhainonAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
-        if (isAttacking) return 0f;
+        if (isAttacking) return 15f;
         return PassiveEvaluator.allSame(selectedValues) ? 50f : 0f;
     }
 

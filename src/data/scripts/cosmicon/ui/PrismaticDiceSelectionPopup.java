@@ -40,6 +40,7 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
     private static final float BUTTON_WIDTH = 80f;
     private static final float BUTTON_HEIGHT = 24f;
     private static final float MARGIN = 15f;
+    private static final Color COLOR_POPUP_BG = new Color(40, 35, 25, 230);
 
     private CustomPanelAPI panel;
     private final BattleState battleState;
@@ -298,6 +299,6 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
 
     @Override
     public void renderBelow(float alphaMult) {
-        PopupRenderer.drawPopupBackground(panelX, panelY, POPUP_WIDTH, POPUP_HEIGHT, new Color(40, 35, 25, 230), ColorHelper.PRISMATIC_GOLD, alphaMult);
+        PopupRenderer.drawPopupBackground(panelX, panelY, POPUP_WIDTH, POPUP_HEIGHT, COLOR_POPUP_BG, ColorHelper.PRISMATIC_GOLD, alphaMult);
     }
 }

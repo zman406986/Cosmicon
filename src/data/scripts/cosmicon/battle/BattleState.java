@@ -254,7 +254,9 @@ public class BattleState {
     public int countSelected(List<Boolean> selected) {
         if (selected == null) return 0;
         int count = 0;
-        for (Boolean b : selected) if (b) count++;
+        for (int i = 0; i < selected.size(); i++) {
+            if (selected.get(i)) count++;
+        }
         return count;
     }
 
@@ -548,7 +550,8 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
             } else {
                 opponentHp = 1;
             }
-            getEffects(isPlayer).removeEffect(StatusEffectProcessor.StatusEffect.UNYIELDING);
+            StatusEffectProcessor effects = getEffects(isPlayer);
+            effects.removeEffect(StatusEffectProcessor.StatusEffect.UNYIELDING);
             CosmiconLogger.info("%s: UNYIELDING prevented death (HP: 1)", characterName);
         }
         

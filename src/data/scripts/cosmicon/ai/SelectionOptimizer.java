@@ -41,7 +41,7 @@ public final class SelectionOptimizer {
         }
 
         if (profile != null && profile.shouldOptimizeForPassive(isAttacking)) {
-            SelectionResult passiveResult = optimizeForPassive(diceValues, diceTypes, requiredCount, profile, isAttacking);
+            SelectionResult passiveResult = optimizeForPassive(diceValues, diceTypes, requiredCount, profile, isAttacking, state, forPlayer);
             if (passiveResult != null && passiveResult.passiveTriggered) {
                 CosmiconLogger.debug("Selection: passive optimization triggered for profile, indices: %s, bonus: %.1f", 
                     passiveResult.selectedIndices, passiveResult.passiveBonus);
@@ -94,6 +94,9 @@ public final class SelectionOptimizer {
                     value += getEffectBonusForSelection(pd.type.getEffect(), isAttacking, state);
                 }
             }
+            if (profile != null && diceTypes.get(i) == DiceType.PRISMATIC) {
+                value += profile.getPrismaticDiceBonus(diceTypes.get(i), diceValues.get(i), isAttacking);
+            }
             indexedValues.add(new DiceIndexValue(i, value, diceTypes.get(i)));
         }
 
@@ -105,6 +108,7 @@ public final class SelectionOptimizer {
 
         Set<Integer> selectedIndices = new HashSet<>();
         int sum = 0;
+        float effectiveScore = 0f;
         List<Integer> selectedValues = new ArrayList<>();
         List<DiceType> selectedTypes = new ArrayList<>();
 
@@ -112,15 +116,14 @@ public final class SelectionOptimizer {
             DiceIndexValue dv = indexedValues.get(i);
             selectedIndices.add(dv.index());
             sum += diceValues.get(dv.index());
+            effectiveScore += dv.sortValue();
             selectedValues.add(diceValues.get(dv.index()));
             selectedTypes.add(dv.type());
         }
 
-        return new SelectionResult(selectedIndices, sum, selectedValues, selectedTypes, false, 0f, sum);
+        return new SelectionResult(selectedIndices, sum, selectedValues, selectedTypes, false, 0f, effectiveScore);
     }
 
-    // Reserved for future context-aware effect scoring (e.g., HP-based heal bonus, combo attack scaling)
-    @SuppressWarnings("unused")
     private static float getEffectBonusForSelection(PrismaticEffect effect, boolean isAttacking, BattleState state) {
         if (effect == null || effect.isNone()) return 0f;
 
@@ -152,8 +155,20 @@ public final class SelectionOptimizer {
             int requiredCount,
             CharacterAIProfile profile,
             boolean isAttacking) {
+        return optimizeForPassive(diceValues, diceTypes, requiredCount, profile, isAttacking, null, false);
+    }
+
+    private static SelectionResult optimizeForPassive(
+            List<Integer> diceValues,
+            List<DiceType> diceTypes,
+            int requiredCount,
+            CharacterAIProfile profile,
+            boolean isAttacking,
+            BattleState state,
+            boolean forPlayer) {
         
-        List<Set<Integer>> candidateSelections = generateCandidateSelections(diceValues, requiredCount);
+        List<Set<Integer>> candidateSelections = generateCandidateSelections(
+            diceValues, diceTypes, state, forPlayer, isAttacking, requiredCount);
 
         SelectionResult bestResult = null;
         float bestScore = Float.MIN_VALUE;
@@ -171,7 +186,8 @@ public final class SelectionOptimizer {
 
             CharacterAIProfile.PassiveEvaluation eval = profile.evaluatePassiveTrigger(selectedValues, selectedTypes, isAttacking);
 
-            float score = sum + eval.bonusValue();
+            float passiveScore = profile.getPassiveBonusValue(selectedValues, isAttacking);
+            float score = sum + passiveScore;
             if (eval.triggered()) {
                 score += 100f;
             }
@@ -179,7 +195,7 @@ public final class SelectionOptimizer {
             if (score > bestScore) {
                 bestScore = score;
                 bestResult = new SelectionResult(selection, sum, selectedValues, selectedTypes,
-                        eval.triggered(), eval.bonusValue(), score);
+                        eval.triggered(), passiveScore, score);
             }
         }
 
@@ -214,34 +230,54 @@ public final class SelectionOptimizer {
         }
 
         CharacterAIProfile.PassiveEvaluation eval = profile.evaluatePassiveTrigger(selectedValues, selectedTypes, isAttacking);
-        float totalScore = sum + eval.bonusValue();
+        float passiveScore = profile.getPassiveBonusValue(selectedValues, isAttacking);
+        float totalScore = sum + passiveScore;
 
-        return new SelectionResult(selectedIndices, sum, selectedValues, selectedTypes, eval.triggered(), eval.bonusValue(), totalScore);
+        return new SelectionResult(selectedIndices, sum, selectedValues, selectedTypes, eval.triggered(), passiveScore, totalScore);
     }
 
     private static List<Set<Integer>> generateCandidateSelections(List<Integer> diceValues, int requiredCount) {
+        return generateCandidateSelections(diceValues, null, null, false, false, requiredCount);
+    }
+
+    private static List<Set<Integer>> generateCandidateSelections(
+            List<Integer> diceValues,
+            List<DiceType> diceTypes,
+            BattleState state,
+            boolean forPlayer,
+            boolean isAttacking,
+            int requiredCount) {
+        
         List<Set<Integer>> selections = new ArrayList<>();
         
         int n = diceValues.size();
         if (n <= 8 && requiredCount <= 4) {
             generateCombinations(selections, new HashSet<>(), 0, n, requiredCount);
         } else {
+            List<WeightedIndex> indices = new ArrayList<>();
+            for (int i = 0; i < n; i++) {
+                float weight = diceValues.get(i);
+                if (diceTypes != null && i < diceTypes.size() && diceTypes.get(i) == DiceType.PRISMATIC && state != null) {
+                    PrismaticDiceInstance pd = state.getPrismaticDiceAt(i, forPlayer);
+                    if (pd != null && pd.isSpecialFace) {
+                        weight += getEffectBonusForSelection(pd.type.getEffect(), isAttacking, state);
+                    }
+                }
+                indices.add(new WeightedIndex(i, weight));
+            }
+            indices.sort(Comparator.comparingDouble(WeightedIndex::weight).reversed());
+
             Set<Integer> topK = new HashSet<>();
-            List<Integer> indices = new ArrayList<>();
-            for (int i = 0; i < n; i++) indices.add(i);
-            indices.sort(Comparator.comparingInt(diceValues::get).reversed());
             for (int i = 0; i < requiredCount; i++) {
-                topK.add(indices.get(i));
+                topK.add(indices.get(i).index());
             }
             selections.add(topK);
             
             for (int swapOut = 0; swapOut < requiredCount; swapOut++) {
                 for (int swapIn = requiredCount; swapIn < n; swapIn++) {
                     Set<Integer> variant = new HashSet<>(topK);
-                    Integer outIdx = indices.get(swapOut);
-                    Integer inIdx = indices.get(swapIn);
-                    variant.remove(outIdx);
-                    variant.add(inIdx);
+                    variant.remove(indices.get(swapOut).index());
+                    variant.add(indices.get(swapIn).index());
                     selections.add(variant);
                 }
             }
@@ -249,6 +285,8 @@ public final class SelectionOptimizer {
 
         return selections;
     }
+
+    private record WeightedIndex(int index, float weight) {}
 
     private static void generateCombinations(List<Set<Integer>> result, Set<Integer> current, 
                                              int start, int n, int k) {

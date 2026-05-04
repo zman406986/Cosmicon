@@ -51,6 +51,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private static final float SELECTION_BAR_HEIGHT = 30f;
 
     private static final float GALLERY_WIDTH = 595f;
+    private static final float SCROLLBAR_WIDTH = 14f;
     private static final float DICE_LIST_X = GALLERY_WIDTH + MARGIN + 10f;
     private static final float DICE_LIST_WIDTH = PANEL_WIDTH - DICE_LIST_X - MARGIN - SCROLLBAR_WIDTH;
     private static final float DICE_ENTRY_HEIGHT = 65f;
@@ -59,8 +60,6 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private static final float BUTTON_AREA_HEIGHT = 50f;
     private static final float BUTTON_WIDTH = 140f;
     private static final float BUTTON_HEIGHT = 35f;
-
-    private static final float SCROLLBAR_WIDTH = 14f;
     private static final Color COLOR_SCROLLBAR_TRACK = new Color(35, 38, 48, 200);
     private static final Color COLOR_SCROLLBAR_THUMB = new Color(90, 100, 120, 180);
 
