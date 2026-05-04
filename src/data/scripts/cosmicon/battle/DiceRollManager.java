@@ -283,17 +283,6 @@ public class DiceRollManager {
         return positions;
     }
     
-    private List<float[]> collectAllOpponentDicePositions() {
-        List<float[]> positions = new ArrayList<>();
-        for (DiceAnimator animator : opponentAnimators) {
-            positions.add(new float[]{
-                animator.getTargetSlotX(),
-                animator.getTargetSlotY()
-            });
-        }
-        return positions;
-    }
-
     public void clear() {
         for (DiceAnimator animator : animators) {
             animator.forceComplete();
@@ -442,7 +431,7 @@ public class DiceRollManager {
         pendingOpponentScatterDestinations = null;
     }
     
-    public void moveSelectedToRestGrid(List<Integer> selectedIndices, boolean forPlayer,
+    public void moveSelectedToRestGrid(boolean forPlayer,
                                          float gridCenterX, float gridCenterY) {
         if (!initialized) return;
         
@@ -470,15 +459,20 @@ public class DiceRollManager {
             if (selected.get(i)) {
                 DiceAnimator sourceAnimator = sourceAnimators.get(i);
                 float targetX = startX + restIndex * spacing;
-                float targetY = startY;
                 
                 DiceAnimator restAnimator = new DiceAnimator();
                 restAnimator.init();
                 restAnimator.startTravelToRestFrom(sourceAnimator, types.get(i), values.get(i),
-                    targetX, targetY);
+                    targetX, startY);
                 restList.add(restAnimator);
                 restIndex++;
             }
+        }
+        
+        if (forPlayer) {
+            clear();
+        } else {
+            clearOpponentAnimators();
         }
     }
     
@@ -523,10 +517,6 @@ public class DiceRollManager {
     public boolean hasRestAnimators(boolean forPlayer) {
         List<DiceAnimator> restList = forPlayer ? playerRestAnimators : opponentRestAnimators;
         return !restList.isEmpty();
-    }
-    
-    public List<DiceAnimator> getRestAnimators(boolean forPlayer) {
-        return new ArrayList<>(forPlayer ? playerRestAnimators : opponentRestAnimators);
     }
     
     public void startRollFromRest(boolean forPlayer, List<DiceType> allTypes, List<Integer> allValues,

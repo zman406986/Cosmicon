@@ -34,10 +34,6 @@ public class WeatherController {
         }
     }
     
-    public boolean isFullTurnBoundary() {
-        return schedule.isFullTurnBoundary();
-    }
-    
     public void applyWeatherAppearanceEffects(BattleState state) {
         WeatherType weather = getCurrentWeather();
         if (weather == null) return;
@@ -225,9 +221,6 @@ public class WeatherController {
         WeatherType weather = getCurrentWeather();
         if (weather == null) return;
         
-        List<Integer> values = isPlayer ? state.getPlayerDiceValues() : state.getOpponentDiceValues();
-        List<Boolean> selected = isPlayer ? state.getPlayerDiceSelected() : state.getOpponentDiceSelected();
-        
         switch (weather) {
             case BLIZZARD -> {
                 if (state.getDefenseValue() <= 8) {
@@ -264,9 +257,7 @@ public class WeatherController {
         if (weather == null) return;
         
         switch (weather) {
-            case DRY_THUNDERSTORM -> {
-                state.addInstantDamage(!state.isPlayerAttacker(), 3);
-            }
+            case DRY_THUNDERSTORM -> state.addInstantDamage(!state.isPlayerAttacker(), 3);
             case CYCLONIC_SWARM -> {
                 boolean attackerIsPlayer = state.isPlayerAttacker();
                 state.getEffects(attackerIsPlayer).addEffect(StatusEffect.COMBO, 1);
@@ -307,9 +298,6 @@ public class WeatherController {
     public float getSiphonMultiplier() {
         WeatherType weather = getCurrentWeather();
         return weather == WeatherType.SCORCHING_SUN ? 0.5f : 0f;
-    }
-    
-    public void applyWeatherTransitionEffect(BattleState state, WeatherType oldWeather, WeatherType newWeather) {
     }
     
     public boolean shouldApplyFineSnowEffect(BattleState state, boolean isPlayer) {

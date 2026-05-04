@@ -10,6 +10,7 @@ import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
 import data.scripts.cosmicon.tutorial.TutorialDiceRoller;
+import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.Strings;
 
@@ -66,6 +67,9 @@ public class BattleState {
     private int opponentPendingDefLevelBoost;
     private int playerOriginalDefLevel;
     private int opponentOriginalDefLevel;
+
+    private boolean phainonUnyieldingAvailable;
+    private boolean opponentPhainonUnyieldingAvailable;
 
     private int playerWeatherAtkMod;
     private int opponentWeatherAtkMod;
@@ -167,6 +171,8 @@ public class BattleState {
         this.opponentPendingDefLevelBoost = 0;
         this.playerOriginalDefLevel = 0;
         this.opponentOriginalDefLevel = 0;
+        this.phainonUnyieldingAvailable = true;
+        this.opponentPhainonUnyieldingAvailable = true;
     }
 
     
@@ -566,6 +572,11 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
             StatusEffectProcessor effects = getEffects(isPlayer);
             effects.removeEffect(StatusEffectProcessor.StatusEffect.UNYIELDING);
             CosmiconLogger.info("%s: UNYIELDING prevented death (HP: 1)", characterName);
+            
+            CharacterCard card = isPlayer ? playerCard : opponentCard;
+            if (card != null && CharacterIds.PHAINON.equals(card.getId())) {
+                consumePhainonUnyielding(isPlayer);
+            }
         }
         
         int maxHp = isPlayer ? 
@@ -1074,6 +1085,18 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         }
     }
 
+    public boolean isPhainonUnyieldingAvailable(boolean forPlayer) {
+        return forPlayer ? phainonUnyieldingAvailable : opponentPhainonUnyieldingAvailable;
+    }
+
+    public void consumePhainonUnyielding(boolean forPlayer) {
+        if (forPlayer) {
+            phainonUnyieldingAvailable = false;
+        } else {
+            opponentPhainonUnyieldingAvailable = false;
+        }
+    }
+
     public void recordTurnAtkDef(boolean forPlayer) {
         int value = forPlayer 
             ? (playerIsAttacker ? attackValue : defenseValue)
@@ -1150,7 +1173,8 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         opponentWeatherAtkMod = 0;
         playerWeatherDefMod = 0;
         opponentWeatherDefMod = 0;
-        
+        phainonUnyieldingAvailable = true;
+        opponentPhainonUnyieldingAvailable = true;
         aiSelectionVisualizer.reset();
         
         pendingValueChanges.clear();

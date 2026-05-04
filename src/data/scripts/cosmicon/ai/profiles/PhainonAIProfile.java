@@ -1,6 +1,7 @@
 package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
+import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.PassiveEvaluator;
@@ -50,9 +51,25 @@ public class PhainonAIProfile extends AbstractCharacterAIProfile {
     }
 
     @Override
+    public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking, BattleState state, boolean forPlayer) {
+        if (!isAttacking && state != null && !state.isPhainonUnyieldingAvailable(forPlayer)) {
+            return PassiveEvaluation.notTriggered();
+        }
+        return evaluatePassiveTrigger(selectedValues, selectedTypes, isAttacking);
+    }
+
+    @Override
     public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
         if (isAttacking) return 15f;
         return PassiveEvaluator.allSame(selectedValues) ? 50f : 0f;
+    }
+
+    @Override
+    public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking, BattleState state, boolean forPlayer) {
+        if (!isAttacking && state != null && !state.isPhainonUnyieldingAvailable(forPlayer)) {
+            return 0f;
+        }
+        return getPassiveBonusValue(selectedValues, isAttacking);
     }
 
     @Override

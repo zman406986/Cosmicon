@@ -21,7 +21,9 @@ public final class CosmiconAICore {
             String characterId,
             boolean isAttacking,
             int rerollsAvailable,
-            int targetSum) {
+            int targetSum,
+            BattleState state,
+            boolean forPlayer) {
         
         CosmiconLogger.debug("AI Decision: character=%s, role=%s, dice=%s, need=%d, rerolls=%d", 
             characterId, isAttacking ? "ATTACK" : "DEFEND", diceValues, requiredSelectCount, rerollsAvailable);
@@ -29,13 +31,14 @@ public final class CosmiconAICore {
         CharacterAIProfile profile = getProfile(characterId);
 
         SelectionOptimizer.SelectionResult selection = SelectionOptimizer.optimalSelection(
-            diceValues, diceTypes, requiredSelectCount, isAttacking, profile);
+            diceValues, diceTypes, requiredSelectCount, isAttacking, profile, state, forPlayer);
 
         Set<Integer> rerollIndices = Set.of();
         if (rerollsAvailable > 0) {
             int effectiveTarget = targetSum > 0 ? targetSum : profile.getTargetThreshold(isAttacking);
             rerollIndices = RerollOptimizer.optimalRerolls(
-                diceValues, diceTypes, requiredSelectCount, rerollsAvailable, effectiveTarget, isAttacking);
+                diceValues, diceTypes, requiredSelectCount, rerollsAvailable, effectiveTarget, 
+                isAttacking, state, forPlayer, profile);
         }
 
         CosmiconLogger.debug("AI Decision result: %s selected indices %s (sum=%d), reroll indices %s", 
@@ -67,9 +70,15 @@ public final class CosmiconAICore {
             int targetSum,
             BattleState state,
             boolean forPlayer) {
-        
+
+        CharacterAIProfile profile = null;
+        if (state != null) {
+            var card = state.getCard(forPlayer);
+            if (card != null) profile = getProfile(card.getId());
+        }
+
         Set<Integer> result = RerollOptimizer.optimalRerolls(
-            diceValues, diceTypes, requiredCount, rerollsAvailable, targetSum, isAttacking, state, forPlayer);
+            diceValues, diceTypes, requiredCount, rerollsAvailable, targetSum, isAttacking, state, forPlayer, profile);
         CosmiconLogger.debug("AI reroll recommendation (with prismatic): indices %s, role: %s, target: %d", 
             result, isAttacking ? "attacker" : "defender", targetSum);
         return result;

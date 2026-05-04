@@ -121,6 +121,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                 this.tutorialController = tc;
                 if (inputHandler != null) inputHandler.setTutorialController(tc);
                 if (buttons != null) buttons.setTutorialController(tc);
+                if (labels != null) labels.setTutorialController(tc);
             }
 
             controller.setOpponentAnimationCompleteChecker(
@@ -133,6 +134,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         this.tutorialController = tc;
         if (inputHandler != null) inputHandler.setTutorialController(tc);
         if (buttons != null) buttons.setTutorialController(tc);
+        if (labels != null) labels.setTutorialController(tc);
         if (panel != null && CosmiconStats.isInTutorialMode()) {
             tutorialRenderer = new TutorialUIRenderer();
             tutorialRenderer.init(tc, panel);
@@ -209,7 +211,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         labels = new BattleUILabels();
         buttons = new BattleUIButtons();
 
-        float opponentCardY = BattleRenderingUtils.MARGIN;
         opponentPrismaticBtnX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.MARGIN - PRISMATIC_BTN_SIZE - 10f;
         opponentPrismaticBtnY = BattleRenderingUtils.MARGIN + 10f;
         labels.init(panel, battleState, diceRollManager,
@@ -345,7 +346,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             boolean attackerIsPlayer = battleState.isPlayerAttacker();
             float gridCenterX = attackerIsPlayer ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_X : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_X;
             float gridCenterY = attackerIsPlayer ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_Y : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_Y;
-            diceRollManager.moveSelectedToRestGrid(null, attackerIsPlayer, gridCenterX, gridCenterY);
+            diceRollManager.moveSelectedToRestGrid(attackerIsPlayer, gridCenterX, gridCenterY);
         }
 
         if (newPhase == Phase.DICE_DISPLAY_DEFENSE) {
@@ -353,7 +354,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             boolean defenderIsPlayer = !battleState.isPlayerAttacker();
             float gridCenterX = defenderIsPlayer ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_X : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_X;
             float gridCenterY = defenderIsPlayer ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_Y : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_Y;
-            diceRollManager.moveSelectedToRestGrid(null, defenderIsPlayer, gridCenterX, gridCenterY);
+            diceRollManager.moveSelectedToRestGrid(defenderIsPlayer, gridCenterX, gridCenterY);
         }
 
         if (newPhase == Phase.RESOLVING_PRE_CLASH) {
@@ -410,6 +411,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
     @Override
     public void onBattleEnd(String winner) {
+        if (tutorialController != null) {
+            tutorialController.onBattleEnd(winner);
+        }
         labels.updatePhaseLabel();
     }
 

@@ -1,6 +1,7 @@
 package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
+import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.PassiveEvaluator;
@@ -46,6 +47,34 @@ public class CyreneAIProfile extends AbstractCharacterAIProfile {
             Strings.format("character.cyrene.passive_progress", sum));
     }
 
+    @Override
+    public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking, BattleState state, boolean forPlayer) {
+        if (selectedValues == null || selectedValues.isEmpty()) {
+            return PassiveEvaluation.notTriggered();
+        }
+
+        int currentSum = PassiveEvaluator.sumOfValues(selectedValues);
+        int cumulative = state.getCumulativeAtkDef(forPlayer);
+        int projectedTotal = cumulative + currentSum;
+        boolean alreadyMet = state.isCyreneThresholdMet(forPlayer);
+
+        if (!alreadyMet && projectedTotal > 24) {
+            float bonus = calculateCumulativeBonus(projectedTotal) + 20f;
+            return PassiveEvaluation.triggered(bonus, 
+                Strings.format("character.cyrene.passive_progress", projectedTotal));
+        }
+
+        if (alreadyMet) {
+            float bonus = calculateCumulativeBonus(currentSum) + 10f;
+            return PassiveEvaluation.potential(1f, bonus,
+                Strings.format("character.cyrene.passive_progress", currentSum));
+        }
+
+        float bonus = calculateCumulativeBonus(currentSum);
+        return PassiveEvaluation.potential(1f, bonus,
+            Strings.format("character.cyrene.passive_progress", projectedTotal));
+    }
+
     private float calculateCumulativeBonus(int turnValue) {
         float bonus = turnValue * 0.5f;
 
@@ -58,7 +87,7 @@ public class CyreneAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     protected float calculatePassiveBonus(List<Integer> selectedValues) {
-        if (hasValidValues(selectedValues)) return 0f;
+        if (hasNoValues(selectedValues)) return 0f;
         int sum = PassiveEvaluator.sumOfValues(selectedValues);
         return calculateCumulativeBonus(sum);
     }

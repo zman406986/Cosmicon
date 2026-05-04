@@ -9,6 +9,7 @@ import data.scripts.cosmicon.ai.AIPrismaticSelector;
 import data.scripts.cosmicon.ai.AIPrismaticSelector.PrismaticDecision;
 import data.scripts.cosmicon.ai.CosmiconAICore;
 import data.scripts.cosmicon.ai.CosmiconAICore.AIDecision;
+import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class AIEngine {
@@ -33,10 +34,10 @@ public class AIEngine {
         
         AIDecision decision = CosmiconAICore.makeDecision(
             diceValues, diceTypes, requiredCount,
-            charId, isAttacking, rerolls, 0);
+            charId, isAttacking, rerolls, 0, state, forPlayer);
         
         List<Boolean> selected = state.getDiceSelected(forPlayer);
-        if (selected != null) {
+        if (selected != null && !shouldPreserveForcedSelections(state, forPlayer)) {
             Collections.fill(selected, false);
         }
         
@@ -74,7 +75,7 @@ public class AIEngine {
         
         AIDecision decision = CosmiconAICore.makeDecision(
             diceValues, diceTypes, requiredCount,
-            charId, isAttacking, rerolls, 0);
+            charId, isAttacking, rerolls, 0, state, forPlayer);
         
         return decision.getSelectedIndicesList();
     }
@@ -116,5 +117,15 @@ public class AIEngine {
     
     public PrismaticDecision planPrismaticUse(BattleState state, boolean forPlayer) {
         return AIPrismaticSelector.selectPrismaticDice(state, forPlayer);
+    }
+
+    private boolean shouldPreserveForcedSelections(BattleState state, boolean forPlayer) {
+        for (int i = 0; i < state.getDiceValues(forPlayer).size(); i++) {
+            var pd = state.getPrismaticDiceAt(i, forPlayer);
+            if (pd != null && pd.isMustSelect()) {
+                return true;
+            }
+        }
+        return false;
     }
 }

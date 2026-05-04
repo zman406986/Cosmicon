@@ -20,7 +20,7 @@ public class TutorialDiceRoller {
     private static final int[][] GAME1_PLAYER_ROLLS = {
         {6, 5, 4, 3, 2},
         {4, 4, 3, 2, 1},
-        {1, 1, 2, 2, 3}
+        {1, 1, 2, 4, 3}
     };
 
     private static final int[][] GAME1_OPPONENT_ROLLS = {
@@ -33,7 +33,7 @@ public class TutorialDiceRoller {
 
     private static final int[][] GAME2_PLAYER_ROLLS = {
         {4, 4, 3, 2, 1, 1, 1},
-        {4, 4, 3, 2, 1, 1, 1},
+        {4, 3, 2, 2, 1, 1, 1},
         {4, 3, 2, 1, 1, 1, 1},
         {4, 4, 4, 3, 2, 1, 1}
     };

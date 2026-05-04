@@ -57,6 +57,11 @@ public class YaoGuangAIProfile extends AbstractCharacterAIProfile {
     }
 
     @Override
+    public float getThornsPenaltyPerReroll() {
+        return 2f;
+    }
+
+    @Override
     protected float calculatePassiveBonus(List<Integer> selectedValues) {
         return 0f;
     }

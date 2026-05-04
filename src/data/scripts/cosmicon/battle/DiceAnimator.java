@@ -67,7 +67,6 @@ public class DiceAnimator {
     
     private float restStartX;
     private float restStartY;
-    private int preChangeValue;
     
     private int bounceCount;
     private float[] bounceHeights;
@@ -574,12 +573,16 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         
         SpriteAPI sprite;
         boolean isScatterPickupOrTravel = phase == Phase.SCATTER_PICKUP || phase == Phase.SCATTER_TRAVEL || phase == Phase.SCATTER_DROP;
-        boolean isRestPhase = phase == Phase.RESTING || phase == Phase.TRAVEL_TO_REST || phase == Phase.REST_DROP || phase == Phase.VALUE_CHANGE;
+        boolean isRestPhase = isRestOrTravel();
         if (phase == Phase.STATIONARY_PREVIEW || isScatterPickupOrTravel || isRestPhase) {
             if (type == DiceType.PRISMATIC) {
-                sprite = DiceSpriteRegistry.getPrismaticFrame(stationaryResultIndex, stationaryFrameIndex);
+                int faceIdx = stationaryResultIndex;
+                if (faceIdx < 0 || faceIdx >= 6) faceIdx = 0;
+                sprite = DiceSpriteRegistry.getPrismaticFrame(faceIdx, stationaryFrameIndex);
             } else {
-                sprite = DiceSpriteRegistry.getFrame(type, stationaryResultIndex, stationaryFrameIndex);
+                int resultIdx = stationaryResultIndex;
+                if (resultIdx <= 0 && type != null) resultIdx = type.getMaxFace();
+                sprite = DiceSpriteRegistry.getFrame(type, resultIdx, stationaryFrameIndex);
             }
         } else if (type == DiceType.PRISMATIC) {
             sprite = DiceSpriteRegistry.getPrismaticFrame(finalValue, currentFrame);
@@ -668,19 +671,6 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         return elapsed >= 0f && !complete;
     }
     
-    public void startTravelToRest(float targetX, float targetY) {
-        this.restStartX = x + posXOffset;
-        this.restStartY = y + posYOffset;
-        this.targetCenterX = targetX;
-        this.targetCenterY = targetY;
-        this.phase = Phase.TRAVEL_TO_REST;
-        this.phaseElapsed = 0f;
-        this.complete = false;
-        this.currentFrame = type != null ? type.getMaxFace() : 0;
-        this.stationaryFrameIndex = currentFrame;
-        this.stationaryResultIndex = finalValue;
-    }
-    
     public void startTravelToRestFrom(DiceAnimator source, DiceType diceType, int value,
                                         float targetX, float targetY) {
         this.type = diceType;
@@ -696,8 +686,8 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         this.elapsed = 0f;
         this.complete = false;
         this.scale = source.getScale();
-        this.currentFrame = diceType != null ? diceType.getMaxFace() : 0;
-        this.stationaryFrameIndex = currentFrame;
+        this.currentFrame = 0;
+        this.stationaryFrameIndex = 0;
         this.stationaryResultIndex = value;
         this.posXOffset = 0f;
         this.posYOffset = 0f;
@@ -720,7 +710,7 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         this.targetCenterY = targetCenterY;
         this.elapsed = -delay;
         this.complete = false;
-        this.currentFrame = type != null ? type.getMaxFace() : 0;
+        this.currentFrame = 0;
         this.posXOffset = 0f;
         this.posYOffset = 0f;
         this.rotation = rotation;
@@ -732,25 +722,12 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         this.phaseElapsed = 0f;
         this.scale = 1f;
         this.useDirectionalAnimation = true;
-        this.stationaryFrameIndex = type != null ? type.getMaxFace() : 0;
+        this.stationaryFrameIndex = 0;
         this.stationaryResultIndex = finalValue;
         this.rollPickupStartScale = 1f;
     }
     
-    public void startResting() {
-        this.phase = Phase.RESTING;
-        this.phaseElapsed = 0f;
-        this.complete = true;
-        this.scale = 1f;
-        this.posXOffset = 0f;
-        this.posYOffset = 0f;
-        this.currentFrame = type != null ? type.getMaxFace() : 0;
-        this.stationaryFrameIndex = currentFrame;
-        this.stationaryResultIndex = finalValue;
-    }
-    
     public void animateValueChange(int newValue) {
-        this.preChangeValue = this.finalValue;
         this.finalValue = newValue;
         this.phase = Phase.VALUE_CHANGE;
         this.phaseElapsed = 0f;
@@ -819,10 +796,6 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
     
     public boolean isAtRest() {
         return phase == Phase.RESTING;
-    }
-    
-    public boolean isTravelingToRest() {
-        return phase == Phase.TRAVEL_TO_REST || phase == Phase.REST_DROP;
     }
     
     public boolean isRestOrTravel() {

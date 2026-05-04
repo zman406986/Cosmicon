@@ -1,9 +1,9 @@
 package data.scripts.cosmicon.ai;
 
 import data.scripts.cosmicon.battle.BattleState;
-import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
+import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticEffect;
 import java.util.ArrayList;
@@ -74,17 +74,44 @@ public final class DiceProbabilityCalculator {
         };
     }
 
-    public static float expectedValue(DiceType type, PrismaticDiceType prismType, boolean isAttacking, BattleState context, boolean forPlayer) {
+    public static float expectedValue(DiceType type, PrismaticDiceType prismType) {
         if (type != DiceType.PRISMATIC || prismType == null) {
             return expectedValue(type);
         }
-        return expectedPrismaticValue(prismType, isAttacking, context, forPlayer);
+        return expectedPrismaticFaceAverage(prismType, false);
     }
 
-    public static float expectedPrismaticValue(PrismaticDiceType type, boolean isAttacking, BattleState context, boolean forPlayer) {
-        int[] faces = type.getFaces(false);
+    public static float expectedValue(DiceType type, PrismaticDiceType prismType, boolean isTrueVersion) {
+        if (type != DiceType.PRISMATIC || prismType == null) {
+            return expectedValue(type);
+        }
+        int[] faces = prismType.getFaces(isTrueVersion);
+        return (float) Arrays.stream(faces).average().orElse(3);
+    }
+
+    public static float expectedValue(DiceType type, PrismaticDiceInstance instance) {
+        if (type != DiceType.PRISMATIC || instance == null) {
+            return expectedValue(type);
+        }
+        return expectedPrismaticFaceAverage(instance.type, instance.isTrueVersion);
+    }
+
+    public static float expectedValue(DiceType type, PrismaticDiceType prismType, boolean isTrueVersion, boolean isAttacking, BattleState context, boolean forPlayer) {
+        if (type != DiceType.PRISMATIC || prismType == null) {
+            return expectedValue(type);
+        }
+        return expectedPrismaticValue(prismType, isTrueVersion, isAttacking, context, forPlayer);
+    }
+
+    public static float expectedPrismaticValue(PrismaticDiceType type, boolean isTrueVersion, boolean isAttacking, BattleState context, boolean forPlayer) {
+        int[] faces = type.getFaces(isTrueVersion);
         float avg = (float) Arrays.stream(faces).average().orElse(3);
         return avg + estimateEffectBonus(type, isAttacking, context, forPlayer);
+    }
+
+    public static float expectedPrismaticFaceAverage(PrismaticDiceType type, boolean isTrueVersion) {
+        int[] faces = type.getFaces(isTrueVersion);
+        return (float) Arrays.stream(faces).average().orElse(3);
     }
 
     private static float estimateEffectBonus(PrismaticDiceType type, boolean isAttacking, BattleState context, boolean forPlayer) {
@@ -116,11 +143,12 @@ public final class DiceProbabilityCalculator {
         }
 
         if (effect.isHealHp()) {
-            CharacterCard card = context.getCard(forPlayer);
-            int hp = forPlayer ? context.getPlayerHp() : context.getOpponentHp();
-            int maxHp = card != null ? card.getMaxHp() : hp;
-            int missingHp = maxHp - hp;
-            return missingHp / 2f;
+            int[] faces = type.getFaces(false);
+            int totalHeal = 0;
+            for (int face : faces) {
+                totalHeal += face;
+            }
+            return (float) totalHeal / faces.length;
         }
 
         if (effect.isInstantDamage()) {
@@ -150,10 +178,20 @@ public final class DiceProbabilityCalculator {
             selectCount = diceTypes.size();
         }
 
-        DiceCacheKey cacheKey = buildCacheKey(diceTypes, selectCount);
-        float[] cached = SUM_PMF_CACHE.get(cacheKey);
-        if (cached != null) {
-            return cached;
+        boolean hasPrismatic = false;
+        for (DiceType type : diceTypes) {
+            if (type == DiceType.PRISMATIC) {
+                hasPrismatic = true;
+                break;
+            }
+        }
+
+        if (!hasPrismatic) {
+            DiceCacheKey cacheKey = buildCacheKey(diceTypes, selectCount);
+            float[] cached = SUM_PMF_CACHE.get(cacheKey);
+            if (cached != null) {
+                return cached;
+            }
         }
 
         List<float[]> dicePMFs = new ArrayList<>();
@@ -163,7 +201,8 @@ public final class DiceProbabilityCalculator {
 
         float[] resultPMF = computeSelectKSumPMF(dicePMFs, selectCount);
 
-        if (diceTypes.size() <= MAX_CACHE_KEY_LENGTH) {
+        if (!hasPrismatic && diceTypes.size() <= MAX_CACHE_KEY_LENGTH) {
+            DiceCacheKey cacheKey = buildCacheKey(diceTypes, selectCount);
             SUM_PMF_CACHE.put(cacheKey, resultPMF);
         }
 

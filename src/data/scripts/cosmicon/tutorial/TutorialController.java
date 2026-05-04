@@ -34,6 +34,7 @@ public class TutorialController {
         G1_T2_ATTACK_REROLL,
         G1_T2_ATTACK_SELECT,
         G1_T2_ATTACK_CONFIRM,
+        G1_T2_ATTACK_WAIT,
         G1_VICTORY,
 
         G2_T1_DEFENSE_ROLL,
@@ -136,7 +137,7 @@ public class TutorialController {
                  G2_T1_DEFENSE_SELECT,
                  G2_T2_DEFENSE_SELECT -> isAmongHighest(diceIndex, values, battleState.getRequiredDiceCount(true));
 
-            case G1_T2_ATTACK_REROLL -> !isMaxValue(diceIndex, values);
+            case G1_T2_ATTACK_REROLL -> !isAmongHighest(diceIndex, values, 2);
 
             case G2_T2_ATTACK_PRISMATIC, G2_T2_ATTACK_SELECT,
                  G2_T3_ATTACK_PRISMATIC, G2_T3_ATTACK_SELECT ->
@@ -152,10 +153,9 @@ public class TutorialController {
 
         List<Integer> values = battleState.getPlayerDiceValues();
         List<Boolean> selected = battleState.getPlayerDiceSelected();
-        int maxVal = Collections.max(values);
 
         for (int i = 0; i < values.size(); i++) {
-            if (values.get(i) < maxVal && !selected.get(i)) {
+            if (!isAmongHighest(i, values, 2) && !selected.get(i)) {
                 return false;
             }
         }
@@ -289,7 +289,7 @@ public class TutorialController {
         switch (currentStep) {
             case G1_T1_ATTACK_CONFIRM -> currentStep = TutorialStep.G1_T1_ATTACK_WAIT;
             case G1_T1_DEFENSE_CONFIRM -> currentStep = TutorialStep.G1_T1_DEFENSE_WAIT;
-            case G1_T2_ATTACK_CONFIRM -> currentStep = TutorialStep.G1_VICTORY;
+            case G1_T2_ATTACK_CONFIRM -> currentStep = TutorialStep.G1_T2_ATTACK_WAIT;
             case G2_T1_DEFENSE_CONFIRM -> currentStep = TutorialStep.G2_T1_DEFENSE_WAIT;
             case G2_T2_ATTACK_CONFIRM -> currentStep = TutorialStep.G2_T2_ATTACK_WAIT;
             case G2_T2_DEFENSE_CONFIRM -> currentStep = TutorialStep.G2_T2_DEFENSE_WAIT;
@@ -350,6 +350,17 @@ public class TutorialController {
             onGame1PhaseChange(newPhase);
         } else {
             onGame2PhaseChange(newPhase);
+        }
+    }
+
+    public void onBattleEnd(String winner) {
+        if (complete) return;
+
+        if (game == TutorialGame.GAME_1_SPARXIE
+                && currentStep == TutorialStep.G1_T2_ATTACK_WAIT
+                && "player".equals(winner)) {
+            currentStep = TutorialStep.G1_VICTORY;
+            complete = true;
         }
     }
 

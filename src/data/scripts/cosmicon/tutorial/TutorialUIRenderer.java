@@ -71,7 +71,7 @@ public class TutorialUIRenderer {
     }
 
     public void render(float alphaMult) {
-        if (controller == null || controller.isTutorialComplete()) return;
+        if (controller == null) return;
 
         String text = controller.getTutorialText();
         if (text.isEmpty()) return;

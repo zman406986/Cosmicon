@@ -343,10 +343,7 @@ public class TurnProcessor {
             }
             
             case SELECTION_PLANNING -> {
-                boolean isAttackPhase = state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK;
-                boolean aiIsAttacker = !state.isPlayerAttacker();
-                
-                List<Integer> selectIndices = aiEngine.planSelection(state, isAttackPhase != aiIsAttacker);
+                List<Integer> selectIndices = aiEngine.planSelection(state, false);
                 aiPlannedIndices = selectIndices;
                 
                 if (viz != null) {
@@ -406,8 +403,7 @@ public class TurnProcessor {
         if (aiPlannedIndices == null) return;
         
         boolean isAttackPhase = state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK;
-        boolean aiIsAttacker = !state.isPlayerAttacker();
-        boolean forPlayer = isAttackPhase != aiIsAttacker;
+        boolean forPlayer = false;
         
         List<Boolean> selected = state.getDiceSelected(forPlayer);
         if (selected != null) {
@@ -479,7 +475,7 @@ public class TurnProcessor {
     private void performAiSelection() {
         boolean isAttackPhase = state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK;
         boolean aiIsAttacker = !state.isPlayerAttacker();
-        boolean forPlayer = isAttackPhase != aiIsAttacker;
+        boolean forPlayer = false;
         
         aiEngine.executeSelection(state, forPlayer);
         

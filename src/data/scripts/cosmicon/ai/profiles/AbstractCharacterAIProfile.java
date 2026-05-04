@@ -23,13 +23,13 @@ public abstract class AbstractCharacterAIProfile implements CharacterAIProfile {
         return CharacterAIProfile.super.isAttackPassive();
     }
 
-    protected boolean hasValidValues(List<Integer> selectedValues) {
+    protected boolean hasNoValues(List<Integer> selectedValues) {
         return selectedValues == null || selectedValues.isEmpty();
     }
 
     @Override
     public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
-        if (hasValidValues(selectedValues)) {
+        if (hasNoValues(selectedValues)) {
             return PassiveEvaluation.notTriggered();
         }
 
@@ -39,7 +39,7 @@ public abstract class AbstractCharacterAIProfile implements CharacterAIProfile {
 
     @Override
     public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
-        if (hasValidValues(selectedValues)) return 0f;
+        if (hasNoValues(selectedValues)) return 0f;
         return calculatePassiveBonus(selectedValues);
     }
 

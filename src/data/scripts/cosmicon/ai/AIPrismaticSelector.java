@@ -76,7 +76,7 @@ public class AIPrismaticSelector {
                     yield (hp <= 3 && !isAttacking) ? 4f : 0f;
                 }
                 case DESTINED -> 3f;
-                case THORNS -> isAttacking ? 0f : 3f;
+                case THORNS -> 0f;
                 case HACK -> 2f;
                 default -> 0f;
             };

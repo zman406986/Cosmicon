@@ -49,7 +49,7 @@ public class SparxieAIProfile extends AbstractCharacterAIProfile {
 
     @Override
     protected float calculatePassiveBonus(List<Integer> selectedValues) {
-        if (hasValidValues(selectedValues)) return 0f;
+        if (hasNoValues(selectedValues)) return 0f;
         return PassiveEvaluator.hasIdenticalNumbers(selectedValues) ? HACK_BONUS_VALUE : 0f;
     }
 }

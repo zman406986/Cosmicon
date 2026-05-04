@@ -1,5 +1,6 @@
 package data.scripts.cosmicon.ai;
 
+import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.DiceType;
 import java.util.List;
 
@@ -25,7 +26,15 @@ public interface CharacterAIProfile {
 
     PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking);
 
+    default PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking, BattleState state, boolean forPlayer) {
+        return evaluatePassiveTrigger(selectedValues, selectedTypes, isAttacking);
+    }
+
     float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking);
+
+    default float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking, BattleState state, boolean forPlayer) {
+        return getPassiveBonusValue(selectedValues, isAttacking);
+    }
 
     default boolean isDefensePassive() {
         return false;
@@ -41,6 +50,10 @@ public interface CharacterAIProfile {
 
     default boolean prefersPairs() {
         return false;
+    }
+
+    default float getThornsPenaltyPerReroll() {
+        return 0f;
     }
 
     record PassiveEvaluation(boolean triggered, float triggerProbability, float bonusValue, String description)

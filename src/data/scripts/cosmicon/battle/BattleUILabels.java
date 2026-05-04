@@ -18,6 +18,7 @@ import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticFaceDisplay;
+import data.scripts.cosmicon.tutorial.TutorialController;
 import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.util.UIComponentFactory;
@@ -83,6 +84,7 @@ public class BattleUILabels {
 
     private CustomPanelAPI panel;
     private BattleState battleState;
+    private TutorialController tutorialController;
 
     private PrismaticDiceInstance pendingPrismaticInstance;
     private int pendingPrismaticAnimatorIndex = -1;
@@ -221,6 +223,10 @@ public class BattleUILabels {
 
     public void setBattleState(BattleState state) {
         this.battleState = state;
+    }
+
+    public void setTutorialController(TutorialController controller) {
+        this.tutorialController = controller;
     }
 
     private void createLabels() {
@@ -898,12 +904,20 @@ public class BattleUILabels {
     public void updatePrismaticButton() {
         if (playerPrismaticUsesLabel == null || battleState == null) return;
         if (data.scripts.cosmicon.state.CosmiconStats.isInTutorialMode()) {
-            playerPrismaticUsesLabel.setOpacity(0f);
+            boolean prismaticAllowed = tutorialController != null && tutorialController.isPrismaticAllowed();
             opponentPrismaticUsesLabel.setOpacity(0f);
-            playerPrismaticFaceMappingLabel.setOpacity(0f);
-            playerPrismaticEffectLabel.setOpacity(0f);
             opponentPrismaticFaceMappingLabel.setOpacity(0f);
             opponentPrismaticEffectLabel.setOpacity(0f);
+            if (prismaticAllowed) {
+                int uses = battleState.getPlayerPrismaticUses();
+                playerPrismaticUsesLabel.setText(String.valueOf(uses));
+                playerPrismaticUsesLabel.setOpacity(1f);
+                updatePrismaticFaceMappingDisplay();
+            } else {
+                playerPrismaticUsesLabel.setOpacity(0f);
+                playerPrismaticFaceMappingLabel.setOpacity(0f);
+                playerPrismaticEffectLabel.setOpacity(0f);
+            }
             return;
         }
 
@@ -1004,8 +1018,11 @@ public class BattleUILabels {
     public void updatePrismaticRolledLabel() {
         if (playerPrismaticRolledLabel == null) return;
         if (data.scripts.cosmicon.state.CosmiconStats.isInTutorialMode()) {
-            playerPrismaticRolledLabel.setOpacity(0f);
-            return;
+            boolean prismaticAllowed = tutorialController != null && tutorialController.isPrismaticAllowed();
+            if (!prismaticAllowed) {
+                playerPrismaticRolledLabel.setOpacity(0f);
+                return;
+            }
         }
 
         if (pendingPrismaticInstance == null || pendingPrismaticAnimatorIndex < 0) {
@@ -1075,7 +1092,13 @@ public class BattleUILabels {
     public void updatePrismaticClickHint(boolean enabled) {
         if (playerPrismaticClickHintLabel != null) {
             if (data.scripts.cosmicon.state.CosmiconStats.isInTutorialMode()) {
-                playerPrismaticClickHintLabel.setOpacity(0f);
+                boolean prismaticAllowed = tutorialController != null && tutorialController.isPrismaticAllowed();
+                if (prismaticAllowed) {
+                    playerPrismaticClickHintLabel.setColor(ColorHelper.PRISMATIC_HINT_ENABLED);
+                    playerPrismaticClickHintLabel.setOpacity(1f);
+                } else {
+                    playerPrismaticClickHintLabel.setOpacity(0f);
+                }
                 return;
             }
             if (enabled) {

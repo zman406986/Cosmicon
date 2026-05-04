@@ -36,12 +36,20 @@ public final class SelectionOptimizer {
             BattleState state,
             boolean forPlayer) {
         
-        if (diceValues == null || diceValues.isEmpty() || requiredCount <= 0) {
+        if (diceValues == null || diceValues.isEmpty() || requiredCount <= 0
+                || diceTypes == null || diceTypes.size() != diceValues.size()) {
             return SelectionResult.empty();
         }
 
+        int effectiveRequired = Math.min(requiredCount, diceValues.size());
+
+        Set<Integer> forcedIndices = findForcedSelectionIndices(diceValues, state, forPlayer);
+        int forcedCount = forcedIndices.size();
+        int freeSlots = Math.max(0, effectiveRequired - forcedCount);
+
         if (profile != null && profile.shouldOptimizeForPassive(isAttacking)) {
-            SelectionResult passiveResult = optimizeForPassive(diceValues, diceTypes, requiredCount, profile, isAttacking, state, forPlayer);
+            SelectionResult passiveResult = optimizeForPassive(diceValues, diceTypes, effectiveRequired, 
+                profile, isAttacking, state, forPlayer, forcedIndices, freeSlots);
             if (passiveResult != null && passiveResult.passiveTriggered) {
                 CosmiconLogger.debug("Selection: passive optimization triggered for profile, indices: %s, bonus: %.1f", 
                     passiveResult.selectedIndices, passiveResult.passiveBonus);
@@ -50,18 +58,22 @@ public final class SelectionOptimizer {
         }
 
         if (profile != null && profile.prefersPairs()) {
-            SelectionResult pairResult = selectForPairs(diceValues, diceTypes, requiredCount);
+            SelectionResult pairResult = selectForPairs(diceValues, diceTypes, freeSlots);
             if (pairResult.passiveTriggered) {
+                pairResult = mergeForcedIndices(pairResult, forcedIndices);
                 CosmiconLogger.debug("Selection: pair optimization triggered, pairs found, indices: %s", 
                     pairResult.selectedIndices);
                 return pairResult;
             }
         }
 
-        SelectionResult greedyResult = greedyHighSelection(diceValues, diceTypes, requiredCount, isAttacking, profile, state, forPlayer);
+        SelectionResult greedyResult = greedyHighSelection(diceValues, diceTypes, freeSlots, 
+            isAttacking, profile, state, forPlayer);
+        greedyResult = mergeForcedIndices(greedyResult, forcedIndices);
         
         if (profile != null && !profile.shouldOptimizeForPassive(isAttacking)) {
-            SelectionResult enhancedResult = considerPassiveBonus(diceValues, diceTypes, requiredCount, profile, isAttacking);
+            SelectionResult enhancedResult = considerPassiveBonus(diceValues, diceTypes, freeSlots, profile, isAttacking);
+            enhancedResult = mergeForcedIndices(enhancedResult, forcedIndices);
             if (enhancedResult.totalScore > greedyResult.totalScore) {
                 CosmiconLogger.debug("Selection: passive bonus enhanced score from %.1f to %.1f", 
                     greedyResult.totalScore, enhancedResult.totalScore);
@@ -72,6 +84,40 @@ public final class SelectionOptimizer {
         CosmiconLogger.debug("Selection: greedy selection chosen, indices: %s, sum: %d, score: %.1f", 
             greedyResult.selectedIndices, greedyResult.sumValue, greedyResult.totalScore);
         return greedyResult;
+    }
+
+    private static Set<Integer> findForcedSelectionIndices(
+            List<Integer> diceValues, BattleState state, boolean forPlayer) {
+        Set<Integer> forced = new HashSet<>();
+        if (state == null) return forced;
+        for (int i = 0; i < diceValues.size(); i++) {
+            var pd = state.getPrismaticDiceAt(i, forPlayer);
+            if (pd != null && pd.isMustSelect()) {
+                forced.add(i);
+            }
+        }
+        return forced;
+    }
+
+    private static SelectionResult mergeForcedIndices(SelectionResult result, Set<Integer> forcedIndices) {
+        if (forcedIndices.isEmpty() || result == null) return result;
+        Set<Integer> merged = new HashSet<>(result.selectedIndices);
+        merged.addAll(forcedIndices);
+        
+        List<Integer> mergedValues = new ArrayList<>(result.selectedValues);
+        List<DiceType> mergedTypes = new ArrayList<>(result.selectedTypes);
+        int mergedSum = result.sumValue;
+        float mergedScore = result.totalScore;
+        
+        for (int idx : forcedIndices) {
+            if (!result.selectedIndices.contains(idx)) {
+                mergedValues.add(null);
+                mergedTypes.add(null);
+            }
+        }
+        
+        return new SelectionResult(merged, mergedSum, mergedValues, mergedTypes,
+                result.passiveTriggered, result.passiveBonus, mergedScore);
     }
 
     private static SelectionResult greedyHighSelection(
@@ -91,7 +137,7 @@ public final class SelectionOptimizer {
             if (diceTypes.get(i) == DiceType.PRISMATIC && state != null) {
                 PrismaticDiceInstance pd = state.getPrismaticDiceAt(i, forPlayer);
                 if (pd != null && pd.isSpecialFace) {
-                    value += getEffectBonusForSelection(pd.type.getEffect(), isAttacking, state);
+                    value += getEffectBonusForSelection(pd.type.getEffect(), isAttacking, state, forPlayer);
                 }
             }
             if (profile != null && diceTypes.get(i) == DiceType.PRISMATIC) {
@@ -124,7 +170,7 @@ public final class SelectionOptimizer {
         return new SelectionResult(selectedIndices, sum, selectedValues, selectedTypes, false, 0f, effectiveScore);
     }
 
-    private static float getEffectBonusForSelection(PrismaticEffect effect, boolean isAttacking, BattleState state) {
+    private static float getEffectBonusForSelection(PrismaticEffect effect, boolean isAttacking, BattleState state, boolean forPlayer) {
         if (effect == null || effect.isNone()) return 0f;
 
         if (effect.isDoubleValue()) return 3f;
@@ -134,10 +180,20 @@ public final class SelectionOptimizer {
             if (grantedEffect == null) return 0f;
 
             return switch (grantedEffect) {
-                case FORCEFIELD -> isAttacking ? 0f : 4f;
-                case COMBO -> 3f;
-                case UNYIELDING, DESTINED, HACK -> 2f;
-                case THORNS -> isAttacking ? 0f : 2f;
+                case FORCEFIELD -> isAttacking ? 0f : 5f;
+                case COMBO -> {
+                    if (!isAttacking) yield 0f;
+                    int attackVal = state != null ? state.getAttackValue() : 0;
+                    yield (attackVal > 0) ? (float) attackVal : 6f;
+                }
+                case UNYIELDING -> {
+                    if (state == null || isAttacking) yield 0f;
+                    int hp = forPlayer ? state.getPlayerHp() : state.getOpponentHp();
+                    yield (hp <= 3) ? 4f : 0f;
+                }
+                case DESTINED -> 3f;
+                case THORNS -> 0f;
+                case HACK -> 2f;
                 default -> 1f;
             };
         }
@@ -154,21 +210,14 @@ public final class SelectionOptimizer {
             List<DiceType> diceTypes,
             int requiredCount,
             CharacterAIProfile profile,
-            boolean isAttacking) {
-        return optimizeForPassive(diceValues, diceTypes, requiredCount, profile, isAttacking, null, false);
-    }
-
-    private static SelectionResult optimizeForPassive(
-            List<Integer> diceValues,
-            List<DiceType> diceTypes,
-            int requiredCount,
-            CharacterAIProfile profile,
             boolean isAttacking,
             BattleState state,
-            boolean forPlayer) {
+            boolean forPlayer,
+            Set<Integer> forcedIndices,
+            int freeSlots) {
         
         List<Set<Integer>> candidateSelections = generateCandidateSelections(
-            diceValues, diceTypes, state, forPlayer, isAttacking, requiredCount);
+            diceValues, diceTypes, state, forPlayer, isAttacking, requiredCount, forcedIndices, freeSlots);
 
         SelectionResult bestResult = null;
         float bestScore = Float.MIN_VALUE;
@@ -184,9 +233,9 @@ public final class SelectionOptimizer {
                 sum += diceValues.get(idx);
             }
 
-            CharacterAIProfile.PassiveEvaluation eval = profile.evaluatePassiveTrigger(selectedValues, selectedTypes, isAttacking);
+            CharacterAIProfile.PassiveEvaluation eval = profile.evaluatePassiveTrigger(selectedValues, selectedTypes, isAttacking, state, forPlayer);
 
-            float passiveScore = profile.getPassiveBonusValue(selectedValues, isAttacking);
+            float passiveScore = profile.getPassiveBonusValue(selectedValues, isAttacking, state, forPlayer);
             float score = sum + passiveScore;
             if (eval.triggered()) {
                 score += 100f;
@@ -236,45 +285,45 @@ public final class SelectionOptimizer {
         return new SelectionResult(selectedIndices, sum, selectedValues, selectedTypes, eval.triggered(), passiveScore, totalScore);
     }
 
-    private static List<Set<Integer>> generateCandidateSelections(List<Integer> diceValues, int requiredCount) {
-        return generateCandidateSelections(diceValues, null, null, false, false, requiredCount);
-    }
-
     private static List<Set<Integer>> generateCandidateSelections(
             List<Integer> diceValues,
             List<DiceType> diceTypes,
             BattleState state,
             boolean forPlayer,
             boolean isAttacking,
-            int requiredCount) {
+            int requiredCount,
+            Set<Integer> forcedIndices,
+            int freeSlots) {
         
         List<Set<Integer>> selections = new ArrayList<>();
         
         int n = diceValues.size();
         if (n <= 8 && requiredCount <= 4) {
-            generateCombinations(selections, new HashSet<>(), 0, n, requiredCount);
+            generateCombinations(selections, new HashSet<>(forcedIndices), 0, n, requiredCount, forcedIndices);
         } else {
             List<WeightedIndex> indices = new ArrayList<>();
             for (int i = 0; i < n; i++) {
+                if (forcedIndices.contains(i)) continue;
                 float weight = diceValues.get(i);
                 if (diceTypes != null && i < diceTypes.size() && diceTypes.get(i) == DiceType.PRISMATIC && state != null) {
-                    PrismaticDiceInstance pd = state.getPrismaticDiceAt(i, forPlayer);
+                    var pd = state.getPrismaticDiceAt(i, forPlayer);
                     if (pd != null && pd.isSpecialFace) {
-                        weight += getEffectBonusForSelection(pd.type.getEffect(), isAttacking, state);
+                        weight += getEffectBonusForSelection(pd.type.getEffect(), isAttacking, state, forPlayer);
                     }
                 }
                 indices.add(new WeightedIndex(i, weight));
             }
             indices.sort(Comparator.comparingDouble(WeightedIndex::weight).reversed());
 
-            Set<Integer> topK = new HashSet<>();
-            for (int i = 0; i < requiredCount; i++) {
+            Set<Integer> topK = new HashSet<>(forcedIndices);
+            int pickCount = Math.min(freeSlots, indices.size());
+            for (int i = 0; i < pickCount; i++) {
                 topK.add(indices.get(i).index());
             }
             selections.add(topK);
             
-            for (int swapOut = 0; swapOut < requiredCount; swapOut++) {
-                for (int swapIn = requiredCount; swapIn < n; swapIn++) {
+            for (int swapOut = 0; swapOut < pickCount; swapOut++) {
+                for (int swapIn = pickCount; swapIn < indices.size(); swapIn++) {
                     Set<Integer> variant = new HashSet<>(topK);
                     variant.remove(indices.get(swapOut).index());
                     variant.add(indices.get(swapIn).index());
@@ -289,7 +338,7 @@ public final class SelectionOptimizer {
     private record WeightedIndex(int index, float weight) {}
 
     private static void generateCombinations(List<Set<Integer>> result, Set<Integer> current, 
-                                             int start, int n, int k) {
+                                             int start, int n, int k, Set<Integer> forcedIndices) {
         if (current.size() == k) {
             result.add(new HashSet<>(current));
             return;
@@ -297,8 +346,9 @@ public final class SelectionOptimizer {
         if (start >= n) return;
 
         for (int i = start; i < n; i++) {
+            if (forcedIndices.contains(i)) continue;
             current.add(i);
-            generateCombinations(result, current, i + 1, n, k);
+            generateCombinations(result, current, i + 1, n, k, forcedIndices);
             current.remove(i);
         }
     }
