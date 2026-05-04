@@ -149,9 +149,13 @@ public class BattleController implements BattleState.DamageAnimationCallback {
             tutorialController = new TutorialController(tutorialGameType, state);
             TutorialDiceRoller tutorialDiceRoller = new TutorialDiceRoller(tutorialController);
             turnProcessor.getDiceRoller().setTutorialDiceRoller(tutorialDiceRoller);
+            state.setTutorialDiceRoller(tutorialDiceRoller);
             CosmiconLogger.info("Tutorial controller initialized for game: %s", tutorialGameType);
 
-            if (tutorialGameType == TutorialController.TutorialGame.GAME_2_ACHERON) {
+            if (tutorialGameType == TutorialController.TutorialGame.GAME_1_SPARXIE) {
+                state.getWeatherController().getWeatherManager().setWeatherDisabled(true);
+                CosmiconLogger.info("Tutorial Game 1: Weather disabled");
+            } else if (tutorialGameType == TutorialController.TutorialGame.GAME_2_ACHERON) {
                 java.util.Map<Integer, WeatherType> forcedWeather = new java.util.HashMap<>();
                 forcedWeather.put(2, WeatherType.CREPUSCULAR_RAYS);
                 state.getWeatherController().getWeatherManager().setForcedWeatherSchedule(forcedWeather);
@@ -191,6 +195,10 @@ public class BattleController implements BattleState.DamageAnimationCallback {
         turnProcessor.advanceAiSelection(amount);
     }
 
+    public void setDiceRollManager(DiceRollManager manager) {
+        turnProcessor.setDiceRollManager(manager);
+    }
+
     public void setOpponentAnimationCompleteChecker(BooleanSupplier checker) {
         turnProcessor.setOpponentAnimationCompleteChecker(checker);
     }
@@ -205,6 +213,14 @@ public class BattleController implements BattleState.DamageAnimationCallback {
 
     public void proceedToClash() {
         turnProcessor.proceedToClash();
+    }
+
+    public void advanceFromDiceDisplayAttack() {
+        turnProcessor.advanceFromDiceDisplayAttack();
+    }
+
+    public void advanceFromDiceDisplayDefense() {
+        turnProcessor.advanceFromDiceDisplayDefense();
     }
 
     public void forcePlayerWin() {

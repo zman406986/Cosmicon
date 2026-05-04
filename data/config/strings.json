@@ -499,7 +499,8 @@
         "g2_t2_defense_wait": "The dice are clashing! Wait for the result...",
         "g2_t2_defense_resolve": "Turn resolved! Click 'Continue' for the final attack.",
         "g2_t3_attack_roll": "The weather changed! Roll your dice.",
-        "g2_t3_attack_select": "Select your 4s and use prismatic dice to finish the opponent!",
+        "g2_t3_attack_prismatic": "Use your Repeater prismatic die again for another Combo attack!",
+        "g2_t3_attack_select": "Select the 4s and the prismatic die to finish the opponent with a Combo!",
         "g2_t3_attack_confirm": "Confirm to win!",
         "g2_victory": "Victory! You mastered abilities, prismatic dice, and weather! You unlocked Acheron and prismatic dice. Play more encounters at the bar to discover additional characters and special dice."
     },

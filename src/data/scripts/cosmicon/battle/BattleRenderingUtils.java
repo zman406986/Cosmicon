@@ -44,6 +44,12 @@ public final class BattleRenderingUtils {
     public static final float OPPONENT_DICE_ZONE_Y_OFFSET = 80f;
     public static final float OPPONENT_DICE_ZONE_W = 350f;
     public static final float OPPONENT_DICE_ZONE_H = 80f;
+    public static final float PLAYER_REST_GRID_CENTER_X = 250f;
+    public static final float PLAYER_REST_GRID_CENTER_Y = 525f;
+    public static final float OPPONENT_REST_GRID_CENTER_X = 750f;
+    public static final float OPPONENT_REST_GRID_CENTER_Y = 175f;
+    public static final float REST_GRID_DICE_SPACING = 70f;
+
     public static final float BUTTON_WIDTH = 120f;
     public static final float BUTTON_HEIGHT = 40f;
 
@@ -320,6 +326,44 @@ public final class BattleRenderingUtils {
 
         GL11.glBegin(GL11.GL_LINE_LOOP);
         int segments = 8;
+        float step = (float) Math.PI / 2 / segments;
+
+        for (int i = 0; i <= segments; i++) {
+            float angle = (float) Math.PI + i * step;
+            GL11.glVertex2f(x + radius + (float) Math.cos(angle) * radius, y + radius + (float) Math.sin(angle) * radius);
+        }
+        for (int i = 0; i <= segments; i++) {
+            float angle = (float) Math.PI * 1.5f + i * step;
+            GL11.glVertex2f(x + w - radius + (float) Math.cos(angle) * radius, y + radius + (float) Math.sin(angle) * radius);
+        }
+        for (int i = 0; i <= segments; i++) {
+            float angle = i * step;
+            GL11.glVertex2f(x + w - radius + (float) Math.cos(angle) * radius, y + h - radius + (float) Math.sin(angle) * radius);
+        }
+        for (int i = 0; i <= segments; i++) {
+            float angle = (float) Math.PI / 2 + i * step;
+            GL11.glVertex2f(x + radius + (float) Math.cos(angle) * radius, y + h - radius + (float) Math.sin(angle) * radius);
+        }
+        GL11.glEnd();
+        GLStateUtil.resetColor();
+    }
+
+    public static final Color COLOR_WEATHER_DESC_BG = new Color(25, 30, 45, 200);
+    public static final Color COLOR_WEATHER_DESC_BORDER = new Color(60, 70, 100);
+
+    public static void renderWeatherDescBox(float x, float y, float w, float h, float alphaMult) {
+        GLStateUtil.resetBlendState();
+
+        Misc.renderQuad(x + 2, y - 2, w, h, COLOR_SHADOW, alphaMult * 0.3f);
+        Misc.renderQuad(x, y, w, h, COLOR_WEATHER_DESC_BG, alphaMult);
+
+        float radius = 6f;
+        float[] c = ColorHelper.toGLComponents(COLOR_WEATHER_DESC_BORDER, alphaMult);
+        GL11.glColor4f(c[0], c[1], c[2], c[3]);
+        GL11.glLineWidth(1.5f);
+
+        GL11.glBegin(GL11.GL_LINE_LOOP);
+        int segments = 6;
         float step = (float) Math.PI / 2 / segments;
 
         for (int i = 0; i <= segments; i++) {

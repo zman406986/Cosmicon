@@ -31,9 +31,15 @@ public class DiceAnimator {
     private static final float SCATTER_TRAVEL_DURATION = 0.6f;
     private static final float SCATTER_DROP_DURATION = 0.4f;
     
+    private static final float TRAVEL_TO_REST_DURATION = 0.5f;
+    private static final float REST_DROP_DURATION = 0.3f;
+    private static final float VALUE_CHANGE_DURATION = 0.4f;
+    private static final float VALUE_CHANGE_SCALE = 1.3f;
+    
     private enum Phase { STATIONARY_PREVIEW, SCATTER_PICKUP, SCATTER_TRAVEL, SCATTER_DROP,
                          ROLL_PICKUP, ROLLING, DROP, TRAVEL, SETTLE, REVEAL, 
-                         WAITING_FOR_CENTERING, PICKUP, CENTERING_TRAVEL, CENTERING_DROP, COMPLETE }
+                         WAITING_FOR_CENTERING, PICKUP, CENTERING_TRAVEL, CENTERING_DROP,
+                         TRAVEL_TO_REST, REST_DROP, RESTING, VALUE_CHANGE, COMPLETE }
     
     private DiceType type;
     private int finalValue;
@@ -58,6 +64,10 @@ public class DiceAnimator {
     private float targetCenterY;
     private float scatterTargetX;
     private float scatterTargetY;
+    
+    private float restStartX;
+    private float restStartY;
+    private int preChangeValue;
     
     private int bounceCount;
     private float[] bounceHeights;
@@ -310,7 +320,7 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         phaseElapsed += amount;
         
         switch (phase) {
-            case STATIONARY_PREVIEW, WAITING_FOR_CENTERING -> { }
+            case STATIONARY_PREVIEW, WAITING_FOR_CENTERING, RESTING -> { }
             case SCATTER_PICKUP -> advanceScatterPickup();
             case SCATTER_TRAVEL -> advanceScatterTravel();
             case SCATTER_DROP -> advanceScatterDrop();
@@ -322,6 +332,9 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
             case PICKUP -> advancePickup();
             case CENTERING_TRAVEL -> advanceCenteringTravel();
             case CENTERING_DROP -> advanceCenteringDrop();
+            case TRAVEL_TO_REST -> advanceTravelToRest();
+            case REST_DROP -> advanceRestDrop();
+            case VALUE_CHANGE -> advanceValueChange();
             case COMPLETE -> complete = true;
         }
     }
@@ -561,7 +574,8 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         
         SpriteAPI sprite;
         boolean isScatterPickupOrTravel = phase == Phase.SCATTER_PICKUP || phase == Phase.SCATTER_TRAVEL || phase == Phase.SCATTER_DROP;
-        if (phase == Phase.STATIONARY_PREVIEW || isScatterPickupOrTravel) {
+        boolean isRestPhase = phase == Phase.RESTING || phase == Phase.TRAVEL_TO_REST || phase == Phase.REST_DROP || phase == Phase.VALUE_CHANGE;
+        if (phase == Phase.STATIONARY_PREVIEW || isScatterPickupOrTravel || isRestPhase) {
             if (type == DiceType.PRISMATIC) {
                 sprite = DiceSpriteRegistry.getPrismaticFrame(stationaryResultIndex, stationaryFrameIndex);
             } else {
@@ -582,7 +596,9 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         boolean isSettledPhase = phase == Phase.PICKUP || phase == Phase.CENTERING_TRAVEL || 
                                   phase == Phase.CENTERING_DROP ||
                                   phase == Phase.SCATTER_PICKUP || phase == Phase.SCATTER_TRAVEL ||
-                                  phase == Phase.SCATTER_DROP;
+                                  phase == Phase.SCATTER_DROP || phase == Phase.TRAVEL_TO_REST ||
+                                  phase == Phase.REST_DROP || phase == Phase.RESTING ||
+                                  phase == Phase.VALUE_CHANGE;
         
         // Use existing context if available (parent already set it), otherwise create one
         UnifiedCoord.PanelContext existingCtx = UnifiedCoord.getCurrentOrNull();
@@ -652,6 +668,167 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         return elapsed >= 0f && !complete;
     }
     
+    public void startTravelToRest(float targetX, float targetY) {
+        this.restStartX = x + posXOffset;
+        this.restStartY = y + posYOffset;
+        this.targetCenterX = targetX;
+        this.targetCenterY = targetY;
+        this.phase = Phase.TRAVEL_TO_REST;
+        this.phaseElapsed = 0f;
+        this.complete = false;
+        this.currentFrame = type != null ? type.getMaxFace() : 0;
+        this.stationaryFrameIndex = currentFrame;
+        this.stationaryResultIndex = finalValue;
+    }
+    
+    public void startTravelToRestFrom(DiceAnimator source, DiceType diceType, int value,
+                                        float targetX, float targetY) {
+        this.type = diceType;
+        this.finalValue = value;
+        this.x = source.getX() + source.getPosXOffset();
+        this.y = source.getY() + source.getPosYOffset();
+        this.restStartX = x;
+        this.restStartY = y;
+        this.targetCenterX = targetX;
+        this.targetCenterY = targetY;
+        this.phase = Phase.TRAVEL_TO_REST;
+        this.phaseElapsed = 0f;
+        this.elapsed = 0f;
+        this.complete = false;
+        this.scale = source.getScale();
+        this.currentFrame = diceType != null ? diceType.getMaxFace() : 0;
+        this.stationaryFrameIndex = currentFrame;
+        this.stationaryResultIndex = value;
+        this.posXOffset = 0f;
+        this.posYOffset = 0f;
+        this.useDirectionalAnimation = true;
+    }
+    
+    public void startFromRestPosition(DiceType type, int finalValue,
+                                       float restX, float restY,
+                                       float scatterX, float scatterY,
+                                       float delay,
+                                       float rotation, float travelDistance, int bounceCount,
+                                       float[] bounceHeights, float targetCenterX, float targetCenterY) {
+        this.type = type;
+        this.finalValue = finalValue;
+        this.x = restX;
+        this.y = restY;
+        this.scatterTargetX = scatterX;
+        this.scatterTargetY = scatterY;
+        this.targetCenterX = targetCenterX;
+        this.targetCenterY = targetCenterY;
+        this.elapsed = -delay;
+        this.complete = false;
+        this.currentFrame = type != null ? type.getMaxFace() : 0;
+        this.posXOffset = 0f;
+        this.posYOffset = 0f;
+        this.rotation = rotation;
+        this.directionRad = (float)Math.toRadians(rotation);
+        this.travelDistance = travelDistance;
+        this.bounceCount = bounceCount;
+        this.bounceHeights = bounceHeights;
+        this.phase = Phase.SCATTER_PICKUP;
+        this.phaseElapsed = 0f;
+        this.scale = 1f;
+        this.useDirectionalAnimation = true;
+        this.stationaryFrameIndex = type != null ? type.getMaxFace() : 0;
+        this.stationaryResultIndex = finalValue;
+        this.rollPickupStartScale = 1f;
+    }
+    
+    public void startResting() {
+        this.phase = Phase.RESTING;
+        this.phaseElapsed = 0f;
+        this.complete = true;
+        this.scale = 1f;
+        this.posXOffset = 0f;
+        this.posYOffset = 0f;
+        this.currentFrame = type != null ? type.getMaxFace() : 0;
+        this.stationaryFrameIndex = currentFrame;
+        this.stationaryResultIndex = finalValue;
+    }
+    
+    public void animateValueChange(int newValue) {
+        this.preChangeValue = this.finalValue;
+        this.finalValue = newValue;
+        this.phase = Phase.VALUE_CHANGE;
+        this.phaseElapsed = 0f;
+        this.complete = false;
+        this.stationaryResultIndex = newValue;
+    }
+    
+    private void advanceTravelToRest() {
+        currentFrame = stationaryFrameIndex;
+        float progress = Math.min(1f, phaseElapsed / TRAVEL_TO_REST_DURATION);
+        float eased = EasingUtil.easeInOutQuad(progress);
+        
+        float currentX = restStartX + (targetCenterX - restStartX) * eased;
+        float currentY = restStartY + (targetCenterY - restStartY) * eased;
+        
+        posXOffset = currentX - x;
+        posYOffset = currentY - y;
+        
+        scale = 1f + (CENTERING_SCALE - 1f) * (float)Math.sin(progress * Math.PI);
+        
+        if (phaseElapsed >= TRAVEL_TO_REST_DURATION) {
+            x = targetCenterX;
+            y = targetCenterY;
+            posXOffset = 0f;
+            posYOffset = 0f;
+            phase = Phase.REST_DROP;
+            phaseElapsed = 0f;
+        }
+    }
+    
+    private void advanceRestDrop() {
+        currentFrame = stationaryFrameIndex;
+        float progress = Math.min(1f, phaseElapsed / REST_DROP_DURATION);
+        float eased = EasingUtil.easeInQuad(progress);
+        scale = CENTERING_SCALE - (CENTERING_SCALE - 1f) * eased;
+        
+        if (phaseElapsed >= REST_DROP_DURATION) {
+            scale = 1f;
+            phase = Phase.RESTING;
+            phaseElapsed = 0f;
+            complete = true;
+        }
+    }
+    
+    private void advanceValueChange() {
+        float progress = Math.min(1f, phaseElapsed / VALUE_CHANGE_DURATION);
+        
+        if (progress < 0.3f) {
+            float shrinkProgress = progress / 0.3f;
+            scale = 1f - (1f - 0.7f) * EasingUtil.easeInQuad(shrinkProgress);
+        } else if (progress < 0.5f) {
+            float growProgress = (progress - 0.3f) / 0.2f;
+            scale = 0.7f + (VALUE_CHANGE_SCALE - 0.7f) * EasingUtil.easeOutQuad(growProgress);
+        } else {
+            float settleProgress = (progress - 0.5f) / 0.5f;
+            scale = VALUE_CHANGE_SCALE - (VALUE_CHANGE_SCALE - 1f) * EasingUtil.easeInQuad(settleProgress);
+        }
+        
+        if (phaseElapsed >= VALUE_CHANGE_DURATION) {
+            scale = 1f;
+            phase = Phase.RESTING;
+            phaseElapsed = 0f;
+            complete = true;
+        }
+    }
+    
+    public boolean isAtRest() {
+        return phase == Phase.RESTING;
+    }
+    
+    public boolean isTravelingToRest() {
+        return phase == Phase.TRAVEL_TO_REST || phase == Phase.REST_DROP;
+    }
+    
+    public boolean isRestOrTravel() {
+        return phase == Phase.RESTING || phase == Phase.TRAVEL_TO_REST || phase == Phase.REST_DROP || phase == Phase.VALUE_CHANGE;
+    }
+    
     public void forceComplete() {
         // Snap to target grid slot so visuals and hitboxes agree on position.
         // Callers that clear the list (clear/clearOpponentAnimators) are unaffected.
@@ -717,5 +894,13 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
     
     public float getTargetSlotY() {
         return targetCenterY;
+    }
+    
+    public float getPosXOffset() {
+        return posXOffset;
+    }
+    
+    public float getPosYOffset() {
+        return posYOffset;
     }
 }

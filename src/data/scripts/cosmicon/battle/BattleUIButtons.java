@@ -29,6 +29,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
     private static final String ACTION_DEBUG_WIN = "debug_win";
     private static final float PASSIVE_BTN_WIDTH = 150f;
     private static final float PASSIVE_BTN_HEIGHT = 25f;
+    private static final float PRISMATIC_BTN_SIZE = 40f;
 
     private CustomPanelAPI panel;
     private DialogCallbacks callbacks;
@@ -40,8 +41,12 @@ public class BattleUIButtons implements ActionListenerDelegate {
 
     private ButtonAPI rerollButton;
     private ButtonAPI confirmButton;
-    private LabelAPI weatherLabel;
+    private LabelAPI weatherTitleLabel;
     private LabelAPI weatherDescLabel;
+    private float weatherDescBoxX;
+    private float weatherDescBoxY;
+    private float weatherDescBoxW;
+    private float weatherDescBoxH;
     private boolean buttonsCreated = false;
 
     private PrismaticDiceSelectionPopup prismaticPopup;
@@ -153,8 +158,8 @@ public class BattleUIButtons implements ActionListenerDelegate {
             }
         }, TooltipLocation.LEFT, false);
 
-        playerPrismaticBtnX = BattleRenderingUtils.MARGIN + 60f;
-        playerPrismaticBtnY = BattleRenderingUtils.PANEL_HEIGHT - 100f;
+        playerPrismaticBtnX = BattleRenderingUtils.MARGIN + 10f;
+        playerPrismaticBtnY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.MARGIN - PRISMATIC_BTN_SIZE - 10f;
 
         createWeatherLabel();
 
@@ -239,47 +244,49 @@ public class BattleUIButtons implements ActionListenerDelegate {
 
     private void createWeatherLabel() {
         float boxWidth = 230f;
-        float boxHeight = 80f;
+        float descBoxHeight = 40f;
+        float descBoxPadding = 8f;
         float titleHeight = 18f;
-        float playerCardUiX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
         float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
 
         float weatherX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.MARGIN - boxWidth;
-        float titleY = playerCardY - PASSIVE_BTN_HEIGHT - titleHeight - boxHeight - 15f;
-        float boxY = titleY + titleHeight + 8f;
+        float titleY = playerCardY - PASSIVE_BTN_HEIGHT - titleHeight - descBoxHeight - 15f;
+        float descBoxY = titleY + titleHeight + 4f;
 
-        UIComponentFactory.createLabelSmall(panel, Strings.get("battle.weather_effects"),
-            java.awt.Color.LIGHT_GRAY, com.fs.starfarer.api.ui.Alignment.MID, boxWidth, titleHeight, weatherX, titleY);
+        weatherTitleLabel = UIComponentFactory.createLabelSmall(panel, Strings.get("battle.weather_effects"),
+            java.awt.Color.LIGHT_GRAY, com.fs.starfarer.api.ui.Alignment.LMID, boxWidth, titleHeight, weatherX, titleY);
 
-        TooltipMakerAPI weatherTp = panel.createUIElement(boxWidth, boxHeight, false);
-        panel.addUIElement(weatherTp).inTL(weatherX, boxY);
+        weatherDescBoxX = weatherX;
+        weatherDescBoxY = descBoxY;
+        weatherDescBoxW = boxWidth;
+        weatherDescBoxH = descBoxHeight;
 
-        weatherLabel = weatherTp.addPara(Strings.get("battle.weather_none"), 0f);
-        weatherLabel.setAlignment(com.fs.starfarer.api.ui.Alignment.MID);
+        TooltipMakerAPI weatherTp = panel.createUIElement(boxWidth, descBoxHeight, false);
+        panel.addUIElement(weatherTp).inTL(weatherX, descBoxY + descBoxPadding);
 
-        weatherDescLabel = weatherTp.addPara("", java.awt.Color.GRAY, 8f);
+        weatherDescLabel = weatherTp.addPara("", java.awt.Color.GRAY, 0f);
         weatherDescLabel.setAlignment(com.fs.starfarer.api.ui.Alignment.MID);
 
         updateWeatherLabel();
     }
 
     public void updateWeatherLabel() {
-        if (weatherLabel == null || battleState == null) return;
+        if (weatherTitleLabel == null || battleState == null) return;
         WeatherController wc = battleState.getWeatherController();
         if (wc == null) {
-            weatherLabel.setText(Strings.get("battle.weather_none"));
-            weatherLabel.setColor(java.awt.Color.GRAY);
+            weatherTitleLabel.setText(Strings.get("battle.weather_effects") + ": " + Strings.get("battle.weather_none"));
+            weatherTitleLabel.setColor(java.awt.Color.LIGHT_GRAY);
             if (weatherDescLabel != null) weatherDescLabel.setText("");
             return;
         }
         WeatherType weather = wc.getCurrentWeather();
         if (weather == null) {
-            weatherLabel.setText(Strings.get("battle.weather_none"));
-            weatherLabel.setColor(java.awt.Color.GRAY);
+            weatherTitleLabel.setText(Strings.get("battle.weather_effects") + ": " + Strings.get("battle.weather_none"));
+            weatherTitleLabel.setColor(java.awt.Color.LIGHT_GRAY);
             if (weatherDescLabel != null) weatherDescLabel.setText("");
         } else {
-            weatherLabel.setText(Strings.get("weather." + weather.name().toLowerCase()));
-            weatherLabel.setColor(weather.getColor());
+            weatherTitleLabel.setText(Strings.get("battle.weather_effects") + ": " + Strings.get("weather." + weather.name().toLowerCase()));
+            weatherTitleLabel.setColor(weather.getColor());
             if (weatherDescLabel != null) {
                 weatherDescLabel.setText(weather.getDescription());
             }
@@ -396,6 +403,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
         boolean canReroll = playerShouldSelect && selectedCount > 0 && hasRerolls;
         if (tutorialController != null) {
             canReroll = canReroll && tutorialController.isRerollAllowed();
+            canReroll = canReroll && tutorialController.canRerollWithCurrentSelection();
         }
         rerollButton.setEnabled(canReroll);
     }
@@ -419,6 +427,9 @@ public class BattleUIButtons implements ActionListenerDelegate {
 
             @Override
             public void onPopupClosed() {
+                if (tutorialController != null) {
+                    tutorialController.onPrismaticPopupClosed();
+                }
                 closePrismaticPopup();
             }
         });
@@ -452,8 +463,12 @@ public class BattleUIButtons implements ActionListenerDelegate {
         battleState = null;
         diceRollManager = null;
         labels = null;
-        weatherLabel = null;
+        weatherTitleLabel = null;
         weatherDescLabel = null;
+        weatherDescBoxX = 0f;
+        weatherDescBoxY = 0f;
+        weatherDescBoxW = 0f;
+        weatherDescBoxH = 0f;
         buttonsCreated = false;
     }
 
@@ -486,5 +501,10 @@ public class BattleUIButtons implements ActionListenerDelegate {
     public float getPlayerPrismaticBtnY() {
         return playerPrismaticBtnY;
     }
+
+    public float getWeatherDescBoxX() { return weatherDescBoxX; }
+    public float getWeatherDescBoxY() { return weatherDescBoxY; }
+    public float getWeatherDescBoxW() { return weatherDescBoxW; }
+    public float getWeatherDescBoxH() { return weatherDescBoxH; }
 
     }
