@@ -27,6 +27,8 @@ import data.scripts.cosmicon.prismatic.PrismaticEffect;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
 import data.scripts.cosmicon.state.CosmiconStats;
+import data.scripts.cosmicon.state.CosmiconEventState;
+import data.scripts.cosmicon.tutorial.TutorialDiceRoller;
 import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.PopupRenderer;
 import data.scripts.cosmicon.util.PrismaticDisplayHelper;
@@ -153,7 +155,8 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
             PrismaticDiceType type = PrismaticDiceRegistry.get(diceId);
             if (type == null) continue;
 
-            if (!CosmiconStats.isPrismaticDiceUnlocked(diceId)) continue;
+            boolean isTutorial = CosmiconEventState.isTutorialMode() || CosmiconStats.isInTutorialMode();
+            if (!isTutorial && !CosmiconStats.isPrismaticDiceUnlocked(diceId)) continue;
 
             int uses = manager != null ? manager.getUsesByType(type, true) : entry.getValue();
             boolean isAvailable = type.isAvailable(context);
@@ -242,9 +245,7 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
                 showingConfirmation = false;
                 selectedType = null;
                 rolledInstance = null;
-                if (selectionCallback != null) {
-                    selectionCallback.onPopupClosed();
-                }
+                updateVisibility();
             } else if (action.equals("confirm_roll")) {
                 confirmRoll();
             } else if (action.startsWith("roll_")) {
@@ -260,9 +261,14 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
     private void showConfirmation(PrismaticDiceType type) {
         showingConfirmation = true;
 
-        Random random = new Random();
         boolean useTrueVersion = battleState.getPlayerCard() != null && battleState.getPlayerCard().isUseTruePrismatic();
-        rolledInstance = PrismaticDiceInstance.roll(type, useTrueVersion, random);
+
+        TutorialDiceRoller tutorialRoller = battleState.getTutorialDiceRoller();
+        if (tutorialRoller != null && tutorialRoller.shouldInterceptPrismaticRoll()) {
+            rolledInstance = tutorialRoller.getFixedPrismaticRoll(type, useTrueVersion);
+        } else {
+            rolledInstance = PrismaticDiceInstance.roll(type, useTrueVersion, new Random());
+        }
 
         String diceName = PrismaticDisplayHelper.getDiceDisplayName(type);
         confirmTitleLabel.setText(Strings.format("prismatic.popup.about_to_roll", diceName));

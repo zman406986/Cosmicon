@@ -165,8 +165,10 @@ public class BattleInputHandler {
                 return;
             }
 
-            if (battleState.getCurrentPhase() != Phase.SELECTING_ATTACK &&
-                battleState.getCurrentPhase() != Phase.SELECTING_DEFENSE) {
+            if (battleState.getCurrentPhase() == Phase.DICE_DISPLAY_ATTACK ||
+                battleState.getCurrentPhase() == Phase.DICE_DISPLAY_DEFENSE ||
+                (battleState.getCurrentPhase() != Phase.SELECTING_ATTACK &&
+                battleState.getCurrentPhase() != Phase.SELECTING_DEFENSE)) {
                 lastMouseButtonState = currentButton;
                 UnifiedCoord.clearCurrent();
                 return;
@@ -188,6 +190,11 @@ public class BattleInputHandler {
                 boolean inside = mousePos.isInsideRect(hb[0], hb[1], hb[2], hb[3]);
                 if (inside) {
                     if (tutorialController != null && !tutorialController.isDiceClickable()) {
+                        lastMouseButtonState = currentButton;
+                        UnifiedCoord.clearCurrent();
+                        return;
+                    }
+                    if (tutorialController != null && !tutorialController.isDiceSelectionAllowed(i)) {
                         lastMouseButtonState = currentButton;
                         UnifiedCoord.clearCurrent();
                         return;

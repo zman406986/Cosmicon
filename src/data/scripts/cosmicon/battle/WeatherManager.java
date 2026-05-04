@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import data.scripts.cosmicon.util.CharacterIds;
 
@@ -15,10 +16,14 @@ public class WeatherManager {
     
     private WeatherType currentWeather;
     private int currentTurn;
+    private int halfTurnCount;
+    private boolean fullTurnBoundary;
     private final List<WeatherType> weatherSchedule;
     private final boolean isStoryBattle;
     private final String storyBattleId;
     private Map<Integer, WeatherType> forcedWeatherSchedule;
+    private boolean weatherDisabled;
+    private final Random random;
     
     private static final Map<String, List<WeatherType>> STORY_BATTLE_WEATHERS = new HashMap<>();
     
@@ -54,16 +59,23 @@ public class WeatherManager {
     public WeatherManager(boolean isStoryBattle, String storyBattleId) {
         this.currentTurn = 1;
         this.currentWeather = null;
+        this.halfTurnCount = 0;
+        this.fullTurnBoundary = true;
         this.isStoryBattle = isStoryBattle;
         this.storyBattleId = storyBattleId;
         this.weatherSchedule = new ArrayList<>();
         this.forcedWeatherSchedule = null;
+        this.random = new Random();
         
         initializeWeatherSchedule();
     }
     
     public void setForcedWeatherSchedule(Map<Integer, WeatherType> schedule) {
         this.forcedWeatherSchedule = schedule;
+    }
+    
+    public void setWeatherDisabled(boolean disabled) {
+        this.weatherDisabled = disabled;
     }
     
     private void initializeWeatherSchedule() {
@@ -82,20 +94,13 @@ public class WeatherManager {
     }
     
     private void generateRandomWeatherSchedule() {
-        List<WeatherType> turn2Weathers = getWeathersForTurn(2);
-        List<WeatherType> turn4Weathers = getWeathersForTurn(4);
-        List<WeatherType> turn6Weathers = getWeathersForTurn(6);
-        List<WeatherType> turn8Weathers = getWeathersForTurn(8);
-        
-        Collections.shuffle(turn2Weathers);
-        Collections.shuffle(turn4Weathers);
-        Collections.shuffle(turn6Weathers);
-        Collections.shuffle(turn8Weathers);
-        
-        weatherSchedule.add(turn2Weathers.get(0));
-        weatherSchedule.add(turn4Weathers.get(0));
-        weatherSchedule.add(turn6Weathers.get(0));
-        weatherSchedule.add(turn8Weathers.get(0));
+        for (int turn : WEATHER_TURN_SCHEDULE) {
+            List<WeatherType> candidates = getWeathersForTurn(turn);
+            if (!candidates.isEmpty()) {
+                Collections.shuffle(candidates, random);
+                weatherSchedule.add(candidates.get(0));
+            }
+        }
     }
     
     private List<WeatherType> getWeathersForTurn(int turn) {
@@ -108,7 +113,26 @@ public class WeatherManager {
         return result;
     }
     
-    public void advanceTurn() {
+    private List<WeatherType> getWeathersForTurn(int turn, boolean allowSafeguard, boolean allowAttack) {
+        List<WeatherType> result = new ArrayList<>();
+        for (WeatherType weather : WeatherType.values()) {
+            if (weather.getDefaultTurn() != turn) continue;
+            WeatherCategory cat = weather.getCategory();
+            if (cat == WeatherCategory.SAFEGUARD && !allowSafeguard) continue;
+            if (cat == WeatherCategory.ATTACK && !allowAttack) continue;
+            result.add(weather);
+        }
+        return result;
+    }
+    
+    public void advanceTurn(boolean allowSafeguard, boolean allowAttack) {
+        if (weatherDisabled) return;
+        
+        halfTurnCount++;
+        fullTurnBoundary = (halfTurnCount % 2 == 0);
+        
+        if (!fullTurnBoundary) return;
+        
         currentTurn++;
         
         if (forcedWeatherSchedule != null && forcedWeatherSchedule.containsKey(currentTurn)) {
@@ -117,15 +141,42 @@ public class WeatherManager {
         }
         
         int scheduleIndex = WEATHER_TURN_SCHEDULE.indexOf(currentTurn);
-        if (scheduleIndex >= 0 && scheduleIndex < weatherSchedule.size()) {
-            WeatherType newWeather = weatherSchedule.get(scheduleIndex);
-            setCurrentWeather(newWeather);
+        if (scheduleIndex < 0 || scheduleIndex >= weatherSchedule.size()) return;
+        
+        if (isStoryBattle || isNpcDuel()) {
+            setCurrentWeather(weatherSchedule.get(scheduleIndex));
+            return;
         }
+        
+        WeatherType scheduled = weatherSchedule.get(scheduleIndex);
+        WeatherCategory cat = scheduled.getCategory();
+        boolean scheduledAllowed = !((cat == WeatherCategory.SAFEGUARD && !allowSafeguard) ||
+                                     (cat == WeatherCategory.ATTACK && !allowAttack));
+        
+        if (scheduledAllowed) {
+            setCurrentWeather(scheduled);
+            return;
+        }
+        
+        List<WeatherType> candidates = getWeathersForTurn(currentTurn, allowSafeguard, allowAttack);
+        if (candidates.isEmpty()) {
+            candidates = getWeathersForTurn(currentTurn);
+        }
+        if (!candidates.isEmpty()) {
+            Collections.shuffle(candidates, random);
+            setCurrentWeather(candidates.get(0));
+        }
+    }
+    
+    public boolean isFullTurnBoundary() {
+        return fullTurnBoundary;
     }
     
     public void reset() {
         currentTurn = 1;
         currentWeather = null;
+        halfTurnCount = 0;
+        fullTurnBoundary = true;
         weatherSchedule.clear();
         initializeWeatherSchedule();
     }
@@ -137,8 +188,6 @@ public class WeatherManager {
     public void setCurrentWeather(WeatherType weather) {
         this.currentWeather = weather;
     }
-    
-    
     
     public boolean isNpcDuel() {
         return false;

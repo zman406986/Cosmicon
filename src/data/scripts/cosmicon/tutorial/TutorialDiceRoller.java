@@ -6,6 +6,8 @@ import java.util.List;
 import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.DiceType;
+import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
+import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class TutorialDiceRoller {
@@ -43,6 +45,9 @@ public class TutorialDiceRoller {
         {3, 2, 2, 1, 1}
     };
 
+    private static final int GAME2_PRISMATIC_FACE = 4;
+    private static final int GAME2_PRISMATIC_FACE_INDEX = 4;
+
     public TutorialDiceRoller(TutorialController controller) {
         this.controller = controller;
         this.playerRollIndex = 0;
@@ -52,6 +57,22 @@ public class TutorialDiceRoller {
 
     public boolean shouldInterceptRoll() {
         return true;
+    }
+
+    public boolean shouldInterceptPrismaticRoll() {
+        return controller.getGame() == TutorialController.TutorialGame.GAME_2_ACHERON;
+    }
+
+    public PrismaticDiceInstance getFixedPrismaticRoll(PrismaticDiceType type, boolean isTrueVersion) {
+        if (controller.getGame() == TutorialController.TutorialGame.GAME_2_ACHERON
+                && "repeater".equals(type.getId()) && !isTrueVersion) {
+            PrismaticDiceInstance instance = new PrismaticDiceInstance(
+                type, false, GAME2_PRISMATIC_FACE, GAME2_PRISMATIC_FACE_INDEX);
+            CosmiconLogger.debug("TutorialDiceRoller: Fixed prismatic roll for %s - face: %d, special: %s",
+                type.getId(), instance.rolledFace, instance.isSpecialFace);
+            return instance;
+        }
+        return PrismaticDiceInstance.roll(type, isTrueVersion);
     }
 
     public boolean shouldInterceptReroll(boolean forPlayer) {

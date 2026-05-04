@@ -83,6 +83,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     private boolean rerollSelectionClearPending;
 
     private float preClashTimer;
+    private float diceDisplayTimer;
+    private static final float DICE_DISPLAY_DURATION = 0.8f;
 
     public BattlePanelUI() {
         List<float[]> diceHitboxes = new ArrayList<>();
@@ -99,6 +101,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         this.valueAnimationPending = false;
         this.rerollSelectionClearPending = false;
         this.preClashTimer = 0f;
+        this.diceDisplayTimer = 0f;
     }
 
     public void setBattleController(BattleController controller) {
@@ -191,6 +194,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         diceRollManager.init();
         diceRollManager.setBattleState(battleState);
 
+        if (battleController != null) {
+            battleController.setDiceRollManager(diceRollManager);
+        }
+
         PositionAPI pos = panel.getPosition();
         panelX = pos.getX();
         panelY = pos.getY();
@@ -203,8 +210,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         buttons = new BattleUIButtons();
 
         float opponentCardY = BattleRenderingUtils.MARGIN;
-        opponentPrismaticBtnX = BattleRenderingUtils.PANEL_WIDTH / 2f + 100f;
-        opponentPrismaticBtnY = opponentCardY + 40f;
+        opponentPrismaticBtnX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.MARGIN - PRISMATIC_BTN_SIZE - 10f;
+        opponentPrismaticBtnY = BattleRenderingUtils.MARGIN + 10f;
         labels.init(panel, battleState, diceRollManager,
             opponentPrismaticBtnX, opponentPrismaticBtnY,
             BattleRenderingUtils.MARGIN + 60f, BattleRenderingUtils.PANEL_HEIGHT - 100f);
@@ -268,6 +275,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             dicePreviewActive = false;
             dicePreviewDelay = 0f;
             preClashTimer = 0f;
+            diceDisplayTimer = 0f;
             valueAnimationPending = false;
             if (damageAnimator == null || damageAnimator.isComplete()) {
                 damageAnimationPending = false;
@@ -288,6 +296,30 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             if (diceRollManager != null) {
                 diceRollManager.clear();
                 diceRollManager.clearOpponentAnimators();
+                
+                if (!battleState.isDefenderRolling()) {
+                    boolean attackerIsPlayer = battleState.isPlayerAttacker();
+                    if (diceRollManager.hasRestAnimators(attackerIsPlayer)) {
+                        List<DiceType> types = attackerIsPlayer ? battleState.getPlayerDiceTypes() : battleState.getOpponentDiceTypes();
+                        List<Integer> values = attackerIsPlayer ? battleState.getPlayerDiceValues() : battleState.getOpponentDiceValues();
+                        float centerX = attackerIsPlayer ? diceZoneCenterX : opponentDiceZoneCenterX;
+                        float centerY = attackerIsPlayer ? diceZoneCenterY : opponentDiceZoneCenterY;
+                        if (types != null && values != null) {
+                            diceRollManager.startRollFromRest(attackerIsPlayer, types, values, centerX, centerY);
+                        }
+                    }
+                } else {
+                    boolean defenderIsPlayer = !battleState.isPlayerAttacker();
+                    if (diceRollManager.hasRestAnimators(defenderIsPlayer)) {
+                        List<DiceType> types = defenderIsPlayer ? battleState.getPlayerDiceTypes() : battleState.getOpponentDiceTypes();
+                        List<Integer> values = defenderIsPlayer ? battleState.getPlayerDiceValues() : battleState.getOpponentDiceValues();
+                        float centerX = defenderIsPlayer ? diceZoneCenterX : opponentDiceZoneCenterX;
+                        float centerY = defenderIsPlayer ? diceZoneCenterY : opponentDiceZoneCenterY;
+                        if (types != null && values != null) {
+                            diceRollManager.startRollFromRest(defenderIsPlayer, types, values, centerX, centerY);
+                        }
+                    }
+                }
             }
             
             if (damageAnimator != null) {
@@ -308,6 +340,22 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             labels.hideClickHint();
         }
 
+        if (newPhase == Phase.DICE_DISPLAY_ATTACK) {
+            diceDisplayTimer = 0f;
+            boolean attackerIsPlayer = battleState.isPlayerAttacker();
+            float gridCenterX = attackerIsPlayer ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_X : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_X;
+            float gridCenterY = attackerIsPlayer ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_Y : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_Y;
+            diceRollManager.moveSelectedToRestGrid(null, attackerIsPlayer, gridCenterX, gridCenterY);
+        }
+
+        if (newPhase == Phase.DICE_DISPLAY_DEFENSE) {
+            diceDisplayTimer = 0f;
+            boolean defenderIsPlayer = !battleState.isPlayerAttacker();
+            float gridCenterX = defenderIsPlayer ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_X : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_X;
+            float gridCenterY = defenderIsPlayer ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_Y : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_Y;
+            diceRollManager.moveSelectedToRestGrid(null, defenderIsPlayer, gridCenterX, gridCenterY);
+        }
+
         if (newPhase == Phase.RESOLVING_PRE_CLASH) {
             preClashTimer = 0f;
             
@@ -322,6 +370,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         if (newPhase == Phase.WAITING_NEXT_TURN || newPhase == Phase.ENDED) {
             if (inputHandler != null) {
                 inputHandler.createDiceHitboxes(new ArrayList<>());
+            }
+            if (newPhase == Phase.ENDED && diceRollManager != null) {
+                diceRollManager.clearAllRestAnimators();
             }
         }
 
@@ -385,6 +436,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         opponentDiceAnimating = false;
         opponentRollDelay = 0f;
         opponentAutoRollDelay = 0f;
+        diceDisplayTimer = 0f;
         
         inputHandler.setWaitingForClickToRoll(false);
         inputHandler.createDiceHitboxes(new ArrayList<>());
@@ -392,6 +444,16 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         boolean defenderIsPlayer = !battleState.isPlayerAttacker();
         if (!defenderIsPlayer) {
             opponentAutoRollDelay = OPPONENT_AUTO_ROLL_DELAY;
+        }
+        
+        if (diceRollManager.hasRestAnimators(defenderIsPlayer)) {
+            List<DiceType> types = defenderIsPlayer ? battleState.getPlayerDiceTypes() : battleState.getOpponentDiceTypes();
+            List<Integer> values = defenderIsPlayer ? battleState.getPlayerDiceValues() : battleState.getOpponentDiceValues();
+            float centerX = defenderIsPlayer ? diceZoneCenterX : opponentDiceZoneCenterX;
+            float centerY = defenderIsPlayer ? diceZoneCenterY : opponentDiceZoneCenterY;
+            if (types != null && values != null) {
+                diceRollManager.startRollFromRest(defenderIsPlayer, types, values, centerX, centerY);
+            }
         }
     }
 
@@ -550,6 +612,26 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                     battleState.setValueChangeAnimationInProgress(false);
                     if (battleController != null) {
                         battleController.proceedToClash();
+                    }
+                }
+            }
+            return;
+        }
+
+        if (currentPhase == Phase.DICE_DISPLAY_ATTACK || currentPhase == Phase.DICE_DISPLAY_DEFENSE) {
+            diceDisplayTimer += amount;
+            boolean forPlayer = currentPhase == Phase.DICE_DISPLAY_ATTACK ? battleState.isPlayerAttacker() : !battleState.isPlayerAttacker();
+            boolean travelComplete = diceRollManager.isRestTravelComplete(forPlayer);
+            
+            if (diceDisplayTimer >= DICE_DISPLAY_DURATION && travelComplete) {
+                diceDisplayTimer = 0f;
+                if (currentPhase == Phase.DICE_DISPLAY_ATTACK) {
+                    if (battleController != null) {
+                        battleController.advanceFromDiceDisplayAttack();
+                    }
+                } else {
+                    if (battleController != null) {
+                        battleController.advanceFromDiceDisplayDefense();
                     }
                 }
             }
@@ -845,6 +927,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             renderOpponentCard(alphaMult);
             renderOpponentHpCircle(alphaMult);
             renderStatusEffectBoxes(alphaMult);
+            renderWeatherDescBox(alphaMult);
 
             if (labels.getStatusEffectAnimator() != null && labels.getStatusEffectAnimator().hasActiveAnimations()) {
                 labels.getStatusEffectAnimator().render(x, y, w, h, alphaMult);
@@ -861,6 +944,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             }
 
             diceRollManager.render(x, y, w, h, alphaMult);
+
+            diceRollManager.renderRestingDice(x, y, w, h, alphaMult);
 
             if (damageAnimator != null && !damageAnimator.isComplete()) {
                 damageAnimator.render(x, y, w, h, alphaMult);
@@ -969,6 +1054,16 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         BattleRenderingUtils.renderStatusEffectBox(opponentBoxGlX, opponentBoxGlY,
             BattleRenderingUtils.STATUS_BOX_WIDTH, BattleRenderingUtils.CARD_HEIGHT, alphaMult);
+    }
+
+    private void renderWeatherDescBox(float alphaMult) {
+        if (buttons == null) return;
+        float boxW = buttons.getWeatherDescBoxW();
+        float boxH = buttons.getWeatherDescBoxH();
+        if (boxW <= 0f || boxH <= 0f) return;
+
+        UnifiedCoord boxPos = new UnifiedCoord(buttons.getWeatherDescBoxX(), buttons.getWeatherDescBoxY());
+        BattleRenderingUtils.renderWeatherDescBox(boxPos.glX(), boxPos.glSpriteY(boxH), boxW, boxH, alphaMult);
     }
 
     private void checkProcessedEffects() {

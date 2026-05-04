@@ -400,14 +400,14 @@ public class BattleUILabels {
             ColorHelper.PRISMATIC_GOLD, Alignment.MID, 40f, 20f,
             opponentPrismaticBtnX + (PRISMATIC_BTN_SIZE - 40f) / 2f, opponentPrismaticBtnY + 10f);
 
-        float opponentPrismaticDescX = opponentPrismaticBtnX + 50f;
+        float opponentPrismaticDescX = opponentPrismaticBtnX - 290f;
         opponentPrismaticFaceMappingLabel = UIComponentFactory.createLabel(panel, "", 
-            Fonts.DEFAULT_SMALL, ColorHelper.PRISMATIC_GOLD, Alignment.LMID, 280f, 20f,
+            Fonts.DEFAULT_SMALL, ColorHelper.PRISMATIC_GOLD, Alignment.RMID, 280f, 20f,
             opponentPrismaticDescX, opponentPrismaticBtnY);
         opponentPrismaticFaceMappingLabel.setOpacity(0f);
 
         opponentPrismaticEffectLabel = UIComponentFactory.createLabelSmall(panel, "", 
-            Color.LIGHT_GRAY, Alignment.LMID, 280f, 20f,
+            Color.LIGHT_GRAY, Alignment.RMID, 280f, 20f,
             opponentPrismaticDescX, opponentPrismaticBtnY + 20f);
         opponentPrismaticEffectLabel.setOpacity(0f);
 
@@ -417,8 +417,8 @@ public class BattleUILabels {
         playerPrismaticUsesLabel = UIComponentFactory.createLabelSmall(panel, "2", 
             ColorHelper.PRISMATIC_GOLD, Alignment.MID, 40f, 20f, playerPrismaticUsesX, playerPrismaticUsesY);
 
-        float playerPrismaticDescX = BattleRenderingUtils.MARGIN + 130f;
-        float playerFaceMappingY = BattleRenderingUtils.PANEL_HEIGHT - 100f;
+        float playerPrismaticDescX = playerPrismaticBtnX + PRISMATIC_BTN_SIZE + 10f;
+        float playerFaceMappingY = playerPrismaticBtnY;
 
         playerPrismaticFaceMappingLabel = UIComponentFactory.createLabelSmall(panel, "", 
             ColorHelper.PRISMATIC_GOLD, Alignment.LMID, 280f, 20f, playerPrismaticDescX, playerFaceMappingY);
@@ -648,7 +648,9 @@ public class BattleUILabels {
         String phaseText = switch (phase) {
             case ROLLING -> Strings.get("phase.rolling");
             case SELECTING_ATTACK -> playerAttacking ? Strings.get("phase.your_attack") : Strings.get("phase.opponent_attack");
+            case DICE_DISPLAY_ATTACK -> playerAttacking ? Strings.get("phase.your_attack") : Strings.get("phase.opponent_attack");
             case SELECTING_DEFENSE -> playerAttacking ? Strings.get("phase.opponent_defense") : Strings.get("phase.your_defense");
+            case DICE_DISPLAY_DEFENSE -> playerAttacking ? Strings.get("phase.opponent_defense") : Strings.get("phase.your_defense");
             case RESOLVING_PRE_CLASH -> Strings.get("phase.pre_clash");
             case RESOLVING -> Strings.get("phase.resolving");
             case WAITING_NEXT_TURN -> Strings.format("phase.turn_complete", battleState.getTurnNumber());
@@ -704,6 +706,7 @@ public class BattleUILabels {
         Phase phase = battleState.getCurrentPhase();
 
         boolean shouldShowAttacker = phase == Phase.SELECTING_DEFENSE ||
+                             phase == Phase.DICE_DISPLAY_DEFENSE ||
                              (phase == Phase.ROLLING && battleState.isDefenderRolling()) ||
                              phase == Phase.RESOLVING_PRE_CLASH;
 
@@ -808,7 +811,7 @@ public class BattleUILabels {
         attackerIconValueLabel.getPosition().inTL(centerX - labelW / 2f, attackerLabelY - labelH / 2f);
         defenderIconValueLabel.getPosition().inTL(centerX - labelW / 2f, defenderLabelY - labelH / 2f);
 
-        if (phase == Phase.SELECTING_ATTACK) {
+        if (phase == Phase.SELECTING_ATTACK || phase == Phase.DICE_DISPLAY_ATTACK) {
             int runningTotal = calculateVisibleSum(playerIsAttacker);
             if (runningTotal > 0) {
                 attackerIconValueLabel.setText(String.valueOf(runningTotal));
@@ -818,12 +821,12 @@ public class BattleUILabels {
             return;
         }
 
-        if (phase == Phase.SELECTING_DEFENSE || (phase == Phase.ROLLING && battleState.isDefenderRolling())) {
+        if (phase == Phase.SELECTING_DEFENSE || phase == Phase.DICE_DISPLAY_DEFENSE || (phase == Phase.ROLLING && battleState.isDefenderRolling())) {
             int attackerValue = getAttackerTotalValue();
             attackerIconValueLabel.setText(String.valueOf(attackerValue));
             attackerIconValueLabel.setOpacity(attackerValue > 0 ? 1f : 0f);
 
-            if (phase == Phase.SELECTING_DEFENSE) {
+            if (phase == Phase.SELECTING_DEFENSE || phase == Phase.DICE_DISPLAY_DEFENSE) {
                 int runningTotal = calculateVisibleSum(!playerIsAttacker);
                 if (runningTotal > 0) {
                     defenderIconValueLabel.setText(String.valueOf(runningTotal));

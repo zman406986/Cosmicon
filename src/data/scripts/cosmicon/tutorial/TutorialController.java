@@ -1,8 +1,13 @@
 package data.scripts.cosmicon.tutorial;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.BattleState.Phase;
+import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.state.CosmiconStats;
 
@@ -47,6 +52,7 @@ public class TutorialController {
         G2_T2_DEFENSE_WAIT,
         G2_T2_DEFENSE_RESOLVE,
         G2_T3_ATTACK_ROLL,
+        G2_T3_ATTACK_PRISMATIC,
         G2_T3_ATTACK_SELECT,
         G2_T3_ATTACK_CONFIRM,
         G2_VICTORY
@@ -103,11 +109,80 @@ public class TutorialController {
             case G1_T1_ATTACK_SELECT, G1_T1_DEFENSE_SELECT,
                  G1_T2_ATTACK_REROLL, G1_T2_ATTACK_SELECT,
                  G2_T1_DEFENSE_SELECT,
-                 G2_T2_ATTACK_SELECT,
+                 G2_T2_ATTACK_PRISMATIC, G2_T2_ATTACK_SELECT,
                  G2_T2_DEFENSE_SELECT,
-                 G2_T3_ATTACK_SELECT -> true;
+                 G2_T3_ATTACK_PRISMATIC, G2_T3_ATTACK_SELECT -> true;
             default -> false;
         };
+    }
+
+    public boolean isDiceSelectionAllowed(int diceIndex) {
+        if (complete) return true;
+
+        List<Boolean> selected = battleState.getPlayerDiceSelected();
+        if (diceIndex < 0 || diceIndex >= selected.size()) return false;
+
+        if (selected.get(diceIndex)) return true;
+
+        List<Integer> values = battleState.getPlayerDiceValues();
+        List<DiceType> types = battleState.getPlayerDiceTypes();
+        int value = values.get(diceIndex);
+        boolean isPrismatic = types.get(diceIndex) == DiceType.PRISMATIC;
+
+        return switch (currentStep) {
+            case G1_T1_ATTACK_SELECT, G1_T1_DEFENSE_SELECT,
+                 G1_T2_ATTACK_SELECT,
+                 G2_T1_DEFENSE_SELECT,
+                 G2_T2_DEFENSE_SELECT -> isAmongHighest(diceIndex, values, battleState.getRequiredDiceCount(true));
+
+            case G1_T2_ATTACK_REROLL -> !isMaxValue(diceIndex, values);
+
+            case G2_T2_ATTACK_PRISMATIC, G2_T2_ATTACK_SELECT,
+                 G2_T3_ATTACK_PRISMATIC, G2_T3_ATTACK_SELECT ->
+                isPrismatic || (value == 4 && isPrismaticDiceSelected());
+
+            default -> true;
+        };
+    }
+
+    public boolean canRerollWithCurrentSelection() {
+        if (complete) return true;
+        if (currentStep != TutorialStep.G1_T2_ATTACK_REROLL) return true;
+
+        List<Integer> values = battleState.getPlayerDiceValues();
+        List<Boolean> selected = battleState.getPlayerDiceSelected();
+        int maxVal = Collections.max(values);
+
+        for (int i = 0; i < values.size(); i++) {
+            if (values.get(i) < maxVal && !selected.get(i)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isAmongHighest(int index, List<Integer> values, int count) {
+        if (values == null || values.isEmpty() || index < 0 || index >= values.size()) return false;
+        List<Integer> sorted = new ArrayList<>(values);
+        sorted.sort(Collections.reverseOrder());
+        int threshold = sorted.get(Math.min(count - 1, sorted.size() - 1));
+        return values.get(index) >= threshold;
+    }
+
+    private boolean isMaxValue(int index, List<Integer> values) {
+        if (values == null || index < 0 || index >= values.size()) return false;
+        return values.get(index) == Collections.max(values);
+    }
+
+    private boolean isPrismaticDiceSelected() {
+        List<DiceType> types = battleState.getPlayerDiceTypes();
+        List<Boolean> selected = battleState.getPlayerDiceSelected();
+        for (int i = 0; i < types.size(); i++) {
+            if (types.get(i) == DiceType.PRISMATIC && selected.get(i)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean isConfirmAllowed() {
@@ -133,7 +208,8 @@ public class TutorialController {
     public boolean isPrismaticAllowed() {
         if (complete) return false;
 
-        return currentStep == TutorialStep.G2_T2_ATTACK_PRISMATIC;
+        return currentStep == TutorialStep.G2_T2_ATTACK_PRISMATIC
+            || currentStep == TutorialStep.G2_T3_ATTACK_PRISMATIC;
     }
 
     public boolean isClickToRollAllowed() {
@@ -187,7 +263,7 @@ public class TutorialController {
                     currentStep = TutorialStep.G2_T1_DEFENSE_CONFIRM;
                 }
             }
-            case G2_T2_ATTACK_SELECT -> {
+            case G2_T2_ATTACK_PRISMATIC, G2_T2_ATTACK_SELECT -> {
                 if (battleState.countSelectedDice(true) == battleState.getRequiredDiceCount(true)) {
                     currentStep = TutorialStep.G2_T2_ATTACK_CONFIRM;
                 }
@@ -197,7 +273,7 @@ public class TutorialController {
                     currentStep = TutorialStep.G2_T2_DEFENSE_CONFIRM;
                 }
             }
-            case G2_T3_ATTACK_SELECT -> {
+            case G2_T3_ATTACK_PRISMATIC, G2_T3_ATTACK_SELECT -> {
                 if (battleState.countSelectedDice(true) == battleState.getRequiredDiceCount(true)) {
                     currentStep = TutorialStep.G2_T3_ATTACK_CONFIRM;
                 }
@@ -238,6 +314,18 @@ public class TutorialController {
 
         if (currentStep == TutorialStep.G2_T2_ATTACK_PRISMATIC) {
             currentStep = TutorialStep.G2_T2_ATTACK_SELECT;
+        } else if (currentStep == TutorialStep.G2_T3_ATTACK_PRISMATIC) {
+            currentStep = TutorialStep.G2_T3_ATTACK_SELECT;
+        }
+    }
+
+    public void onPrismaticPopupClosed() {
+        if (complete) return;
+
+        if (currentStep == TutorialStep.G2_T2_ATTACK_PRISMATIC) {
+            currentStep = TutorialStep.G2_T2_ATTACK_SELECT;
+        } else if (currentStep == TutorialStep.G2_T3_ATTACK_PRISMATIC) {
+            currentStep = TutorialStep.G2_T3_ATTACK_SELECT;
         }
     }
 
@@ -299,7 +387,7 @@ public class TutorialController {
             if (currentStep == TutorialStep.G2_T2_ATTACK_ROLL) {
                 currentStep = TutorialStep.G2_T2_ATTACK_PRISMATIC;
             } else if (currentStep == TutorialStep.G2_T3_ATTACK_ROLL) {
-                currentStep = TutorialStep.G2_T3_ATTACK_SELECT;
+                currentStep = TutorialStep.G2_T3_ATTACK_PRISMATIC;
             }
         } else if (newPhase == Phase.WAITING_NEXT_TURN) {
             if (currentStep == TutorialStep.G2_T1_DEFENSE_WAIT) {

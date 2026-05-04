@@ -13,6 +13,8 @@ public class DiceRollManager {
 
     private final List<DiceAnimator> animators;
     private final List<DiceAnimator> opponentAnimators;
+    private final List<DiceAnimator> playerRestAnimators;
+    private final List<DiceAnimator> opponentRestAnimators;
     private boolean initialized;
     private BattleState battleState;
     
@@ -26,6 +28,8 @@ public class DiceRollManager {
     public DiceRollManager() {
         this.animators = new ArrayList<>();
         this.opponentAnimators = new ArrayList<>();
+        this.playerRestAnimators = new ArrayList<>();
+        this.opponentRestAnimators = new ArrayList<>();
         this.initialized = false;
     }
 
@@ -171,6 +175,12 @@ public class DiceRollManager {
             animator.advance(amount);
         }
         for (DiceAnimator animator : opponentAnimators) {
+            animator.advance(amount);
+        }
+        for (DiceAnimator animator : playerRestAnimators) {
+            animator.advance(amount);
+        }
+        for (DiceAnimator animator : opponentRestAnimators) {
             animator.advance(amount);
         }
         
@@ -430,6 +440,155 @@ public class DiceRollManager {
         opponentWaitingForRollTrigger = false;
         pendingOpponentRollPaths = null;
         pendingOpponentScatterDestinations = null;
+    }
+    
+    public void moveSelectedToRestGrid(List<Integer> selectedIndices, boolean forPlayer,
+                                         float gridCenterX, float gridCenterY) {
+        if (!initialized) return;
+        
+        List<DiceAnimator> sourceAnimators = forPlayer ? animators : opponentAnimators;
+        List<DiceAnimator> restList = forPlayer ? playerRestAnimators : opponentRestAnimators;
+        List<Boolean> selected = battleState.getDiceSelected(forPlayer);
+        List<DiceType> types = battleState.getDiceTypes(forPlayer);
+        List<Integer> values = battleState.getDiceValues(forPlayer);
+        
+        if (selected == null || types == null || values == null) return;
+        
+        int selectedCount = 0;
+        for (boolean s : selected) {
+            if (s) selectedCount++;
+        }
+        if (selectedCount == 0) return;
+        
+        float spacing = BattleRenderingUtils.REST_GRID_DICE_SPACING;
+        float totalWidth = spacing * (selectedCount - 1);
+        float startX = gridCenterX - totalWidth / 2f;
+        float startY = gridCenterY - AnimationConstants.DICE_SIZE / 2f;
+        
+        int restIndex = 0;
+        for (int i = 0; i < Math.min(selected.size(), sourceAnimators.size()); i++) {
+            if (selected.get(i)) {
+                DiceAnimator sourceAnimator = sourceAnimators.get(i);
+                float targetX = startX + restIndex * spacing;
+                float targetY = startY;
+                
+                DiceAnimator restAnimator = new DiceAnimator();
+                restAnimator.init();
+                restAnimator.startTravelToRestFrom(sourceAnimator, types.get(i), values.get(i),
+                    targetX, targetY);
+                restList.add(restAnimator);
+                restIndex++;
+            }
+        }
+    }
+    
+    public void renderRestingDice(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
+        for (DiceAnimator animator : playerRestAnimators) {
+            animator.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
+        }
+        for (DiceAnimator animator : opponentRestAnimators) {
+            animator.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
+        }
+    }
+    
+    public boolean isRestTravelComplete(boolean forPlayer) {
+        List<DiceAnimator> restList = forPlayer ? playerRestAnimators : opponentRestAnimators;
+        if (restList.isEmpty()) return true;
+        for (DiceAnimator animator : restList) {
+            if (!animator.isAtRest()) return false;
+        }
+        return true;
+    }
+    
+    public void updateRestDiceValue(int index, int newValue, boolean forPlayer) {
+        List<DiceAnimator> restList = forPlayer ? playerRestAnimators : opponentRestAnimators;
+        if (index >= 0 && index < restList.size()) {
+            restList.get(index).animateValueChange(newValue);
+        }
+    }
+    
+    public void clearRestAnimators(boolean forPlayer) {
+        List<DiceAnimator> restList = forPlayer ? playerRestAnimators : opponentRestAnimators;
+        for (DiceAnimator animator : restList) {
+            animator.forceComplete();
+        }
+        restList.clear();
+    }
+    
+    public void clearAllRestAnimators() {
+        clearRestAnimators(true);
+        clearRestAnimators(false);
+    }
+    
+    public boolean hasRestAnimators(boolean forPlayer) {
+        List<DiceAnimator> restList = forPlayer ? playerRestAnimators : opponentRestAnimators;
+        return !restList.isEmpty();
+    }
+    
+    public List<DiceAnimator> getRestAnimators(boolean forPlayer) {
+        return new ArrayList<>(forPlayer ? playerRestAnimators : opponentRestAnimators);
+    }
+    
+    public void startRollFromRest(boolean forPlayer, List<DiceType> allTypes, List<Integer> allValues,
+                                    float centerX, float centerY) {
+        if (!initialized) return;
+        
+        List<DiceAnimator> restList = forPlayer ? playerRestAnimators : opponentRestAnimators;
+        List<DiceAnimator> targetList = forPlayer ? animators : opponentAnimators;
+        
+        if (forPlayer) {
+            clear();
+        } else {
+            clearOpponentAnimators();
+        }
+        
+        int count = allTypes.size();
+        float panelW = BattleRenderingUtils.PANEL_WIDTH;
+        float panelH = BattleRenderingUtils.PANEL_HEIGHT;
+        
+        List<PlannedPath> gridPaths = DicePathPlanner.planPaths(allTypes, allValues, centerX, centerY, DICE_SPACING,
+                panelW, panelH);
+        
+        float[][] scatters = DicePathPlanner.planScatterDestinations(count, panelW, panelH);
+        
+        float[] targetXs = new float[count];
+        float[] targetYs = new float[count];
+        for (int i = 0; i < count; i++) {
+            targetXs[i] = gridPaths.get(i).targetCenterX();
+            targetYs[i] = gridPaths.get(i).targetCenterY();
+        }
+        List<PlannedPath> travelPaths = DicePathPlanner.planTravelPaths(scatters, targetXs, targetYs, panelW, panelH);
+        
+        int restCount = restList.size();
+        
+        for (int i = 0; i < count; i++) {
+            DiceAnimator animator = new DiceAnimator();
+            animator.init();
+            PlannedPath path = travelPaths.get(i);
+            
+            if (i < restCount) {
+                DiceAnimator restAnimator = restList.get(i);
+                float scatterX = scatters[i][0];
+                float scatterY = scatters[i][1];
+                animator.startFromRestPosition(allTypes.get(i), allValues.get(i),
+                    restAnimator.getX(), restAnimator.getY(),
+                    scatterX, scatterY,
+                    path.delay(), path.rotation(), path.travelDistance(),
+                    path.bounceCount(), path.bounceHeights(),
+                    path.targetCenterX(), path.targetCenterY());
+            } else {
+                float scatterX = scatters[i][0];
+                float scatterY = scatters[i][1];
+                animator.startFromScatterPosition(allTypes.get(i), allValues.get(i),
+                    scatterX, scatterY, path.delay(),
+                    path.rotation(), path.travelDistance(),
+                    path.bounceCount(), path.bounceHeights(),
+                    path.targetCenterX(), path.targetCenterY());
+            }
+            targetList.add(animator);
+        }
+        
+        restList.clear();
     }
     
     public List<DiceAnimator> getOpponentAnimators() {

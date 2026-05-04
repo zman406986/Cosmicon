@@ -25,16 +25,20 @@ public class WeatherController {
         return schedule.getCurrentWeather();
     }
     
-    public void advanceTurn() {
+    public void advanceTurn(boolean allowSafeguard, boolean allowAttack) {
         WeatherType oldWeather = schedule.getCurrentWeather();
-        schedule.advanceTurn();
+        schedule.advanceTurn(allowSafeguard, allowAttack);
         WeatherType newWeather = schedule.getCurrentWeather();
         if (oldWeather != newWeather) {
             CosmiconLogger.debug("Weather changed: %s -> %s", oldWeather, newWeather);
         }
     }
     
-    public void applyStartOfBattle(BattleState state) {
+    public boolean isFullTurnBoundary() {
+        return schedule.isFullTurnBoundary();
+    }
+    
+    public void applyWeatherAppearanceEffects(BattleState state) {
         WeatherType weather = getCurrentWeather();
         if (weather == null) return;
         
@@ -51,52 +55,81 @@ public class WeatherController {
                 state.getPlayerEffects().addEffect(StatusEffect.VENOM, 1);
                 state.getOpponentEffects().addEffect(StatusEffect.VENOM, 1);
             }
-            default -> {}
-        }
-    }
-    
-    public void applyStartOfTurn(BattleState state) {
-        WeatherType weather = getCurrentWeather();
-        if (weather == null) return;
-        
-        switch (weather) {
-            case ACID_RAIN -> {
-                int higherHpSide = state.getPlayerHp() >= state.getOpponentHp() ? 0 : 1;
-                if (higherHpSide == 0) {
-                    state.getPlayerEffects().addEffect(StatusEffect.POISON, 1);
-                } else {
-                    state.getOpponentEffects().addEffect(StatusEffect.POISON, 1);
-                }
-            }
-            case HIGH_TEMPERATURE -> {
-                int lowerHpSide = state.getPlayerHp() <= state.getOpponentHp() ? 0 : 1;
-                if (lowerHpSide == 0) {
-                    state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, 2);
-                } else {
-                    state.getOpponentEffects().addEffect(StatusEffect.STRENGTH, 2);
-                }
-            }
             case STORM -> {
                 state.modifyWeatherAtkMod(true, 1);
                 state.modifyWeatherDefMod(true, 1);
                 state.modifyWeatherAtkMod(false, 1);
                 state.modifyWeatherDefMod(false, 1);
             }
+            case SEA_OF_CLOUDS -> {
+                state.addPrismaticUse(1);
+                for (PrismaticDiceType type : PrismaticDiceRegistry.getAll().values()) {
+                    state.addPrismaticUseByType(type, true, 1);
+                    state.addPrismaticUseByType(type, false, 1);
+                }
+            }
             default -> {}
         }
     }
     
-    public void applyRerollPhase(BattleState state, int attackerBaseRerolls) {
+    public void applyStartOfBattle(BattleState state) {
+    }
+    
+    public void applyStartOfTurn(BattleState state) {
+        WeatherType weather = getCurrentWeather();
+        if (weather == null) return;
+        if (!schedule.isFullTurnBoundary()) return;
+        
+        switch (weather) {
+            case ACID_RAIN -> {
+                int playerHpLost = state.getPlayerCard().getMaxHp() - state.getPlayerHp();
+                int opponentHpLost = state.getOpponentCard().getMaxHp() - state.getOpponentHp();
+                if (playerHpLost > opponentHpLost) {
+                    state.getPlayerEffects().addEffect(StatusEffect.POISON, 1);
+                } else if (opponentHpLost > playerHpLost) {
+                    state.getOpponentEffects().addEffect(StatusEffect.POISON, 1);
+                } else {
+                    int higherHpSide = state.getPlayerHp() >= state.getOpponentHp() ? 0 : 1;
+                    if (higherHpSide == 0) {
+                        state.getPlayerEffects().addEffect(StatusEffect.POISON, 1);
+                    } else {
+                        state.getOpponentEffects().addEffect(StatusEffect.POISON, 1);
+                    }
+                }
+            }
+            case HIGH_TEMPERATURE -> {
+                int playerHpLost = state.getPlayerCard().getMaxHp() - state.getPlayerHp();
+                int opponentHpLost = state.getOpponentCard().getMaxHp() - state.getOpponentHp();
+                if (playerHpLost > opponentHpLost) {
+                    state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, 2);
+                } else if (opponentHpLost > playerHpLost) {
+                    state.getOpponentEffects().addEffect(StatusEffect.STRENGTH, 2);
+                } else {
+                    int lowerHpSide = state.getPlayerHp() <= state.getOpponentHp() ? 0 : 1;
+                    if (lowerHpSide == 0) {
+                        state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, 2);
+                    } else {
+                        state.getOpponentEffects().addEffect(StatusEffect.STRENGTH, 2);
+                    }
+                }
+            }
+            default -> {}
+        }
+    }
+    
+    public void applyRerollPhase(BattleState state) {
         WeatherType weather = getCurrentWeather();
         if (weather == null) return;
         
         switch (weather) {
             case FISH_RAIN -> {
-                state.setRemainingRerolls(state.isPlayerAttacker(), attackerBaseRerolls + 1);
-                CosmiconLogger.debug("%s: +1 reroll for attacker", weather);
+                state.setRemainingRerolls(true, state.getRemainingRerolls(true) + 1);
+                state.setRemainingRerolls(false, state.getRemainingRerolls(false) + 1);
+                CosmiconLogger.debug("%s: +1 reroll for both sides", weather);
             }
             case PARHELION -> {
-                state.setRemainingRerolls(state.isPlayerAttacker(), attackerBaseRerolls + 2);
+                boolean attackerIsPlayer = state.isPlayerAttacker();
+                state.setRemainingRerolls(attackerIsPlayer, state.getRemainingRerolls(attackerIsPlayer) + 2);
                 CosmiconLogger.debug("%s: +2 rerolls for attacker", weather);
             }
             default -> {}
@@ -203,7 +236,10 @@ public class WeatherController {
                 }
             }
             case FROST -> {
-                Map<Integer, Integer> counts = countSelectedValues(values, selected);
+                boolean attackerIsPlayer = !isPlayer;
+                List<Integer> attackerValues = state.getDiceValues(attackerIsPlayer);
+                List<Boolean> attackerSelected = state.getDiceSelected(attackerIsPlayer);
+                Map<Integer, Integer> counts = countSelectedValues(attackerValues, attackerSelected);
                 boolean hasMatch = counts.values().stream().anyMatch(c -> c >= 2);
                 if (hasMatch) {
                     state.modifyWeatherDefMod(isPlayer, 1);
@@ -229,26 +265,22 @@ public class WeatherController {
         
         switch (weather) {
             case DRY_THUNDERSTORM -> {
-                if (state.isPlayerAttacker()) {
-                    state.addInstantDamage(false, 3);
-                }
+                state.addInstantDamage(!state.isPlayerAttacker(), 3);
             }
             case CYCLONIC_SWARM -> {
-                if (state.isPlayerAttacker()) {
-                    state.getPlayerEffects().addEffect(StatusEffect.COMBO, 1);
-                }
+                boolean attackerIsPlayer = state.isPlayerAttacker();
+                state.getEffects(attackerIsPlayer).addEffect(StatusEffect.COMBO, 1);
             }
             case TEMPORAL_STORM -> {
-                if (state.isPlayerAttacker()) {
-                    List<Integer> values = state.getPlayerDiceValues();
-                    List<Boolean> selected = state.getPlayerDiceSelected();
-                    boolean allSixes = checkAllSixes(values, selected);
-                    int selectedCount = countSelected(selected);
-                    if (allSixes && selectedCount > 0) {
-                        int temp = state.getPlayerHp();
-                        state.setPlayerHp(state.getOpponentHp());
-                        state.setOpponentHp(temp);
-                    }
+                boolean attackerIsPlayer = state.isPlayerAttacker();
+                List<Integer> values = state.getDiceValues(attackerIsPlayer);
+                List<Boolean> selected = state.getDiceSelected(attackerIsPlayer);
+                boolean allSixes = checkAllSixes(values, selected);
+                int selectedCount = countSelected(selected);
+                if (allSixes && selectedCount > 0) {
+                    int temp = state.getPlayerHp();
+                    state.setPlayerHp(state.getOpponentHp());
+                    state.setOpponentHp(temp);
                 }
             }
             default -> {}
@@ -278,19 +310,12 @@ public class WeatherController {
     }
     
     public void applyWeatherTransitionEffect(BattleState state, WeatherType oldWeather, WeatherType newWeather) {
-        if (newWeather == WeatherType.SEA_OF_CLOUDS && oldWeather != WeatherType.SEA_OF_CLOUDS) {
-            state.addPrismaticUse(1);
-            for (PrismaticDiceType type : PrismaticDiceRegistry.getAll().values()) {
-                state.addPrismaticUseByType(type, true, 1);
-                state.addPrismaticUseByType(type, false, 1);
-            }
-        }
     }
     
     public boolean shouldApplyFineSnowEffect(BattleState state, boolean isPlayer) {
         WeatherType weather = getCurrentWeather();
         if (weather != WeatherType.FINE_SNOW) return false;
-        if (state.isAttacker(isPlayer) && state.getRerollsUsedThisTurn() == 0) {
+        if (state.isAttacker(isPlayer) && state.getRerollsUsedThisTurn(isPlayer) == 0) {
             return true;
         }
         return false;

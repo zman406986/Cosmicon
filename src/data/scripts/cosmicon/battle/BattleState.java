@@ -9,6 +9,7 @@ import java.util.Map;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
+import data.scripts.cosmicon.tutorial.TutorialDiceRoller;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.Strings;
 
@@ -17,7 +18,9 @@ public class BattleState {
     public enum Phase {
         ROLLING,
         SELECTING_ATTACK,
+        DICE_DISPLAY_ATTACK,
         SELECTING_DEFENSE,
+        DICE_DISPLAY_DEFENSE,
         RESOLVING_PRE_CLASH,
         RESOLVING,
         WAITING_NEXT_TURN,
@@ -33,6 +36,7 @@ public class BattleState {
     private final StatusEffectProcessor opponentEffects;
     private PrismaticManager prismaticManager;
     private WeatherController weatherController;
+    private TutorialDiceRoller tutorialDiceRoller;
     private CharacterCard playerCard;
     private CharacterCard opponentCard;
     private DicePoolCounts playerDicePoolCounts;
@@ -395,6 +399,14 @@ public class BattleState {
 
     public PrismaticManager getPrismaticManager() {
         return prismaticManager;
+    }
+
+    public TutorialDiceRoller getTutorialDiceRoller() {
+        return tutorialDiceRoller;
+    }
+
+    public void setTutorialDiceRoller(TutorialDiceRoller roller) {
+        this.tutorialDiceRoller = roller;
     }
 
     
@@ -806,8 +818,10 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
     
     private boolean isMajorPhaseTransition(Phase newPhase) {
-        return newPhase == Phase.SELECTING_ATTACK || 
+        return newPhase == Phase.SELECTING_ATTACK ||
+               newPhase == Phase.DICE_DISPLAY_ATTACK ||
                newPhase == Phase.SELECTING_DEFENSE ||
+               newPhase == Phase.DICE_DISPLAY_DEFENSE ||
                newPhase == Phase.RESOLVING_PRE_CLASH ||
                newPhase == Phase.RESOLVING ||
                newPhase == Phase.WAITING_NEXT_TURN ||
