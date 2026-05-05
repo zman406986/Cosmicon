@@ -68,6 +68,8 @@ public class BattleState {
     private int opponentPendingDefLevelBoost;
     private int playerOriginalDefLevel;
     private int opponentOriginalDefLevel;
+    private int playerPendingStrength;
+    private int opponentPendingStrength;
 
     private boolean phainonUnyieldingAvailable;
     private boolean opponentPhainonUnyieldingAvailable;
@@ -403,12 +405,6 @@ public class BattleState {
             modificationOrder.add(new ModificationRecord(effect, toPlayer, modificationSequenceCounter++));
         }
         CosmiconLogger.debug("Effect applied to %s (%d layers)", toPlayer ? "Player" : "Opponent", layers);
-    }
-
-    public void recordModificationOrder(StatusEffectProcessor.StatusEffect effect, boolean forPlayer) {
-        if (effect == StatusEffectProcessor.StatusEffect.HACK || effect == StatusEffectProcessor.StatusEffect.ARISE) {
-            modificationOrder.add(new ModificationRecord(effect, forPlayer, modificationSequenceCounter++));
-        }
     }
 
     public List<ModificationRecord> getModificationOrder() {
@@ -1122,6 +1118,30 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
             playerOriginalDefLevel = level;
         } else {
             opponentOriginalDefLevel = level;
+        }
+    }
+
+    public int getPendingStrength(boolean forPlayer) {
+        return forPlayer ? playerPendingStrength : opponentPendingStrength;
+    }
+
+    public void setPendingStrength(boolean forPlayer, int strength) {
+        if (forPlayer) {
+            playerPendingStrength = strength;
+        } else {
+            opponentPendingStrength = strength;
+        }
+    }
+
+    public int consumePendingStrength(boolean forPlayer) {
+        if (forPlayer) {
+            int val = playerPendingStrength;
+            playerPendingStrength = 0;
+            return val;
+        } else {
+            int val = opponentPendingStrength;
+            opponentPendingStrength = 0;
+            return val;
         }
     }
 

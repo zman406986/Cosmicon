@@ -26,7 +26,7 @@ public class StatusEffectAnimator {
     private final List<LoopingGlowAnimation> loopingAnimations = new ArrayList<>();
 
     public void triggerAddAnimation(float uiX, float uiY, float width, float height) {
-        CosmiconLogger.debug("[StatusAnim] ADD triggered at uiX=%.1f uiY=%.1f w=%.1f h=%.1f", uiX, uiY, width, height);
+
         BoxAnimation anim = new BoxAnimation();
         anim.uiX = uiX - LABEL_PADDING;
         anim.uiY = uiY - LABEL_PADDING;
@@ -41,7 +41,7 @@ public class StatusEffectAnimator {
     }
 
     public void triggerProcessAnimation(float uiX, float uiY, float width, float height) {
-        CosmiconLogger.debug("[StatusAnim] PROCESS triggered at uiX=%.1f uiY=%.1f w=%.1f h=%.1f", uiX, uiY, width, height);
+
         BoxAnimation anim = new BoxAnimation();
         anim.uiX = uiX - LABEL_PADDING;
         anim.uiY = uiY - LABEL_PADDING;
@@ -56,7 +56,7 @@ public class StatusEffectAnimator {
     }
 
     public void triggerLoopingGlowAnimation(float uiX, float uiY, float width, float height) {
-        CosmiconLogger.debug("[StatusAnim] LOOP GLOW triggered at uiX=%.1f uiY=%.1f w=%.1f h=%.1f", uiX, uiY, width, height);
+
         LoopingGlowAnimation anim = new LoopingGlowAnimation();
         anim.uiX = uiX - LABEL_PADDING;
         anim.uiY = uiY - LABEL_PADDING;
@@ -73,10 +73,6 @@ public class StatusEffectAnimator {
 
     public void stopLoopingGlowAnimations() {
         loopingAnimations.clear();
-    }
-
-    public boolean hasLoopingAnimations() {
-        return !loopingAnimations.isEmpty();
     }
 
     public void advance(float amount) {
@@ -102,8 +98,7 @@ public class StatusEffectAnimator {
     public void render(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
         if (animations.isEmpty() && loopingAnimations.isEmpty()) return;
 
-        CosmiconLogger.debug("[StatusAnim] RENDER count=%d loopCount=%d alphaMult=%.2f panel=(%.0f,%.0f,%.0f,%.0f)",
-            animations.size(), loopingAnimations.size(), alphaMult, panelX, panelY, panelWidth, panelHeight);
+
 
         UnifiedCoord.PanelContext existingCtx = UnifiedCoord.getCurrentOrNull();
         boolean needsContextCleanup = existingCtx == null;
@@ -153,8 +148,7 @@ public class StatusEffectAnimator {
             float glX2 = bottomRight.glX();
             float glY2 = bottomRight.glY();
 
-            CosmiconLogger.debug("[StatusAnim] box=%d progress=%.2f glX1=%.0f glY1=%.0f glX2=%.0f glY2=%.0f alpha=%.2f",
-                box, progress, glX1, glY1, glX2, glY2, alpha);
+
 
             float[] c = ColorHelper.toGLComponents(anim.color, alpha);
             GL11.glColor4f(c[0], c[1], c[2], c[3]);

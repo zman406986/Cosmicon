@@ -8,7 +8,6 @@ import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.BattleState.Phase;
 import data.scripts.cosmicon.battle.DiceType;
-import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.state.CosmiconStats;
 
@@ -161,7 +160,7 @@ public class TutorialController {
 
             case G2_T3_ATTACK_PRISMATIC -> isPrismatic;
 
-            case G2_T3_ATTACK_SELECT -> !isPrismatic && isAmongHighestNonPrismatic(diceIndex, values, types, battleState.getRequiredDiceCount(true));
+            case G2_T3_ATTACK_SELECT -> isPrismatic || (isPrismaticDiceSelected() && isAmongHighestNonPrismatic(diceIndex, values, types, Math.max(1, battleState.getRequiredDiceCount(true) - 1)));
 
             case G2_T4_ATTACK_SELECT -> value == 4;
 
@@ -394,10 +393,6 @@ public class TutorialController {
         if (currentStep == TutorialStep.G2_T2_ATTACK_PRISMATIC) {
             currentStep = TutorialStep.G2_T2_ATTACK_SELECT;
         } else if (currentStep == TutorialStep.G2_T3_ATTACK_PRISMATIC) {
-            var repeaterType = PrismaticDiceRegistry.get("repeater");
-            if (repeaterType != null) {
-                battleState.consumePrismaticUse(repeaterType, true);
-            }
             currentStep = TutorialStep.G2_T3_ATTACK_REROLL;
         }
     }
@@ -408,10 +403,6 @@ public class TutorialController {
         if (currentStep == TutorialStep.G2_T2_ATTACK_PRISMATIC) {
             currentStep = TutorialStep.G2_T2_ATTACK_SELECT;
         } else if (currentStep == TutorialStep.G2_T3_ATTACK_PRISMATIC) {
-            var repeaterType = PrismaticDiceRegistry.get("repeater");
-            if (repeaterType != null) {
-                battleState.consumePrismaticUse(repeaterType, true);
-            }
             currentStep = TutorialStep.G2_T3_ATTACK_REROLL;
         }
     }

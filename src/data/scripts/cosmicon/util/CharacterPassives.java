@@ -112,10 +112,10 @@ public class CharacterPassives {
     private static void evaluateHyacine(PassiveResult result, List<Integer> values, boolean isAttacking) {
         if (!isAttacking || values == null || values.isEmpty()) return;
         if (allDiceEqualSix(values)) {
-            result.setGrantedEffect(StatusEffect.STRENGTH, sumOfValues(values));
+            result.setPendingStrength(sumOfValues(values));
             result.setHealAmount(6);
         } else {
-            result.setGrantedEffect(StatusEffect.STRENGTH, sumOfValues(values) / 2);
+            result.setPendingStrength(sumOfValues(values) / 2);
         }
     }
 

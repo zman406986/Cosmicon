@@ -161,7 +161,7 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
             int uses = manager != null ? manager.getUsesByType(type, true) : entry.getValue();
             boolean isAvailable = type.isAvailable(context);
 
-            if (!isAvailable || uses <= 0) continue;
+            if ((!isTutorial && !isAvailable) || uses <= 0) continue;
 
             DiceEntry diceEntry = new DiceEntry();
             diceEntry.type = type;

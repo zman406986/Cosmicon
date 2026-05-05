@@ -87,7 +87,7 @@ public class TurnProcessor {
     }
     
     public void startBattle() {
-        weatherController.applyStartOfBattle(state);
+        weatherController.applyStartOfBattle();
         executeTurn();
     }
     
@@ -96,10 +96,19 @@ public class TurnProcessor {
         state.setAttackValue(0);
         state.setDefenseValue(0);
         state.setDefenderRolling(false);
-        state.clearPendingDefLevelBoost(true);
-        state.clearPendingDefLevelBoost(false);
+        
+        boolean playerIsAttacker = state.isPlayerAttacker();
+        if (playerIsAttacker) {
+            state.clearPendingDefLevelBoost(true);
+        } else {
+            state.clearPendingDefLevelBoost(false);
+        }
+        
         state.getPlayerEffects().resetTurnState();
         state.getOpponentEffects().resetTurnState();
+        
+        applyPendingStrength(true);
+        applyPendingStrength(false);
         
         aiVisualPhase = AIVisualPhase.NONE;
         aiSelectionComplete = false;
@@ -113,7 +122,6 @@ public class TurnProcessor {
         
         weatherController.applyStartOfTurn(state);
         
-        boolean playerIsAttacker = state.isPlayerAttacker();
         StatusEffectProcessor.BattleContext playerContext = createBattleContext(true);
         StatusEffectProcessor.BattleContext opponentContext = createBattleContext(false);
         
@@ -263,6 +271,12 @@ public class TurnProcessor {
         PrismaticDecision prismDecision = aiEngine.planPrismaticUse(state, false);
         if (prismDecision != null && prismDecision.shouldUse()) {
             state.addPrismaticDiceToPool(prismDecision.instance(), false);
+            if (diceRollManager != null) {
+                float opponentCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
+                float opponentCenterY = BattleRenderingUtils.PANEL_HEIGHT / 2f - 40f;
+                diceRollManager.appendOpponentInstantDice(DiceType.PRISMATIC, prismDecision.instance().faceIndex,
+                    opponentCenterX, opponentCenterY);
+            }
             CosmiconLogger.debug("AI added prismatic dice: %s with score %.1f", 
                 prismDecision.instance().type.getId(), prismDecision.score());
         }
@@ -564,17 +578,16 @@ public class TurnProcessor {
         state.notifyPhaseChange(BattleState.Phase.RESOLVING_PRE_CLASH);
     }
     
-    public boolean proceedToModificationPause() {
-        if (state.getCurrentPhase() != BattleState.Phase.RESOLVING_PRE_CLASH) return false;
+    public void proceedToModificationPause() {
+        if (state.getCurrentPhase() != BattleState.Phase.RESOLVING_PRE_CLASH) return;
 
         if (state.hasPendingModification()) {
             state.setCurrentPhase(BattleState.Phase.RESOLVING_MODIFICATION);
             state.notifyPhaseChange(BattleState.Phase.RESOLVING_MODIFICATION);
-            return true;
+            return;
         }
 
         continueToClash();
-        return false;
     }
 
     public void proceedFromModificationPause() {
@@ -1077,6 +1090,13 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
     
     private void processEndOfTurnPassives(boolean forPlayer) {
         PassiveEventSystem.onEndOfTurn(state, forPlayer);
+    }
+    
+    private void applyPendingStrength(boolean forPlayer) {
+        int pending = state.consumePendingStrength(forPlayer);
+        if (pending > 0) {
+            state.getEffects(forPlayer).setEffect(StatusEffectProcessor.StatusEffect.STRENGTH, pending);
+        }
     }
     
     private void notifyRestDiceValueChanges(List<Integer> oldValues, List<Integer> newValues, boolean forPlayer) {

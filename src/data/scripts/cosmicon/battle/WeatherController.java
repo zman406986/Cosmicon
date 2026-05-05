@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
-import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.util.CosmiconLogger;
@@ -69,7 +68,7 @@ public class WeatherController {
         }
     }
     
-    public void applyStartOfBattle(BattleState state) {
+    public void applyStartOfBattle() {
     }
     
     public void applyStartOfTurn(BattleState state) {
@@ -222,17 +221,16 @@ public class WeatherController {
         WeatherType weather = getCurrentWeather();
         if (weather == null) return;
 
-        switch (weather) {
-            case SLEET -> {
-                int hp = isPlayer ? state.getPlayerHp() : state.getOpponentHp();
-                CharacterCard card = state.getCard(isPlayer);
-                if (card != null && hp < card.getMaxHp()) {
-                    state.getEffects(isPlayer).addEffect(StatusEffect.COUNTER, 1);
-                    state.modifyWeatherDefMod(isPlayer, 2);
-                    CosmiconLogger.debug("%s: COUNTER + DEF+2 for defender (%s) [pre-selection]", weather, isPlayer ? "Player" : "Opponent");
-                }
+        if (weather == WeatherType.SLEET)
+        {
+            int hp = isPlayer ? state.getPlayerHp() : state.getOpponentHp();
+            CharacterCard card = state.getCard(isPlayer);
+            if (card != null && hp < card.getMaxHp())
+            {
+                state.getEffects(isPlayer).addEffect(StatusEffect.COUNTER, 1);
+                state.modifyWeatherDefMod(isPlayer, 2);
+                CosmiconLogger.debug("%s: COUNTER + DEF+2 for defender (%s) [pre-selection]", weather, isPlayer ? "Player" : "Opponent");
             }
-            default -> {}
         }
     }
 
@@ -240,14 +238,12 @@ public class WeatherController {
         WeatherType weather = getCurrentWeather();
         if (weather == null) return;
 
-        switch (weather) {
-            case STORM -> {
-                state.modifyWeatherAtkMod(true, 1);
-                state.modifyWeatherDefMod(true, 1);
-                state.modifyWeatherAtkMod(false, 1);
-                state.modifyWeatherDefMod(false, 1);
-            }
-            default -> {}
+        if (weather == WeatherType.STORM)
+        {
+            state.modifyWeatherAtkMod(true, 1);
+            state.modifyWeatherDefMod(true, 1);
+            state.modifyWeatherAtkMod(false, 1);
+            state.modifyWeatherDefMod(false, 1);
         }
     }
 

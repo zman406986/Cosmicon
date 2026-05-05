@@ -89,10 +89,6 @@ public class TutorialDiceRoller {
         return false;
     }
 
-    TutorialController.TutorialStep getCurrentStep() {
-        return controller.getCurrentStep();
-    }
-
     public void rollForParticipant(BattleState state, boolean forPlayer) {
         if (controller.getGame() == TutorialController.TutorialGame.GAME_1_SPARXIE) {
             rollGame1(state, forPlayer);

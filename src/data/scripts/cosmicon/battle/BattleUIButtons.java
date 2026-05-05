@@ -1,5 +1,8 @@
 package data.scripts.cosmicon.battle;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.lwjgl.input.Keyboard;
 
 import com.fs.starfarer.api.campaign.CustomVisualDialogDelegate.DialogCallbacks;
@@ -58,6 +61,9 @@ public class BattleUIButtons implements ActionListenerDelegate {
     private float playerPrismaticBtnX;
     private float playerPrismaticBtnY;
     private TutorialController tutorialController;
+
+    private List<ButtonAPI> opponentStatusButtons;
+    private List<ButtonAPI> playerStatusButtons;
 
     public void init(CustomPanelAPI panel, DialogCallbacks callbacks, BattleController controller,
             BattleState state, DiceRollManager diceRollManager, BattleUILabels labels,
@@ -169,6 +175,9 @@ public class BattleUIButtons implements ActionListenerDelegate {
     }
 
     private void createStatusTooltips() {
+        opponentStatusButtons = new ArrayList<>();
+        playerStatusButtons = new ArrayList<>();
+
         float btnWidth = BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
         float btnHeight = 18f;
         float spacing = 20f;
@@ -187,7 +196,9 @@ public class BattleUIButtons implements ActionListenerDelegate {
             ButtonAPI btn = opponentTp.addButton("", "status_opp_" + i, btnWidth, btnHeight, 0f);
             btn.setQuickMode(true);
             btn.setOpacity(0.01f);
+            btn.setEnabled(false);
             btn.getPosition().inTL(0f, yOffset);
+            opponentStatusButtons.add(btn);
 
             final int index = i;
             opponentTp.addTooltipToPrevious(new TooltipCreator() {
@@ -221,7 +232,9 @@ public class BattleUIButtons implements ActionListenerDelegate {
             ButtonAPI btn = playerTp.addButton("", "status_plr_" + i, btnWidth, btnHeight, 0f);
             btn.setQuickMode(true);
             btn.setOpacity(0.01f);
+            btn.setEnabled(false);
             btn.getPosition().inTL(0f, yOffset);
+            playerStatusButtons.add(btn);
 
             final int index = i;
             playerTp.addTooltipToPrevious(new TooltipCreator() {
@@ -243,9 +256,9 @@ public class BattleUIButtons implements ActionListenerDelegate {
     }
 
     private void createWeatherLabel() {
-        float boxWidth = 230f;
-        float descBoxHeight = 40f;
-        float descBoxPadding = 8f;
+        float boxWidth = 255f;
+        float descBoxHeight = 55f;
+        float descBoxPadding = 4f;
         float titleHeight = 18f;
         float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
 
@@ -306,6 +319,19 @@ public class BattleUIButtons implements ActionListenerDelegate {
             }
         }
         return null;
+    }
+
+    public void updateStatusTooltipButtons() {
+        if (opponentStatusButtons != null) {
+            for (int i = 0; i < opponentStatusButtons.size(); i++) {
+                opponentStatusButtons.get(i).setEnabled(getEffectAtIndex(i, false) != null);
+            }
+        }
+        if (playerStatusButtons != null) {
+            for (int i = 0; i < playerStatusButtons.size(); i++) {
+                playerStatusButtons.get(i).setEnabled(getEffectAtIndex(i, true) != null);
+            }
+        }
     }
 
     @Override
@@ -469,6 +495,10 @@ public class BattleUIButtons implements ActionListenerDelegate {
         weatherDescBoxY = 0f;
         weatherDescBoxW = 0f;
         weatherDescBoxH = 0f;
+        if (opponentStatusButtons != null) opponentStatusButtons.clear();
+        opponentStatusButtons = null;
+        if (playerStatusButtons != null) playerStatusButtons.clear();
+        playerStatusButtons = null;
         buttonsCreated = false;
     }
 

@@ -623,7 +623,10 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
             float extraWidth = displaySize * (scale - 1f);
             float renderX = dicePos.glX() - extraWidth / 2f;
             float renderY = dicePos.glSpriteY(displaySize) - extraHeight / 2f;
-            
+            if (type == DiceType.BLUE_D4) {
+                renderY -= 5f;
+            }
+
             float visualRotation = getVisualRotation(isSettledPhase);
             DiceSpriteRenderer.render(sprite, renderX, renderY, alphaMult, scale, displaySize, visualRotation);
         } finally {

@@ -107,7 +107,7 @@ public class BattleInputHandler {
                     boolean prismaticAllowed = tutorialController == null || tutorialController.isPrismaticAllowed();
                     if (prismaticAllowed) {
                         boolean insidePrismatic = mousePos.isInsideRect(
-                            buttons.getPlayerPrismaticBtnX(), buttons.getPlayerPrismaticBtnY(),
+                            buttons.getPlayerPrismaticBtnX() + 50f, buttons.getPlayerPrismaticBtnY(),
                             PRISMATIC_BTN_SIZE, PRISMATIC_BTN_SIZE);
 
                         if (insidePrismatic) {

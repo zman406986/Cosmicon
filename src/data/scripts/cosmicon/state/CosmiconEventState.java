@@ -93,8 +93,4 @@ public class CosmiconEventState {
     public static boolean isReplayTutorial() {
         return getReplayTutorialGame() >= 0;
     }
-
-    public static void clearReplayTutorial() {
-        getMemory().unset(KEY_REPLAY_TUTORIAL);
-    }
 }

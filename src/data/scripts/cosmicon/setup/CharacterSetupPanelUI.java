@@ -296,10 +296,11 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             PrismaticDiceType type = PrismaticDiceRegistry.get(labels.diceId());
             if (type == null) continue;
 
-            float opacity = canEquip ? 1f : 0f;
-            labels.nameLabel().setOpacity(opacity);
-            labels.facesLabel().setOpacity(opacity);
-            labels.descLabel().setOpacity(opacity);
+            if (!canEquip) {
+                labels.nameLabel().setOpacity(0f);
+                labels.facesLabel().setOpacity(0f);
+                labels.descLabel().setOpacity(0f);
+            }
 
             boolean useTrue = (i == selectedDiceEntryIndex) ? selectedUseTrueVersion : !labels.hasBothVersions();
 

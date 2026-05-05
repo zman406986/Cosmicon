@@ -5,6 +5,7 @@ import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -316,13 +317,7 @@ public final class RerollOptimizer {
             float thornsPenalty) {
 
         int currentSum = calculateSum(currentValues, currentSelection);
-
-        Set<Integer> newSelection = findOptimalSelectionAfterReroll(
-            currentValues, diceTypes, rerollIndices, requiredCount, prismaticMap);
-
-        float expectedNewSum = calculateExpectedSumAfterReroll(currentValues, diceTypes, rerollIndices, newSelection,
-                                                               prismaticMap);
-
+        float expectedNewSum = expectedTopNSumAfterReroll(currentValues, diceTypes, rerollIndices, requiredCount, prismaticMap);
         float improvement = expectedNewSum - currentSum - thornsPenalty;
 
         if (expectedNewSum >= targetSum && currentSum < targetSum) {
@@ -332,74 +327,123 @@ public final class RerollOptimizer {
         return improvement;
     }
 
-    private static Set<Integer> findOptimalSelectionAfterReroll(
+    private static float expectedTopNSumAfterReroll(
             List<Integer> currentValues,
             List<DiceType> diceTypes,
             Set<Integer> rerollIndices,
-            int required,
+            int requiredCount,
             Map<Integer, PrismaticDiceInstance> prismaticMap) {
 
-        Set<Integer> forcedIndices = new HashSet<>();
-        if (prismaticMap != null) {
-            for (Map.Entry<Integer, PrismaticDiceInstance> entry : prismaticMap.entrySet()) {
-                PrismaticDiceInstance pd = entry.getValue();
-                if (pd.isMustSelect() || isDestinedEffect(pd)) {
-                    forcedIndices.add(entry.getKey());
-                }
-            }
+        if (rerollIndices.isEmpty()) {
+            return calculateTopNSum(currentValues, requiredCount, prismaticMap);
         }
 
-        int remaining = required - forcedIndices.size();
+        Set<Integer> forcedIndices = getForcedIndices(prismaticMap, currentValues.size());
+        float forcedSum = 0f;
+        for (int idx : forcedIndices) {
+            forcedSum += currentValues.get(idx);
+        }
+
+        int remaining = requiredCount - forcedIndices.size();
         if (remaining <= 0) {
-            return forcedIndices;
+            return forcedSum;
         }
 
-        List<RerolledDieValue> candidates = new ArrayList<>();
+        int rerollCount = rerollIndices.size();
+        int[] maxFaces = new int[rerollCount];
+        int ri = 0;
         for (int i = 0; i < currentValues.size(); i++) {
-            if (forcedIndices.contains(i)) {
-                continue;
-            }
             if (rerollIndices.contains(i)) {
-                DiceType type = diceTypes.get(i);
-                PrismaticDiceInstance instance = prismaticMap != null ? prismaticMap.get(i) : null;
-                float expectedVal = DiceProbabilityCalculator.expectedValue(type, instance);
-                candidates.add(new RerolledDieValue(i, expectedVal, true));
-            } else {
-                candidates.add(new RerolledDieValue(i, currentValues.get(i), false));
+                maxFaces[ri++] = diceTypes.get(i).getMaxFace();
             }
         }
 
-        candidates.sort(Comparator.comparingDouble(RerolledDieValue::value).reversed());
-
-        Set<Integer> newSelection = new HashSet<>(forcedIndices);
-        for (int i = 0; i < Math.min(remaining, candidates.size()); i++) {
-            newSelection.add(candidates.get(i).index());
+        List<Integer> fixedFreeValues = new ArrayList<>();
+        for (int i = 0; i < currentValues.size(); i++) {
+            if (!forcedIndices.contains(i) && !rerollIndices.contains(i)) {
+                fixedFreeValues.add(currentValues.get(i));
+            }
         }
 
-        return newSelection;
+        int[] combination = new int[rerollCount];
+        Arrays.fill(combination, 1);
+
+        double totalSum = 0;
+        long totalOutcomes = 0;
+
+        while (true) {
+            List<Integer> freeValues = new ArrayList<>(fixedFreeValues.size() + rerollCount);
+            freeValues.addAll(fixedFreeValues);
+            for (int v : combination) {
+                freeValues.add(v);
+            }
+
+            freeValues.sort(Comparator.reverseOrder());
+            int freeSum = 0;
+            for (int i = 0; i < Math.min(remaining, freeValues.size()); i++) {
+                freeSum += freeValues.get(i);
+            }
+
+            totalSum += forcedSum + freeSum;
+            totalOutcomes++;
+
+            int carryIdx = rerollCount - 1;
+            while (carryIdx >= 0 && combination[carryIdx] >= maxFaces[carryIdx]) {
+                combination[carryIdx] = 1;
+                carryIdx--;
+            }
+            if (carryIdx < 0) break;
+            combination[carryIdx]++;
+        }
+
+        return (float) (totalSum / totalOutcomes);
     }
 
-    private static float calculateExpectedSumAfterReroll(
-            List<Integer> currentValues,
-            List<DiceType> diceTypes,
-            Set<Integer> rerollIndices,
-            Set<Integer> newSelection,
+    private static Set<Integer> getForcedIndices(Map<Integer, PrismaticDiceInstance> prismaticMap, int diceCount) {
+        if (prismaticMap == null) return Set.of();
+
+        Set<Integer> forced = new HashSet<>();
+        for (int i = 0; i < diceCount; i++) {
+            PrismaticDiceInstance pd = prismaticMap.get(i);
+            if (pd != null && (pd.isMustSelect() || isDestinedEffect(pd, i))) {
+                forced.add(i);
+            }
+        }
+        return forced;
+    }
+
+    private static boolean isDestinedEffect(PrismaticDiceInstance pd, int ignoredIdx) {
+        if (pd == null || pd.type == null) return false;
+        var effect = pd.type.getEffect();
+        if (effect == null) return false;
+        return effect.isGrantStatus()
+            && effect.getGrantedEffect() == data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect.DESTINED;
+    }
+
+    private static int calculateTopNSum(List<Integer> values, int n,
             Map<Integer, PrismaticDiceInstance> prismaticMap) {
+        Set<Integer> forcedIndices = getForcedIndices(prismaticMap, values.size());
+        int forcedSum = 0;
+        for (int idx : forcedIndices) {
+            forcedSum += values.get(idx);
+        }
 
-        float sum = 0;
-        for (int idx : newSelection) {
-            if (rerollIndices.contains(idx)) {
-                DiceType type = diceTypes.get(idx);
-                PrismaticDiceInstance instance = prismaticMap != null ? prismaticMap.get(idx) : null;
-                sum += DiceProbabilityCalculator.expectedValue(type, instance);
-            } else {
-                sum += currentValues.get(idx);
+        int remaining = n - forcedIndices.size();
+        if (remaining <= 0) return forcedSum;
+
+        List<Integer> freeValues = new ArrayList<>();
+        for (int i = 0; i < values.size(); i++) {
+            if (!forcedIndices.contains(i)) {
+                freeValues.add(values.get(i));
             }
         }
-        return sum;
+
+        freeValues.sort(Comparator.reverseOrder());
+        int freeSum = 0;
+        for (int i = 0; i < Math.min(remaining, freeValues.size()); i++) {
+            freeSum += freeValues.get(i);
+        }
+
+        return forcedSum + freeSum;
     }
-
-    private record RerollCandidate(Set<Integer> rerollIndices, float expectedImprovement) {}
-
-    private record RerolledDieValue(int index, float value, boolean isRerolled) {}
 }

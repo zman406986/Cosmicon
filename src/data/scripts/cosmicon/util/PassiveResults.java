@@ -17,6 +17,7 @@ public class PassiveResults {
         private int toughnessToRemove;
         private boolean triggerToughnessInstantDamage;
         private int pendingDefLevelBoost;
+        private int pendingStrength;
 
         public PassiveResult() {
             this.attackBonus = 0;
@@ -29,6 +30,7 @@ public class PassiveResults {
             this.toughnessToRemove = 0;
             this.triggerToughnessInstantDamage = false;
             this.pendingDefLevelBoost = 0;
+            this.pendingStrength = 0;
         }
 
         public void addAttackBonus(int bonus) {
@@ -101,9 +103,18 @@ public class PassiveResults {
             return pendingDefLevelBoost;
         }
 
+        public void setPendingStrength(int strength) {
+            this.pendingStrength = strength;
+        }
+
+        public int getPendingStrength() {
+            return pendingStrength;
+        }
+
         public boolean isEmpty() {
             return attackBonus == 0 && defenseBonus == 0 && !perforation && grantedEffects.isEmpty() 
-                && setGrantedEffects.isEmpty() && healAmount == 0 && instantDamageToOpponent == 0 && pendingDefLevelBoost == 0;
+                && setGrantedEffects.isEmpty() && healAmount == 0 && instantDamageToOpponent == 0 
+                && pendingDefLevelBoost == 0 && pendingStrength == 0;
         }
     }
 

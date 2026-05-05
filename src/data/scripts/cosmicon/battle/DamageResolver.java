@@ -39,12 +39,6 @@ public class DamageResolver {
         
         int damage = Math.max(0, modifiedAttack - modifiedDefense);
         
-        CosmiconLogger.info("[DMG_DIAG] resolve: attacker=%s, atkValue=%d, defValue=%d, atkBonus=%d, defBonus=%d, prismAtk=%d, prismDef=%d, perf=%s, damage=%d",
-            state.isPlayerAttacker() ? "Player" : "Opponent",
-            attackValue, defenseValue, atkBonus, defBonus,
-            attackerPrismaticValue, defenderPrismaticValue,
-            hasPerforation, damage);
-        
         boolean forcefieldUsed = false;
         if (defenderEffects.isForcefieldActive() && damage > 0) {
             damage = 0;
@@ -61,7 +55,13 @@ public class DamageResolver {
             attackerSelfThorns = attackerEffects.getLayers(StatusEffectProcessor.StatusEffect.THORNS);
         }
         
-        int counterDamage = defenderEffects.calculateCounterDamage(attackValue, defenseValue);
+        int counterDamage = defenderEffects.calculateCounterDamage(modifiedAttack, prePerforationDefense);
+        
+        CosmiconLogger.info("[DMG_DIAG] resolve: attacker=%s, atkValue=%d, defValue=%d, atkBonus=%d, defBonus=%d, prismAtk=%d, prismDef=%d, perf=%s, damage=%d, counter=%d (modAtk=%d vs prePerfDef=%d)",
+            state.isPlayerAttacker() ? "Player" : "Opponent",
+            attackValue, defenseValue, atkBonus, defBonus,
+            attackerPrismaticValue, defenderPrismaticValue,
+            hasPerforation, damage, counterDamage, modifiedAttack, prePerforationDefense);
         
         int overloadSelfDamage = attackerEffects.calculateOverloadSelfDamage(TurnType.ATTACK);
         

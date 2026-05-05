@@ -489,8 +489,7 @@ public class BattleUILabels {
 
                 int previousLayers = previousPlayerLayers.getOrDefault(effect, 0);
                 if (layers > previousLayers) {
-                    CosmiconLogger.debug("[StatusAnim] Player %s layers %d > prev %d, triggering ADD at idx=%d",
-                        effect.name(), layers, previousLayers, playerIdx);
+
                     float[] pos = getPlayerStatusLabelPosition(playerIdx);
                     statusEffectAnimator.triggerAddAnimation(pos[0], pos[1], pos[2], pos[3]);
                 }
@@ -532,8 +531,7 @@ public class BattleUILabels {
 
                 int previousLayers = previousOpponentLayers.getOrDefault(effect, 0);
                 if (layers > previousLayers) {
-                    CosmiconLogger.debug("[StatusAnim] Opponent %s layers %d > prev %d, triggering ADD at idx=%d",
-                        effect.name(), layers, previousLayers, opponentIdx);
+
                     float[] pos = getOpponentStatusLabelPosition(opponentIdx);
                     statusEffectAnimator.triggerAddAnimation(pos[0], pos[1], pos[2], pos[3]);
                 }

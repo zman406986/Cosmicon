@@ -212,8 +212,8 @@ public class BattleController implements BattleState.DamageAnimationCallback {
         turnProcessor.advanceToDefenderSelectPhase();
     }
 
-    public boolean proceedToModificationPause() {
-        return turnProcessor.proceedToModificationPause();
+    public void proceedToModificationPause() {
+        turnProcessor.proceedToModificationPause();
     }
 
     public void proceedFromModificationPause() {

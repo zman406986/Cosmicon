@@ -273,9 +273,51 @@ public class DiceRollManager {
     
     
     
+    public void appendOpponentInstantDice(DiceType type, int value, float centerX, float centerY) {
+        if (!initialized) return;
+
+        List<float[]> existingPositions = collectAllOpponentDicePositions();
+        PlannedPath prismaticPath = DicePathPlanner.planSinglePrismaticPath(
+            opponentAnimators.size(), centerX, centerY, DICE_SPACING, existingPositions,
+            BattleRenderingUtils.PANEL_WIDTH, BattleRenderingUtils.PANEL_HEIGHT);
+
+        float panelW = BattleRenderingUtils.PANEL_WIDTH;
+        float panelH = BattleRenderingUtils.PANEL_HEIGHT;
+
+        float[][] scatterDest = DicePathPlanner.planScatterDestinations(1, panelW, panelH);
+        float scatterX = scatterDest[0][0];
+        float scatterY = scatterDest[0][1];
+
+        float[][] singlePos = new float[][]{{scatterX, scatterY}};
+        float[] targetXs = new float[]{prismaticPath.targetCenterX()};
+        float[] targetYs = new float[]{prismaticPath.targetCenterY()};
+        List<PlannedPath> travelPaths = DicePathPlanner.planTravelPaths(
+            singlePos, targetXs, targetYs, panelW, panelH);
+        PlannedPath travelPath = travelPaths.get(0);
+
+        DiceAnimator animator = new DiceAnimator();
+        animator.init();
+        animator.startFromScatterPosition(type, value, scatterX, scatterY, prismaticPath.delay(),
+                travelPath.rotation(), travelPath.travelDistance(),
+                travelPath.bounceCount(), travelPath.bounceHeights(),
+                prismaticPath.targetCenterX(), prismaticPath.targetCenterY());
+        opponentAnimators.add(animator);
+    }
+
     private List<float[]> collectAllDicePositions() {
         List<float[]> positions = new ArrayList<>();
         for (DiceAnimator animator : animators) {
+            positions.add(new float[]{
+                animator.getTargetSlotX(),
+                animator.getTargetSlotY()
+            });
+        }
+        return positions;
+    }
+
+    private List<float[]> collectAllOpponentDicePositions() {
+        List<float[]> positions = new ArrayList<>();
+        for (DiceAnimator animator : opponentAnimators) {
             positions.add(new float[]{
                 animator.getTargetSlotX(),
                 animator.getTargetSlotY()

@@ -212,7 +212,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         buttons = new BattleUIButtons();
 
         opponentPrismaticBtnX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.MARGIN - PRISMATIC_BTN_SIZE - 10f;
-        opponentPrismaticBtnY = BattleRenderingUtils.MARGIN + 10f;
+        opponentPrismaticBtnY = BattleRenderingUtils.MARGIN + 22f;
         labels.init(panel, battleState, diceRollManager,
             opponentPrismaticBtnX, opponentPrismaticBtnY,
             BattleRenderingUtils.MARGIN + 60f, BattleRenderingUtils.PANEL_HEIGHT - 100f);
@@ -357,6 +357,11 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             float gridCenterX = defenderIsPlayer ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_X : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_X;
             float gridCenterY = defenderIsPlayer ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_Y : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_Y;
             diceRollManager.moveSelectedToRestGrid(defenderIsPlayer, gridCenterX, gridCenterY);
+            labels.updateLabelsFromState();
+        }
+
+        if (newPhase == Phase.SELECTING_DEFENSE) {
+            labels.updateLabelsFromState();
         }
 
         if (newPhase == Phase.RESOLVING_PRE_CLASH) {
@@ -591,6 +596,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         labels.updateConfirmedSelectionLabels();
         labels.updateIconValueLabels();
         labels.updateStatusEffectLabels();
+        buttons.updateStatusTooltipButtons();
         labels.updatePrismaticButton();
         checkProcessedEffects();
         if (labels.getStatusEffectAnimator() != null) {
@@ -1111,40 +1117,40 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         List<StatusEffectProcessor.ProcessedEffect> playerProcessed =
             battleState.getPlayerEffects().getAndClearProcessedEffects();
         if (!playerProcessed.isEmpty()) {
-            CosmiconLogger.debug("[StatusAnim] Player processed effects: %d", playerProcessed.size());
+
         }
         for (StatusEffectProcessor.ProcessedEffect pe : playerProcessed) {
-            CosmiconLogger.debug("[StatusAnim] Player processed: %s layers=%d", pe.effect().name(), pe.layers());
+
             Integer idx = labels.getEffectDisplayIndex(true, pe.effect());
             if (idx == null) {
                 idx = computeDisplayIndex(true, pe.effect());
-                CosmiconLogger.debug("[StatusAnim] Fallback computeDisplayIndex for %s = %d", pe.effect().name(), idx);
+                
             }
             if (idx != null) {
                 float[] pos = labels.getStatusEffectLabelPosition(true, idx);
                 animator.triggerProcessAnimation(pos[0], pos[1], pos[2], pos[3]);
             } else {
-                CosmiconLogger.debug("[StatusAnim] Could not find display index for player %s", pe.effect().name());
+
             }
         }
 
         List<StatusEffectProcessor.ProcessedEffect> opponentProcessed =
             battleState.getOpponentEffects().getAndClearProcessedEffects();
         if (!opponentProcessed.isEmpty()) {
-            CosmiconLogger.debug("[StatusAnim] Opponent processed effects: %d", opponentProcessed.size());
+
         }
         for (StatusEffectProcessor.ProcessedEffect pe : opponentProcessed) {
-            CosmiconLogger.debug("[StatusAnim] Opponent processed: %s layers=%d", pe.effect().name(), pe.layers());
+
             Integer idx = labels.getEffectDisplayIndex(false, pe.effect());
             if (idx == null) {
                 idx = computeDisplayIndex(false, pe.effect());
-                CosmiconLogger.debug("[StatusAnim] Fallback computeDisplayIndex for %s = %d", pe.effect().name(), idx);
+                
             }
             if (idx != null) {
                 float[] pos = labels.getStatusEffectLabelPosition(false, idx);
                 animator.triggerProcessAnimation(pos[0], pos[1], pos[2], pos[3]);
             } else {
-                CosmiconLogger.debug("[StatusAnim] Could not find display index for opponent %s", pe.effect().name());
+
             }
         }
     }
@@ -1330,7 +1336,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         GLStateUtil.enableTexturingWithBlend();
 
         UnifiedCoord btnPos = new UnifiedCoord(buttons.getPlayerPrismaticBtnX(), buttons.getPlayerPrismaticBtnY());
-        float renderX = btnPos.glX();
+        float renderX = btnPos.glX() + 50f;
         float renderY = btnPos.glSpriteY(PRISMATIC_BTN_SIZE);
 
         int uses = battleState.getPlayerPrismaticUses();

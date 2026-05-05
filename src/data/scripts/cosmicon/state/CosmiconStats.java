@@ -115,6 +115,12 @@ public class CosmiconStats {
 
     public static void unlockCharacter(String charId) {
         getUnlockedCharacters().add(charId);
+        CharacterCard card = CharacterRegistry.getCharacterById(charId);
+        if (card != null) {
+            for (String diceId : card.getPrismaticDiceIds().keySet()) {
+                unlockPrismaticDice(diceId);
+            }
+        }
     }
 
     public static boolean hasAnyCharacterUnlocked() {
