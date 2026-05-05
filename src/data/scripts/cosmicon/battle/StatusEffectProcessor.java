@@ -126,11 +126,17 @@ public class StatusEffectProcessor {
         return result;
     }
 
+    public void processedEffectsFromModification(StatusEffect effect) {
+        if (hasEffect(effect)) {
+            processedEffects.add(new ProcessedEffect(effect, getLayers(effect)));
+        }
+    }
+
     public int processPhase(Phase phase, TurnType turnType, BattleContext context) {
         int totalDamage = 0;
 
         switch (phase) {
-            case START_OF_TURN -> totalDamage += processStartOfTurn(turnType, context);
+            case START_OF_TURN -> processStartOfTurn(turnType, context);
             case BEFORE_ROLL -> processBeforeRoll(turnType, context);
             case AFTER_ROLL -> processAfterRoll(context);
             case AFTER_SELECT -> processAfterSelect(context);
@@ -142,7 +148,7 @@ public class StatusEffectProcessor {
         return totalDamage;
     }
 
-    private int processStartOfTurn(TurnType turnType, BattleContext context) {
+    private void processStartOfTurn(TurnType turnType, BattleContext context) {
         if (turnType == TurnType.ATTACK && hasEffect(StatusEffect.LAST_STAND)) {
             int layers = getLayers(StatusEffect.LAST_STAND);
             lastStandHpReduction = context.getCurrentHp() - 1;
@@ -153,7 +159,6 @@ public class StatusEffectProcessor {
             CosmiconLogger.debug("LAST_STAND: HP reduced from %d to 1, bonus = %d", 
                 lastStandHpReduction + 1, lastStandHpReduction);
         }
-        return 0;
     }
 
     private void processBeforeRoll(TurnType turnType, BattleContext context) {
@@ -188,13 +193,6 @@ public class StatusEffectProcessor {
     }
 
     private void processAfterSelect(BattleContext context) {
-        if (hasEffect(StatusEffect.ARISE)) {
-            processedEffects.add(new ProcessedEffect(StatusEffect.ARISE, getLayers(StatusEffect.ARISE)));
-            context.applyArise();
-            effects.remove(StatusEffect.ARISE);
-            durations.remove(StatusEffect.ARISE);
-        }
-
         if (hasEffect(StatusEffect.LEVEL_UP)) {
             int layers = getLayers(StatusEffect.LEVEL_UP);
             processedEffects.add(new ProcessedEffect(StatusEffect.LEVEL_UP, layers));

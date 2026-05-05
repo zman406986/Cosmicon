@@ -23,6 +23,7 @@ public class BattleState {
         SELECTING_DEFENSE,
         DICE_DISPLAY_DEFENSE,
         RESOLVING_PRE_CLASH,
+        RESOLVING_MODIFICATION,
         RESOLVING,
         WAITING_NEXT_TURN,
         ENDED
@@ -107,6 +108,11 @@ public class BattleState {
     private final List<ValueChangeRecord> pendingValueChanges;
     private boolean valueChangeAnimationInProgress;
 
+    private final List<ModificationRecord> modificationOrder;
+    private int modificationSequenceCounter;
+
+    public record ModificationRecord(StatusEffectProcessor.StatusEffect effect, boolean forPlayer, int sequence) {}
+
     public interface BattleEventListener {
         void onPhaseChange(Phase newPhase);
         void onDiceRerolled(boolean isPlayer, List<Integer> newValues, List<Integer> rerolledIndices);
@@ -167,6 +173,8 @@ public class BattleState {
         this.aiSelectionVisualizer = new AISelectionVisualizer();
         this.pendingValueChanges = new ArrayList<>();
         this.valueChangeAnimationInProgress = false;
+        this.modificationOrder = new ArrayList<>();
+        this.modificationSequenceCounter = 0;
         this.playerPendingDefLevelBoost = 0;
         this.opponentPendingDefLevelBoost = 0;
         this.playerOriginalDefLevel = 0;
@@ -391,12 +399,39 @@ public class BattleState {
     
     public void applyEffect(StatusEffectProcessor.StatusEffect effect, int layers, boolean toPlayer) {
         getEffects(toPlayer).addEffect(effect, layers);
+        if (effect == StatusEffectProcessor.StatusEffect.HACK || effect == StatusEffectProcessor.StatusEffect.ARISE) {
+            modificationOrder.add(new ModificationRecord(effect, toPlayer, modificationSequenceCounter++));
+        }
         CosmiconLogger.debug("Effect applied to %s (%d layers)", toPlayer ? "Player" : "Opponent", layers);
+    }
+
+    public void recordModificationOrder(StatusEffectProcessor.StatusEffect effect, boolean forPlayer) {
+        if (effect == StatusEffectProcessor.StatusEffect.HACK || effect == StatusEffectProcessor.StatusEffect.ARISE) {
+            modificationOrder.add(new ModificationRecord(effect, forPlayer, modificationSequenceCounter++));
+        }
+    }
+
+    public List<ModificationRecord> getModificationOrder() {
+        return new ArrayList<>(modificationOrder);
+    }
+
+    public void clearModificationOrder() {
+        modificationOrder.clear();
+    }
+
+    public boolean hasPendingModification() {
+        boolean playerHasHack = playerEffects.hasEffect(StatusEffectProcessor.StatusEffect.HACK);
+        boolean opponentHasHack = opponentEffects.hasEffect(StatusEffectProcessor.StatusEffect.HACK);
+        boolean playerHasArise = playerEffects.hasEffect(StatusEffectProcessor.StatusEffect.ARISE);
+        boolean opponentHasArise = opponentEffects.hasEffect(StatusEffectProcessor.StatusEffect.ARISE);
+        return playerHasHack || opponentHasHack || playerHasArise || opponentHasArise;
     }
     
     public void resetEffectTurnState() {
         playerEffects.resetTurnState();
         opponentEffects.resetTurnState();
+        modificationOrder.clear();
+        modificationSequenceCounter = 0;
     }
     
     public void clearTemporaryEffects() {
@@ -512,6 +547,10 @@ public class BattleState {
 
     public void addPrismaticUse(PrismaticDiceType type, boolean isPlayer) {
         prismaticManager.addPrismaticUse(type, isPlayer);
+    }
+
+    public void consumePrismaticUse(PrismaticDiceType type, boolean forPlayer) {
+        prismaticManager.consumePrismaticUse(type, forPlayer);
     }
     
     
@@ -645,7 +684,7 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
                 turnNumber, playerPrismaticDiceByIndex.keySet());
             return;
         }
-        if (currentPhase == Phase.RESOLVING || currentPhase == Phase.RESOLVING_PRE_CLASH) {
+        if (currentPhase == Phase.RESOLVING || currentPhase == Phase.RESOLVING_PRE_CLASH || currentPhase == Phase.RESOLVING_MODIFICATION) {
             CosmiconLogger.warn("[PRISM_DIAG] Cannot clear prismatic state (turn %d): phase=%s, playerPrismaticDiceByIndex=%s",
                 turnNumber, currentPhase, playerPrismaticDiceByIndex.keySet());
             return;
@@ -835,6 +874,7 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
                newPhase == Phase.SELECTING_DEFENSE ||
                newPhase == Phase.DICE_DISPLAY_DEFENSE ||
                newPhase == Phase.RESOLVING_PRE_CLASH ||
+               newPhase == Phase.RESOLVING_MODIFICATION ||
                newPhase == Phase.RESOLVING ||
                newPhase == Phase.WAITING_NEXT_TURN ||
                newPhase == Phase.ENDED;
@@ -1179,6 +1219,8 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         
         pendingValueChanges.clear();
         valueChangeAnimationInProgress = false;
+        modificationOrder.clear();
+        modificationSequenceCounter = 0;
         
         attackValue = 0;
         defenseValue = 0;

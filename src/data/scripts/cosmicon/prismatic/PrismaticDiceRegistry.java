@@ -92,7 +92,7 @@ public final class PrismaticDiceRegistry {
             "evolution",
             new int[]{3, 3, 4, 4, 6, 2},
             indices(5),
-            PrismaticEffect.doubleValue(),
+            PrismaticEffect.DOUBLE_VALUE,
             AlwaysAvailableCondition.INSTANCE
         );
     }
@@ -101,7 +101,7 @@ public final class PrismaticDiceRegistry {
         return PrismaticDiceType.create(
             "absolute_six",
             new int[]{6, 6, 6, 6, 6, 6},
-            PrismaticEffect.none(),
+            PrismaticEffect.NONE,
             AlwaysAvailableCondition.INSTANCE
         );
     }
@@ -121,7 +121,7 @@ public final class PrismaticDiceRegistry {
         return PrismaticDiceType.create(
             "revenge",
             new int[]{6, 6, 8, 8, 12, 12},
-            PrismaticEffect.none(),
+            PrismaticEffect.NONE,
             DamageTakenCondition.atLeast(25)
         );
     }
@@ -131,7 +131,7 @@ public final class PrismaticDiceRegistry {
             "doctors_advice",
             new int[]{1, 2, 3, 4, 6, 6},
             allIndices(),
-            PrismaticEffect.healHp(),
+            PrismaticEffect.HEAL_HP,
             AlwaysAvailableCondition.INSTANCE
         );
     }
@@ -141,7 +141,7 @@ public final class PrismaticDiceRegistry {
             "last_words",
             new int[]{4, 5, 5, 1, 2, 4},
             indices(3, 4, 5),
-            PrismaticEffect.doubleValue(),
+            PrismaticEffect.DOUBLE_VALUE,
             HpThresholdCondition.atOrBelow(8)
         );
     }
@@ -174,7 +174,7 @@ public final class PrismaticDiceRegistry {
         return PrismaticDiceType.create(
             "miracle",
             new int[]{99, 99, 99, 99, 99, 99},
-            PrismaticEffect.none(),
+            PrismaticEffect.NONE,
             FaceSelectionCountCondition.faceSelected(1, 9)
         );
     }
@@ -218,7 +218,7 @@ public final class PrismaticDiceRegistry {
             new int[]{3, 3, 5, 5, 7, 7},
             new int[]{5, 5, 5, 7, 7, 7},
             new HashSet<>(),
-            PrismaticEffect.none(),
+            PrismaticEffect.NONE,
             AlwaysAvailableCondition.INSTANCE
         );
     }
@@ -252,7 +252,7 @@ public final class PrismaticDiceRegistry {
             "heartbeat",
             new int[]{1, 1, 1, 1, 9, 9},
             indices(4, 5),
-            PrismaticEffect.gainPrismaticUse(),
+            PrismaticEffect.GAIN_PRISMATIC_USE,
             AlwaysAvailableCondition.INSTANCE
         );
     }
@@ -274,7 +274,7 @@ public final class PrismaticDiceRegistry {
             new int[]{1, 1, 4, 6, 8, 10},
             new int[]{1, 1, 6, 8, 10, 12},
             Set.of(),
-            PrismaticEffect.none(),
+            PrismaticEffect.NONE,
             TurnCountCondition.untilTurn(4)
         );
     }

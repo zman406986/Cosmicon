@@ -41,7 +41,7 @@ public interface CharacterAIProfile {
     }
 
     default boolean isAttackPassive() {
-        return true;
+        return !isDefensePassive();
     }
     
     default float getPrismaticDiceBonus(DiceType type, int faceValue, boolean isAttacking) {
@@ -56,22 +56,17 @@ public interface CharacterAIProfile {
         return 0f;
     }
 
-    record PassiveEvaluation(boolean triggered, float triggerProbability, float bonusValue, String description)
-    {
-
-        public static PassiveEvaluation notTriggered()
-        {
-                return new PassiveEvaluation(false, 0f, 0f, "");
-            }
-
-            public static PassiveEvaluation triggered(float bonus, String desc)
-            {
-                return new PassiveEvaluation(true, 1f, bonus, desc);
-            }
-
-            public static PassiveEvaluation potential(float probability, float bonus, String desc)
-            {
-                return new PassiveEvaluation(false, probability, bonus, desc);
-            }
+    record PassiveEvaluation(boolean triggered, float triggerProbability, float bonusValue, String description) {
+        public static PassiveEvaluation notTriggered() {
+            return new PassiveEvaluation(false, 0f, 0f, "");
         }
+
+        public static PassiveEvaluation triggered(float bonus, String desc) {
+            return new PassiveEvaluation(true, 1f, bonus, desc);
+        }
+
+        public static PassiveEvaluation potential(float probability, float bonus, String desc) {
+            return new PassiveEvaluation(false, probability, bonus, desc);
+        }
+    }
 }

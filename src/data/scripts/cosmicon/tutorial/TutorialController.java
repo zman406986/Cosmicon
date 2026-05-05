@@ -3,12 +3,12 @@ package data.scripts.cosmicon.tutorial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.BattleState.Phase;
 import data.scripts.cosmicon.battle.DiceType;
+import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.state.CosmiconStats;
 
@@ -55,8 +55,19 @@ public class TutorialController {
         G2_T2_DEFENSE_RESOLVE,
         G2_T3_ATTACK_ROLL,
         G2_T3_ATTACK_PRISMATIC,
+        G2_T3_ATTACK_REROLL,
         G2_T3_ATTACK_SELECT,
         G2_T3_ATTACK_CONFIRM,
+        G2_T3_ATTACK_WAIT,
+        G2_T3_ATTACK_RESOLVE,
+        G2_T3_DEFENSE_ROLL,
+        G2_T3_DEFENSE_SELECT,
+        G2_T3_DEFENSE_CONFIRM,
+        G2_T3_DEFENSE_WAIT,
+        G2_T3_DEFENSE_RESOLVE,
+        G2_T4_ATTACK_ROLL,
+        G2_T4_ATTACK_SELECT,
+        G2_T4_ATTACK_CONFIRM,
         G2_VICTORY
     }
 
@@ -91,8 +102,8 @@ public class TutorialController {
         return game;
     }
 
-    public boolean isTutorialComplete() {
-        return complete;
+    public TutorialStep getCurrentStep() {
+        return currentStep;
     }
 
     public String getTutorialText() {
@@ -113,7 +124,10 @@ public class TutorialController {
                  G2_T1_DEFENSE_SELECT,
                  G2_T2_ATTACK_PRISMATIC, G2_T2_ATTACK_SELECT,
                  G2_T2_DEFENSE_SELECT,
-                 G2_T3_ATTACK_PRISMATIC, G2_T3_ATTACK_SELECT -> true;
+                 G2_T3_ATTACK_PRISMATIC, G2_T3_ATTACK_REROLL,
+                 G2_T3_ATTACK_SELECT,
+                 G2_T3_DEFENSE_SELECT,
+                 G2_T4_ATTACK_SELECT -> true;
             default -> false;
         };
     }
@@ -135,13 +149,21 @@ public class TutorialController {
             case G1_T1_ATTACK_SELECT, G1_T1_DEFENSE_SELECT,
                  G1_T2_ATTACK_SELECT,
                  G2_T1_DEFENSE_SELECT,
-                 G2_T2_DEFENSE_SELECT -> isAmongHighest(diceIndex, values, battleState.getRequiredDiceCount(true));
+                 G2_T2_DEFENSE_SELECT,
+                 G2_T3_DEFENSE_SELECT -> isAmongHighest(diceIndex, values, battleState.getRequiredDiceCount(true));
 
             case G1_T2_ATTACK_REROLL -> !isAmongHighest(diceIndex, values, 2);
 
-            case G2_T2_ATTACK_PRISMATIC, G2_T2_ATTACK_SELECT,
-                 G2_T3_ATTACK_PRISMATIC, G2_T3_ATTACK_SELECT ->
+            case G2_T3_ATTACK_REROLL -> !isPrismatic;
+
+            case G2_T2_ATTACK_PRISMATIC, G2_T2_ATTACK_SELECT ->
                 isPrismatic || (value == 4 && isPrismaticDiceSelected());
+
+            case G2_T3_ATTACK_PRISMATIC -> isPrismatic;
+
+            case G2_T3_ATTACK_SELECT -> !isPrismatic && isAmongHighestNonPrismatic(diceIndex, values, types, battleState.getRequiredDiceCount(true));
+
+            case G2_T4_ATTACK_SELECT -> value == 4;
 
             default -> true;
         };
@@ -149,16 +171,29 @@ public class TutorialController {
 
     public boolean canRerollWithCurrentSelection() {
         if (complete) return true;
-        if (currentStep != TutorialStep.G1_T2_ATTACK_REROLL) return true;
 
-        List<Integer> values = battleState.getPlayerDiceValues();
-        List<Boolean> selected = battleState.getPlayerDiceSelected();
-
-        for (int i = 0; i < values.size(); i++) {
-            if (!isAmongHighest(i, values, 2) && !selected.get(i)) {
-                return false;
+        if (currentStep == TutorialStep.G1_T2_ATTACK_REROLL) {
+            List<Integer> values = battleState.getPlayerDiceValues();
+            List<Boolean> selected = battleState.getPlayerDiceSelected();
+            for (int i = 0; i < values.size(); i++) {
+                if (!isAmongHighest(i, values, 2) && !selected.get(i)) {
+                    return false;
+                }
             }
+            return true;
         }
+
+        if (currentStep == TutorialStep.G2_T3_ATTACK_REROLL) {
+            List<DiceType> types = battleState.getPlayerDiceTypes();
+            List<Boolean> selected = battleState.getPlayerDiceSelected();
+            for (int i = 0; i < types.size(); i++) {
+                if (types.get(i) != DiceType.PRISMATIC && !selected.get(i)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         return true;
     }
 
@@ -170,9 +205,18 @@ public class TutorialController {
         return values.get(index) >= threshold;
     }
 
-    private boolean isMaxValue(int index, List<Integer> values) {
-        if (values == null || index < 0 || index >= values.size()) return false;
-        return Objects.equals(values.get(index), Collections.max(values));
+    private boolean isAmongHighestNonPrismatic(int index, List<Integer> values, List<DiceType> types, int count) {
+        if (values == null || values.isEmpty() || index < 0 || index >= values.size()) return false;
+        List<Integer> nonPrismaticValues = new ArrayList<>();
+        for (int i = 0; i < values.size(); i++) {
+            if (types.get(i) != DiceType.PRISMATIC) {
+                nonPrismaticValues.add(values.get(i));
+            }
+        }
+        if (nonPrismaticValues.isEmpty()) return false;
+        nonPrismaticValues.sort(Collections.reverseOrder());
+        int threshold = nonPrismaticValues.get(Math.min(count - 1, nonPrismaticValues.size() - 1));
+        return values.get(index) >= threshold && types.get(index) != DiceType.PRISMATIC;
     }
 
     private boolean isPrismaticDiceSelected() {
@@ -195,7 +239,9 @@ public class TutorialController {
                  G2_T1_DEFENSE_CONFIRM,
                  G2_T2_ATTACK_CONFIRM,
                  G2_T2_DEFENSE_CONFIRM,
-                 G2_T3_ATTACK_CONFIRM -> true;
+                 G2_T3_ATTACK_CONFIRM,
+                 G2_T3_DEFENSE_CONFIRM,
+                 G2_T4_ATTACK_CONFIRM -> true;
             default -> false;
         };
     }
@@ -203,14 +249,30 @@ public class TutorialController {
     public boolean isRerollAllowed() {
         if (complete) return true;
 
-        return currentStep == TutorialStep.G1_T2_ATTACK_REROLL;
+        return currentStep == TutorialStep.G1_T2_ATTACK_REROLL
+            || currentStep == TutorialStep.G2_T3_ATTACK_REROLL;
     }
 
     public boolean isPrismaticAllowed() {
         if (complete) return false;
+        if (game != TutorialGame.GAME_2_ACHERON) return false;
 
-        return currentStep == TutorialStep.G2_T2_ATTACK_PRISMATIC
-            || currentStep == TutorialStep.G2_T3_ATTACK_PRISMATIC;
+        boolean isAttackPhase = currentStep == TutorialStep.G2_T2_ATTACK_PRISMATIC
+            || currentStep == TutorialStep.G2_T2_ATTACK_SELECT
+            || currentStep == TutorialStep.G2_T3_ATTACK_PRISMATIC
+            || currentStep == TutorialStep.G2_T3_ATTACK_REROLL
+            || currentStep == TutorialStep.G2_T3_ATTACK_SELECT;
+
+        if (!isAttackPhase) return false;
+
+        List<DiceType> types = battleState.getPlayerDiceTypes();
+        if (types != null) {
+            for (DiceType type : types) {
+                if (type == DiceType.PRISMATIC) return false;
+            }
+        }
+
+        return true;
     }
 
     public boolean isClickToRollAllowed() {
@@ -222,20 +284,22 @@ public class TutorialController {
                  G2_T1_DEFENSE_ROLL,
                  G2_T2_ATTACK_ROLL,
                  G2_T2_DEFENSE_ROLL,
-                 G2_T3_ATTACK_ROLL -> true;
+                 G2_T3_ATTACK_ROLL,
+                 G2_T3_DEFENSE_ROLL,
+                 G2_T4_ATTACK_ROLL -> true;
             default -> false;
         };
     }
 
     public boolean isContinueAllowed() {
-        if (complete) return false;
+        if (complete) return true;
 
         return !switch (currentStep)
         {
-            case G1_VICTORY, G2_VICTORY,
-                 G1_T1_ATTACK_RESOLVE, G1_T1_DEFENSE_RESOLVE,
+            case G1_T1_ATTACK_RESOLVE, G1_T1_DEFENSE_RESOLVE,
                  G2_T1_DEFENSE_RESOLVE,
-                 G2_T2_ATTACK_RESOLVE, G2_T2_DEFENSE_RESOLVE -> true;
+                 G2_T2_ATTACK_RESOLVE, G2_T2_DEFENSE_RESOLVE,
+                 G2_T3_ATTACK_RESOLVE, G2_T3_DEFENSE_RESOLVE -> true;
             default -> false;
         };
     }
@@ -274,9 +338,19 @@ public class TutorialController {
                     currentStep = TutorialStep.G2_T2_DEFENSE_CONFIRM;
                 }
             }
-            case G2_T3_ATTACK_PRISMATIC, G2_T3_ATTACK_SELECT -> {
+            case G2_T3_ATTACK_SELECT -> {
                 if (battleState.countSelectedDice(true) == battleState.getRequiredDiceCount(true)) {
                     currentStep = TutorialStep.G2_T3_ATTACK_CONFIRM;
+                }
+            }
+            case G2_T3_DEFENSE_SELECT -> {
+                if (battleState.countSelectedDice(true) == battleState.getRequiredDiceCount(true)) {
+                    currentStep = TutorialStep.G2_T3_DEFENSE_CONFIRM;
+                }
+            }
+            case G2_T4_ATTACK_SELECT -> {
+                if (battleState.countSelectedDice(true) == battleState.getRequiredDiceCount(true)) {
+                    currentStep = TutorialStep.G2_T4_ATTACK_CONFIRM;
                 }
             }
             default -> {}
@@ -293,7 +367,9 @@ public class TutorialController {
             case G2_T1_DEFENSE_CONFIRM -> currentStep = TutorialStep.G2_T1_DEFENSE_WAIT;
             case G2_T2_ATTACK_CONFIRM -> currentStep = TutorialStep.G2_T2_ATTACK_WAIT;
             case G2_T2_DEFENSE_CONFIRM -> currentStep = TutorialStep.G2_T2_DEFENSE_WAIT;
-            case G2_T3_ATTACK_CONFIRM -> currentStep = TutorialStep.G2_VICTORY;
+            case G2_T3_ATTACK_CONFIRM -> currentStep = TutorialStep.G2_T3_ATTACK_WAIT;
+            case G2_T3_DEFENSE_CONFIRM -> currentStep = TutorialStep.G2_T3_DEFENSE_WAIT;
+            case G2_T4_ATTACK_CONFIRM -> currentStep = TutorialStep.G2_VICTORY;
             default -> {}
         }
 
@@ -307,6 +383,8 @@ public class TutorialController {
 
         if (currentStep == TutorialStep.G1_T2_ATTACK_REROLL) {
             currentStep = TutorialStep.G1_T2_ATTACK_SELECT;
+        } else if (currentStep == TutorialStep.G2_T3_ATTACK_REROLL) {
+            currentStep = TutorialStep.G2_T3_ATTACK_SELECT;
         }
     }
 
@@ -316,7 +394,11 @@ public class TutorialController {
         if (currentStep == TutorialStep.G2_T2_ATTACK_PRISMATIC) {
             currentStep = TutorialStep.G2_T2_ATTACK_SELECT;
         } else if (currentStep == TutorialStep.G2_T3_ATTACK_PRISMATIC) {
-            currentStep = TutorialStep.G2_T3_ATTACK_SELECT;
+            var repeaterType = PrismaticDiceRegistry.get("repeater");
+            if (repeaterType != null) {
+                battleState.consumePrismaticUse(repeaterType, true);
+            }
+            currentStep = TutorialStep.G2_T3_ATTACK_REROLL;
         }
     }
 
@@ -326,7 +408,11 @@ public class TutorialController {
         if (currentStep == TutorialStep.G2_T2_ATTACK_PRISMATIC) {
             currentStep = TutorialStep.G2_T2_ATTACK_SELECT;
         } else if (currentStep == TutorialStep.G2_T3_ATTACK_PRISMATIC) {
-            currentStep = TutorialStep.G2_T3_ATTACK_SELECT;
+            var repeaterType = PrismaticDiceRegistry.get("repeater");
+            if (repeaterType != null) {
+                battleState.consumePrismaticUse(repeaterType, true);
+            }
+            currentStep = TutorialStep.G2_T3_ATTACK_REROLL;
         }
     }
 
@@ -339,6 +425,8 @@ public class TutorialController {
             case G2_T1_DEFENSE_RESOLVE -> currentStep = TutorialStep.G2_T2_ATTACK_ROLL;
             case G2_T2_ATTACK_RESOLVE -> currentStep = TutorialStep.G2_T2_DEFENSE_ROLL;
             case G2_T2_DEFENSE_RESOLVE -> currentStep = TutorialStep.G2_T3_ATTACK_ROLL;
+            case G2_T3_ATTACK_RESOLVE -> currentStep = TutorialStep.G2_T3_DEFENSE_ROLL;
+            case G2_T3_DEFENSE_RESOLVE -> currentStep = TutorialStep.G2_T4_ATTACK_ROLL;
             default -> {}
         }
     }
@@ -394,12 +482,16 @@ public class TutorialController {
                 currentStep = TutorialStep.G2_T1_DEFENSE_SELECT;
             } else if (currentStep == TutorialStep.G2_T2_DEFENSE_ROLL) {
                 currentStep = TutorialStep.G2_T2_DEFENSE_SELECT;
+            } else if (currentStep == TutorialStep.G2_T3_DEFENSE_ROLL) {
+                currentStep = TutorialStep.G2_T3_DEFENSE_SELECT;
             }
         } else if (newPhase == Phase.SELECTING_ATTACK && playerIsAttacker) {
             if (currentStep == TutorialStep.G2_T2_ATTACK_ROLL) {
                 currentStep = TutorialStep.G2_T2_ATTACK_PRISMATIC;
             } else if (currentStep == TutorialStep.G2_T3_ATTACK_ROLL) {
                 currentStep = TutorialStep.G2_T3_ATTACK_PRISMATIC;
+            } else if (currentStep == TutorialStep.G2_T4_ATTACK_ROLL) {
+                currentStep = TutorialStep.G2_T4_ATTACK_SELECT;
             }
         } else if (newPhase == Phase.WAITING_NEXT_TURN) {
             if (currentStep == TutorialStep.G2_T1_DEFENSE_WAIT) {
@@ -408,6 +500,10 @@ public class TutorialController {
                 currentStep = TutorialStep.G2_T2_ATTACK_RESOLVE;
             } else if (currentStep == TutorialStep.G2_T2_DEFENSE_WAIT) {
                 currentStep = TutorialStep.G2_T2_DEFENSE_RESOLVE;
+            } else if (currentStep == TutorialStep.G2_T3_ATTACK_WAIT) {
+                currentStep = TutorialStep.G2_T3_ATTACK_RESOLVE;
+            } else if (currentStep == TutorialStep.G2_T3_DEFENSE_WAIT) {
+                currentStep = TutorialStep.G2_T3_DEFENSE_RESOLVE;
             }
         }
     }

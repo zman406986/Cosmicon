@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import data.scripts.Strings;
+import data.scripts.cosmicon.util.PrismaticDisplayHelper;
 
 public class PrismaticFaceDisplay {
     
@@ -51,30 +52,6 @@ public class PrismaticFaceDisplay {
     }
     
     public static String getEffectDescription(PrismaticDiceType type) {
-        if (type == null) return "";
-        
-        String key = "prismatic." + type.getId() + ".description";
-        try {
-            return Strings.get(key);
-        } catch (Exception e) {
-            return getFallbackEffectDescription(type.getEffect());
-        }
-    }
-    
-    private static String getFallbackEffectDescription(PrismaticEffect effect) {
-        if (effect == null || effect.isNone()) return Strings.get("prismatic.equip.no_effect");
-        if (effect.isDoubleValue()) return Strings.get("prismatic.equip.effect_double");
-        if (effect.isHealHp()) return Strings.get("prismatic.equip.effect_heal");
-        if (effect.isGainPrismaticUse()) return Strings.get("prismatic.equip.effect_gain_use");
-        if (effect.isInstantDamage()) return Strings.format("prismatic.equip.effect_instant_damage", effect.getInstantDamageAmount());
-        if (effect.isGrantStatus()) {
-            String statusName = effect.getGrantedEffect().name();
-            String statusKey = "status." + statusName.toLowerCase();
-            try {
-                statusName = Strings.get(statusKey);
-            } catch (Exception ignored) { }
-            return Strings.format("prismatic.equip.effect_status", statusName);
-        }
-        return Strings.get("prismatic.equip.no_effect");
+        return PrismaticDisplayHelper.getEffectDescription(type);
     }
 }

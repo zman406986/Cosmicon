@@ -8,10 +8,10 @@ import java.io.IOException;
 import java.util.MissingResourceException;
 
 public class Strings {
+    private Strings() {}
+
     private static final String STRINGS_PATH = "data/config/strings.json";
     private static JSONObject strings = null;
-
-    static { }
 
     public static void loadStrings() {
         try {

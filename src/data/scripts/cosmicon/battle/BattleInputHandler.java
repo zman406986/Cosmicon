@@ -62,6 +62,10 @@ public class BattleInputHandler {
         this.waitingForClickToRoll = waiting;
     }
 
+    public void consumeClick() {
+        lastMouseButtonState = Mouse.isButtonDown(0) ? 1 : 0;
+    }
+
     public void setPanelPosition(float x, float y) {
         this.panelX = x;
         this.panelY = y;
@@ -160,6 +164,15 @@ public class BattleInputHandler {
 
             if (damageAnimator != null) {
                 damageAnimator.forceComplete();
+                lastMouseButtonState = currentButton;
+                UnifiedCoord.clearCurrent();
+                return;
+            }
+
+            if (battleState.getCurrentPhase() == Phase.RESOLVING_MODIFICATION) {
+                if (battleController != null) {
+                    battleController.proceedFromModificationPause();
+                }
                 lastMouseButtonState = currentButton;
                 UnifiedCoord.clearCurrent();
                 return;

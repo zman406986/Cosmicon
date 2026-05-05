@@ -307,6 +307,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                         float centerY = attackerIsPlayer ? diceZoneCenterY : opponentDiceZoneCenterY;
                         if (types != null && values != null) {
                             diceRollManager.startRollFromRest(attackerIsPlayer, types, values, centerX, centerY);
+                            inputHandler.consumeClick();
                         }
                     }
                 } else {
@@ -318,6 +319,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                         float centerY = defenderIsPlayer ? diceZoneCenterY : opponentDiceZoneCenterY;
                         if (types != null && values != null) {
                             diceRollManager.startRollFromRest(defenderIsPlayer, types, values, centerX, centerY);
+                            inputHandler.consumeClick();
                         }
                     }
                 }
@@ -368,7 +370,22 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             }
         }
 
+        if (newPhase == Phase.RESOLVING_MODIFICATION) {
+            triggerModificationGlowAnimations();
+        }
+
+        if (newPhase == Phase.RESOLVING) {
+            if (labels.getStatusEffectAnimator() != null) {
+                labels.getStatusEffectAnimator().stopLoopingGlowAnimations();
+            }
+            labels.hideClickHint();
+        }
+
         if (newPhase == Phase.WAITING_NEXT_TURN || newPhase == Phase.ENDED) {
+            if (labels.getStatusEffectAnimator() != null) {
+                labels.getStatusEffectAnimator().stopLoopingGlowAnimations();
+            }
+            labels.hideClickHint();
             if (inputHandler != null) {
                 inputHandler.createDiceHitboxes(new ArrayList<>());
             }
@@ -421,7 +438,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     public void onDiceRolled(boolean isPlayer, List<DiceType> types, List<Integer> values) {
         labels.updateDiceRolledCounts(isPlayer, types);
         
-        if (!isPlayer && types != null) {
+        if (!isPlayer && types != null && battleState != null 
+                && battleState.getCurrentPhase() == BattleState.Phase.ROLLING) {
             triggerOpponentDiceRoll();
         }
     }
@@ -457,6 +475,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             float centerY = defenderIsPlayer ? diceZoneCenterY : opponentDiceZoneCenterY;
             if (types != null && values != null) {
                 diceRollManager.startRollFromRest(defenderIsPlayer, types, values, centerX, centerY);
+                inputHandler.consumeClick();
             }
         }
     }
@@ -590,7 +609,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         }
 
         Phase currentPhase = battleState.getCurrentPhase();
-        if (currentPhase == Phase.RESOLVING || currentPhase == Phase.WAITING_NEXT_TURN || damageAnimationPending) {
+        if (currentPhase == Phase.RESOLVING || currentPhase == Phase.RESOLVING_MODIFICATION || currentPhase == Phase.WAITING_NEXT_TURN || damageAnimationPending) {
             labels.updateLabelsFromState();
         }
 
@@ -617,11 +636,25 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                     preClashTimer = 0f;
                     battleState.setValueChangeAnimationInProgress(false);
                     if (battleController != null) {
-                        battleController.proceedToClash();
+                        battleController.proceedToModificationPause();
                     }
                 }
             }
             return;
+        }
+
+        if (currentPhase == Phase.RESOLVING_MODIFICATION) {
+            StatusEffectAnimator effectAnimator = labels.getStatusEffectAnimator();
+            if (effectAnimator != null) {
+                effectAnimator.advance(amount);
+            }
+
+            ValueChangeAnimator attackerAnimator = labels.getAttackerValueAnimator();
+            ValueChangeAnimator defenderAnimator = labels.getDefenderValueAnimator();
+            if (attackerAnimator != null) attackerAnimator.advance(amount);
+            if (defenderAnimator != null) defenderAnimator.advance(amount);
+
+            labels.showClickHint(Strings.get("battle.click_to_continue"), 0.8f);
         }
 
         if (currentPhase == Phase.DICE_DISPLAY_ATTACK || currentPhase == Phase.DICE_DISPLAY_DEFENSE) {
@@ -782,7 +815,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             }
 
             if (!damageAnimator.isComplete()) {
-                labels.showClickHint("battle.click_to_continue", 0.6f);
+                labels.showClickHint(Strings.get("battle.click_to_continue"), 0.6f);
             } else {
                 labels.hideClickHint();
             }
@@ -1116,6 +1149,45 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         }
     }
 
+    private void triggerModificationGlowAnimations() {
+        if (battleState == null || labels == null || labels.getStatusEffectAnimator() == null) return;
+
+        StatusEffectAnimator animator = labels.getStatusEffectAnimator();
+
+        if (battleState.getPlayerEffects().hasEffect(StatusEffectProcessor.StatusEffect.HACK)) {
+            Integer idx = labels.getEffectDisplayIndex(true, StatusEffectProcessor.StatusEffect.HACK);
+            if (idx == null) idx = computeDisplayIndex(true, StatusEffectProcessor.StatusEffect.HACK);
+            if (idx != null) {
+                float[] pos = labels.getStatusEffectLabelPosition(true, idx);
+                animator.triggerLoopingGlowAnimation(pos[0], pos[1], pos[2], pos[3]);
+            }
+        }
+        if (battleState.getPlayerEffects().hasEffect(StatusEffectProcessor.StatusEffect.ARISE)) {
+            Integer idx = labels.getEffectDisplayIndex(true, StatusEffectProcessor.StatusEffect.ARISE);
+            if (idx == null) idx = computeDisplayIndex(true, StatusEffectProcessor.StatusEffect.ARISE);
+            if (idx != null) {
+                float[] pos = labels.getStatusEffectLabelPosition(true, idx);
+                animator.triggerLoopingGlowAnimation(pos[0], pos[1], pos[2], pos[3]);
+            }
+        }
+        if (battleState.getOpponentEffects().hasEffect(StatusEffectProcessor.StatusEffect.HACK)) {
+            Integer idx = labels.getEffectDisplayIndex(false, StatusEffectProcessor.StatusEffect.HACK);
+            if (idx == null) idx = computeDisplayIndex(false, StatusEffectProcessor.StatusEffect.HACK);
+            if (idx != null) {
+                float[] pos = labels.getStatusEffectLabelPosition(false, idx);
+                animator.triggerLoopingGlowAnimation(pos[0], pos[1], pos[2], pos[3]);
+            }
+        }
+        if (battleState.getOpponentEffects().hasEffect(StatusEffectProcessor.StatusEffect.ARISE)) {
+            Integer idx = labels.getEffectDisplayIndex(false, StatusEffectProcessor.StatusEffect.ARISE);
+            if (idx == null) idx = computeDisplayIndex(false, StatusEffectProcessor.StatusEffect.ARISE);
+            if (idx != null) {
+                float[] pos = labels.getStatusEffectLabelPosition(false, idx);
+                animator.triggerLoopingGlowAnimation(pos[0], pos[1], pos[2], pos[3]);
+            }
+        }
+    }
+
     private Integer computeDisplayIndex(boolean isPlayer, StatusEffectProcessor.StatusEffect targetEffect) {
         StatusEffectProcessor effects = isPlayer ? battleState.getPlayerEffects() : battleState.getOpponentEffects();
         int idx = 0;
@@ -1172,11 +1244,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void renderOpponentDiceZone(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
-        float zoneX = panelX + BattleRenderingUtils.MARGIN + BattleRenderingUtils.OPPONENT_DICE_ZONE_OFFSET_X;
-        float zoneY = panelY + BattleRenderingUtils.MARGIN + BattleRenderingUtils.OPPONENT_DICE_ZONE_Y_OFFSET;
-
-        BattleRenderingUtils.renderOpponentDiceZone(zoneX, zoneY, alphaMult);
-
         diceRollManager.renderOpponentDice(panelX, panelY, panelWidth, panelHeight, alphaMult);
 
         renderOpponentSelectionHighlights(alphaMult);

@@ -88,6 +88,7 @@ public class BattleController implements BattleState.DamageAnimationCallback {
             String tutorialPlayerId = tutorialGameType == TutorialController.TutorialGame.GAME_1_SPARXIE
                 ? "sparxie" : "acheron";
             playerCard = CharacterRegistry.getCharacterById(tutorialPlayerId);
+            CosmiconEventState.setPlayerCharacter(tutorialPlayerId);
             CosmiconLogger.info("Tutorial game: forced player character = %s", playerCard.getName());
         }
 
@@ -157,9 +158,9 @@ public class BattleController implements BattleState.DamageAnimationCallback {
                 CosmiconLogger.info("Tutorial Game 1: Weather disabled");
             } else if (tutorialGameType == TutorialController.TutorialGame.GAME_2_ACHERON) {
                 java.util.Map<Integer, WeatherType> forcedWeather = new java.util.HashMap<>();
-                forcedWeather.put(2, WeatherType.CREPUSCULAR_RAYS);
+                forcedWeather.put(2, WeatherType.SLEET);
                 state.getWeatherController().getWeatherManager().setForcedWeatherSchedule(forcedWeather);
-                CosmiconLogger.info("Tutorial Game 2: Forced CREPUSCULAR_RAYS weather at turn 2");
+                CosmiconLogger.info("Tutorial Game 2: Forced SLEET weather at turn 2");
             }
         }
 
@@ -211,8 +212,16 @@ public class BattleController implements BattleState.DamageAnimationCallback {
         turnProcessor.advanceToDefenderSelectPhase();
     }
 
+    public boolean proceedToModificationPause() {
+        return turnProcessor.proceedToModificationPause();
+    }
+
+    public void proceedFromModificationPause() {
+        turnProcessor.proceedFromModificationPause();
+    }
+
     public void proceedToClash() {
-        turnProcessor.proceedToClash();
+        turnProcessor.proceedToModificationPause();
     }
 
     public void advanceFromDiceDisplayAttack() {

@@ -123,10 +123,10 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
     private final CharacterSetupCallback callback;
 
-    private record ClickRegion(float boxX, float boxY, float width, float height, int index) {}
+    private record ClickRegion(float boxX, float boxY, int index) {}
     private record CardLabels(LabelAPI nameLabel, LabelAPI hpLabel, LabelAPI atkLabel, LabelAPI defLabel,
                               LabelAPI orangeLabel, LabelAPI purpleLabel, LabelAPI blueLabel, LabelAPI prismaticLabel) {}
-    private record DiceClickRegion(float x, float y, float width, float height, int entryIndex) {}
+    private record DiceClickRegion(float y, int entryIndex) {}
     private record VersionClickRegion(float x, float y, float width, float height, int entryIndex, boolean useTrue) {}
     private record DiceEntryLabels(LabelAPI nameLabel, LabelAPI facesLabel, LabelAPI descLabel, String diceId, boolean hasBothVersions) {}
 
@@ -530,7 +530,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                 continue;
             }
 
-            clickRegions.add(new ClickRegion(boxX, boxY, CARD_WIDTH, CARD_HEIGHT, i));
+            clickRegions.add(new ClickRegion(boxX, boxY, i));
 
             UnifiedCoord cardPos = new UnifiedCoord(boxX, boxY);
             float cardGlX = cardPos.glX();
@@ -666,7 +666,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             boolean isSelected = (i == selectedDiceEntryIndex);
             boolean hasBothVersions = PrismaticDisplayHelper.hasDistinctDefaultFaces(type);
 
-            diceClickRegions.add(new DiceClickRegion(DICE_LIST_X, entryY, DICE_LIST_WIDTH, DICE_ENTRY_HEIGHT, i));
+            diceClickRegions.add(new DiceClickRegion(entryY, i));
 
             UnifiedCoord entryPos = new UnifiedCoord(DICE_LIST_X, entryY);
             Color bgColor = isSelected ? COLOR_DICE_ENTRY_SELECTED : COLOR_DICE_ENTRY_BG;
@@ -914,7 +914,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                     // Dice entry click
                     boolean diceClicked = false;
                     for (DiceClickRegion region : diceClickRegions) {
-                        if (mousePos.isInsideRect(region.x, region.y, region.width, region.height)) {
+                        if (mousePos.isInsideRect(DICE_LIST_X, region.y, DICE_LIST_WIDTH, DICE_ENTRY_HEIGHT)) {
                             handleDiceSelection(region.entryIndex);
                             Global.getSoundPlayer().playUISound("ui_button_pressed", 1f, 0.6f);
                             diceClicked = true;
@@ -925,7 +925,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                     // Card click
                     if (!diceClicked) {
                         for (ClickRegion region : clickRegions) {
-                            if (mousePos.isInsideRect(region.boxX, region.boxY, region.width, region.height)) {
+                            if (mousePos.isInsideRect(region.boxX, region.boxY, CARD_WIDTH, CARD_HEIGHT)) {
                                 handleCardSelection(region.index);
                                 Global.getSoundPlayer().playUISound("ui_button_pressed", 1f, 0.6f);
                                 break;

@@ -186,7 +186,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
             float yOffset = i * spacing;
             ButtonAPI btn = opponentTp.addButton("", "status_opp_" + i, btnWidth, btnHeight, 0f);
             btn.setQuickMode(true);
-            btn.setOpacity(0f);
+            btn.setOpacity(0.01f);
             btn.getPosition().inTL(0f, yOffset);
 
             final int index = i;
@@ -220,7 +220,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
             float yOffset = i * spacing;
             ButtonAPI btn = playerTp.addButton("", "status_plr_" + i, btnWidth, btnHeight, 0f);
             btn.setQuickMode(true);
-            btn.setOpacity(0f);
+            btn.setOpacity(0.01f);
             btn.getPosition().inTL(0f, yOffset);
 
             final int index = i;
@@ -371,7 +371,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
         String confirmText = switch (phase) {
             case SELECTING_ATTACK -> playerIsAttacker ? Strings.get("battle.confirm_attack") : Strings.get("phase.waiting");
             case SELECTING_DEFENSE -> playerIsAttacker ? Strings.get("phase.waiting") : Strings.get("battle.confirm_defense");
-            case RESOLVING_PRE_CLASH, RESOLVING -> Strings.get("phase.resolving");
+            case RESOLVING_PRE_CLASH, RESOLVING_MODIFICATION, RESOLVING -> Strings.get("phase.resolving");
             case WAITING_NEXT_TURN -> Strings.get("phase.continue");
             case ENDED -> Strings.get("phase.close");
             default -> Strings.get("phase.waiting");

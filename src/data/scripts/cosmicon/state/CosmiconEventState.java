@@ -6,6 +6,7 @@ import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 public class CosmiconEventState {
 
     private static final String KEY_OPPONENT_CHAR = "$cos_temp_opponent_char";
+    private static final String KEY_PLAYER_CHAR = "$cos_temp_player_char";
     private static final String KEY_OPPONENT_PRISMATIC = "$cos_temp_opponent_prismatic";
     private static final String KEY_IS_BAR_EVENT = "$cos_temp_is_bar_event";
     private static final String KEY_IS_TUTORIAL = "$cos_temp_is_tutorial";
@@ -23,6 +24,16 @@ public class CosmiconEventState {
         MemoryAPI mem = getMemory();
         if (!mem.contains(KEY_OPPONENT_CHAR)) return null;
         return mem.getString(KEY_OPPONENT_CHAR);
+    }
+
+    public static void setPlayerCharacter(String charId) {
+        getMemory().set(KEY_PLAYER_CHAR, charId, 0f);
+    }
+
+    public static String getPlayerCharacter() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_PLAYER_CHAR)) return null;
+        return mem.getString(KEY_PLAYER_CHAR);
     }
 
     public static void setOpponentPrismatic(String diceId) {
@@ -62,6 +73,7 @@ public class CosmiconEventState {
     public static void clearAll() {
         MemoryAPI mem = getMemory();
         mem.unset(KEY_OPPONENT_CHAR);
+        mem.unset(KEY_PLAYER_CHAR);
         mem.unset(KEY_OPPONENT_PRISMATIC);
         mem.unset(KEY_IS_BAR_EVENT);
         mem.unset(KEY_IS_TUTORIAL);

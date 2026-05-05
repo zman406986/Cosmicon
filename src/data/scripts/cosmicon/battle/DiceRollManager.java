@@ -458,12 +458,13 @@ public class DiceRollManager {
         float spacing = BattleRenderingUtils.REST_GRID_DICE_SPACING;
         float gap = BattleRenderingUtils.REST_GRID_GROUP_GAP;
         
-        float activeWidth = activeCount > 0 ? spacing * (activeCount - 1) : 0f;
-        float reserveWidth = reserveCount > 0 ? spacing * (reserveCount - 1) : 0f;
+        float diceSize = AnimationConstants.DICE_SIZE;
+        float activeWidth = activeCount > 0 ? spacing * (activeCount - 1) + diceSize : 0f;
+        float reserveWidth = reserveCount > 0 ? spacing * (reserveCount - 1) + diceSize : 0f;
         float combinedWidth = activeWidth + reserveWidth;
         if (activeCount > 0 && reserveCount > 0) combinedWidth += gap;
         
-        float startX = gridCenterX - combinedWidth / 2f;
+        float startX = gridCenterX - combinedWidth / 2f + diceSize / 2f;
         float startY = gridCenterY - AnimationConstants.DICE_SIZE / 2f;
         
         float reserveGroupStartX;
@@ -511,8 +512,8 @@ public class DiceRollManager {
     }
     
     public void renderRestingDice(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
-        renderRestGroupBoxes(playerRestAnimators, panelX, panelY, panelWidth, panelHeight, alphaMult);
-        renderRestGroupBoxes(opponentRestAnimators, panelX, panelY, panelWidth, panelHeight, alphaMult);
+        renderRestGroupBoxes(playerRestAnimators, panelX, panelY, panelHeight, alphaMult);
+        renderRestGroupBoxes(opponentRestAnimators, panelX, panelY, panelHeight, alphaMult);
         
         for (DiceAnimator animator : playerRestAnimators) {
             animator.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
@@ -523,7 +524,7 @@ public class DiceRollManager {
     }
     
     private void renderRestGroupBoxes(List<DiceAnimator> restList, float panelX, float panelY,
-                                       float panelWidth, float panelHeight, float alphaMult) {
+                                       float panelHeight, float alphaMult) {
         if (restList.isEmpty()) return;
         
         float padding = BattleRenderingUtils.REST_GRID_BOX_PADDING;

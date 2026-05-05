@@ -5,11 +5,13 @@ import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.ai.AIPrismaticSelector.PrismaticDecision;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.Phase;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
+import data.scripts.cosmicon.battle.BattleState.ModificationRecord;
 import data.scripts.cosmicon.battle.BattleState.TurnType;
 import data.scripts.cosmicon.character.PassiveEventSystem;
 import data.scripts.cosmicon.util.PassiveEvaluator;
 import data.scripts.cosmicon.util.PassiveResults.PassiveResult;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
@@ -169,10 +171,10 @@ public class TurnProcessor {
         CosmiconLogger.debug("[AI_REROLL_DIAG] FINAL rerolls after bonuses: playerRerolls=%d, opponentRerolls=%d", 
             state.getRemainingRerolls(true), state.getRemainingRerolls(false));
         
+        diceRoller.rollForAttacker(state);
+        
         state.setCurrentPhase(BattleState.Phase.ROLLING);
         state.notifyPhaseChange(BattleState.Phase.ROLLING);
-        
-        diceRoller.rollForAttacker(state);
         
         StatusEffectProcessor.BattleContext attackerContext = createBattleContext(playerIsAttacker);
         TurnType attackerTurnType = TurnType.ATTACK;
@@ -199,15 +201,15 @@ public class TurnProcessor {
     private void advanceToDefensePhase() {
         state.setDefenderRolling(true);
         
-        state.notifyTransitionToDefenderRoll();
-        
-        state.setCurrentPhase(BattleState.Phase.ROLLING);
-        state.notifyPhaseChange(BattleState.Phase.ROLLING);
-        
         PassiveEventSystem.onStartOfDefenseTurn(state, true);
         PassiveEventSystem.onStartOfDefenseTurn(state, false);
         
         diceRoller.rollForDefender(state);
+        
+        state.notifyTransitionToDefenderRoll();
+        
+        state.setCurrentPhase(BattleState.Phase.ROLLING);
+        state.notifyPhaseChange(BattleState.Phase.ROLLING);
         
         boolean defenderIsPlayer = !state.isPlayerAttacker();
         StatusEffectProcessor.BattleContext defenderContext = createBattleContext(defenderIsPlayer);
@@ -237,13 +239,15 @@ public class TurnProcessor {
     public void advanceToDefenderSelectPhase() {
         if (!state.isDefenderRolling()) return;
         state.setDefenderRolling(false);
-        
+
         boolean defenderIsPlayer = !state.isPlayerAttacker();
         state.clearDiceSelection(defenderIsPlayer);
-        
+
+        weatherController.applyDefenderPreSelectionEffects(state, defenderIsPlayer);
+
         state.setCurrentPhase(BattleState.Phase.SELECTING_DEFENSE);
         state.notifyPhaseChange(BattleState.Phase.SELECTING_DEFENSE);
-        
+
         if (state.isPlayerAttacker()) {
             startAiSelection();
         }
@@ -403,6 +407,7 @@ public class TurnProcessor {
         if (aiPlannedIndices == null) return;
         
         boolean isAttackPhase = state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK;
+        boolean aiIsAttacker = !state.isPlayerAttacker();
         boolean forPlayer = false;
         
         List<Boolean> selected = state.getDiceSelected(forPlayer);
@@ -418,9 +423,7 @@ public class TurnProcessor {
         processPassiveEffects(forPlayer);
         
         StatusEffectProcessor.BattleContext context = createBattleContext(forPlayer);
-        TurnType turnType = forPlayer ? 
-            (state.isPlayerAttacker() ? TurnType.ATTACK : TurnType.DEFENSE) :
-            (state.isPlayerAttacker() ? TurnType.DEFENSE : TurnType.ATTACK);
+        TurnType turnType = state.isPlayerAttacker() ? TurnType.DEFENSE : TurnType.ATTACK;
         
         int oldValue = isAttackPhase ? state.getAttackValue() : state.getDefenseValue();
         List<Integer> preSelectValues = new ArrayList<>(state.getDiceValues(forPlayer));
@@ -561,8 +564,96 @@ public class TurnProcessor {
         state.notifyPhaseChange(BattleState.Phase.RESOLVING_PRE_CLASH);
     }
     
-    public void proceedToClash() {
-        if (state.getCurrentPhase() != BattleState.Phase.RESOLVING_PRE_CLASH) return;
+    public boolean proceedToModificationPause() {
+        if (state.getCurrentPhase() != BattleState.Phase.RESOLVING_PRE_CLASH) return false;
+
+        if (state.hasPendingModification()) {
+            state.setCurrentPhase(BattleState.Phase.RESOLVING_MODIFICATION);
+            state.notifyPhaseChange(BattleState.Phase.RESOLVING_MODIFICATION);
+            return true;
+        }
+
+        continueToClash();
+        return false;
+    }
+
+    public void proceedFromModificationPause() {
+        if (state.getCurrentPhase() != BattleState.Phase.RESOLVING_MODIFICATION) return;
+        applyPendingModifications();
+        continueToClash();
+    }
+
+    private void applyPendingModifications() {
+        List<ModificationRecord> orderedModifications = state.getModificationOrder();
+        orderedModifications.sort(Comparator.comparingInt(ModificationRecord::sequence));
+
+        for (ModificationRecord record : orderedModifications) {
+            StatusEffect effect = record.effect();
+            boolean forPlayer = record.forPlayer();
+            StatusEffectProcessor effects = state.getEffects(forPlayer);
+
+            if (effect == StatusEffect.ARISE && effects.hasEffect(StatusEffect.ARISE)) {
+                CosmiconLogger.debug("ARISE triggered for %s", forPlayer ? "player" : "opponent");
+                StatusEffectProcessor.BattleContext context = createBattleContext(forPlayer);
+                List<Integer> preValues = new ArrayList<>(state.getDiceValues(forPlayer));
+                int oldSum = state.calculateSelectedSum(forPlayer);
+
+                effects.processedEffectsFromModification(StatusEffect.ARISE);
+                context.applyArise();
+                effects.removeEffect(StatusEffect.ARISE);
+                state.setDiceValues(forPlayer, context.getDiceValues());
+
+                List<Integer> postValues = state.getDiceValues(forPlayer);
+                notifyRestDiceValueChanges(preValues, postValues, forPlayer);
+
+                int newSum = state.calculateSelectedSum(forPlayer);
+                if (newSum != oldSum) {
+                    int delta = newSum - oldSum;
+                    boolean isAttack = state.isAttacker(forPlayer);
+                    if (isAttack) state.setAttackValue(newSum);
+                    else state.setDefenseValue(newSum);
+                    String changeType = isAttack ? "ATTACK_LEVEL_UP" : "DEFENSE_LEVEL_UP";
+                    state.queueValueChange(forPlayer, changeType, delta);
+                    state.notifyValueChange(forPlayer, "ARISE", oldSum, newSum, delta);
+                }
+            }
+
+            if (effect == StatusEffect.HACK && effects.hasEffect(StatusEffect.HACK)) {
+                CosmiconLogger.debug("HACK triggered for %s", forPlayer ? "player" : "opponent");
+                boolean targetIsPlayer = !forPlayer;
+                StatusEffectProcessor.BattleContext targetContext = createBattleContext(targetIsPlayer);
+                List<Integer> preHackValues = new ArrayList<>(state.getDiceValues(targetIsPlayer));
+                int oldTargetSum = state.calculateSelectedSum(targetIsPlayer);
+
+                effects.processedEffectsFromModification(StatusEffect.HACK);
+                if (targetContext.applyHackToSelectedDice()) {
+                    state.setDiceValues(targetIsPlayer, targetContext.getDiceValues());
+                    boolean targetIsAttacker = state.isAttacker(targetIsPlayer);
+                    if (targetIsAttacker) state.setAttackValue(state.calculateSelectedSum(targetIsPlayer));
+                    else state.setDefenseValue(state.calculateSelectedSum(targetIsPlayer));
+                }
+                List<Integer> postHackValues = state.getDiceValues(targetIsPlayer);
+                notifyRestDiceValueChanges(preHackValues, postHackValues, targetIsPlayer);
+
+                int newTargetSum = state.calculateSelectedSum(targetIsPlayer);
+                if (newTargetSum != oldTargetSum) {
+                    int delta = newTargetSum - oldTargetSum;
+                    boolean targetIsAttacker = state.isAttacker(targetIsPlayer);
+                    String changeType = targetIsAttacker ? "ATTACK_LEVEL_UP" : "DEFENSE_LEVEL_UP";
+                    state.queueValueChange(targetIsPlayer, changeType, delta);
+                    state.notifyValueChange(targetIsPlayer, "HACK", oldTargetSum, newTargetSum, delta);
+                }
+
+                effects.removeEffect(StatusEffect.HACK);
+            }
+        }
+
+        state.clearModificationOrder();
+    }
+
+    public void continueToClash() {
+        if (state.getCurrentPhase() != BattleState.Phase.RESOLVING_PRE_CLASH &&
+            state.getCurrentPhase() != BattleState.Phase.RESOLVING_MODIFICATION) return;
 
         StatusEffectProcessor.BattleContext attackerContext = createBattleContext(state.isPlayerAttacker());
         StatusEffectProcessor.BattleContext defenderContext = createBattleContext(!state.isPlayerAttacker());
@@ -576,41 +667,6 @@ public class TurnProcessor {
         state.getOpponentEffects().processPhase(Phase.BEFORE_RESOLUTION,
             state.isPlayerAttacker() ? defenderTurnType : attackerTurnType,
             state.isPlayerAttacker() ? defenderContext : attackerContext);
-        
-        if (state.getPlayerEffects().hasEffect(StatusEffect.HACK)) {
-            CosmiconLogger.debug("HACK triggered for player");
-            StatusEffectProcessor.BattleContext targetContext = state.isPlayerAttacker() ? defenderContext : attackerContext;
-            boolean targetIsPlayer = false;
-            List<Integer> preHackValues = new ArrayList<>(state.getDiceValues(targetIsPlayer));
-            if (targetContext.applyHackToSelectedDice()) {
-                state.setDiceValues(targetIsPlayer, targetContext.getDiceValues());
-                if (targetIsPlayer == state.isPlayerAttacker()) {
-                    state.setAttackValue(state.calculateSelectedSum(targetIsPlayer));
-                } else {
-                    state.setDefenseValue(state.calculateSelectedSum(targetIsPlayer));
-                }
-            }
-            List<Integer> postHackValues = state.getDiceValues(targetIsPlayer);
-            notifyRestDiceValueChanges(preHackValues, postHackValues, targetIsPlayer);
-            state.getPlayerEffects().removeEffect(StatusEffect.HACK);
-        }
-        if (state.getOpponentEffects().hasEffect(StatusEffect.HACK)) {
-            CosmiconLogger.debug("HACK triggered for opponent");
-            StatusEffectProcessor.BattleContext targetContext = state.isPlayerAttacker() ? attackerContext : defenderContext;
-            boolean targetIsPlayer = true;
-            List<Integer> preHackValues = new ArrayList<>(state.getDiceValues(targetIsPlayer));
-            if (targetContext.applyHackToSelectedDice()) {
-                state.setDiceValues(targetIsPlayer, targetContext.getDiceValues());
-                if (targetIsPlayer == state.isPlayerAttacker()) {
-                    state.setAttackValue(state.calculateSelectedSum(targetIsPlayer));
-                } else {
-                    state.setDefenseValue(state.calculateSelectedSum(targetIsPlayer));
-                }
-            }
-            List<Integer> postHackValues = state.getDiceValues(targetIsPlayer);
-            notifyRestDiceValueChanges(preHackValues, postHackValues, targetIsPlayer);
-            state.getOpponentEffects().removeEffect(StatusEffect.HACK);
-        }
         
         int attackerInstantDamage = attackerContext.getInstantDamageToOpponent();
         int defenderInstantDamage = defenderContext.getInstantDamageToOpponent();
@@ -857,12 +913,13 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         weatherController.advanceTurn(allowSafeguard, allowAttack);
         WeatherType newWeather = weatherController.getCurrentWeather();
         
-        if (newWeather != oldWeather) {
-            state.clearWeatherMods();
-            if (newWeather != null) {
+        state.clearWeatherMods();
+        if (newWeather != null) {
+            if (newWeather != oldWeather) {
                 state.notifyWeatherChange(newWeather);
                 weatherController.applyWeatherAppearanceEffects(state);
             }
+            weatherController.applyPersistentWeatherMods(state);
         }
         
         state.clearDiceSelection(true);

@@ -581,15 +581,19 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
                 int faceIdx = stationaryResultIndex;
                 if (faceIdx < 0 || faceIdx >= 6) faceIdx = 0;
                 sprite = DiceSpriteRegistry.getPrismaticFrame(faceIdx, stationaryFrameIndex);
-            } else {
+            } else if (type != null) {
                 int resultIdx = stationaryResultIndex;
-                if (resultIdx <= 0 && type != null) resultIdx = type.getMaxFace();
+                if (resultIdx <= 0) resultIdx = type.getMaxFace();
                 sprite = DiceSpriteRegistry.getFrame(type, resultIdx, stationaryFrameIndex);
+            } else {
+                return;
             }
         } else if (type == DiceType.PRISMATIC) {
             sprite = DiceSpriteRegistry.getPrismaticFrame(finalValue, currentFrame);
-        } else {
+        } else if (type != null) {
             sprite = DiceSpriteRegistry.getFrame(type, finalValue, currentFrame);
+        } else {
+            return;
         }
         if (sprite == null) return;
         

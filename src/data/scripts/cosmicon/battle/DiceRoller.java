@@ -33,7 +33,7 @@ public class DiceRoller {
     }
     
     public void rollForParticipant(BattleState state, boolean forPlayer) {
-        if (tutorialDiceRoller != null && tutorialDiceRoller.shouldInterceptRoll()) {
+        if (tutorialDiceRoller != null) {
             tutorialDiceRoller.rollForParticipant(state, forPlayer);
             return;
         }
@@ -89,7 +89,16 @@ public class DiceRoller {
             if (weatherController != null) {
                 weatherController.applyRerollThornsEffect(state, forPlayer);
             }
-            state.notifyDiceRerolled(forPlayer, state.getDiceValues(forPlayer), new ArrayList<>());
+
+            List<Integer> rerolledIndices = new ArrayList<>();
+            List<Boolean> selected = state.getDiceSelected(forPlayer);
+            for (int i = 0; i < selected.size(); i++) {
+                if (selected.get(i)) {
+                    rerolledIndices.add(i);
+                }
+            }
+
+            state.notifyDiceRerolled(forPlayer, state.getDiceValues(forPlayer), rerolledIndices);
             return;
         }
 

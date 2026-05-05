@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
+import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.util.CosmiconLogger;
@@ -217,6 +218,39 @@ public class WeatherController {
         }
     }
     
+    public void applyDefenderPreSelectionEffects(BattleState state, boolean isPlayer) {
+        WeatherType weather = getCurrentWeather();
+        if (weather == null) return;
+
+        switch (weather) {
+            case SLEET -> {
+                int hp = isPlayer ? state.getPlayerHp() : state.getOpponentHp();
+                CharacterCard card = state.getCard(isPlayer);
+                if (card != null && hp < card.getMaxHp()) {
+                    state.getEffects(isPlayer).addEffect(StatusEffect.COUNTER, 1);
+                    state.modifyWeatherDefMod(isPlayer, 2);
+                    CosmiconLogger.debug("%s: COUNTER + DEF+2 for defender (%s) [pre-selection]", weather, isPlayer ? "Player" : "Opponent");
+                }
+            }
+            default -> {}
+        }
+    }
+
+    public void applyPersistentWeatherMods(BattleState state) {
+        WeatherType weather = getCurrentWeather();
+        if (weather == null) return;
+
+        switch (weather) {
+            case STORM -> {
+                state.modifyWeatherAtkMod(true, 1);
+                state.modifyWeatherDefMod(true, 1);
+                state.modifyWeatherAtkMod(false, 1);
+                state.modifyWeatherDefMod(false, 1);
+            }
+            default -> {}
+        }
+    }
+
     public void applyDefenderSelectionPhase(BattleState state, boolean isPlayer) {
         WeatherType weather = getCurrentWeather();
         if (weather == null) return;
@@ -237,15 +271,6 @@ public class WeatherController {
                 if (hasMatch) {
                     state.modifyWeatherDefMod(isPlayer, 1);
                     CosmiconLogger.debug("%s: DEF level +1 for defender (%s)", weather, isPlayer ? "Player" : "Opponent");
-                }
-            }
-            case SLEET -> {
-                int hp = isPlayer ? state.getPlayerHp() : state.getOpponentHp();
-                CharacterCard card = state.getCard(isPlayer);
-                if (card != null && hp < card.getMaxHp()) {
-                    state.getEffects(isPlayer).addEffect(StatusEffect.COUNTER, 1);
-                    state.modifyWeatherDefMod(isPlayer, 2);
-                    CosmiconLogger.debug("%s: COUNTER + DEF+2 for defender (%s)", weather, isPlayer ? "Player" : "Opponent");
                 }
             }
             default -> {}

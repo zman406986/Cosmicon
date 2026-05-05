@@ -655,7 +655,7 @@ public class BattleUILabels {
             case ROLLING -> Strings.get("phase.rolling");
             case SELECTING_ATTACK, DICE_DISPLAY_ATTACK -> playerAttacking ? Strings.get("phase.your_attack") : Strings.get("phase.opponent_attack");
             case SELECTING_DEFENSE, DICE_DISPLAY_DEFENSE -> playerAttacking ? Strings.get("phase.opponent_defense") : Strings.get("phase.your_defense");
-            case RESOLVING_PRE_CLASH -> Strings.get("phase.pre_clash");
+            case RESOLVING_PRE_CLASH, RESOLVING_MODIFICATION -> Strings.get("phase.pre_clash");
             case RESOLVING -> Strings.get("phase.resolving");
             case WAITING_NEXT_TURN -> Strings.format("phase.turn_complete", battleState.getTurnNumber());
             case ENDED -> battleState.getWinner().equals("player") ? Strings.get("phase.victory") : Strings.get("phase.defeat");
@@ -712,9 +712,11 @@ public class BattleUILabels {
         boolean shouldShowAttacker = phase == Phase.SELECTING_DEFENSE ||
                              phase == Phase.DICE_DISPLAY_DEFENSE ||
                              (phase == Phase.ROLLING && battleState.isDefenderRolling()) ||
-                             phase == Phase.RESOLVING_PRE_CLASH;
+                             phase == Phase.RESOLVING_PRE_CLASH ||
+                             phase == Phase.RESOLVING_MODIFICATION;
 
-        boolean shouldShowDefender = phase == Phase.RESOLVING_PRE_CLASH;
+        boolean shouldShowDefender = phase == Phase.RESOLVING_PRE_CLASH ||
+                             phase == Phase.RESOLVING_MODIFICATION;
 
         if (phase == Phase.RESOLVING) {
             attackerConfirmedSelectionLabel.setOpacity(0f);
@@ -840,7 +842,7 @@ public class BattleUILabels {
             return;
         }
 
-        if (phase == Phase.RESOLVING_PRE_CLASH) {
+        if (phase == Phase.RESOLVING_PRE_CLASH || phase == Phase.RESOLVING_MODIFICATION) {
             int attackerValue = getAttackerTotalValue();
             int defenderValue = getDefenderTotalValue();
 

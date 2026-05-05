@@ -20,6 +20,7 @@ public class WeatherManager {
     private boolean fullTurnBoundary;
     private final List<WeatherType> weatherSchedule;
     private final boolean isStoryBattle;
+    private final boolean isNpcDuel;
     private final String storyBattleId;
     private Map<Integer, WeatherType> forcedWeatherSchedule;
     private boolean weatherDisabled;
@@ -53,15 +54,20 @@ public class WeatherManager {
     }
     
     public WeatherManager() {
-        this(false, null);
+        this(false, null, false);
     }
     
     public WeatherManager(boolean isStoryBattle, String storyBattleId) {
+        this(isStoryBattle, storyBattleId, false);
+    }
+
+    public WeatherManager(boolean isStoryBattle, String storyBattleId, boolean isNpcDuel) {
         this.currentTurn = 1;
         this.currentWeather = null;
         this.halfTurnCount = 0;
         this.fullTurnBoundary = true;
         this.isStoryBattle = isStoryBattle;
+        this.isNpcDuel = isNpcDuel;
         this.storyBattleId = storyBattleId;
         this.weatherSchedule = new ArrayList<>();
         this.forcedWeatherSchedule = null;
@@ -86,7 +92,7 @@ public class WeatherManager {
             } else {
                 generateRandomWeatherSchedule();
             }
-        } else if (isNpcDuel()) {
+        } else if (isNpcDuel) {
             weatherSchedule.add(WeatherType.THE_DECISIVE_MOMENT);
         } else {
             generateRandomWeatherSchedule();
@@ -143,7 +149,7 @@ public class WeatherManager {
         int scheduleIndex = WEATHER_TURN_SCHEDULE.indexOf(currentTurn);
         if (scheduleIndex < 0 || scheduleIndex >= weatherSchedule.size()) return;
         
-        if (isStoryBattle || isNpcDuel()) {
+        if (isStoryBattle || isNpcDuel) {
             setCurrentWeather(weatherSchedule.get(scheduleIndex));
             return;
         }
@@ -187,10 +193,6 @@ public class WeatherManager {
     
     public void setCurrentWeather(WeatherType weather) {
         this.currentWeather = weather;
-    }
-    
-    public boolean isNpcDuel() {
-        return false;
     }
     
 }

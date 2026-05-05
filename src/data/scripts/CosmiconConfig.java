@@ -7,6 +7,8 @@ import org.json.JSONObject;
 import java.io.IOException;
 
 public class CosmiconConfig {
+    private CosmiconConfig() {}
+
     public static final String MOD_ID = "cosmicon_dice";
     private static final String CONFIG_PATH = "data/config/settings.json";
 

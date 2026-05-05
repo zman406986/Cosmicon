@@ -259,6 +259,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         pendingRewardPrismaticId = CosmiconEventState.getOpponentPrismatic();
 
         if (tutorialJustCompleted) {
+            pendingRewardCharId = CosmiconEventState.getPlayerCharacter();
             textPanel.addPara(Strings.get("victory.absolute_six_unlocked"));
         }
 

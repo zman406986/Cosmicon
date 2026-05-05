@@ -97,6 +97,8 @@ public class PassiveEvaluator {
             if (ge.effect() == StatusEffect.POISON || ge.effect() == StatusEffect.INSTANT_DAMAGE) {
                 boolean opponent = !forPlayer;
                 state.getEffects(opponent).addEffect(ge.effect(), ge.layers());
+            } else if (ge.effect() == StatusEffect.HACK || ge.effect() == StatusEffect.ARISE) {
+                state.applyEffect(ge.effect(), ge.layers(), forPlayer);
             } else {
                 effects.addEffect(ge.effect(), ge.layers());
             }

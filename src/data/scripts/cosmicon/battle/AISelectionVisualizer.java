@@ -3,9 +3,9 @@ package data.scripts.cosmicon.battle;
 import java.util.ArrayList;
 import java.util.List;
 
+import data.scripts.CosmiconConfig;
+
 public class AISelectionVisualizer {
-    
-    private static final float DEFAULT_DELAY_PER_DICE = 0.15f;
     
     private final List<Integer> plannedIndices;
     private int currentRevealIndex;
@@ -17,7 +17,7 @@ public class AISelectionVisualizer {
     
     public AISelectionVisualizer() {
         this.plannedIndices = new ArrayList<>();
-        this.delayPerDice = DEFAULT_DELAY_PER_DICE;
+        this.delayPerDice = CosmiconConfig.AI_REVEAL_PER_DICE_DELAY;
         reset();
     }
     

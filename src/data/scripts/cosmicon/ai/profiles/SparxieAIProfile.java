@@ -32,6 +32,11 @@ public class SparxieAIProfile extends AbstractCharacterAIProfile {
     }
 
     @Override
+    public boolean isAttackPassive() {
+        return true;
+    }
+
+    @Override
     public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
         if (selectedValues == null || selectedValues.isEmpty()) {
             return PassiveEvaluation.notTriggered();

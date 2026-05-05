@@ -20,8 +20,10 @@ public class StatusEffectAnimator {
     private static final float EXPAND_AMOUNT = 6f;
     private static final float LABEL_PADDING = 2f;
     private static final float INITIAL_ALPHA = 0.8f;
+    private static final float LOOP_GLOW_PAUSE = 0.3f;
 
     private final List<BoxAnimation> animations = new ArrayList<>();
+    private final List<LoopingGlowAnimation> loopingAnimations = new ArrayList<>();
 
     public void triggerAddAnimation(float uiX, float uiY, float width, float height) {
         CosmiconLogger.debug("[StatusAnim] ADD triggered at uiX=%.1f uiY=%.1f w=%.1f h=%.1f", uiX, uiY, width, height);
@@ -53,6 +55,30 @@ public class StatusEffectAnimator {
         animations.add(anim);
     }
 
+    public void triggerLoopingGlowAnimation(float uiX, float uiY, float width, float height) {
+        CosmiconLogger.debug("[StatusAnim] LOOP GLOW triggered at uiX=%.1f uiY=%.1f w=%.1f h=%.1f", uiX, uiY, width, height);
+        LoopingGlowAnimation anim = new LoopingGlowAnimation();
+        anim.uiX = uiX - LABEL_PADDING;
+        anim.uiY = uiY - LABEL_PADDING;
+        anim.width = width + LABEL_PADDING * 2f;
+        anim.height = height + LABEL_PADDING * 2f;
+        anim.elapsed = 0f;
+        anim.cycleDuration = PROCESS_BOX_DURATION;
+        anim.boxCount = PROCESS_BOX_COUNT;
+        anim.staggerDelay = PROCESS_STAGGER_DELAY;
+        anim.pauseDuration = LOOP_GLOW_PAUSE;
+        anim.color = ColorHelper.PRISMATIC_GOLD;
+        loopingAnimations.add(anim);
+    }
+
+    public void stopLoopingGlowAnimations() {
+        loopingAnimations.clear();
+    }
+
+    public boolean hasLoopingAnimations() {
+        return !loopingAnimations.isEmpty();
+    }
+
     public void advance(float amount) {
         for (int i = animations.size() - 1; i >= 0; i--) {
             BoxAnimation anim = animations.get(i);
@@ -62,13 +88,22 @@ public class StatusEffectAnimator {
                 animations.remove(i);
             }
         }
+
+        for (LoopingGlowAnimation anim : loopingAnimations) {
+            anim.elapsed += amount;
+            float totalCycleDuration = anim.cycleDuration + anim.staggerDelay * (anim.boxCount - 1) + anim.pauseDuration;
+            if (anim.elapsed >= totalCycleDuration) {
+                anim.elapsed -= totalCycleDuration;
+                if (anim.elapsed < 0f) anim.elapsed = 0f;
+            }
+        }
     }
 
     public void render(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
-        if (animations.isEmpty()) return;
+        if (animations.isEmpty() && loopingAnimations.isEmpty()) return;
 
-        CosmiconLogger.debug("[StatusAnim] RENDER count=%d alphaMult=%.2f panel=(%.0f,%.0f,%.0f,%.0f)",
-            animations.size(), alphaMult, panelX, panelY, panelWidth, panelHeight);
+        CosmiconLogger.debug("[StatusAnim] RENDER count=%d loopCount=%d alphaMult=%.2f panel=(%.0f,%.0f,%.0f,%.0f)",
+            animations.size(), loopingAnimations.size(), alphaMult, panelX, panelY, panelWidth, panelHeight);
 
         UnifiedCoord.PanelContext existingCtx = UnifiedCoord.getCurrentOrNull();
         boolean needsContextCleanup = existingCtx == null;
@@ -81,6 +116,10 @@ public class StatusEffectAnimator {
 
             for (BoxAnimation anim : animations) {
                 renderAnimation(anim, alphaMult);
+            }
+
+            for (LoopingGlowAnimation anim : loopingAnimations) {
+                renderLoopingAnimation(anim, alphaMult);
             }
 
             GLStateUtil.resetColor();
@@ -131,11 +170,12 @@ public class StatusEffectAnimator {
     }
 
     public boolean hasActiveAnimations() {
-        return !animations.isEmpty();
+        return !animations.isEmpty() || !loopingAnimations.isEmpty();
     }
 
     public void clear() {
         animations.clear();
+        loopingAnimations.clear();
     }
 
     private static class BoxAnimation {
@@ -147,6 +187,59 @@ public class StatusEffectAnimator {
         float duration;
         int boxCount;
         float staggerDelay;
+        Color color;
+    }
+
+    private void renderLoopingAnimation(LoopingGlowAnimation anim, float alphaMult) {
+        float totalBoxDuration = anim.cycleDuration + anim.staggerDelay * (anim.boxCount - 1);
+        float effectiveElapsed = anim.elapsed;
+        if (effectiveElapsed >= totalBoxDuration) return;
+
+        for (int box = 0; box < anim.boxCount; box++) {
+            float boxStart = box * anim.staggerDelay;
+            float boxElapsed = effectiveElapsed - boxStart;
+            if (boxElapsed < 0f) continue;
+            if (boxElapsed >= anim.cycleDuration) continue;
+
+            float progress = boxElapsed / anim.cycleDuration;
+            float expand = EXPAND_AMOUNT * progress;
+            float alpha = INITIAL_ALPHA * (1f - progress) * alphaMult;
+
+            float x = anim.uiX - expand;
+            float y = anim.uiY - expand;
+            float w = anim.width + expand * 2f;
+            float h = anim.height + expand * 2f;
+
+            UnifiedCoord topLeft = new UnifiedCoord(x, y);
+            UnifiedCoord bottomRight = new UnifiedCoord(x + w, y + h);
+            float glX1 = topLeft.glX();
+            float glY1 = topLeft.glY();
+            float glX2 = bottomRight.glX();
+            float glY2 = bottomRight.glY();
+
+            float[] c = ColorHelper.toGLComponents(anim.color, alpha);
+            GL11.glColor4f(c[0], c[1], c[2], c[3]);
+            GL11.glLineWidth(2f);
+
+            GL11.glBegin(GL11.GL_LINE_LOOP);
+            GL11.glVertex2f(glX1, glY1);
+            GL11.glVertex2f(glX2, glY1);
+            GL11.glVertex2f(glX2, glY2);
+            GL11.glVertex2f(glX1, glY2);
+            GL11.glEnd();
+        }
+    }
+
+    private static class LoopingGlowAnimation {
+        float uiX;
+        float uiY;
+        float width;
+        float height;
+        float elapsed;
+        float cycleDuration;
+        int boxCount;
+        float staggerDelay;
+        float pauseDuration;
         Color color;
     }
 }

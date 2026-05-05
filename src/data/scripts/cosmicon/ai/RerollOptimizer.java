@@ -23,23 +23,6 @@ public final class RerollOptimizer {
             int targetSum,
             boolean isAttacking,
             BattleState state,
-            boolean forPlayer) {
-
-        Map<Integer, PrismaticDiceInstance> prismaticMap = state != null
-            ? state.getPrismaticDiceMap(forPlayer) : null;
-
-        return optimalRerollsInternal(currentValues, diceTypes, requiredSelectCount,
-            rerollsAvailable, targetSum, isAttacking, prismaticMap, null, 0f);
-    }
-
-    public static Set<Integer> optimalRerolls(
-            List<Integer> currentValues,
-            List<DiceType> diceTypes,
-            int requiredSelectCount,
-            int rerollsAvailable,
-            int targetSum,
-            boolean isAttacking,
-            BattleState state,
             boolean forPlayer,
             CharacterAIProfile profile) {
 
@@ -66,23 +49,6 @@ public final class RerollOptimizer {
             rerollsAvailable, targetSum, isAttacking, null, null, 0f);
     }
 
-    public static Set<Integer> optimalRerolls(
-            List<Integer> currentValues,
-            List<DiceType> diceTypes,
-            int requiredSelectCount,
-            int rerollsAvailable,
-            int targetSum,
-            boolean isAttacking,
-            CharacterAIProfile profile) {
-
-        Set<Integer> profileSelection = computeProfileSelection(
-            currentValues, diceTypes, requiredSelectCount, isAttacking, profile, null, false);
-        float thornsPenalty = profile != null ? profile.getThornsPenaltyPerReroll() : 0f;
-
-        return optimalRerollsInternal(currentValues, diceTypes, requiredSelectCount,
-            rerollsAvailable, targetSum, isAttacking, null, profileSelection, thornsPenalty);
-    }
-
     private static Set<Integer> computeProfileSelection(
             List<Integer> currentValues, List<DiceType> diceTypes,
             int requiredSelectCount, boolean isAttacking,
@@ -96,7 +62,7 @@ public final class RerollOptimizer {
             result = SelectionOptimizer.optimalSelection(
                 currentValues, diceTypes, requiredSelectCount, isAttacking, profile);
         }
-        return result != null ? result.selectedIndices : null;
+        return result.selectedIndices;
     }
 
     private static Set<Integer> optimalRerollsInternal(
@@ -352,7 +318,7 @@ public final class RerollOptimizer {
         int currentSum = calculateSum(currentValues, currentSelection);
 
         Set<Integer> newSelection = findOptimalSelectionAfterReroll(
-            currentValues, diceTypes, rerollIndices, currentSelection, requiredCount, prismaticMap);
+            currentValues, diceTypes, rerollIndices, requiredCount, prismaticMap);
 
         float expectedNewSum = calculateExpectedSumAfterReroll(currentValues, diceTypes, rerollIndices, newSelection,
                                                                prismaticMap);
@@ -370,7 +336,6 @@ public final class RerollOptimizer {
             List<Integer> currentValues,
             List<DiceType> diceTypes,
             Set<Integer> rerollIndices,
-            Set<Integer> currentSelection,
             int required,
             Map<Integer, PrismaticDiceInstance> prismaticMap) {
 
