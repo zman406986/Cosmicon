@@ -530,11 +530,16 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         float defenderCenterX = playerIsAttacker ? topIconCenterX : bottomIconCenterX;
         float defenderCenterY = playerIsAttacker ? topIconCenterY : bottomIconCenterY;
 
-        int attackValue = battleState.getAttackValue();
-        int defenseValue = battleState.getDefenseValue();
-
         List<BattleState.ValueChangeRecord> attackerChanges = battleState.getPendingValueChanges(playerIsAttacker);
         List<BattleState.ValueChangeRecord> defenderChanges = battleState.getPendingValueChanges(!playerIsAttacker);
+
+        int attackerDelta = 0;
+        for (BattleState.ValueChangeRecord record : attackerChanges) attackerDelta += record.delta();
+        int defenderDelta = 0;
+        for (BattleState.ValueChangeRecord record : defenderChanges) defenderDelta += record.delta();
+
+        int attackValue = labels.getAttackerTotalDisplayValue() - attackerDelta;
+        int defenseValue = labels.getDefenderTotalDisplayValue() - defenderDelta;
 
         ValueChangeAnimator attackerAnimator = labels.getAttackerValueAnimator();
         ValueChangeAnimator defenderAnimator = labels.getDefenderValueAnimator();
@@ -1116,41 +1121,27 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         List<StatusEffectProcessor.ProcessedEffect> playerProcessed =
             battleState.getPlayerEffects().getAndClearProcessedEffects();
-        if (!playerProcessed.isEmpty()) {
-
-        }
         for (StatusEffectProcessor.ProcessedEffect pe : playerProcessed) {
-
             Integer idx = labels.getEffectDisplayIndex(true, pe.effect());
             if (idx == null) {
                 idx = computeDisplayIndex(true, pe.effect());
-                
             }
             if (idx != null) {
                 float[] pos = labels.getStatusEffectLabelPosition(true, idx);
                 animator.triggerProcessAnimation(pos[0], pos[1], pos[2], pos[3]);
-            } else {
-
             }
         }
 
         List<StatusEffectProcessor.ProcessedEffect> opponentProcessed =
             battleState.getOpponentEffects().getAndClearProcessedEffects();
-        if (!opponentProcessed.isEmpty()) {
-
-        }
         for (StatusEffectProcessor.ProcessedEffect pe : opponentProcessed) {
-
             Integer idx = labels.getEffectDisplayIndex(false, pe.effect());
             if (idx == null) {
                 idx = computeDisplayIndex(false, pe.effect());
-                
             }
             if (idx != null) {
                 float[] pos = labels.getStatusEffectLabelPosition(false, idx);
                 animator.triggerProcessAnimation(pos[0], pos[1], pos[2], pos[3]);
-            } else {
-
             }
         }
     }

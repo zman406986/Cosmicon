@@ -540,7 +540,14 @@ public class DiceRollManager {
             
             DiceAnimator restAnimator = new DiceAnimator();
             restAnimator.init();
-            restAnimator.startTravelToRestFrom(sourceAnimator, types.get(i), values.get(i),
+            int displayValue = values.get(i);
+            if (battleState.isPrismaticDiceAt(i, forPlayer)) {
+                PrismaticDiceInstance prismatic = battleState.getPrismaticDiceAt(i, forPlayer);
+                if (prismatic != null) {
+                    displayValue = prismatic.faceIndex;
+                }
+            }
+            restAnimator.startTravelToRestFrom(sourceAnimator, types.get(i), displayValue,
                 targetX, startY);
             restAnimator.setReserve(isReserve);
             restList.add(restAnimator);
@@ -636,7 +643,14 @@ public class DiceRollManager {
     public void updateRestDiceValue(int index, int newValue, boolean forPlayer) {
         List<DiceAnimator> restList = forPlayer ? playerRestAnimators : opponentRestAnimators;
         if (index >= 0 && index < restList.size()) {
-            restList.get(index).animateValueChange(newValue);
+            int displayValue = newValue;
+            if (battleState.isPrismaticDiceAt(index, forPlayer)) {
+                PrismaticDiceInstance prismatic = battleState.getPrismaticDiceAt(index, forPlayer);
+                if (prismatic != null) {
+                    displayValue = prismatic.faceIndex;
+                }
+            }
+            restList.get(index).animateValueChange(displayValue);
         }
     }
     
@@ -694,12 +708,19 @@ public class DiceRollManager {
             DiceAnimator animator = new DiceAnimator();
             animator.init();
             PlannedPath path = travelPaths.get(i);
+            int displayValue = allValues.get(i);
+            if (battleState.isPrismaticDiceAt(i, forPlayer)) {
+                PrismaticDiceInstance prismatic = battleState.getPrismaticDiceAt(i, forPlayer);
+                if (prismatic != null) {
+                    displayValue = prismatic.faceIndex;
+                }
+            }
             
             if (i < restCount) {
                 DiceAnimator restAnimator = restList.get(i);
                 float scatterX = scatters[i][0];
                 float scatterY = scatters[i][1];
-                animator.startFromRestPosition(allTypes.get(i), allValues.get(i),
+                animator.startFromRestPosition(allTypes.get(i), displayValue,
                     restAnimator.getX(), restAnimator.getY(),
                     scatterX, scatterY,
                     path.delay(), path.rotation(), path.travelDistance(),
@@ -708,7 +729,7 @@ public class DiceRollManager {
             } else {
                 float scatterX = scatters[i][0];
                 float scatterY = scatters[i][1];
-                animator.startFromScatterPosition(allTypes.get(i), allValues.get(i),
+                animator.startFromScatterPosition(allTypes.get(i), displayValue,
                     scatterX, scatterY, path.delay(),
                     path.rotation(), path.travelDistance(),
                     path.bounceCount(), path.bounceHeights(),

@@ -20,7 +20,6 @@ import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticFaceDisplay;
 import data.scripts.cosmicon.tutorial.TutorialController;
 import data.scripts.cosmicon.util.ColorHelper;
-import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.util.UIComponentFactory;
 
 public class BattleUILabels {
@@ -1115,6 +1114,14 @@ public class BattleUILabels {
 
     public ValueChangeAnimator getDefenderValueAnimator() {
         return defenderValueAnimator;
+    }
+
+    public int getAttackerTotalDisplayValue() {
+        return getAttackerTotalValue();
+    }
+
+    public int getDefenderTotalDisplayValue() {
+        return getDefenderTotalValue();
     }
 
     public LabelAPI getPhaseLabel() {

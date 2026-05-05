@@ -107,9 +107,17 @@ public class AIEngine {
         CosmiconLogger.debug("AIEngine: planning reroll for %s (%s), dice: %s, rerolls left: %d", 
             charId, isAttacking ? "attack" : "defense", diceValues, rerollsAvailable);
         
+        int targetSum = 0;
+        if (card != null) {
+            var profile = CosmiconAICore.getProfile(card.getId());
+            if (profile != null) {
+                targetSum = profile.getTargetThreshold(isAttacking);
+            }
+        }
+        
         Set<Integer> rerollIndices = CosmiconAICore.recommendRerolls(
             diceValues, diceTypes, requiredCount, rerollsAvailable,
-            isAttacking, 0, state, forPlayer);
+            isAttacking, targetSum, state, forPlayer);
         
         return new ArrayList<>(rerollIndices);
     }

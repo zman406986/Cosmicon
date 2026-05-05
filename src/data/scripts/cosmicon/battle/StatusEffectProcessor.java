@@ -338,6 +338,7 @@ public class StatusEffectProcessor {
         private final List<Boolean> diceSelected;
         private final List<Boolean> diceIsPrismatic;
         private final List<Integer> diceMaxFaces;
+        private final List<DiceType> diceTypes;
         private int instantDamageToOpponent;
 
         public BattleContext(int hp, int maxHp) {
@@ -348,6 +349,7 @@ public class StatusEffectProcessor {
             this.diceSelected = new ArrayList<>();
             this.diceIsPrismatic = new ArrayList<>();
             this.diceMaxFaces = new ArrayList<>();
+            this.diceTypes = new ArrayList<>();
             this.instantDamageToOpponent = 0;
         }
 
@@ -365,6 +367,15 @@ public class StatusEffectProcessor {
         public void setDiceMaxFaces(List<Integer> maxFaces) {
             diceMaxFaces.clear();
             diceMaxFaces.addAll(maxFaces);
+        }
+
+        public void setDiceTypes(List<DiceType> types) {
+            diceTypes.clear();
+            diceTypes.addAll(types);
+        }
+
+        public List<DiceType> getDiceTypes() {
+            return diceTypes;
         }
 
         public void setDiceSelected(List<Boolean> selected) {
@@ -438,13 +449,15 @@ public class StatusEffectProcessor {
         }
 
         public void applyLevelUp(int count) {
-            for (int i = 0; i < diceValues.size() && count > 0; i++) {
+            for (int i = 0; i < diceValues.size(); i++) {
                 if (diceSelected.get(i) && !diceIsPrismatic.get(i)) {
-                    int maxFace = (i < diceMaxFaces.size()) ? diceMaxFaces.get(i) : getDiceMaxFace(i);
-                    if (maxFace >= 12) continue;
-                    int upgradedMaxFace = upgradeDiceMaxFace(maxFace);
-                    diceValues.set(i, upgradedMaxFace);
-                    count--;
+                    int currentMaxFace = (i < diceMaxFaces.size()) ? diceMaxFaces.get(i) : getDiceMaxFace(i);
+                    if (currentMaxFace >= 12) continue;
+                    int upgradedMaxFace = upgradeDiceMaxFace(currentMaxFace);
+                    diceMaxFaces.set(i, upgradedMaxFace);
+                    if (i < diceTypes.size()) {
+                        diceTypes.set(i, DiceType.fromMaxFace(upgradedMaxFace));
+                    }
                 }
             }
         }

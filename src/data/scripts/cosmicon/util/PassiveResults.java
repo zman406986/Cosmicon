@@ -45,6 +45,7 @@ public class PassiveResults {
             grantedEffects.add(new GrantedEffect(effect, layers));
         }
 
+        @SuppressWarnings("unused")
         public void setGrantedEffect(StatusEffect effect, int layers) {
             setGrantedEffects.add(new GrantedEffect(effect, layers));
         }

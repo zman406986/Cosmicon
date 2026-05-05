@@ -19,6 +19,7 @@ public final class CosmiconSprites {
     private static SpriteAPI diceD4Sprite;
     private static SpriteAPI diceD6Sprite;
     private static SpriteAPI diceD8Sprite;
+    private static SpriteAPI diceD12Sprite;
     private static SpriteAPI prismaticDiceSprite;
     private static SpriteAPI prismaticButtonSprite;
     private static SpriteAPI atkIconSprite;
@@ -51,6 +52,7 @@ public final class CosmiconSprites {
             diceD4Sprite = settings.getSprite("cosmicon_dice", "d4");
             diceD6Sprite = settings.getSprite("cosmicon_dice", "d6");
             diceD8Sprite = settings.getSprite("cosmicon_dice", "d8");
+            diceD12Sprite = settings.getSprite("cosmicon_dice", "d12");
             prismaticDiceSprite = settings.getSprite("cosmicon_dice", "prismatic");
             prismaticButtonSprite = settings.getSprite("cosmicon_dice", "prismatic_btn");
             atkIconSprite = settings.getSprite("cosmicon_cards", "atk_icon");
@@ -112,6 +114,7 @@ public final class CosmiconSprites {
             case BLUE_D4 -> diceD4Sprite;
             case PURPLE_D6 -> diceD6Sprite;
             case ORANGE_D8 -> diceD8Sprite;
+            case RED_D12 -> diceD12Sprite;
             case PRISMATIC -> prismaticDiceSprite;
         };
     }

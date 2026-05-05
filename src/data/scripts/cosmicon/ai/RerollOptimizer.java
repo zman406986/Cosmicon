@@ -290,17 +290,13 @@ public final class RerollOptimizer {
         for (int idx : sortedIndices) {
             if (addedCount >= maxReroll) break;
 
-            if (!currentSelection.contains(idx)) {
-                cumulativeRerollSet.add(idx);
-                addedCount++;
-            }
+            cumulativeRerollSet.add(idx);
+            addedCount++;
 
-            if (!cumulativeRerollSet.isEmpty()) {
-                float improvement = calculateExpectedImprovement(currentValues, diceTypes, cumulativeRerollSet,
-                                                                 currentSelection, requiredCount, targetSum,
-                                                                 prismaticMap, thornsPenalty);
-                candidates.add(new RerollCandidate(new HashSet<>(cumulativeRerollSet), improvement));
-            }
+            float improvement = calculateExpectedImprovement(currentValues, diceTypes, cumulativeRerollSet,
+                                                             currentSelection, requiredCount, targetSum,
+                                                             prismaticMap, thornsPenalty);
+            candidates.add(new RerollCandidate(new HashSet<>(cumulativeRerollSet), improvement));
         }
 
         return candidates;
@@ -322,6 +318,12 @@ public final class RerollOptimizer {
 
         if (expectedNewSum >= targetSum && currentSum < targetSum) {
             improvement += (targetSum - currentSum) * 0.5f;
+        }
+
+        for (int idx : rerollIndices) {
+            if (currentValues.get(idx) <= 1) {
+                improvement += 0.01f;
+            }
         }
 
         return improvement;
@@ -405,19 +407,11 @@ public final class RerollOptimizer {
         Set<Integer> forced = new HashSet<>();
         for (int i = 0; i < diceCount; i++) {
             PrismaticDiceInstance pd = prismaticMap.get(i);
-            if (pd != null && (pd.isMustSelect() || isDestinedEffect(pd, i))) {
+            if (pd != null && (pd.isMustSelect() || isDestinedEffect(pd))) {
                 forced.add(i);
             }
         }
         return forced;
-    }
-
-    private static boolean isDestinedEffect(PrismaticDiceInstance pd, int ignoredIdx) {
-        if (pd == null || pd.type == null) return false;
-        var effect = pd.type.getEffect();
-        if (effect == null) return false;
-        return effect.isGrantStatus()
-            && effect.getGrantedEffect() == data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect.DESTINED;
     }
 
     private static int calculateTopNSum(List<Integer> values, int n,
@@ -445,5 +439,18 @@ public final class RerollOptimizer {
         }
 
         return forcedSum + freeSum;
+    }
+
+    private static final class RerollCandidate {
+        private final Set<Integer> rerollIndices;
+        private final float expectedImprovement;
+
+        RerollCandidate(Set<Integer> rerollIndices, float expectedImprovement) {
+            this.rerollIndices = rerollIndices;
+            this.expectedImprovement = expectedImprovement;
+        }
+
+        Set<Integer> rerollIndices() { return rerollIndices; }
+        float expectedImprovement() { return expectedImprovement; }
     }
 }

@@ -71,7 +71,39 @@ public final class DiceProbabilityCalculator {
             case BLUE_D4 -> 2.5f;
             case PURPLE_D6, PRISMATIC -> 3.5f;
             case ORANGE_D8 -> 4.5f;
+            case RED_D12 -> 6.5f;
         };
+    }
+
+    public static double expectedValue(int sides, int rollsAvailable) {
+        if (rollsAvailable <= 0) return 0;
+        double ev = (sides + 1) / 2.0;
+        for (int n = 2; n <= rollsAvailable; n++) {
+            double threshold = ev;
+            double sum = 0;
+            for (int face = 1; face <= sides; face++) {
+                sum += Math.max(face, threshold);
+            }
+            ev = sum / sides;
+        }
+        return ev;
+    }
+
+    public static double expectedValue(DiceType type, int rollsAvailable) {
+        if (type == DiceType.PRISMATIC) {
+            return expectedValue(6, rollsAvailable);
+        }
+        return expectedValue(type.getMaxFace(), rollsAvailable);
+    }
+
+    public static int getRerollThreshold(DiceType type, int rollsAvailable) {
+        double ev = expectedValue(type, rollsAvailable);
+        return (int) Math.floor(ev);
+    }
+
+    public static boolean shouldRerollSingle(int currentValue, DiceType type, int rollsAvailable) {
+        if (rollsAvailable <= 0) return false;
+        return currentValue < expectedValue(type, rollsAvailable);
     }
 
     public static float expectedValue(DiceType type, PrismaticDiceType prismType) {
@@ -244,7 +276,18 @@ public final class DiceProbabilityCalculator {
             }
         }
 
-        return dp[n][k];
+        float[] result = dp[n][k];
+        float totalMass = 0f;
+        for (int s = 0; s < result.length; s++) {
+            totalMass += result[s];
+        }
+        if (totalMass > 0f) {
+            for (int s = 0; s < result.length; s++) {
+                result[s] /= totalMass;
+            }
+        }
+
+        return result;
     }
 
     public static float expectedSum(List<DiceType> diceTypes, int selectCount) {

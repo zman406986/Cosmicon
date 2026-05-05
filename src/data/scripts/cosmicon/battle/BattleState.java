@@ -304,6 +304,7 @@ public class BattleState {
         }
 
         if (types != null) {
+            context.setDiceTypes(new ArrayList<>(types));
             List<Integer> maxFaces = new ArrayList<>();
             for (DiceType type : types) {
                 maxFaces.add(type.getMaxFace());
@@ -545,6 +546,7 @@ public class BattleState {
         prismaticManager.addPrismaticUse(type, isPlayer);
     }
 
+    @SuppressWarnings("unused")
     public void consumePrismaticUse(PrismaticDiceType type, boolean forPlayer) {
         prismaticManager.consumePrismaticUse(type, forPlayer);
     }
@@ -1121,6 +1123,7 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         }
     }
 
+    @SuppressWarnings("unused")
     public int getPendingStrength(boolean forPlayer) {
         return forPlayer ? playerPendingStrength : opponentPendingStrength;
     }

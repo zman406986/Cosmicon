@@ -298,7 +298,7 @@ public final class BattleRenderingUtils {
         float startY = cardY + CARD_HEIGHT - DICE_POOL_TOP_MARGIN - DICE_ICON_SIZE;
 
         List<DiceType> order = Arrays.asList(
-            DiceType.ORANGE_D8, DiceType.PURPLE_D6, DiceType.BLUE_D4, DiceType.PRISMATIC
+            DiceType.RED_D12, DiceType.ORANGE_D8, DiceType.PURPLE_D6, DiceType.BLUE_D4, DiceType.PRISMATIC
         );
 
         float offsetY = 0f;

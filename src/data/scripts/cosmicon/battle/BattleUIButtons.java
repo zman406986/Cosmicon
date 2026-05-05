@@ -195,8 +195,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
             float yOffset = i * spacing;
             ButtonAPI btn = opponentTp.addButton("", "status_opp_" + i, btnWidth, btnHeight, 0f);
             btn.setQuickMode(true);
-            btn.setOpacity(0.01f);
-            btn.setEnabled(false);
+            btn.setOpacity(0f);
             btn.getPosition().inTL(0f, yOffset);
             opponentStatusButtons.add(btn);
 
@@ -231,8 +230,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
             float yOffset = i * spacing;
             ButtonAPI btn = playerTp.addButton("", "status_plr_" + i, btnWidth, btnHeight, 0f);
             btn.setQuickMode(true);
-            btn.setOpacity(0.01f);
-            btn.setEnabled(false);
+            btn.setOpacity(0f);
             btn.getPosition().inTL(0f, yOffset);
             playerStatusButtons.add(btn);
 
@@ -324,12 +322,12 @@ public class BattleUIButtons implements ActionListenerDelegate {
     public void updateStatusTooltipButtons() {
         if (opponentStatusButtons != null) {
             for (int i = 0; i < opponentStatusButtons.size(); i++) {
-                opponentStatusButtons.get(i).setEnabled(getEffectAtIndex(i, false) != null);
+                opponentStatusButtons.get(i).setOpacity(getEffectAtIndex(i, false) != null ? 0.01f : 0f);
             }
         }
         if (playerStatusButtons != null) {
             for (int i = 0; i < playerStatusButtons.size(); i++) {
-                playerStatusButtons.get(i).setEnabled(getEffectAtIndex(i, true) != null);
+                playerStatusButtons.get(i).setOpacity(getEffectAtIndex(i, true) != null ? 0.01f : 0f);
             }
         }
     }

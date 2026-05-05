@@ -354,6 +354,20 @@ public class TurnProcessor {
                 if (aiPhaseTimer <= 0f && opponentAnimationCompleteChecker.getAsBoolean()) {
                     if (viz != null) viz.reset();
 
+                    int remainingRerolls = state.getRemainingRerolls(false);
+                    if (remainingRerolls > 0) {
+                        List<Integer> nextRerollIndices = aiEngine.planReroll(state, false);
+                        if (!nextRerollIndices.isEmpty()) {
+                            CosmiconLogger.debug("AI planning additional reroll: %s", nextRerollIndices);
+                            aiPlannedIndices = nextRerollIndices;
+                            aiVisualPhase = AIVisualPhase.REROLL_PLANNING;
+                            if (viz != null) {
+                                viz.planSelection(nextRerollIndices, true);
+                            }
+                            break;
+                        }
+                    }
+
                     CosmiconLogger.debug("AI reroll complete, transitioning to SELECTION_PLANNING");
                     aiVisualPhase = AIVisualPhase.SELECTION_PLANNING;
                     aiPlannedIndices = null;
@@ -443,6 +457,7 @@ public class TurnProcessor {
         List<Integer> preSelectValues = new ArrayList<>(state.getDiceValues(forPlayer));
         state.getEffects(forPlayer).processPhase(Phase.AFTER_SELECT, turnType, context);
         state.setDiceValues(forPlayer, context.getDiceValues());
+        state.setDiceTypes(forPlayer, context.getDiceTypes());
         List<Integer> postSelectValues = state.getDiceValues(forPlayer);
         notifyRestDiceValueChanges(preSelectValues, postSelectValues, forPlayer);
         
@@ -505,6 +520,7 @@ public class TurnProcessor {
         List<Integer> preSelectValues = new ArrayList<>(state.getDiceValues(false));
         state.getOpponentEffects().processPhase(Phase.AFTER_SELECT, opponentTurnType, opponentContext);
         state.setDiceValues(false, opponentContext.getDiceValues());
+        state.setDiceTypes(false, opponentContext.getDiceTypes());
         List<Integer> postSelectValues = state.getDiceValues(false);
         notifyRestDiceValueChanges(preSelectValues, postSelectValues, false);
         
@@ -987,6 +1003,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         List<Integer> preSelectValues = new ArrayList<>(state.getDiceValues(true));
         state.getPlayerEffects().processPhase(Phase.AFTER_SELECT, playerTurnType, playerContext);
         state.setDiceValues(true, playerContext.getDiceValues());
+        state.setDiceTypes(true, playerContext.getDiceTypes());
         List<Integer> postSelectValues = state.getDiceValues(true);
         notifyRestDiceValueChanges(preSelectValues, postSelectValues, true);
         
