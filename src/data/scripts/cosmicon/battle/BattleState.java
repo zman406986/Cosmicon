@@ -139,6 +139,7 @@ public class BattleState {
         void onDamageImpacted();
         void onValueChange(boolean isPlayer, String changeType, int oldValue, int newValue, int delta);
         void onTransitionToDefenderRoll();
+        void onSecondaryDamage(boolean isPlayer, int damage, String damageType);
     }
 
     public record ValueChangeRecord(String changeType, int delta, String displayText, boolean isPlayer)
@@ -1128,6 +1129,12 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     public void notifyValueChange(boolean isPlayer, String changeType, int oldValue, int newValue, int delta) {
         for (BattleEventListener l : listeners) {
             l.onValueChange(isPlayer, changeType, oldValue, newValue, delta);
+        }
+    }
+    
+    public void notifySecondaryDamage(boolean isPlayer, int damage, String damageType) {
+        for (BattleEventListener l : listeners) {
+            l.onSecondaryDamage(isPlayer, damage, damageType);
         }
     }
     

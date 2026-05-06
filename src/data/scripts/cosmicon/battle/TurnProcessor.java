@@ -448,6 +448,14 @@ public class TurnProcessor {
         
         processPassiveEffects(forPlayer);
         
+        int passiveAtkBonus = 0;
+        int passiveDefBonus = 0;
+        if (isAttackPhase) {
+            passiveAtkBonus = state.getAttackValue() - state.calculateSelectedSum(forPlayer);
+        } else {
+            passiveDefBonus = state.getDefenseValue() - state.calculateSelectedSum(forPlayer);
+        }
+        
         StatusEffectProcessor.BattleContext context = createBattleContext(forPlayer);
         TurnType turnType = state.isPlayerAttacker() ? TurnType.DEFENSE : TurnType.ATTACK;
         
@@ -471,9 +479,9 @@ public class TurnProcessor {
         }
         
         if (aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
-            state.setAttackValue(state.calculateSelectedSum(false));
+            state.setAttackValue(state.calculateSelectedSum(false) + passiveAtkBonus);
         } else if (!aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
-            state.setDefenseValue(state.calculateSelectedSum(false));
+            state.setDefenseValue(state.calculateSelectedSum(false) + passiveDefBonus);
         }
         
         int oldAtk = state.getAttackValue();
@@ -514,6 +522,14 @@ public class TurnProcessor {
         
         processPassiveEffects(forPlayer);
         
+        int passiveAtkBonus = 0;
+        int passiveDefBonus = 0;
+        if (isAttackPhase) {
+            passiveAtkBonus = state.getAttackValue() - state.calculateSelectedSum(forPlayer);
+        } else {
+            passiveDefBonus = state.getDefenseValue() - state.calculateSelectedSum(forPlayer);
+        }
+        
         StatusEffectProcessor.BattleContext opponentContext = createBattleContext(false);
         TurnType opponentTurnType = state.isPlayerAttacker() ? TurnType.DEFENSE : TurnType.ATTACK;
         
@@ -537,9 +553,9 @@ public class TurnProcessor {
         }
         
         if (aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
-            state.setAttackValue(state.calculateSelectedSum(false));
+            state.setAttackValue(state.calculateSelectedSum(false) + passiveAtkBonus);
         } else if (!aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
-            state.setDefenseValue(state.calculateSelectedSum(false));
+            state.setDefenseValue(state.calculateSelectedSum(false) + passiveDefBonus);
         }
         
         int oldAtk = state.getAttackValue();
@@ -718,16 +734,20 @@ public class TurnProcessor {
         if (attackerInstantDamage > 0) {
             if (state.isPlayerAttacker()) {
                 state.setOpponentHp(Math.max(0, state.getOpponentHp() - attackerInstantDamage));
+                state.notifySecondaryDamage(false, attackerInstantDamage, "INSTANT_DAMAGE");
             } else {
                 state.setPlayerHp(Math.max(0, state.getPlayerHp() - attackerInstantDamage));
+                state.notifySecondaryDamage(true, attackerInstantDamage, "INSTANT_DAMAGE");
             }
         }
         
         if (defenderInstantDamage > 0) {
             if (state.isPlayerAttacker()) {
                 state.setPlayerHp(Math.max(0, state.getPlayerHp() - defenderInstantDamage));
+                state.notifySecondaryDamage(true, defenderInstantDamage, "INSTANT_DAMAGE");
             } else {
                 state.setOpponentHp(Math.max(0, state.getOpponentHp() - defenderInstantDamage));
+                state.notifySecondaryDamage(false, defenderInstantDamage, "INSTANT_DAMAGE");
             }
         }
 
@@ -736,9 +756,11 @@ public class TurnProcessor {
 
         if (playerThornsDamage > 0 && state.getPlayerEffects().hasEffect(StatusEffectProcessor.StatusEffect.THORNS)) {
             state.applyDamageTo(true, playerThornsDamage);
+            state.notifySecondaryDamage(true, playerThornsDamage, "THORNS");
         }
         if (opponentThornsDamage > 0 && state.getOpponentEffects().hasEffect(StatusEffectProcessor.StatusEffect.THORNS)) {
             state.applyDamageTo(false, opponentThornsDamage);
+            state.notifySecondaryDamage(false, opponentThornsDamage, "THORNS");
         }
 
         state.setCurrentPhase(BattleState.Phase.RESOLVING);
@@ -796,6 +818,7 @@ private void applyImpactDamage(DamageResolver.DamageResult result) {
             int instantDamageToAttacker = PassiveEventSystem.onDamageTaken(state, defenderIsPlayer, damage);
             if (instantDamageToAttacker > 0) {
                 state.applyDamageTo(playerIsAttacker, instantDamageToAttacker);
+                state.notifySecondaryDamage(playerIsAttacker, instantDamageToAttacker, "INSTANT_DAMAGE");
             }
 
             PassiveEventSystem.onDefenseFail(state, defenderIsPlayer);
@@ -812,6 +835,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
 
         if (result.counterDamage() > 0) {
             state.applyDamageTo(playerIsAttacker, result.counterDamage());
+            state.notifySecondaryDamage(playerIsAttacker, result.counterDamage(), "COUNTER");
         }
 
         if (result.selfThornsDamage() > 0) {
@@ -820,14 +844,17 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
 
         if (result.overloadSelfDamage() > 0) {
             state.applyDamageTo(playerIsAttacker, result.overloadSelfDamage());
+            state.notifySecondaryDamage(playerIsAttacker, result.overloadSelfDamage(), "OVERLOAD");
         }
 
         if (result.instantDamage() > 0) {
             state.applyDamageTo(defenderIsPlayer, result.instantDamage());
+            state.notifySecondaryDamage(defenderIsPlayer, result.instantDamage(), "INSTANT_DAMAGE");
         }
 
         if (result.reflectDamage() > 0) {
             state.applyDamageTo(playerIsAttacker, result.reflectDamage());
+            state.notifySecondaryDamage(playerIsAttacker, result.reflectDamage(), "REFLECT");
             state.getEffects(defenderIsPlayer).removeEffect(StatusEffectProcessor.StatusEffect.REFLECT);
         }
 
@@ -892,6 +919,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
             int reflectDamage = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.REFLECT);
             if (reflectDamage > 0) {
                 state.applyDamageTo(playerIsAttacker, reflectDamage);
+                state.notifySecondaryDamage(playerIsAttacker, reflectDamage, "REFLECT");
                 defenderEffects.removeEffect(StatusEffectProcessor.StatusEffect.REFLECT);
                 CosmiconLogger.debug("COMBO reflect: %d damage to attacker", reflectDamage);
             }
@@ -899,6 +927,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
             int instantDamageToAttacker = PassiveEventSystem.onDamageTaken(state, defenderIsPlayer, comboDamage);
             if (instantDamageToAttacker > 0) {
                 state.applyDamageTo(playerIsAttacker, instantDamageToAttacker);
+                state.notifySecondaryDamage(playerIsAttacker, instantDamageToAttacker, "INSTANT_DAMAGE");
             }
             
             PassiveEventSystem.onDefenseFail(state, defenderIsPlayer);
@@ -922,6 +951,13 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         
         state.applyDamageTo(true, playerPoisonDamage);
         state.applyDamageTo(false, opponentPoisonDamage);
+        
+        if (playerPoisonDamage > 0) {
+            state.notifySecondaryDamage(true, playerPoisonDamage, "POISON");
+        }
+        if (opponentPoisonDamage > 0) {
+            state.notifySecondaryDamage(false, opponentPoisonDamage, "POISON");
+        }
         
         if (state.getPlayerHp() <= 0 || state.getOpponentHp() <= 0) {
             endBattle();
@@ -1013,12 +1049,21 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         
         state.recordSelectedFaces(true);
         
+        boolean isAttackPhase = state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK;
+        
         processPassiveEffects(true);
+        
+        int passiveAtkBonus = 0;
+        int passiveDefBonus = 0;
+        if (isAttackPhase) {
+            passiveAtkBonus = state.getAttackValue() - state.calculateSelectedSum(true);
+        } else {
+            passiveDefBonus = state.getDefenseValue() - state.calculateSelectedSum(true);
+        }
         
         StatusEffectProcessor.BattleContext playerContext = createBattleContext(true);
         TurnType playerTurnType = state.isPlayerAttacker() ? TurnType.ATTACK : TurnType.DEFENSE;
         
-        boolean isAttackPhase = state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK;
         int oldValue = isAttackPhase ? state.getAttackValue() : state.getDefenseValue();
         List<Integer> preSelectValues = new ArrayList<>(state.getDiceValues(true));
         List<DiceType> preSelectTypes = state.getDiceTypes(true) != null ? new ArrayList<>(state.getDiceTypes(true)) : null;
@@ -1050,9 +1095,9 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
             selectedFlags != null ? selectedFlags.toString() : "null", prismaticCount);
 
         if (state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
-            state.setAttackValue(calcSum);
+            state.setAttackValue(calcSum + passiveAtkBonus);
         } else if (!state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
-            state.setDefenseValue(calcSum);
+            state.setDefenseValue(calcSum + passiveDefBonus);
         }
         
         int oldAtk = state.getAttackValue();

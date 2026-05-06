@@ -33,6 +33,13 @@ public final class ColorHelper {
     public static final Color REST_RESERVE_BG = new Color(80, 85, 95, 60);
     public static final Color REST_RESERVE_BORDER = new Color(120, 125, 140, 150);
 
+    public static final Color COUNTER_DAMAGE = new Color(200, 100, 255);
+    public static final Color INSTANT_DAMAGE = new Color(255, 160, 50);
+    public static final Color POISON_DAMAGE = new Color(100, 220, 80);
+    public static final Color THORNS_DAMAGE = new Color(140, 200, 60);
+    public static final Color REFLECT_DAMAGE = new Color(80, 220, 255);
+    public static final Color OVERLOAD_DAMAGE = new Color(255, 80, 50);
+
     public static float[] toGLComponents(Color color, float alphaMult) {
         return new float[] {
             color.getRed() / 255f,

@@ -52,6 +52,7 @@ public class PrismaticDiceProcessor {
         if (effect.isInstantDamage()) {
             int damage = effect.getInstantDamageAmount();
             state.applyDamageTo(!forPlayer, damage);
+            state.notifySecondaryDamage(!forPlayer, damage, "INSTANT_DAMAGE");
             CosmiconLogger.debug("Prismatic effect applied: InstantDamage %d to %s", 
                 damage, forPlayer ? "Opponent" : "Player");
         }

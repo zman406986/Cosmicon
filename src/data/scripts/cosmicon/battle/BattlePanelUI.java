@@ -35,6 +35,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     private static final float OPPONENT_AUTO_ROLL_DELAY = 0.8f;
     private static final float ROLE_TRANSITION_DURATION = 0.4f;
     private static final float PRE_CLASH_DELAY = 1.5f;
+    private static final float SECONDARY_DAMAGE_FLIGHT_DURATION = 0.6f;
+    private static final float SECONDARY_DAMAGE_LIFETIME = 1.5f;
+    private static final float HP_ANIM_SPEED = 10f;
 
     private CustomPanelAPI panel;
     private BattleController battleController;
@@ -86,6 +89,21 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     private float diceDisplayTimer;
     private static final float DICE_DISPLAY_DURATION = 0.8f;
 
+    private static class SecondaryDamageEntry {
+        final FlyingNumber number;
+        final boolean isPlayer;
+        float timeAlive;
+        SecondaryDamageEntry(FlyingNumber number, boolean isPlayer) {
+            this.number = number;
+            this.isPlayer = isPlayer;
+            this.timeAlive = 0f;
+        }
+    }
+    private final List<SecondaryDamageEntry> secondaryDamageNumbers = new ArrayList<>();
+
+    private float displayedPlayerHp;
+    private float displayedOpponentHp;
+
     public BattlePanelUI() {
         List<float[]> diceHitboxes = new ArrayList<>();
         this.inputHandler = new BattleInputHandler(diceHitboxes);
@@ -102,6 +120,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         this.rerollSelectionClearPending = false;
         this.preClashTimer = 0f;
         this.diceDisplayTimer = 0f;
+        this.displayedPlayerHp = -1f;
+        this.displayedOpponentHp = -1f;
     }
 
     public void setBattleController(BattleController controller) {
@@ -115,6 +135,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             lastPlayerWasAttacker = battleState.isPlayerAttacker();
             roleTransitionProgress = lastPlayerWasAttacker ? 0f : 1f;
             targetRoleTransition = roleTransitionProgress;
+
+            displayedPlayerHp = battleState.getPlayerHp();
+            displayedOpponentHp = battleState.getOpponentHp();
 
             TutorialController tc = controller.getTutorialController();
             if (tc != null) {
@@ -175,6 +198,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             damageAnimator.cleanup();
             damageAnimator = null;
         }
+        for (SecondaryDamageEntry entry : secondaryDamageNumbers) {
+            entry.number.cleanup();
+        }
+        secondaryDamageNumbers.clear();
         diceRollManager = null;
         damageAnimationPending = false;
         damageImpactHandled = false;
@@ -185,6 +212,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         opponentAutoRollDelay = 0f;
         preClashTimer = 0f;
         tutorialLabel = null;
+        displayedPlayerHp = -1f;
+        displayedOpponentHp = -1f;
     }
 
     public void init(CustomPanelAPI panel, DialogCallbacks callbacks) {
@@ -237,6 +266,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             lastPlayerWasAttacker = battleState.isPlayerAttacker();
             roleTransitionProgress = lastPlayerWasAttacker ? 0f : 1f;
             targetRoleTransition = roleTransitionProgress;
+            displayedPlayerHp = battleState.getPlayerHp();
+            displayedOpponentHp = battleState.getOpponentHp();
         }
     }
 
@@ -282,6 +313,11 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                 damageAnimationPending = false;
                 pendingDamageResult = null;
             }
+            
+            for (SecondaryDamageEntry entry : secondaryDamageNumbers) {
+                entry.number.cleanup();
+            }
+            secondaryDamageNumbers.clear();
             
             inputHandler.setWaitingForClickToRoll(false);
 
@@ -593,8 +629,96 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     @Override
+    public void onSecondaryDamage(boolean isPlayer, int damage, String damageType) {
+        if (battleState == null || panel == null || damage <= 0) return;
+
+        float cardCenterX;
+        float cardCenterY;
+        if (isPlayer) {
+            float cardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
+            float cardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+            cardCenterX = cardX + BattleRenderingUtils.CARD_WIDTH / 2f;
+            cardCenterY = cardY + BattleRenderingUtils.CARD_HEIGHT / 2f;
+        } else {
+            cardCenterX = BattleRenderingUtils.MARGIN + BattleRenderingUtils.CARD_WIDTH / 2f;
+            cardCenterY = BattleRenderingUtils.MARGIN + BattleRenderingUtils.CARD_HEIGHT / 2f;
+        }
+
+        int sameTargetCount = 0;
+        for (SecondaryDamageEntry entry : secondaryDamageNumbers) {
+            if (entry.isPlayer == isPlayer) sameTargetCount++;
+        }
+        float yOffset = sameTargetCount * 20f;
+
+        Color color = getSecondaryDamageColor(damageType);
+        FlyingNumber fn = new FlyingNumber();
+        fn.setValue(damage);
+        fn.setColor(color);
+        fn.startFrom(cardCenterX, cardCenterY - yOffset);
+        fn.flyTo(cardCenterX, cardCenterY - 30f - yOffset, SECONDARY_DAMAGE_FLIGHT_DURATION);
+        secondaryDamageNumbers.add(new SecondaryDamageEntry(fn, isPlayer));
+
+        labels.updateLabelsFromState();
+    }
+
+    private Color getSecondaryDamageColor(String damageType) {
+        return switch (damageType) {
+            case "COUNTER" -> ColorHelper.COUNTER_DAMAGE;
+            case "INSTANT_DAMAGE" -> ColorHelper.INSTANT_DAMAGE;
+            case "POISON" -> ColorHelper.POISON_DAMAGE;
+            case "THORNS" -> ColorHelper.THORNS_DAMAGE;
+            case "REFLECT" -> ColorHelper.REFLECT_DAMAGE;
+            case "OVERLOAD" -> ColorHelper.OVERLOAD_DAMAGE;
+            default -> FlyingNumber.DAMAGE_RESULT;
+        };
+    }
+
+    private void advanceDisplayedHp(float amount) {
+        if (battleState == null) return;
+
+        if (displayedPlayerHp < 0f) displayedPlayerHp = battleState.getPlayerHp();
+        if (displayedOpponentHp < 0f) displayedOpponentHp = battleState.getOpponentHp();
+
+        float targetPlayerHp = battleState.getPlayerHp();
+        float targetOpponentHp = battleState.getOpponentHp();
+
+        float playerDiff = targetPlayerHp - displayedPlayerHp;
+        float opponentDiff = targetOpponentHp - displayedOpponentHp;
+
+        if (Math.abs(playerDiff) < 0.5f) {
+            displayedPlayerHp = targetPlayerHp;
+        } else {
+            displayedPlayerHp += playerDiff * HP_ANIM_SPEED * amount;
+        }
+
+        if (Math.abs(opponentDiff) < 0.5f) {
+            displayedOpponentHp = targetOpponentHp;
+        } else {
+            displayedOpponentHp += opponentDiff * HP_ANIM_SPEED * amount;
+        }
+    }
+
+    private void advanceSecondaryDamageNumbers(float amount) {
+        List<SecondaryDamageEntry> toRemove = new ArrayList<>();
+        for (SecondaryDamageEntry entry : secondaryDamageNumbers) {
+            entry.number.advance(amount);
+            entry.timeAlive += amount;
+            if (entry.timeAlive >= SECONDARY_DAMAGE_LIFETIME) {
+                toRemove.add(entry);
+            }
+        }
+        for (SecondaryDamageEntry entry : toRemove) {
+            entry.number.cleanup();
+            secondaryDamageNumbers.remove(entry);
+        }
+    }
+
+    @Override
     public void advance(float amount) {
         if (battleState == null) return;
+
+        advanceDisplayedHp(amount);
+        advanceSecondaryDamageNumbers(amount);
 
         updateRoleTransition(amount);
         labels.updateSelectionDisplayLabels();
@@ -1016,6 +1140,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                 damageAnimator.render(x, y, w, h, alphaMult);
             }
 
+            for (SecondaryDamageEntry entry : secondaryDamageNumbers) {
+                entry.number.render(x, y, h, alphaMult, panel);
+            }
+
             if (shouldShowOpponentDice()) {
                 renderOpponentDiceZone(x, y, w, h, alphaMult);
             }
@@ -1086,7 +1214,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         float cy = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN + 14f + 10f;
 
         UnifiedCoord center = new UnifiedCoord(cx, cy);
-        float fillFraction = (float) battleState.getPlayerHp() / card.getMaxHp();
+        float fillFraction = displayedPlayerHp >= 0f ? displayedPlayerHp / card.getMaxHp() : (float) battleState.getPlayerHp() / card.getMaxHp();
         BattleRenderingUtils.renderHpCircle(center.glX(), center.glY(), BattleRenderingUtils.HP_CIRCLE_RADIUS, fillFraction, alphaMult);
     }
 
@@ -1099,7 +1227,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         float cy = BattleRenderingUtils.MARGIN + 14f + 10f;
 
         UnifiedCoord center = new UnifiedCoord(cx, cy);
-        float fillFraction = (float) battleState.getOpponentHp() / card.getMaxHp();
+        float fillFraction = displayedOpponentHp >= 0f ? displayedOpponentHp / card.getMaxHp() : (float) battleState.getOpponentHp() / card.getMaxHp();
         BattleRenderingUtils.renderHpCircle(center.glX(), center.glY(), BattleRenderingUtils.HP_CIRCLE_RADIUS, fillFraction, alphaMult);
     }
 
@@ -1349,7 +1477,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         UnifiedCoord btnPos = new UnifiedCoord(buttons.getPlayerPrismaticBtnX(), buttons.getPlayerPrismaticBtnY());
         float renderX = btnPos.glX() + 50f;
-        float renderY = btnPos.glSpriteY(PRISMATIC_BTN_SIZE);
+        float renderY = btnPos.glSpriteY(PRISMATIC_BTN_SIZE) + 40f;
 
         int uses = battleState.getPlayerPrismaticUses();
         boolean playerShouldSelect = (battleState.isAttacker(true) &&
