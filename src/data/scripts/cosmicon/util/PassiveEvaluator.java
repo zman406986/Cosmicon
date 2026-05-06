@@ -59,13 +59,19 @@ public class PassiveEvaluator {
     }
 
     public static PassiveResult evaluateForCharacter(String characterId, List<Integer> diceValues, boolean isAttacking) {
-        return evaluateForCharacter(characterId, diceValues, isAttacking, -1, -1, 0);
+        return evaluateForCharacter(characterId, diceValues, isAttacking, -1, -1, 0, 0);
     }
 
     public static PassiveResult evaluateForCharacter(String characterId, List<Integer> diceValues, boolean isAttacking, 
                                                        int currentHp, int maxHp, int currentToughnessLayers) {
+        return evaluateForCharacter(characterId, diceValues, isAttacking, currentHp, maxHp, currentToughnessLayers, 0);
+    }
+
+    public static PassiveResult evaluateForCharacter(String characterId, List<Integer> diceValues, boolean isAttacking, 
+                                                       int currentHp, int maxHp, int currentToughnessLayers,
+                                                       int currentStrengthLayers) {
         PassiveResult result = new PassiveResult();
-        CharacterPassives.evaluateForCharacter(characterId, result, diceValues, isAttacking, currentHp, maxHp, currentToughnessLayers);
+        CharacterPassives.evaluateForCharacter(characterId, result, diceValues, isAttacking, currentHp, maxHp, currentToughnessLayers, currentStrengthLayers);
         return result;
     }
 

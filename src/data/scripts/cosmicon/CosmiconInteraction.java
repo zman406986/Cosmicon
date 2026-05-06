@@ -254,6 +254,8 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     }
 
     private void handleVictory() {
+        markSessionWonIfBarEvent();
+
         boolean isReplay = CosmiconEventState.isReplayTutorial();
         if (!isReplay) {
             CosmiconStats.incrementGamesPlayed();
@@ -341,6 +343,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             int credits = CosmiconStats.calculateCreditReward(playerLevel);
             Global.getSector().getPlayerFleet().getCargo().getCredits().add(credits);
             AddRemoveCommodity.addCreditsGainText(credits, textPanel);
+            options.addOption(Strings.get("menu.back"), "back");
         } else {
             options.addOption(Strings.get("reward.take_credits"), "take_credits");
         }
@@ -391,7 +394,6 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                     CosmiconStats.unlockCharacter(pendingRewardCharId);
                     textPanel.addPara(Strings.get("reward.character_unlocked"));
                 }
-                markSessionWonIfBarEvent();
                 finishReward();
             }
             case "unlock_prismatic" -> {
@@ -399,7 +401,6 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                     CosmiconStats.unlockPrismaticDice(pendingRewardPrismaticId);
                     textPanel.addPara(Strings.get("reward.prismatic_unlocked"));
                 }
-                markSessionWonIfBarEvent();
                 finishReward();
             }
             case "take_credits" -> {
@@ -407,7 +408,6 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 int credits = CosmiconStats.calculateCreditReward(playerLevel);
                 Global.getSector().getPlayerFleet().getCargo().getCredits().add(credits);
                 AddRemoveCommodity.addCreditsGainText(credits, textPanel);
-                markSessionWonIfBarEvent();
                 finishReward();
             }
             default -> finishReward();

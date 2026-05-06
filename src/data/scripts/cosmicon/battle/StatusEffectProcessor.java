@@ -81,6 +81,15 @@ public class StatusEffectProcessor {
         durations.remove(effect);
     }
 
+    public void removeLayers(StatusEffect effect, int layers) {
+        int current = getLayers(effect);
+        if (current <= layers) {
+            removeEffect(effect);
+        } else {
+            effects.put(effect, current - layers);
+        }
+    }
+
     public void setEffect(StatusEffect effect, int layers) {
         if (layers <= 0) {
             if (hasEffect(effect)) {
@@ -118,6 +127,10 @@ public class StatusEffectProcessor {
         if (hasEffect(StatusEffect.LEVEL_UP)) {
             effects.remove(StatusEffect.LEVEL_UP);
             durations.remove(StatusEffect.LEVEL_UP);
+        }
+        if (hasEffect(StatusEffect.UNYIELDING)) {
+            effects.remove(StatusEffect.UNYIELDING);
+            durations.remove(StatusEffect.UNYIELDING);
         }
     }
 

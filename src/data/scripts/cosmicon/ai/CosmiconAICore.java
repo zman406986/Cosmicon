@@ -14,6 +14,10 @@ public final class CosmiconAICore {
         return CharacterProfileRegistry.get(characterId);
     }
 
+    public static AttackRerollAI getRerollAI(String characterId) {
+        return CharacterProfileRegistry.getRerollAI(characterId);
+    }
+
     public static AIDecision makeDecision(
             List<Integer> diceValues,
             List<DiceType> diceTypes,
@@ -24,10 +28,10 @@ public final class CosmiconAICore {
             int targetSum,
             BattleState state,
             boolean forPlayer) {
-        
-        CosmiconLogger.debug("AI Decision: character=%s, role=%s, dice=%s, need=%d, rerolls=%d", 
+
+        CosmiconLogger.debug("AI Decision: character=%s, role=%s, dice=%s, need=%d, rerolls=%d",
             characterId, isAttacking ? "ATTACK" : "DEFEND", diceValues, requiredSelectCount, rerollsAvailable);
-        
+
         CharacterAIProfile profile = getProfile(characterId);
 
         SelectionOptimizer.SelectionResult selection = SelectionOptimizer.optimalSelection(
@@ -35,15 +39,15 @@ public final class CosmiconAICore {
 
         Set<Integer> rerollIndices = Set.of();
         if (rerollsAvailable > 0) {
-            int effectiveTarget = targetSum > 0 ? targetSum : profile.getTargetThreshold(isAttacking);
-            rerollIndices = RerollOptimizer.optimalRerolls(
-                diceValues, diceTypes, requiredSelectCount, rerollsAvailable, effectiveTarget, 
-                isAttacking, state, forPlayer, profile);
+            AttackRerollAI rerollAI = getRerollAI(characterId);
+            rerollIndices = rerollAI.planReroll(
+                diceValues, diceTypes, requiredSelectCount, rerollsAvailable,
+                isAttacking, state, forPlayer);
         }
 
-        CosmiconLogger.debug("AI Decision result: %s selected indices %s (sum=%d), reroll indices %s", 
+        CosmiconLogger.debug("AI Decision result: %s selected indices %s (sum=%d), reroll indices %s",
             characterId, selection.selectedIndices, selection.sumValue, rerollIndices);
-        
+
         return new AIDecision(selection, rerollIndices, profile);
     }
 
@@ -54,9 +58,11 @@ public final class CosmiconAICore {
             int rerollsAvailable,
             boolean isAttacking,
             int targetSum) {
-        
-        Set<Integer> result = RerollOptimizer.optimalRerolls(diceValues, diceTypes, requiredCount, rerollsAvailable, targetSum, isAttacking);
-        CosmiconLogger.debug("AI reroll recommendation: indices %s, role: %s, target: %d", 
+
+        AttackRerollAI rerollAI = CharacterProfileRegistry.getDefaultRerollAI();
+        Set<Integer> result = rerollAI.planReroll(
+            diceValues, diceTypes, requiredCount, rerollsAvailable, isAttacking, null, false);
+        CosmiconLogger.debug("AI reroll recommendation: indices %s, role: %s, target: %d",
             result, isAttacking ? "attacker" : "defender", targetSum);
         return result;
     }
@@ -71,15 +77,15 @@ public final class CosmiconAICore {
             BattleState state,
             boolean forPlayer) {
 
-        CharacterAIProfile profile = null;
+        AttackRerollAI rerollAI = CharacterProfileRegistry.getDefaultRerollAI();
         if (state != null) {
             var card = state.getCard(forPlayer);
-            if (card != null) profile = getProfile(card.getId());
+            if (card != null) rerollAI = getRerollAI(card.getId());
         }
 
-        Set<Integer> result = RerollOptimizer.optimalRerolls(
-            diceValues, diceTypes, requiredCount, rerollsAvailable, targetSum, isAttacking, state, forPlayer, profile);
-        CosmiconLogger.debug("AI reroll recommendation (with prismatic): indices %s, role: %s, target: %d", 
+        Set<Integer> result = rerollAI.planReroll(
+            diceValues, diceTypes, requiredCount, rerollsAvailable, isAttacking, state, forPlayer);
+        CosmiconLogger.debug("AI reroll recommendation (with prismatic): indices %s, role: %s, target: %d",
             result, isAttacking ? "attacker" : "defender", targetSum);
         return result;
     }

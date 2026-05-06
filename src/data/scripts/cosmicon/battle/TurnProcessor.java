@@ -415,6 +415,7 @@ public class TurnProcessor {
         
         List<Boolean> selected = state.getDiceSelected(false);
         if (selected != null) {
+            Collections.fill(selected, false);
             for (int idx : aiPlannedIndices) {
                 if (idx < selected.size()) {
                     selected.set(idx, true);
@@ -638,7 +639,7 @@ public class TurnProcessor {
                         diceRollManager.setRestDiceEffect(ariseDiceIndex, StatusEffect.ARISE, forPlayer);
                     }
                 }
-                effects.removeEffect(StatusEffect.ARISE);
+                effects.removeLayers(StatusEffect.ARISE, 1);
                 state.setDiceValues(forPlayer, context.getDiceValues());
 
                 List<Integer> postValues = state.getDiceValues(forPlayer);
@@ -687,7 +688,7 @@ public class TurnProcessor {
                     state.notifyValueChange(targetIsPlayer, "HACK", oldTargetSum, newTargetSum, delta);
                 }
 
-                effects.removeEffect(StatusEffect.HACK);
+                effects.removeLayers(StatusEffect.HACK, 1);
             }
         }
 
@@ -1110,9 +1111,10 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         
         StatusEffectProcessor effects = state.getEffects(forPlayer);
         int currentToughness = effects.getLayers(StatusEffect.TOUGHNESS);
+        int currentStrengthLayers = effects.getLayers(StatusEffect.STRENGTH);
         
         PassiveResult result = PassiveEvaluator.evaluateForCharacter(
-            characterId, selectedValues, isAttacking, currentHp, maxHp, currentToughness);
+            characterId, selectedValues, isAttacking, currentHp, maxHp, currentToughness, currentStrengthLayers);
         
         PassiveEvaluator.applyPassiveEffects(result, state, forPlayer);
         

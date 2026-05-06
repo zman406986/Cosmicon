@@ -1,5 +1,6 @@
 package data.scripts.cosmicon.ai.profiles;
 
+import data.scripts.cosmicon.ai.AttackRerollAI;
 import data.scripts.cosmicon.ai.CharacterAIProfile;
 import java.util.HashMap;
 import java.util.Map;
@@ -7,7 +8,7 @@ import java.util.Map;
 public final class CharacterProfileRegistry {
 
     private static final Map<String, CharacterAIProfile> REGISTRY = new HashMap<>();
-    private static final CharacterAIProfile DEFAULT = new DefaultCharacterAIProfile();
+    private static final DefaultAI DEFAULT = new DefaultAI();
 
     static {
         registerAll();
@@ -16,20 +17,20 @@ public final class CharacterProfileRegistry {
     private CharacterProfileRegistry() {}
 
     private static void registerAll() {
-        register(new AcheronAIProfile());
-        register(new CastoriceAIProfile());
-        register(new FireflyAIProfile());
-        register(new RobinAIProfile());
-        register(new TheHertaAIProfile());
-        register(new KafkaAIProfile());
-        register(new AventurineAIProfile());
-        register(new March7thAIProfile());
-        register(new DanHengAIProfile());
-        register(new SparxieAIProfile());
-        register(new YaoGuangAIProfile());
-        register(new CyreneAIProfile());
-        register(new PhainonAIProfile());
-        register(new HyacineAIProfile());
+        register(new AcheronAI());
+        register(new CastoriceAI());
+        register(new FireflyAI());
+        register(new RobinAI());
+        register(new TheHertaAI());
+        register(new KafkaAI());
+        register(new AventurineAI());
+        register(new March7thAI());
+        register(new DanHengAI());
+        register(new SparxieAI());
+        register(new YaoGuangAI());
+        register(new CyreneAI());
+        register(new PhainonAI());
+        register(new HyacineAI());
     }
 
     private static void register(CharacterAIProfile profile) {
@@ -38,6 +39,16 @@ public final class CharacterProfileRegistry {
 
     public static CharacterAIProfile get(String characterId) {
         return REGISTRY.getOrDefault(characterId, DEFAULT);
+    }
+
+    public static AttackRerollAI getRerollAI(String characterId) {
+        CharacterAIProfile profile = get(characterId);
+        if (profile instanceof AttackRerollAI) return (AttackRerollAI) profile;
+        return DEFAULT;
+    }
+
+    public static AttackRerollAI getDefaultRerollAI() {
+        return DEFAULT;
     }
 
     public static boolean has(String characterId) {

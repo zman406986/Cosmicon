@@ -1,11 +1,13 @@
 package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
+import data.scripts.cosmicon.ai.AttackRerollAI;
+import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.util.CharacterIds;
-import java.util.List;
+import java.util.*;
 
-public class CastoriceAIProfile extends AbstractCharacterAIProfile {
+public class CastoriceAI extends AttackRerollAI {
 
     @Override
     public String getCharacterId() {
@@ -51,10 +53,5 @@ public class CastoriceAIProfile extends AbstractCharacterAIProfile {
     public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
         if (isAttacking) return 0f;
         return 10f;
-    }
-
-    @Override
-    protected float calculatePassiveBonus(List<Integer> selectedValues) {
-        return 0f;
     }
 }

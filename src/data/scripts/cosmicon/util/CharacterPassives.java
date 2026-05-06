@@ -27,7 +27,8 @@ public class CharacterPassives {
 
     public static void evaluateForCharacter(String characterId, PassiveResult result, 
                                             List<Integer> diceValues, boolean isAttacking,
-                                            int currentHp, int maxHp, int currentToughnessLayers) {
+                                            int currentHp, int maxHp, int currentToughnessLayers,
+                                            int currentStrengthLayers) {
         switch (characterId) {
             case AVENTURINE -> evaluateAventurine(result, diceValues, isAttacking, currentToughnessLayers);
             case FIREFLY -> evaluateFirefly(result, diceValues, isAttacking, currentHp, maxHp);
@@ -35,7 +36,7 @@ public class CharacterPassives {
             case KAFKA -> evaluateKafka(result, diceValues, isAttacking);
             case ROBIN -> evaluateRobin(result, diceValues, isAttacking);
             case MARCH_7TH -> evaluateMarch7th(result, diceValues);
-            case HYACINE -> evaluateHyacine(result, diceValues, isAttacking);
+            case HYACINE -> evaluateHyacine(result, diceValues, isAttacking, currentStrengthLayers);
             case DAN_HENG -> evaluateDanHengPT(result, diceValues, isAttacking);
             case PHAINON -> evaluatePhainon(result, diceValues, isAttacking);
             case TRASHCAN -> evaluateTrashcan(result, diceValues, isAttacking);
@@ -110,13 +111,14 @@ public class CharacterPassives {
         }
     }
 
-    private static void evaluateHyacine(PassiveResult result, List<Integer> values, boolean isAttacking) {
+    private static void evaluateHyacine(PassiveResult result, List<Integer> values, boolean isAttacking, int currentStrengthLayers) {
         if (!isAttacking || values == null || values.isEmpty()) return;
+        int totalAttack = sumOfValues(values) + currentStrengthLayers;
         if (allDiceEqualSix(values)) {
-            result.setPendingStrength(sumOfValues(values));
+            result.setPendingStrength(totalAttack);
             result.setHealAmount(6);
         } else {
-            result.setPendingStrength(sumOfValues(values) / 2);
+            result.setPendingStrength((totalAttack + 1) / 2);
         }
     }
 

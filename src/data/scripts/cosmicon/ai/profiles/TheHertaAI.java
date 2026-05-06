@@ -1,11 +1,13 @@
 package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
+import data.scripts.cosmicon.ai.AttackRerollAI;
+import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.util.CharacterIds;
-import java.util.List;
+import java.util.*;
 
-public class TheHertaAIProfile extends AbstractCharacterAIProfile {
+public class TheHertaAI extends AttackRerollAI {
 
     @Override
     public String getCharacterId() {
@@ -16,12 +18,12 @@ public class TheHertaAIProfile extends AbstractCharacterAIProfile {
     public String getCharacterName() {
         return Strings.get("character.the_herta.name");
     }
-    
+
     @Override
     public boolean shouldOptimizeForPassive(boolean isAttacking) {
         return false;
     }
-    
+
     @Override
     public float getPrismaticDiceBonus(DiceType type, int faceValue, boolean isAttacking) {
         float bonus = 0f;
@@ -32,10 +34,5 @@ public class TheHertaAIProfile extends AbstractCharacterAIProfile {
             }
         }
         return bonus;
-    }
-
-    @Override
-    protected float calculatePassiveBonus(List<Integer> selectedValues) {
-        return 0f;
     }
 }
