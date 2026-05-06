@@ -6,8 +6,7 @@ import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.DiceEvaluator;
-import data.scripts.cosmicon.util.PassiveEvaluator;
-import data.scripts.cosmicon.util.PassiveResults.PassiveResult;
+
 import java.util.*;
 
 public class HyacineAI extends AttackRerollAI {

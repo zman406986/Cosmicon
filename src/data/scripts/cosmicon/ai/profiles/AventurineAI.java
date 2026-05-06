@@ -7,8 +7,7 @@ import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.DiceEvaluator;
-import data.scripts.cosmicon.util.PassiveEvaluator;
-import data.scripts.cosmicon.util.PassiveResults.PassiveResult;
+
 import java.util.*;
 
 public class AventurineAI extends AttackRerollAI {
