@@ -9,7 +9,8 @@
         "help": "How to Play",
         "leave": "Leave",
         "back": "Back",
-        "play": "Play"
+        "play": "Play",
+        "session_won": "You've won this round! Find another bar encounter to play again."
     },
     "help": {
         "title": "=== How to Play Cosmicon ===",
@@ -103,7 +104,8 @@
         "heal": "Heal",
         "reflect": "Reflect",
         "instant_damage": "Instant Damage",
-        "yao_guang_rerolls": "Yao Guang Rerolls"
+        "yao_guang_rerolls": "Yao Guang Rerolls",
+        "cyrene_tally": "Tally"
     },
     "status_desc": {
         "poison_desc": "End of turn: receive damage = layer count, then layers -1",
@@ -129,7 +131,8 @@
         "awakening_desc": "Double all dice values after selection",
         "heal_desc": "Recover specified HP amount",
         "reflect_desc": "Deal instant damage after receiving damage",
-        "yao_guang_rerolls_desc": "Gain extra rerolls equal to layer count"
+        "yao_guang_rerolls_desc": "Gain extra rerolls equal to layer count",
+        "cyrene_tally_desc": "Cumulative ATK+DEF tally: {0}/24. When the total exceeds 24, Attack Level becomes 5 and gains Arise each turn."
     },
     "weather_category": {
         "safeguard": "Safeguard",
@@ -455,18 +458,19 @@
     },
     "bar_event": {
         "tutorial_prompt": "A cloaked figure approaches you in the bar, dice clicking in their palms. 'Care for a game, rookie? I'll go easy on you.'",
-        "standard_prompt": "A mysterious figure at the back of the bar beckons you over. The Cosmicon board is already set. 'The stakes are high...'",
+        "standard_prompt": "A Cosmicon player at the bar waves you over. 'Fancy a match? Winner takes their pick of the spoils...'",
         "accept": "Accept the challenge",
         "decline": "Politely decline",
         "declined": "You politely decline and return to your drink.",
-        "approach": "Approach the mysterious figure"
+        "approach": "Approach the Cosmicon player"
     },
     "victory": {
-        "absolute_six_unlocked": "You have completed your training! The Absolute Six prismatic dice has been unlocked."
     },
     "tutorial": {
         "no_prismatic_allowed": "Tutorial mode: Prismatic dice are disabled for this game.",
         "games_remaining": "Tutorial mode - {0} games remaining",
+        "g1_reward": "You unlocked the character [Sparxie]! Play the next tutorial game to unlock more.",
+        "g2_reward": "You unlocked [Acheron] and the [Repeater] prismatic dice! You can now play random encounters at bars.",
         "g1_t1_attack_roll": "You are the attacker! Roll the dice by clicking anywhere.",
         "g1_t1_attack_select": "Select your highest dice to deal more damage. Your attack level is 4, so you can select the 4 highest numbers.",
         "g1_t1_attack_confirm": "Click 'Confirm Attack' when you're ready!",
@@ -482,7 +486,7 @@
         "g1_t2_attack_select": "Much better! Now select your 4 best dice and confirm!",
         "g1_t2_attack_confirm": "Hack will be triggered again since you selected 2 identical numbers. Each character has a different ability with varying trigger.",
         "g1_t2_attack_wait": "You've mastered the basics of rolling, selecting, rerolling and character ability! Now watch the resolution play out...",
-        "g1_victory": "Victory! You unlocked the character [Sparxie]. Play the next tutorial game to unlock more characters and special dice!",
+        "g1_victory": "Victory! You unlocked the character [Sparxie]. Play the next tutorial game to unlock Acheron and the Repeater prismatic dice!",
         "g2_t1_defense_roll": "You now play as [Acheron]! Her ability triggers when she selects all 4s on attack. For now, defend first - roll the dice!",
         "g2_t1_defense_select": "You rolled two 4s! Select them - You'll get to use a special dice next turn!",
         "g2_t1_defense_confirm": "Confirm your defense selection.",
@@ -515,10 +519,10 @@
         "g2_t4_attack_roll": "Final attack! Your prismatic uses have run out, but a Perforation attack with three 4s can win the game!",
         "g2_t4_attack_select": "Three 4s! Select them all to trigger Acheron's ability - finish it!",
         "g2_t4_attack_confirm": "Confirm to claim victory!",
-        "g2_victory": "Victory! You've mastered prismatic dice and weather tactics! You unlocked Acheron and can now equip prismatic dice in the setup gallery!"
+        "g2_victory": "Victory! You've mastered prismatic dice and weather tactics! You unlocked Acheron and the Repeater prismatic dice. Visit bars to find random encounters and unlock more characters and dice!"
     },
     "gallery": {
-        "no_prismatic_unlocked": "No prismatic dice unlocked. Complete 2 tutorial games to unlock Absolute Six."
+        "no_prismatic_unlocked": "No prismatic dice unlocked yet. Win random encounters to unlock more dice!"
     },
     "reward": {
         "unlock_character": "Unlock {0}",

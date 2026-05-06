@@ -215,6 +215,14 @@ public class BattleState {
         opponentCumulativeAtkDef = 0;
         playerCyreneThresholdMet = false;
         opponentCyreneThresholdMet = false;
+
+        if (CharacterIds.CYRENE.equals(playerCard.getId())) {
+            playerEffects.addEffect(StatusEffectProcessor.StatusEffect.CYRENE_TALLY, 1);
+        }
+        if (CharacterIds.CYRENE.equals(opponentCard.getId())) {
+            opponentEffects.addEffect(StatusEffectProcessor.StatusEffect.CYRENE_TALLY, 1);
+        }
+
         prismaticManager.initializeFromCards(playerCard, opponentCard);
 
         CosmiconLogger.debug("BattleState initialized - Player: %s (HP %d), Opponent: %s (HP %d)",

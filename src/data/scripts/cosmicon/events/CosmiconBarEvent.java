@@ -33,7 +33,6 @@ public class CosmiconBarEvent extends BaseBarEvent {
         if (!super.shouldShowAtMarket(market)) return false;
         if (market == null) return false;
         if (market.getSize() < 3) return false;
-        if (CosmiconStats.hasAnyCharacterUnlocked()) return false;
         return true;
     }
 
@@ -97,11 +96,19 @@ public class CosmiconBarEvent extends BaseBarEvent {
                         CharacterCard opponentCard = CharacterRegistry.getRandomOpponent();
                         if (opponentCard != null) {
                             CosmiconEventState.setOpponentCharacter(opponentCard.getId());
-                        }
 
-                        PrismaticDiceType prismatic = PrismaticDiceRegistry.getRandomPrismatic();
-                        if (prismatic != null) {
-                            CosmiconEventState.setOpponentPrismatic(prismatic.getId());
+                            java.util.Map<String, Integer> oppPrismatic = opponentCard.getPrismaticDiceIds();
+                            if (!oppPrismatic.isEmpty()) {
+                                String defaultPrismaticId = oppPrismatic.keySet().iterator().next();
+                                CosmiconEventState.setOpponentPrismatic(defaultPrismaticId);
+
+                                if (CosmiconStats.isPrismaticDiceUnlocked(defaultPrismaticId)) {
+                                    PrismaticDiceType diceType = PrismaticDiceRegistry.get(defaultPrismaticId);
+                                    if (diceType != null && diceType.hasTrueVersion()) {
+                                        CosmiconEventState.setOpponentUsesTrue(true);
+                                    }
+                                }
+                            }
                         }
                     }
 

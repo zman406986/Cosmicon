@@ -36,7 +36,6 @@ public class CosmiconStats {
         mem.set(KEY_GAMES_PLAYED, getGamesPlayed() + 1);
         if (getGamesPlayed() >= TUTORIAL_GAMES && !isPrismaticFeatureUnlocked()) {
             setPrismaticFeatureUnlocked();
-            unlockPrismaticDice("absolute_six");
         }
     }
 
@@ -115,16 +114,10 @@ public class CosmiconStats {
 
     public static void unlockCharacter(String charId) {
         getUnlockedCharacters().add(charId);
-        CharacterCard card = CharacterRegistry.getCharacterById(charId);
-        if (card != null) {
-            for (String diceId : card.getPrismaticDiceIds().keySet()) {
-                unlockPrismaticDice(diceId);
-            }
-        }
     }
 
     public static boolean hasAnyCharacterUnlocked() {
-        return getUnlockedCharacters().isEmpty();
+        return !getUnlockedCharacters().isEmpty();
     }
 
     @SuppressWarnings("unchecked")
@@ -166,6 +159,21 @@ public class CosmiconStats {
         setStartingCharGranted(true);
     }
 
+    public static void completeTutorialGame1() {
+        unlockCharacter("sparxie");
+        CosmiconPlayerState.saveCharacter("sparxie");
+    }
+
+    public static void completeTutorialGame2() {
+        unlockCharacter("acheron");
+        unlockPrismaticDice("repeater");
+        if (!isPrismaticFeatureUnlocked()) {
+            setPrismaticFeatureUnlocked();
+        }
+        CosmiconPlayerState.saveCharacter("acheron");
+        CosmiconPlayerState.savePrismaticDice("repeater");
+    }
+
     public static int calculateCreditReward(int playerLevel) {
         return 3000 * Math.max(1, playerLevel);
     }
@@ -180,26 +188,19 @@ public class CosmiconStats {
             mem.set(KEY_GAMES_WON, 0);
         }
 
-        String selectedChar = CosmiconPlayerState.loadCharacter();
-        if (selectedChar != null && !selectedChar.isEmpty()) {
-            grantStartingCharacter(selectedChar);
-        }
-
-        java.util.List<data.scripts.cosmicon.battle.CharacterCard> allCards =
-            data.scripts.cosmicon.battle.CharacterRegistry.getAllCards();
-        if (!allCards.isEmpty() && hasAnyCharacterUnlocked()) {
-            String defaultCharId = null;
-            for (data.scripts.cosmicon.battle.CharacterCard card : allCards) {
-                if ("sparxie".equals(card.getId())) {
-                    defaultCharId = card.getId();
-                    break;
-                }
+        if (getGamesPlayed() >= TUTORIAL_GAMES) {
+            if (!isCharacterUnlocked("sparxie")) {
+                unlockCharacter("sparxie");
             }
-            if (defaultCharId == null) {
-                defaultCharId = allCards.get(0).getId();
+            if (!isCharacterUnlocked("acheron")) {
+                unlockCharacter("acheron");
             }
-            grantStartingCharacter(defaultCharId);
-            CosmiconPlayerState.saveCharacter(defaultCharId);
+            if (!isPrismaticDiceUnlocked("repeater")) {
+                unlockPrismaticDice("repeater");
+            }
+            if (!isPrismaticFeatureUnlocked()) {
+                setPrismaticFeatureUnlocked();
+            }
         }
     }
 }

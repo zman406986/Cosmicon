@@ -8,6 +8,7 @@ import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
+import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.CharacterPassives;
 import data.scripts.cosmicon.util.PassiveEvaluator;
 import data.scripts.cosmicon.util.PassiveResults.EndOfTurnPassiveResult;
@@ -96,6 +97,12 @@ public final class PassiveEventSystem {
 
         boolean cyreneThresholdMet = state.isCyreneThresholdMet(forPlayer);
         CharacterPassives.applyEndOfTurnEffects(characterId, state, forPlayer, cumulativeAtkDef, cyreneThresholdMet);
+
+        if (CharacterIds.CYRENE.equals(characterId)) {
+            if (state.isCyreneThresholdMet(forPlayer)) {
+                state.getEffects(forPlayer).removeEffect(StatusEffect.CYRENE_TALLY);
+            }
+        }
 
         if (result.hasEffects()) {
             if (result.getPrismaticUseBonus() > 0) {

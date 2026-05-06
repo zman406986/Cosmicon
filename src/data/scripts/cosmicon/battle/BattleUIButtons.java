@@ -210,9 +210,16 @@ public class BattleUIButtons implements ActionListenerDelegate {
                     StatusEffect effect = getEffectAtIndex(index, false);
                     if (effect == null) return;
                     String name = Strings.get("status." + effect.name().toLowerCase());
-                    String desc = Strings.get("status_desc." + effect.name().toLowerCase() + "_desc");
-                    tooltip.addPara(name, Misc.getHighlightColor(), 5f);
-                    tooltip.addPara(desc, Misc.getGrayColor(), 3f);
+                    if (effect == StatusEffect.CYRENE_TALLY && battleState != null) {
+                        int cumulative = battleState.getCumulativeAtkDef(false);
+                        String desc = Strings.format("status_desc.cyrene_tally_desc", cumulative);
+                        tooltip.addPara(name, Misc.getHighlightColor(), 5f);
+                        tooltip.addPara(desc, Misc.getGrayColor(), 3f);
+                    } else {
+                        String desc = Strings.get("status_desc." + effect.name().toLowerCase() + "_desc");
+                        tooltip.addPara(name, Misc.getHighlightColor(), 5f);
+                        tooltip.addPara(desc, Misc.getGrayColor(), 3f);
+                    }
                 }
             }, TooltipLocation.LEFT, false);
         }
@@ -245,9 +252,16 @@ public class BattleUIButtons implements ActionListenerDelegate {
                     StatusEffect effect = getEffectAtIndex(index, true);
                     if (effect == null) return;
                     String name = Strings.get("status." + effect.name().toLowerCase());
-                    String desc = Strings.get("status_desc." + effect.name().toLowerCase() + "_desc");
-                    tooltip.addPara(name, Misc.getHighlightColor(), 5f);
-                    tooltip.addPara(desc, Misc.getGrayColor(), 3f);
+                    if (effect == StatusEffect.CYRENE_TALLY && battleState != null) {
+                        int cumulative = battleState.getCumulativeAtkDef(true);
+                        String desc = Strings.format("status_desc.cyrene_tally_desc", cumulative);
+                        tooltip.addPara(name, Misc.getHighlightColor(), 5f);
+                        tooltip.addPara(desc, Misc.getGrayColor(), 3f);
+                    } else {
+                        String desc = Strings.get("status_desc." + effect.name().toLowerCase() + "_desc");
+                        tooltip.addPara(name, Misc.getHighlightColor(), 5f);
+                        tooltip.addPara(desc, Misc.getGrayColor(), 3f);
+                    }
                 }
             }, TooltipLocation.RIGHT, false);
         }

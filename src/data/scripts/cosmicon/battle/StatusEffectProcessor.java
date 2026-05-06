@@ -32,7 +32,8 @@ public class StatusEffectProcessor {
         INSTANT_DAMAGE,
         TACTICS,
         YAO_GUANG_REROLLS,
-        REFLECT
+        REFLECT,
+        CYRENE_TALLY
     }
 
     public enum Phase {

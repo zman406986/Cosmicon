@@ -155,12 +155,12 @@ public class DamageResolutionAnimator {
         
         this.isDraw = (resultValue == 0 && !perforation);
         
-        this.attackWins = attackValue > defenseValue;
+        this.attackWins = attackValue > defenseValue && !primaryDamageTriggersForcefield;
         
         this.combo = hasCombo(state);
         if (combo) {
             this.comboDamage = Math.max(0, attackValue - defenseValue);
-            if (!primaryDamageTriggersForcefield && defenderEffects.isForcefieldActive() && this.comboDamage > 0) {
+            if (defenderEffects.isForcefieldActive() && this.comboDamage > 0) {
                 this.comboDamage = 0;
             }
         } else {

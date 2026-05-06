@@ -9,7 +9,8 @@
         "help": "游戏说明",
         "leave": "离开",
         "back": "返回",
-        "play": "对战"
+        "play": "对战",
+        "session_won": "你赢了这一轮！去其他酒吧寻找新的对手吧。"
     },
     "help": {
         "title": "=== 游戏说明 ===",
@@ -103,7 +104,8 @@
         "heal": "治愈",
         "reflect": "反弹",
         "instant_damage": "瞬伤",
-        "yao_guang_rerolls": "爻光重投"
+        "yao_guang_rerolls": "爻光重投",
+        "cyrene_tally": "计数"
     },
     "status_desc": {
         "poison_desc": "在回合结算后，将会受到对应层数的伤害，随后使层数-1",
@@ -129,7 +131,8 @@
         "awakening_desc": "选定后，将所有点数翻倍",
         "heal_desc": "回复指定点数的生命值",
         "reflect_desc": "受到伤害后，立刻造成瞬伤",
-        "yao_guang_rerolls_desc": "获得等同于层数的额外重投次数"
+        "yao_guang_rerolls_desc": "获得等同于层数的额外重投次数",
+        "cyrene_tally_desc": "累计攻击+防御计数：{0}/24。总计超过24后，攻击等级变为5，此后每回合获得跃升。"
     },
     "weather_category": {
         "safeguard": "坚守",
@@ -455,18 +458,19 @@
     },
     "bar_event": {
         "tutorial_prompt": "一个披着斗篷的身影在酒吧里向你走来，骰子在他们掌心咔嗒作响。「来一局吗，新手？我会放水的。」",
-        "standard_prompt": "酒吧深处一个神秘的身影向你招手。银河战力党的棋盘已经摆好。「赌注很高...」",
+        "standard_prompt": "酒吧里一个战力党玩家向你招手。「来一局？赢家可以挑选战利品……」",
         "accept": "接受挑战",
         "decline": "婉言谢绝",
         "declined": "你婉言谢绝，继续喝你的酒。",
-        "approach": "走近那个神秘的身影"
+        "approach": "走近战力党玩家"
     },
     "victory": {
-        "absolute_six_unlocked": "你已经完成了训练！真-6-6 曜彩骰已解锁。"
     },
     "tutorial": {
         "no_prismatic_allowed": "教程模式：本局禁用曜彩骰。",
         "games_remaining": "教程模式 - 剩余 {0} 局",
+        "g1_reward": "你解锁了角色[火花]！继续下一局教程游戏来解锁更多。",
+        "g2_reward": "你解锁了[黄泉]和[复读]曜彩骰！现在可以在酒吧进行随机对战了。",
         "g1_t1_attack_roll": "你是攻击方！点击任意位置投骰子。",
         "g1_t1_attack_select": "选择点数最大的骰子来造成更多伤害。你的攻击等级为4，所以可以选择4个最大的数字。",
         "g1_t1_attack_confirm": "准备好后点击「确认攻击」！",
@@ -482,7 +486,7 @@
         "g1_t2_attack_select": "好多了！现在选择你最好的4颗骰子并确认！",
         "g1_t2_attack_confirm": "由于你选择了2个相同的点数，骇入将再次触发。每个角色都有不同的能力和触发条件。",
         "g1_t2_attack_wait": "你已经掌握了投骰、选择、重投和角色能力的基础操作！现在等待结算动画播放完毕……",
-        "g1_victory": "胜利！你解锁了角色[火花]。继续下一局教程游戏来解锁更多角色和特殊骰子！",
+        "g1_victory": "胜利！你解锁了角色[火花]。继续下一局教程游戏来解锁黄泉和复读曜彩骰！",
         "g2_t1_defense_roll": "你现在使用[黄泉]！她的能力在攻击时选择全为4的骰子时触发。现在先防御——投骰子！",
         "g2_t1_defense_select": "你掷出了两个4！选中它们——下回合你将能使用一颗特殊骰子！",
         "g2_t1_defense_confirm": "确认你的防御选择。",
@@ -515,10 +519,10 @@
         "g2_t4_attack_roll": "最终攻击！你的曜彩骰使用次数已用完，但用三个4点发动洞穿攻击可以赢得比赛！",
         "g2_t4_attack_select": "三个4！全选它们触发洞穿——终结比赛！",
         "g2_t4_attack_confirm": "确认以赢得胜利！",
-        "g2_victory": "胜利！你已经掌握了曜彩骰和天气策略！你解锁了黄泉，现在可以在设置画廊中装备曜彩骰了！"
+        "g2_victory": "胜利！你已经掌握了曜彩骰和天气策略！你解锁了黄泉和复读曜彩骰。去酒吧寻找随机对战，解锁更多角色和骰子吧！"
     },
     "gallery": {
-        "no_prismatic_unlocked": "尚未解锁曜彩骰。完成 2 局教程对局即可解锁真-6-6。"
+        "no_prismatic_unlocked": "尚未解锁曜彩骰。赢得随机对战来解锁更多骰子！"
     },
     "reward": {
         "unlock_character": "解锁 {0}",

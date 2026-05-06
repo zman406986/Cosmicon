@@ -836,7 +836,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
             state.getEffects(playerIsAttacker).removeEffect(StatusEffectProcessor.StatusEffect.PERFORATION);
         }
 
-        if (result.forcefieldUsed()) {
+        if (state.getEffects(defenderIsPlayer).isForcefieldActive()) {
             state.getEffects(defenderIsPlayer).removeEffect(StatusEffectProcessor.StatusEffect.FORCEFIELD);
         }
 
@@ -878,7 +878,6 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         
         if (defenderEffects.isForcefieldActive() && comboDamage > 0) {
             comboDamage = 0;
-            defenderEffects.removeEffect(StatusEffectProcessor.StatusEffect.FORCEFIELD);
         }
         
         attackerEffects.removeEffect(StatusEffect.COMBO);

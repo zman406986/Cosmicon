@@ -28,9 +28,9 @@ public final class BattleRenderingUtils {
     public static final float DICE_POOL_RIGHT_MARGIN = 3f;
     public static final float DICE_POOL_TOP_MARGIN = 0f;
     public static final float ATK_DEF_ICON_SIZE = 49f;
-    public static final float ATK_LEFT_MARGIN = 3f;
-    public static final float DEF_RIGHT_MARGIN = 3f;
-    public static final float ATK_DEF_BOTTOM_MARGIN = 3f;
+    public static final float ATK_LEFT_MARGIN = -1f;
+    public static final float DEF_RIGHT_MARGIN = -1f;
+    public static final float ATK_DEF_BOTTOM_MARGIN = -1f;
 
     private static final float INDICATOR_ARROW_WIDTH = 12f;
     private static final float INDICATOR_ARROW_HEIGHT = 16f;

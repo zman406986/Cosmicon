@@ -58,6 +58,10 @@ public class PrismaticDiceType {
     public String getId() {
         return id;
     }
+
+    public boolean hasTrueVersion() {
+        return trueFaces != null;
+    }
     
     public int[] getFaces(boolean useTrueVersion) {
         if (useTrueVersion && trueFaces != null) {

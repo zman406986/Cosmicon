@@ -501,6 +501,9 @@ public class BattleUILabels {
                     text = duration < StatusEffectProcessor.PERMANENT_DURATION
                         ? String.format("%s (%d%%, %d turns)", effectName, layers, duration)
                         : String.format("%s (%d%%)", effectName, layers);
+                } else if (effect == StatusEffectProcessor.StatusEffect.CYRENE_TALLY) {
+                    int cumulative = battleState.getCumulativeAtkDef(true);
+                    text = String.format("%s (%d/24)", effectName, cumulative);
                 } else {
                     text = duration < StatusEffectProcessor.PERMANENT_DURATION
                         ? String.format("%s (%d, %d turns)", effectName, layers, duration)
@@ -543,6 +546,9 @@ public class BattleUILabels {
                     text = duration < StatusEffectProcessor.PERMANENT_DURATION
                         ? String.format("%s (%d%%, %d turns)", effectName, layers, duration)
                         : String.format("%s (%d%%)", effectName, layers);
+                } else if (effect == StatusEffectProcessor.StatusEffect.CYRENE_TALLY) {
+                    int cumulative = battleState.getCumulativeAtkDef(false);
+                    text = String.format("%s (%d/24)", effectName, cumulative);
                 } else {
                     text = duration < StatusEffectProcessor.PERMANENT_DURATION
                         ? String.format("%s (%d, %d turns)", effectName, layers, duration)

@@ -70,10 +70,46 @@ public class BattleController implements BattleState.DamageAnimationCallback {
             }
             CosmiconEventState.setOpponentCharacter(Objects.requireNonNull(opponentCard).getId());
         } else if (CosmiconEventState.isBarEvent()) {
-            opponentCard = CharacterRegistry.getCharacterById(CosmiconEventState.getOpponentCharacter());
+            String oppCharId = CosmiconEventState.getOpponentCharacter();
+            if (oppCharId != null) {
+                opponentCard = CharacterRegistry.getCharacterById(oppCharId);
+            } else {
+                opponentCard = CharacterRegistry.getRandomOpponent();
+                if (opponentCard != null) {
+                    CosmiconEventState.setOpponentCharacter(opponentCard.getId());
+
+                    Map<String, Integer> oppPrismatic = opponentCard.getPrismaticDiceIds();
+                    if (!oppPrismatic.isEmpty()) {
+                        String defaultPrismaticId = oppPrismatic.keySet().iterator().next();
+                        CosmiconEventState.setOpponentPrismatic(defaultPrismaticId);
+
+                        if (CosmiconStats.isPrismaticDiceUnlocked(defaultPrismaticId)) {
+                            data.scripts.cosmicon.prismatic.PrismaticDiceType diceType =
+                                data.scripts.cosmicon.prismatic.PrismaticDiceRegistry.get(defaultPrismaticId);
+                            if (diceType != null && diceType.hasTrueVersion()) {
+                                CosmiconEventState.setOpponentUsesTrue(true);
+                            }
+                        }
+                    }
+                }
+            }
         } else {
             opponentCard = CharacterRegistry.getRandomOpponent();
             CosmiconEventState.setOpponentCharacter(Objects.requireNonNull(opponentCard).getId());
+
+            Map<String, Integer> oppPrismatic = opponentCard.getPrismaticDiceIds();
+            if (!oppPrismatic.isEmpty()) {
+                String defaultPrismaticId = oppPrismatic.keySet().iterator().next();
+                CosmiconEventState.setOpponentPrismatic(defaultPrismaticId);
+
+                if (CosmiconStats.isPrismaticDiceUnlocked(defaultPrismaticId)) {
+                    data.scripts.cosmicon.prismatic.PrismaticDiceType diceType =
+                        data.scripts.cosmicon.prismatic.PrismaticDiceRegistry.get(defaultPrismaticId);
+                    if (diceType != null && diceType.hasTrueVersion()) {
+                        CosmiconEventState.setOpponentUsesTrue(true);
+                    }
+                }
+            }
         }
 
         if (playerCard == null || opponentCard == null) {
@@ -109,17 +145,18 @@ public class BattleController implements BattleState.DamageAnimationCallback {
             }
 
             boolean opponentHasPrismatic = !opponentCard.getPrismaticDiceIds().isEmpty();
+            boolean opponentUsesTrue = CosmiconEventState.getOpponentUsesTrue();
 
             if (opponentHasPrismatic && CosmiconEventState.hasOpponentPrismatic()) {
                 String oppPrismId = CosmiconEventState.getOpponentPrismatic();
                 int uses = opponentCard.getPrismaticDiceIds().getOrDefault(oppPrismId, 2);
-                opponentCard = opponentCard.withPrismaticDice(oppPrismId, uses, false);
+                opponentCard = opponentCard.withPrismaticDice(oppPrismId, uses, opponentUsesTrue);
             } else if (opponentHasPrismatic) {
                 Map<String, Integer> oppPrismatic = opponentCard.getPrismaticDiceIds();
                 if (!oppPrismatic.isEmpty()) {
                     String oppPrismaticId = oppPrismatic.keySet().iterator().next();
                     opponentCard = opponentCard.withPrismaticDice(oppPrismaticId,
-                        oppPrismatic.get(oppPrismaticId), false);
+                        oppPrismatic.get(oppPrismaticId), opponentUsesTrue);
                     CosmiconEventState.setOpponentPrismatic(oppPrismaticId);
                 }
             }

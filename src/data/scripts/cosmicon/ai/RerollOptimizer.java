@@ -320,10 +320,21 @@ public final class RerollOptimizer {
             improvement += (targetSum - currentSum) * 0.5f;
         }
 
+        Set<Integer> forcedIndices = getForcedIndices(prismaticMap, currentValues.size());
+        int minSelectedNonForced = Integer.MAX_VALUE;
+        for (int idx : currentSelection) {
+            if (!forcedIndices.contains(idx)) {
+                minSelectedNonForced = Math.min(minSelectedNonForced, currentValues.get(idx));
+            }
+        }
+
         float perDieGain = 0f;
         for (int idx : rerollIndices) {
-            float expectedVal = (diceTypes.get(idx).getMaxFace() + 1f) / 2f;
-            perDieGain += expectedVal - currentValues.get(idx);
+            int maxFace = diceTypes.get(idx).getMaxFace();
+            if (minSelectedNonForced == Integer.MAX_VALUE || maxFace > minSelectedNonForced) {
+                float expectedVal = (maxFace + 1f) / 2f;
+                perDieGain += expectedVal - currentValues.get(idx);
+            }
         }
         improvement += perDieGain * 3f;
 
