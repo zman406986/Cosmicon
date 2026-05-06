@@ -214,8 +214,6 @@ public class StatusEffectProcessor {
             int thornsDamage = getLayers(StatusEffect.THORNS);
             processedEffects.add(new ProcessedEffect(StatusEffect.THORNS, thornsDamage));
             damage += thornsDamage;
-            effects.remove(StatusEffect.THORNS);
-            durations.remove(StatusEffect.THORNS);
         }
 
         if (hasEffect(StatusEffect.INSTANT_DAMAGE)) {
@@ -454,11 +452,15 @@ public class StatusEffectProcessor {
             for (int i = 0; i < diceValues.size(); i++) {
                 if (diceSelected.get(i) && !diceIsPrismatic.get(i)) {
                     int currentMaxFace = (i < diceMaxFaces.size()) ? diceMaxFaces.get(i) : getDiceMaxFace(i);
-                    if (currentMaxFace >= 12) continue;
-                    int upgradedMaxFace = upgradeDiceMaxFace(currentMaxFace);
-                    diceMaxFaces.set(i, upgradedMaxFace);
+                    for (int j = 0; j < count; j++) {
+                        if (currentMaxFace >= 12) break;
+                        currentMaxFace = upgradeDiceMaxFace(currentMaxFace);
+                    }
+                    if (i < diceMaxFaces.size()) {
+                        diceMaxFaces.set(i, currentMaxFace);
+                    }
                     if (i < diceTypes.size()) {
-                        diceTypes.set(i, DiceType.fromMaxFace(upgradedMaxFace));
+                        diceTypes.set(i, DiceType.fromMaxFace(currentMaxFace));
                     }
                 }
             }

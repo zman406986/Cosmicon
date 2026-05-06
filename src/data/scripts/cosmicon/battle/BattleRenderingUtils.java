@@ -46,8 +46,6 @@ public final class BattleRenderingUtils {
     public static final float STATUS_BOX_PADDING = 15f;
     public static final Color COLOR_STATUS_BG = new Color(30, 35, 45, 220);
     public static final Color COLOR_STATUS_BORDER = new Color(70, 75, 90);
-    public static final float OPPONENT_DICE_ZONE_OFFSET_X = 30f;
-    public static final float OPPONENT_DICE_ZONE_Y_OFFSET = 80f;
     public static final float OPPONENT_DICE_ZONE_W = 350f;
     public static final float OPPONENT_DICE_ZONE_H = 80f;
     public static final float PLAYER_REST_GRID_CENTER_X = 250f;
@@ -324,17 +322,15 @@ public final class BattleRenderingUtils {
             atkIcon.render(atkX, atkY);
             GLStateUtil.disableTexturing();
 
-            if (card != null) {
-                int baseAtk = card.getAtkLevel();
-                if (effectiveAtk > baseAtk) {
-                    float arrowX = atkX + ATK_DEF_ICON_SIZE + INDICATOR_ARROW_OFFSET;
-                    float arrowY = atkY + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
-                    renderIndicatorArrow(arrowX, arrowY, true, alphaMult);
-                } else if (effectiveAtk < baseAtk) {
-                    float arrowX = atkX + ATK_DEF_ICON_SIZE + INDICATOR_ARROW_OFFSET;
-                    float arrowY = atkY + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
-                    renderIndicatorArrow(arrowX, arrowY, false, alphaMult);
-                }
+            int baseAtk = card.getAtkLevel();
+            if (effectiveAtk > baseAtk) {
+                float arrowX = atkX + ATK_DEF_ICON_SIZE + INDICATOR_ARROW_OFFSET;
+                float arrowY = atkY + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
+                renderIndicatorArrow(arrowX, arrowY, true, alphaMult);
+            } else if (effectiveAtk < baseAtk) {
+                float arrowX = atkX + ATK_DEF_ICON_SIZE + INDICATOR_ARROW_OFFSET;
+                float arrowY = atkY + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
+                renderIndicatorArrow(arrowX, arrowY, false, alphaMult);
             }
         }
 
@@ -348,17 +344,15 @@ public final class BattleRenderingUtils {
             defIcon.render(defX, defY);
             GLStateUtil.disableTexturing();
 
-            if (card != null) {
-                int baseDef = card.getDefLevel();
-                if (effectiveDef > baseDef) {
-                    float arrowX = defX - INDICATOR_ARROW_WIDTH - INDICATOR_ARROW_OFFSET;
-                    float arrowY = defY + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
-                    renderIndicatorArrow(arrowX, arrowY, true, alphaMult);
-                } else if (effectiveDef < baseDef) {
-                    float arrowX = defX - INDICATOR_ARROW_WIDTH - INDICATOR_ARROW_OFFSET;
-                    float arrowY = defY + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
-                    renderIndicatorArrow(arrowX, arrowY, false, alphaMult);
-                }
+            int baseDef = card.getDefLevel();
+            if (effectiveDef > baseDef) {
+                float arrowX = defX - INDICATOR_ARROW_WIDTH - INDICATOR_ARROW_OFFSET;
+                float arrowY = defY + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
+                renderIndicatorArrow(arrowX, arrowY, true, alphaMult);
+            } else if (effectiveDef < baseDef) {
+                float arrowX = defX - INDICATOR_ARROW_WIDTH - INDICATOR_ARROW_OFFSET;
+                float arrowY = defY + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
+                renderIndicatorArrow(arrowX, arrowY, false, alphaMult);
             }
         }
 
@@ -372,7 +366,7 @@ public final class BattleRenderingUtils {
         float startY = cardY + CARD_HEIGHT - DICE_POOL_TOP_MARGIN - DICE_ICON_SIZE;
 
         List<DiceType> order = Arrays.asList(
-            DiceType.RED_D12, DiceType.ORANGE_D8, DiceType.PURPLE_D6, DiceType.BLUE_D4, DiceType.PRISMATIC
+            DiceType.ORANGE_D8, DiceType.PURPLE_D6, DiceType.BLUE_D4, DiceType.PRISMATIC
         );
 
         float offsetY = 0f;

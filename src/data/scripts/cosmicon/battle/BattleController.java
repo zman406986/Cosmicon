@@ -204,6 +204,10 @@ public class BattleController implements BattleState.DamageAnimationCallback {
         turnProcessor.setOpponentAnimationCompleteChecker(checker);
     }
 
+    public void skipAiAnimation() {
+        turnProcessor.skipAiAnimation();
+    }
+
     public void advanceToSelectPhase() {
         turnProcessor.advanceToSelectPhase();
     }

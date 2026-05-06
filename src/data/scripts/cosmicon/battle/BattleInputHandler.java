@@ -62,6 +62,10 @@ public class BattleInputHandler {
         this.waitingForClickToRoll = waiting;
     }
 
+    public boolean isWaitingForClickToRoll() {
+        return waitingForClickToRoll;
+    }
+
     public void consumeClick() {
         lastMouseButtonState = Mouse.isButtonDown(0) ? 1 : 0;
     }
@@ -155,7 +159,19 @@ public class BattleInputHandler {
                     } else {
                         battleController.advanceToSelectPhase();
                     }
+                } else if (diceRollManager.hasOpponentAnimators() || diceRollManager.isOpponentWaitingForRollTrigger()) {
+                    if (diceRollManager.isOpponentWaitingForRollTrigger()) {
+                        diceRollManager.triggerOpponentRollFromStationary();
+                    }
+                    diceRollManager.forceCompleteAllOpponent();
+                    labels.hideClickHint();
+                    labels.updatePrismaticRolledLabel();
 
+                    if (battleState.isDefenderRolling()) {
+                        battleController.advanceToDefenderSelectPhase();
+                    } else {
+                        battleController.advanceToSelectPhase();
+                    }
                 }
                 lastMouseButtonState = currentButton;
                 UnifiedCoord.clearCurrent();
@@ -182,6 +198,25 @@ public class BattleInputHandler {
                 battleState.getCurrentPhase() == Phase.DICE_DISPLAY_DEFENSE ||
                 (battleState.getCurrentPhase() != Phase.SELECTING_ATTACK &&
                 battleState.getCurrentPhase() != Phase.SELECTING_DEFENSE)) {
+                lastMouseButtonState = currentButton;
+                UnifiedCoord.clearCurrent();
+                return;
+            }
+
+            boolean playerRerollAnimating = diceRollManager.hasAnimators() && !diceRollManager.isComplete();
+            boolean opponentRerollAnimating = diceRollManager.hasOpponentAnimators() && !diceRollManager.isOpponentComplete();
+
+            if (playerRerollAnimating || opponentRerollAnimating) {
+                if (playerRerollAnimating) {
+                    diceRollManager.forceCompleteAll();
+                }
+                if (opponentRerollAnimating) {
+                    diceRollManager.forceCompleteAllOpponent();
+                    if (battleController != null) {
+                        battleController.skipAiAnimation();
+                    }
+                }
+                labels.hideClickHint();
                 lastMouseButtonState = currentButton;
                 UnifiedCoord.clearCurrent();
                 return;

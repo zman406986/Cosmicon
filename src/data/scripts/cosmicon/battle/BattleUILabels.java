@@ -38,12 +38,10 @@ public class BattleUILabels {
     private LabelAPI opponentAtkLabel;
     private LabelAPI opponentDefLabel;
     private LabelAPI playerPrismaticLabel;
-    private LabelAPI playerRedLabel;
     private LabelAPI playerOrangeLabel;
     private LabelAPI playerPurpleLabel;
     private LabelAPI playerBlueLabel;
     private LabelAPI opponentPrismaticLabel;
-    private LabelAPI opponentRedLabel;
     private LabelAPI opponentOrangeLabel;
     private LabelAPI opponentPurpleLabel;
     private LabelAPI opponentBlueLabel;
@@ -145,8 +143,6 @@ public class BattleUILabels {
         opponentDefLabel = null;
         removeAndNullLabel(playerPrismaticLabel);
         playerPrismaticLabel = null;
-        removeAndNullLabel(playerRedLabel);
-        playerRedLabel = null;
         removeAndNullLabel(playerOrangeLabel);
         playerOrangeLabel = null;
         removeAndNullLabel(playerPurpleLabel);
@@ -155,8 +151,6 @@ public class BattleUILabels {
         playerBlueLabel = null;
         removeAndNullLabel(opponentPrismaticLabel);
         opponentPrismaticLabel = null;
-        removeAndNullLabel(opponentRedLabel);
-        opponentRedLabel = null;
         removeAndNullLabel(opponentOrangeLabel);
         opponentOrangeLabel = null;
         removeAndNullLabel(opponentPurpleLabel);
@@ -344,7 +338,6 @@ public class BattleUILabels {
         float diceX = playerCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DICE_POOL_RIGHT_MARGIN - BattleRenderingUtils.DICE_ICON_SIZE / 2f - 11f;
         float diceStartY = playerCardY + BattleRenderingUtils.DICE_POOL_TOP_MARGIN + 3f;
 
-        playerRedLabel = createCountLabel(diceX, diceStartY - 21);
         playerOrangeLabel = createCountLabel(diceX, diceStartY);
         playerPurpleLabel = createCountLabel(diceX, diceStartY + 21);
         playerBlueLabel = createCountLabel(diceX, diceStartY + 42);
@@ -356,7 +349,6 @@ public class BattleUILabels {
         diceX = opponentCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DICE_POOL_RIGHT_MARGIN - BattleRenderingUtils.DICE_ICON_SIZE / 2f - 11f;
         diceStartY = opponentCardY + BattleRenderingUtils.DICE_POOL_TOP_MARGIN + 3f;
 
-        opponentRedLabel = createCountLabel(diceX, diceStartY - 21);
         opponentOrangeLabel = createCountLabel(diceX, diceStartY);
         opponentPurpleLabel = createCountLabel(diceX, diceStartY + 21);
         opponentBlueLabel = createCountLabel(diceX, diceStartY + 42);
@@ -632,14 +624,12 @@ public class BattleUILabels {
 
         int playerPrisCount = playerCard != null ? playerCard.getPrismaticDiceIds().values().stream().mapToInt(Integer::intValue).sum() : 0;
         playerPrismaticLabel.setText(String.valueOf(playerPrisCount));
-        playerRedLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.RED_D12) : 0));
         playerOrangeLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.ORANGE_D8) : 0));
         playerPurpleLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.PURPLE_D6) : 0));
         playerBlueLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.BLUE_D4) : 0));
 
         int opponentPrisCount = opponentCard != null ? opponentCard.getPrismaticDiceIds().values().stream().mapToInt(Integer::intValue).sum() : 0;
         opponentPrismaticLabel.setText(String.valueOf(opponentPrisCount));
-        opponentRedLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.RED_D12) : 0));
         opponentOrangeLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.ORANGE_D8) : 0));
         opponentPurpleLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.PURPLE_D6) : 0));
         opponentBlueLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.BLUE_D4) : 0));
@@ -1073,12 +1063,10 @@ public class BattleUILabels {
         
         DicePoolCounts counts = DicePoolCounts.fromPool(types);
         if (isPlayer) {
-            playerRedLabel.setText(String.valueOf(counts.getCount(DiceType.RED_D12)));
             playerOrangeLabel.setText(String.valueOf(counts.getCount(DiceType.ORANGE_D8)));
             playerPurpleLabel.setText(String.valueOf(counts.getCount(DiceType.PURPLE_D6)));
             playerBlueLabel.setText(String.valueOf(counts.getCount(DiceType.BLUE_D4)));
         } else {
-            opponentRedLabel.setText(String.valueOf(counts.getCount(DiceType.RED_D12)));
             opponentOrangeLabel.setText(String.valueOf(counts.getCount(DiceType.ORANGE_D8)));
             opponentPurpleLabel.setText(String.valueOf(counts.getCount(DiceType.PURPLE_D6)));
             opponentBlueLabel.setText(String.valueOf(counts.getCount(DiceType.BLUE_D4)));

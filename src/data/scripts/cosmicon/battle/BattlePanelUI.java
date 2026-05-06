@@ -698,7 +698,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                 boolean playerComplete = !hasPlayerAnimators || diceRollManager.isComplete();
                 boolean opponentComplete = !hasOpponentAnimators || diceRollManager.isOpponentComplete();
 
-                if (playerComplete && opponentComplete && rollAnimationDelay <= 0f) {
+                if (playerComplete && opponentComplete) {
+                    rollAnimationDelay = 0f;
                     diceAnimating = false;
                     labels.updatePrismaticRolledLabel();
                     List<DiceType> playerTypes = battleState.getPlayerDiceTypes();
@@ -750,6 +751,13 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         inputHandler.updateClickHintForRoll();
 
+        if (battleState.getCurrentPhase() == Phase.ROLLING && !inputHandler.isWaitingForClickToRoll()) {
+            boolean isOpponentTurn = battleState.isDefenderRolling() == battleState.isPlayerAttacker();
+            if (isOpponentTurn && (diceRollManager.hasOpponentAnimators() || diceRollManager.isOpponentWaitingForRollTrigger())) {
+                labels.showClickHint(Strings.get("battle.click_to_continue"), 0.6f);
+            }
+        }
+
         if (opponentAutoRollDelay > 0f) {
             opponentAutoRollDelay -= amount;
             if (opponentAutoRollDelay <= 0f && diceRollManager.isOpponentWaitingForRollTrigger()) {
@@ -776,7 +784,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             opponentRollDelay -= amount;
 
             if (diceRollManager.hasOpponentAnimators()) {
-                if (diceRollManager.isOpponentComplete() && opponentRollDelay <= 0f) {
+                if (diceRollManager.isOpponentComplete()) {
+                    opponentRollDelay = 0f;
                     opponentDiceAnimating = false;
                 }
             } else if (opponentRollDelay <= 0f) {
@@ -788,6 +797,14 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             rerollSelectionClearPending = false;
             if (battleState != null) {
                 battleState.clearDiceSelection(true);
+            }
+        }
+
+        if (currentPhase == Phase.SELECTING_ATTACK || currentPhase == Phase.SELECTING_DEFENSE) {
+            if (diceAnimating && diceRollManager.hasAnimators() && !diceRollManager.isComplete()) {
+                labels.showClickHint(Strings.get("battle.click_to_continue"), 0.6f);
+            } else if (opponentDiceAnimating && diceRollManager.hasOpponentAnimators() && !diceRollManager.isOpponentComplete()) {
+                labels.showClickHint(Strings.get("battle.click_to_continue"), 0.6f);
             }
         }
 

@@ -86,6 +86,10 @@ public class TurnProcessor {
             this.opponentAnimationCompleteChecker = checker;
         }
     }
+
+    public void skipAiAnimation() {
+        aiPhaseTimer = 0f;
+    }
     
     public void startBattle() {
         weatherController.applyStartOfBattle();
@@ -99,11 +103,7 @@ public class TurnProcessor {
         state.setDefenderRolling(false);
         
         boolean playerIsAttacker = state.isPlayerAttacker();
-        if (playerIsAttacker) {
-            state.clearPendingDefLevelBoost(true);
-        } else {
-            state.clearPendingDefLevelBoost(false);
-        }
+        state.clearPendingDefLevelBoost(playerIsAttacker);
         
         state.getPlayerEffects().resetTurnState();
         state.getOpponentEffects().resetTurnState();
@@ -138,14 +138,9 @@ public class TurnProcessor {
         
         int baseRerolls = playerIsAttacker ? CosmiconConfig.DEFAULT_REROLLS : 0;
         int opponentBaseRerolls = playerIsAttacker ? 0 : CosmiconConfig.DEFAULT_REROLLS;
-        
-        if (playerIsAttacker) {
-            state.setRemainingRerolls(true, baseRerolls);
-            state.setRemainingRerolls(false, 0);
-        } else {
-            state.setRemainingRerolls(true, 0);
-            state.setRemainingRerolls(false, opponentBaseRerolls);
-        }
+
+        state.setRemainingRerolls(true, baseRerolls);
+        state.setRemainingRerolls(false, opponentBaseRerolls);
         
         weatherController.applyRerollPhase(state);
         
@@ -709,10 +704,10 @@ public class TurnProcessor {
         TurnType attackerTurnType = TurnType.ATTACK;
         TurnType defenderTurnType = TurnType.DEFENSE;
         
-        state.getPlayerEffects().processPhase(Phase.BEFORE_RESOLUTION, 
+        int playerThornsDamage = state.getPlayerEffects().processPhase(Phase.BEFORE_RESOLUTION, 
             state.isPlayerAttacker() ? attackerTurnType : defenderTurnType, 
             state.isPlayerAttacker() ? attackerContext : defenderContext);
-        state.getOpponentEffects().processPhase(Phase.BEFORE_RESOLUTION,
+        int opponentThornsDamage = state.getOpponentEffects().processPhase(Phase.BEFORE_RESOLUTION,
             state.isPlayerAttacker() ? defenderTurnType : attackerTurnType,
             state.isPlayerAttacker() ? defenderContext : attackerContext);
         
@@ -737,6 +732,13 @@ public class TurnProcessor {
 
         PassiveEventSystem.onAttackResolution(state, state.isPlayerAttacker());
         PassiveEventSystem.onAttackResolution(state, !state.isPlayerAttacker());
+
+        if (playerThornsDamage > 0 && state.getPlayerEffects().hasEffect(StatusEffectProcessor.StatusEffect.THORNS)) {
+            state.applyDamageTo(true, playerThornsDamage);
+        }
+        if (opponentThornsDamage > 0 && state.getOpponentEffects().hasEffect(StatusEffectProcessor.StatusEffect.THORNS)) {
+            state.applyDamageTo(false, opponentThornsDamage);
+        }
 
         state.setCurrentPhase(BattleState.Phase.RESOLVING);
         state.notifyPhaseChange(BattleState.Phase.RESOLVING);
@@ -804,7 +806,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         boolean defenderIsPlayer = !playerIsAttacker;
 
         if (result.thornsDamage() > 0) {
-            state.applyDamageTo(playerIsAttacker, result.thornsDamage());
+            state.getEffects(defenderIsPlayer).removeEffect(StatusEffectProcessor.StatusEffect.THORNS);
         }
 
         if (result.counterDamage() > 0) {
@@ -812,7 +814,6 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         }
 
         if (result.selfThornsDamage() > 0) {
-            state.applyDamageTo(playerIsAttacker, result.selfThornsDamage());
             state.getEffects(playerIsAttacker).removeEffect(StatusEffectProcessor.StatusEffect.THORNS);
         }
 

@@ -320,11 +320,12 @@ public final class RerollOptimizer {
             improvement += (targetSum - currentSum) * 0.5f;
         }
 
+        float perDieGain = 0f;
         for (int idx : rerollIndices) {
-            if (currentValues.get(idx) <= 1) {
-                improvement += 0.01f;
-            }
+            float expectedVal = (diceTypes.get(idx).getMaxFace() + 1f) / 2f;
+            perDieGain += expectedVal - currentValues.get(idx);
         }
+        improvement += perDieGain * 3f;
 
         return improvement;
     }

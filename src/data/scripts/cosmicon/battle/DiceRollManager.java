@@ -393,6 +393,12 @@ public class DiceRollManager {
         }
     }
 
+    public void forceCompleteAllOpponent() {
+        for (DiceAnimator animator : opponentAnimators) {
+            animator.forceComplete();
+        }
+    }
+
     public void renderOpponentDice(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
         for (DiceAnimator animator : opponentAnimators) {
             animator.render(panelX, panelY, panelWidth, panelHeight, alphaMult);

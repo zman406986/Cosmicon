@@ -208,8 +208,8 @@ public class BattleState {
         this.opponentCard = opponentCard;
         this.playerDicePoolCounts = DicePoolCounts.fromPool(playerCard.getDicePool());
         this.opponentDicePoolCounts = DicePoolCounts.fromPool(opponentCard.getDicePool());
-        this.playerUpgradedDicePool = null;
-        this.opponentUpgradedDicePool = null;
+        clearUpgradedDicePool(true);
+        clearUpgradedDicePool(false);
         resetBattleState(playerCard.getMaxHp(), opponentCard.getMaxHp(), playerIsAttacker);
         playerCumulativeAtkDef = 0;
         opponentCumulativeAtkDef = 0;
@@ -446,16 +446,6 @@ public class BattleState {
 
     public int getAriseDiceIndex(boolean forPlayer) {
         return forPlayer ? playerAriseDiceIndex : opponentAriseDiceIndex;
-    }
-
-    public StatusEffectProcessor.StatusEffect getLatestDiceEffect(boolean forPlayer, int diceIndex) {
-        if (diceIndex == getHackDiceIndex(forPlayer)) {
-            return StatusEffectProcessor.StatusEffect.HACK;
-        }
-        if (diceIndex == getAriseDiceIndex(forPlayer)) {
-            return StatusEffectProcessor.StatusEffect.ARISE;
-        }
-        return null;
     }
 
     public List<ModificationRecord> getModificationOrder() {
@@ -1281,8 +1271,8 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         opponentDiceValues = null;
         opponentDiceSelected = null;
 
-        playerUpgradedDicePool = null;
-        opponentUpgradedDicePool = null;
+        clearUpgradedDicePool(true);
+        clearUpgradedDicePool(false);
         
         playerPrismaticDiceByIndex.clear();
         opponentPrismaticDiceByIndex.clear();

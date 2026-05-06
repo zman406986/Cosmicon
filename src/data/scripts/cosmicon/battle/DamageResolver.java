@@ -1,7 +1,6 @@
 package data.scripts.cosmicon.battle;
 
 import data.scripts.cosmicon.battle.BattleState.TurnType;
-import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class DamageResolver {
@@ -47,13 +46,7 @@ public class DamageResolver {
         
         int thornsDamage = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.THORNS);
         
-        int attackerSelfThorns = 0;
-        String attackerCardId = state.isPlayerAttacker() ?
-                (state.getPlayerCard() != null ? state.getPlayerCard().getId() : null) :
-                (state.getOpponentCard() != null ? state.getOpponentCard().getId() : null);
-        if (CharacterIds.YAO_GUANG.equals(attackerCardId)) {
-            attackerSelfThorns = attackerEffects.getLayers(StatusEffectProcessor.StatusEffect.THORNS);
-        }
+        int attackerSelfThorns = attackerEffects.getLayers(StatusEffectProcessor.StatusEffect.THORNS);
         
         int counterDamage = defenderEffects.calculateCounterDamage(modifiedAttack, prePerforationDefense);
         

@@ -97,14 +97,6 @@ public class DiceAnimator {
     public void setDiceEffect(StatusEffectProcessor.StatusEffect effect) {
         this.diceEffect = effect;
     }
-
-    public StatusEffectProcessor.StatusEffect getDiceEffect() {
-        return diceEffect;
-    }
-
-    public boolean hasDiceEffect() {
-        return diceEffect != null;
-    }
     
 public DiceAnimator() {
         scale = 1f;
