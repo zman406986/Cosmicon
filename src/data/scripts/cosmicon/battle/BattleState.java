@@ -1210,15 +1210,15 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
 
     public int consumePendingStrength(boolean forPlayer) {
+        int val;
         if (forPlayer) {
-            int val = playerPendingStrength;
+            val = playerPendingStrength;
             playerPendingStrength = 0;
-            return val;
         } else {
-            int val = opponentPendingStrength;
+            val = opponentPendingStrength;
             opponentPendingStrength = 0;
-            return val;
         }
+        return val;
     }
 
     public boolean isPhainonUnyieldingAvailable(boolean forPlayer) {

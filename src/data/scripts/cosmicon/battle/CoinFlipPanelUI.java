@@ -42,10 +42,6 @@ public class CoinFlipPanelUI extends BaseCustomUIPanelPlugin {
 
     private final Boolean forcedPlayerIsAttacker;
 
-    public CoinFlipPanelUI() {
-        this(null);
-    }
-
     public CoinFlipPanelUI(Boolean forcedPlayerIsAttacker) {
         this.forcedPlayerIsAttacker = forcedPlayerIsAttacker;
         this.lastMouseButtonState = 0;

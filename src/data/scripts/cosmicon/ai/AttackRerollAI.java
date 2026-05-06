@@ -32,16 +32,6 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
     }
 
     @Override
-    public float getRiskTolerance() {
-        return 0.5f;
-    }
-
-    @Override
-    public int getTargetThreshold(boolean isAttacking) {
-        return isAttacking ? 15 : 10;
-    }
-
-    @Override
     public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
         return PassiveEvaluation.notTriggered();
     }
@@ -59,26 +49,6 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
     @Override
     public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking, BattleState state, boolean forPlayer) {
         return getPassiveBonusValue(selectedValues, isAttacking);
-    }
-
-    @Override
-    public boolean isDefensePassive() {
-        return false;
-    }
-
-    @Override
-    public float getPrismaticDiceBonus(DiceType type, int faceValue, boolean isAttacking) {
-        return 0f;
-    }
-
-    @Override
-    public boolean prefersPairs() {
-        return false;
-    }
-
-    @Override
-    public float getThornsPenaltyPerReroll() {
-        return 0f;
     }
 
     // ==================== Main entry point ====================
@@ -178,7 +148,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
                 selectedTypes.add(pool.getType(idx));
             }
             double util = evaluator.evaluateSelection(selectedValues, selectedTypes, isAttacking, state, forPlayer);
-            util -= calculateRerollSelfDamage(rerollsUsed, state, forPlayer);
+            util -= calculateRerollSelfDamage(rerollsUsed);
             if (util > bestUtil) bestUtil = util;
         }
         return bestUtil;
@@ -195,7 +165,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         while (r > 0) {
             Set<Integer> toReroll = new HashSet<>();
             for (int i = 0; i < copy.size(); i++) {
-                if (isSpecialFaceNeverReroll(i, copy.getType(i), copy.getValue(i), isAttacking, state, forPlayer)) {
+                if (isSpecialFaceNeverReroll(i, copy.getType(i), isAttacking, state, forPlayer)) {
                     continue;
                 }
                 DieStoppingPolicy policy = getPolicyForDie(copy.getType(i));
@@ -223,7 +193,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
         Set<Integer> thresholdSet = new HashSet<>();
         for (int i = 0; i < pool.size(); i++) {
-            if (!isSpecialFaceNeverReroll(i, pool.getType(i), pool.getValue(i), isAttacking, state, forPlayer)) {
+            if (!isSpecialFaceNeverReroll(i, pool.getType(i), isAttacking, state, forPlayer)) {
                 DieStoppingPolicy policy = getPolicyForDie(pool.getType(i));
                 if (policy.shouldReroll(pool.getValue(i), rerollsLeft)) {
                     thresholdSet.add(i);
@@ -235,7 +205,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         }
 
         for (int i = 0; i < pool.size(); i++) {
-            if (!isSpecialFaceNeverReroll(i, pool.getType(i), pool.getValue(i), isAttacking, state, forPlayer)) {
+            if (!isSpecialFaceNeverReroll(i, pool.getType(i), isAttacking, state, forPlayer)) {
                 candidates.add(new HashSet<>(Collections.singletonList(i)));
             }
         }
@@ -254,11 +224,8 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
     protected static class DieStoppingPolicy {
         private final int[] thresholds;
-        private final double[] expectedFreshValues;
-
-        public DieStoppingPolicy(int[] thresholds, double[] expectedFreshValues) {
+        public DieStoppingPolicy(int[] thresholds) {
             this.thresholds = thresholds;
-            this.expectedFreshValues = expectedFreshValues;
         }
 
         public boolean shouldReroll(int currentFace, int rerollsLeft) {
@@ -273,11 +240,6 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             return currentFace < Math.max(1, thresholds[rerollsLeft] - 1);
         }
 
-        public double expectedFreshValue(int rerollsLeft) {
-            if (rerollsLeft <= 0) return 0;
-            if (rerollsLeft >= expectedFreshValues.length) rerollsLeft = expectedFreshValues.length - 1;
-            return expectedFreshValues[rerollsLeft];
-        }
     }
 
     protected DieStoppingPolicy getPolicyForDie(DiceType type) {
@@ -313,16 +275,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             }
         }
 
-        double[] freshValues = new double[maxRerolls + 1];
-        for (int r = 0; r <= maxRerolls; r++) {
-            double sum = 0;
-            for (int face = 1; face <= maxFace; face++) {
-                sum += expected[r][face];
-            }
-            freshValues[r] = sum / maxFace;
-        }
-
-        return new DieStoppingPolicy(thresholds, freshValues);
+        return new DieStoppingPolicy(thresholds);
     }
 
     // ==================== Outcome generation ====================
@@ -402,7 +355,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
                 destined.add(entry.getKey());
                 continue;
             }
-            if (pd.type != null && pd.type.getEffect() != null
+            if (pd.type.getEffect() != null
                 && pd.type.getEffect().isGrantStatus()
                 && pd.type.getEffect().getGrantedEffect() == StatusEffect.DESTINED) {
                 destined.add(entry.getKey());
@@ -438,18 +391,18 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         };
     }
 
-    protected double calculateRerollSelfDamage(int rerollsUsed, BattleState state, boolean forPlayer) {
+    protected double calculateRerollSelfDamage(int rerollsUsed) {
         float penaltyPerReroll = getThornsPenaltyPerReroll();
         return rerollsUsed * penaltyPerReroll;
     }
 
-    protected boolean isSpecialFaceNeverReroll(int index, DiceType type, int face,
+    protected boolean isSpecialFaceNeverReroll(int index, DiceType type,
                                                 boolean isAttacking, BattleState state, boolean forPlayer) {
         if (type != DiceType.PRISMATIC || state == null) return false;
         PrismaticDiceInstance pd = state.getPrismaticDiceAt(index, forPlayer);
         if (pd == null) return false;
         if (pd.rolledFace >= 6 || pd.isSpecialFace) return true;
-        if (!isAttacking && pd.type != null && pd.type.getEffect() != null) {
+        if (!isAttacking && pd.type.getEffect() != null) {
             PrismaticEffect effect = pd.type.getEffect();
             if (effect.isHealHp()) return true;
             if (effect.isGrantStatus() && isDefenseStatusEffect(effect.getGrantedEffect())) return true;
@@ -517,7 +470,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
             if (types[i] == DiceType.PRISMATIC && state != null) {
                 PrismaticDiceInstance pd = state.getPrismaticDiceAt(i, forPlayer);
-                if (pd != null && pd.type != null) {
+                if (pd != null) {
                     possibleFaces[i] = pd.type.getFaces(pd.isTrueVersion);
                 } else {
                     possibleFaces[i] = regularFaces(types[i].getMaxFace());

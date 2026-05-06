@@ -165,13 +165,6 @@ public class PrismaticManager {
         opponentPrismatic.clear();
     }
     
-    public void resetForNewBattle(CharacterCard playerCard, CharacterCard opponentCard) {
-        playerPrismatic.reset();
-        opponentPrismatic.reset();
-        initializeFromCards(playerCard, opponentCard);
-        CosmiconLogger.debug("Prismatic state reset for new battle");
-    }
-    
     private PrismaticState getState(boolean forPlayer) {
         return forPlayer ? playerPrismatic : opponentPrismatic;
     }

@@ -1070,5 +1070,15 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     }
 
     public void cleanup() {
+        panel = null;
+        callbacks = null;
+        selectedNameLabel = null;
+        passiveLabel = null;
+        noPrismaticLabel = null;
+        clickRegions.clear();
+        cardLabels.clear();
+        diceClickRegions.clear();
+        versionClickRegions.clear();
+        diceEntryLabels.clear();
     }
 }

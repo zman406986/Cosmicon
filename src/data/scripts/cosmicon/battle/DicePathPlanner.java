@@ -304,57 +304,6 @@ public class DicePathPlanner {
         return paths;
     }
 
-    public static List<PlannedPath> planRerollPaths(List<Integer> indices,
-                                                     List<float[]> allDicePositions,
-                                                     float panelW, float panelH) {
-        List<Integer> sortedIndices = new ArrayList<>(indices);
-        Collections.sort(sortedIndices);
-
-        List<PlannedPath> paths = new ArrayList<>();
-        List<float[][]> plannedCheckpoints = new ArrayList<>();
-
-        for (int diceIndex : sortedIndices) {
-            if (diceIndex >= allDicePositions.size()) {
-                paths.add(null);
-                continue;
-            }
-
-            float[] startPos = allDicePositions.get(diceIndex);
-            if (startPos == null || startPos.length < 2) {
-                throw new IllegalArgumentException("allDicePositions[" + diceIndex + "] is invalid");
-            }
-            float startX = startPos[0];
-            float startY = startPos[1];
-
-            List<float[][]> otherCheckpoints = new ArrayList<>();
-            for (int j = 0; j < allDicePositions.size(); j++) {
-                if (!sortedIndices.contains(j) && j != diceIndex) {
-                    float[] pos = allDicePositions.get(j);
-                    float[][] cp = calculateCheckpoints(pos[0], pos[1], pos[0], pos[1]);
-                    otherCheckpoints.add(cp);
-                }
-            }
-            otherCheckpoints.addAll(plannedCheckpoints);
-
-            float angle = rand.nextFloat() * 360f;
-            float dist = 150f + rand.nextFloat() * 200f;
-            float targetX = startX + (float)Math.cos(Math.toRadians(angle)) * dist;
-            float targetY = startY + (float)Math.sin(Math.toRadians(angle)) * dist;
-            targetX = Math.max(SCATTER_MARGIN, Math.min(panelW - SCATTER_MARGIN, targetX));
-            targetY = Math.max(SCATTER_MARGIN, Math.min(panelH - SCATTER_MARGIN, targetY));
-
-            PlannedPath path = planSingleDice(startX, startY, 0f, otherCheckpoints,
-                                               targetX, targetY, panelW, panelH);
-            paths.add(path);
-
-            float[][] checkpoints = calculateCheckpoints(path.startX(), path.startY(),
-                                                         path.actualLandingX(), path.actualLandingY());
-            plannedCheckpoints.add(checkpoints);
-        }
-
-        return paths;
-    }
-
     public static PlannedPath planSinglePrismaticPath(int diceIndex, float centerX, float centerY,
                                                         float spacing, List<float[]> existingPositions,
                                                         float panelW, float panelH) {

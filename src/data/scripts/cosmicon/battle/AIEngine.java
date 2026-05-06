@@ -33,7 +33,7 @@ public class AIEngine {
         
         AIDecision decision = CosmiconAICore.makeDecision(
             diceValues, diceTypes, requiredCount,
-            charId, isAttacking, rerolls, 0, state, forPlayer);
+            charId, isAttacking, rerolls, state, forPlayer);
         
         List<Boolean> selected = state.getDiceSelected(forPlayer);
         if (selected != null && !shouldPreserveForcedSelections(state, forPlayer)) {
@@ -74,7 +74,7 @@ public class AIEngine {
         
         AIDecision decision = CosmiconAICore.makeDecision(
             diceValues, diceTypes, requiredCount,
-            charId, isAttacking, rerolls, 0, state, forPlayer);
+            charId, isAttacking, rerolls, state, forPlayer);
         
         return decision.getSelectedIndicesList();
     }
@@ -107,17 +107,9 @@ public class AIEngine {
         CosmiconLogger.debug("AIEngine: planning reroll for %s (%s), dice: %s, rerolls left: %d", 
             charId, isAttacking ? "attack" : "defense", diceValues, rerollsAvailable);
         
-        int targetSum = 0;
-        if (card != null) {
-            var profile = CosmiconAICore.getProfile(card.getId());
-            if (profile != null) {
-                targetSum = profile.getTargetThreshold(isAttacking);
-            }
-        }
-        
         Set<Integer> rerollIndices = CosmiconAICore.recommendRerolls(
             diceValues, diceTypes, requiredCount, rerollsAvailable,
-            isAttacking, targetSum, state, forPlayer);
+            isAttacking, state, forPlayer);
         
         return new ArrayList<>(rerollIndices);
     }

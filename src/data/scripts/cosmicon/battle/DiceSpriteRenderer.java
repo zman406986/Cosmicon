@@ -4,8 +4,6 @@ import org.lwjgl.opengl.GL11;
 import com.fs.starfarer.api.graphics.SpriteAPI;
 
 public class DiceSpriteRenderer {
-    public static final float RENDER_SIZE = 80f;
-    
     public static void render(SpriteAPI sprite, float x, float y, float alphaMult, float scale, float size) {
         if (sprite == null) return;
         
