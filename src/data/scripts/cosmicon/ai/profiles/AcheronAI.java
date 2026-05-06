@@ -45,15 +45,7 @@ public class AcheronAI extends AttackRerollAI {
     protected List<Set<Integer>> generateComboCandidates(SimPool pool, int rerollsLeft, int requiredCount,
                                                           boolean isAttacking, BattleState state, boolean forPlayer) {
         if (!isAttacking) return Collections.emptyList();
-        List<Integer> nonFourIndices = new ArrayList<>();
-        int fourCount = 0;
-        for (int i = 0; i < pool.size(); i++) {
-            if (pool.getValue(i) == 4) fourCount++;
-            else nonFourIndices.add(i);
-        }
-        if (fourCount >= requiredCount - 1 && fourCount < requiredCount && !nonFourIndices.isEmpty()) {
-            return Collections.singletonList(new HashSet<>(nonFourIndices));
-        }
-        return Collections.emptyList();
+        Set<Integer> result = findComboForSpecificValue(pool, requiredCount, 4);
+        return result != null ? Collections.singletonList(result) : Collections.emptyList();
     }
 }

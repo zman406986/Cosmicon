@@ -73,6 +73,22 @@ public final class BattleRenderingUtils {
     private static final Color COLOR_HP_ORANGE = new Color(255, 140, 0, 220);
     private static final Color COLOR_HP_RED = new Color(220, 50, 50, 220);
 
+    public static float getPlayerCardX() {
+        return PANEL_WIDTH - CARD_WIDTH - MARGIN;
+    }
+
+    public static float getPlayerCardY() {
+        return PANEL_HEIGHT - CARD_HEIGHT - MARGIN;
+    }
+
+    public static float getOpponentCardX() {
+        return MARGIN;
+    }
+
+    public static float getOpponentCardY() {
+        return MARGIN;
+    }
+
     public static final Color COLOR_ATTACK_SIDE = new Color(255, 120, 120, 40);
     public static final Color COLOR_DEFENSE_SIDE = new Color(120, 180, 255, 40);
     public static final float ROLE_ICON_OPACITY = 0.25f;
@@ -310,8 +326,6 @@ public final class BattleRenderingUtils {
 
         renderDicePoolIcons(x, y, alphaMult);
 
-        GLStateUtil.disableTexturing();
-
         SpriteAPI atkIcon = CosmiconSprites.getAtkIcon();
         if (atkIcon != null) {
             GLStateUtil.enableTexturing();
@@ -383,19 +397,7 @@ public final class BattleRenderingUtils {
         GLStateUtil.disableTexturing();
     }
 
-    public static void renderStatusEffectBox(float x, float y, float w, float h, float alphaMult) {
-        GLStateUtil.resetBlendState();
-
-        Misc.renderQuad(x + 3, y - 3, w, h, COLOR_SHADOW, alphaMult * 0.3f);
-        Misc.renderQuad(x, y, w, h, COLOR_STATUS_BG, alphaMult);
-
-        float radius = 8f;
-        float[] c = ColorHelper.toGLComponents(COLOR_STATUS_BORDER, alphaMult);
-        GL11.glColor4f(c[0], c[1], c[2], c[3]);
-        GL11.glLineWidth(2f);
-
-        GL11.glBegin(GL11.GL_LINE_LOOP);
-        int segments = 8;
+    private static void renderRoundedRectBorder(float x, float y, float w, float h, float radius, int segments) {
         float step = (float) Math.PI / 2 / segments;
 
         for (int i = 0; i <= segments; i++) {
@@ -414,6 +416,20 @@ public final class BattleRenderingUtils {
             float angle = (float) Math.PI / 2 + i * step;
             GL11.glVertex2f(x + radius + (float) Math.cos(angle) * radius, y + h - radius + (float) Math.sin(angle) * radius);
         }
+    }
+
+    public static void renderStatusEffectBox(float x, float y, float w, float h, float alphaMult) {
+        GLStateUtil.resetBlendState();
+
+        Misc.renderQuad(x + 3, y - 3, w, h, COLOR_SHADOW, alphaMult * 0.3f);
+        Misc.renderQuad(x, y, w, h, COLOR_STATUS_BG, alphaMult);
+
+        float[] c = ColorHelper.toGLComponents(COLOR_STATUS_BORDER, alphaMult);
+        GL11.glColor4f(c[0], c[1], c[2], c[3]);
+        GL11.glLineWidth(2f);
+
+        GL11.glBegin(GL11.GL_LINE_LOOP);
+        renderRoundedRectBorder(x, y, w, h, 8f, 8);
         GL11.glEnd();
         GLStateUtil.resetColor();
     }
@@ -427,31 +443,12 @@ public final class BattleRenderingUtils {
         Misc.renderQuad(x + 2, y - 2, w, h, COLOR_SHADOW, alphaMult * 0.3f);
         Misc.renderQuad(x, y, w, h, COLOR_WEATHER_DESC_BG, alphaMult);
 
-        float radius = 6f;
         float[] c = ColorHelper.toGLComponents(COLOR_WEATHER_DESC_BORDER, alphaMult);
         GL11.glColor4f(c[0], c[1], c[2], c[3]);
         GL11.glLineWidth(1.5f);
 
         GL11.glBegin(GL11.GL_LINE_LOOP);
-        int segments = 6;
-        float step = (float) Math.PI / 2 / segments;
-
-        for (int i = 0; i <= segments; i++) {
-            float angle = (float) Math.PI + i * step;
-            GL11.glVertex2f(x + radius + (float) Math.cos(angle) * radius, y + radius + (float) Math.sin(angle) * radius);
-        }
-        for (int i = 0; i <= segments; i++) {
-            float angle = (float) Math.PI * 1.5f + i * step;
-            GL11.glVertex2f(x + w - radius + (float) Math.cos(angle) * radius, y + radius + (float) Math.sin(angle) * radius);
-        }
-        for (int i = 0; i <= segments; i++) {
-            float angle = i * step;
-            GL11.glVertex2f(x + w - radius + (float) Math.cos(angle) * radius, y + h - radius + (float) Math.sin(angle) * radius);
-        }
-        for (int i = 0; i <= segments; i++) {
-            float angle = (float) Math.PI / 2 + i * step;
-            GL11.glVertex2f(x + radius + (float) Math.cos(angle) * radius, y + h - radius + (float) Math.sin(angle) * radius);
-        }
+        renderRoundedRectBorder(x, y, w, h, 6f, 6);
         GL11.glEnd();
         GLStateUtil.resetColor();
     }
@@ -496,31 +493,12 @@ public final class BattleRenderingUtils {
 
         Misc.renderQuad(x, y, w, h, bgColor, alphaMult);
 
-        float radius = 6f;
         float[] c = ColorHelper.toGLComponents(borderColor, alphaMult);
         GL11.glColor4f(c[0], c[1], c[2], c[3]);
         GL11.glLineWidth(1.5f);
 
         GL11.glBegin(GL11.GL_LINE_LOOP);
-        int segments = 6;
-        float step = (float) Math.PI / 2 / segments;
-
-        for (int i = 0; i <= segments; i++) {
-            float angle = (float) Math.PI + i * step;
-            GL11.glVertex2f(x + radius + (float) Math.cos(angle) * radius, y + radius + (float) Math.sin(angle) * radius);
-        }
-        for (int i = 0; i <= segments; i++) {
-            float angle = (float) Math.PI * 1.5f + i * step;
-            GL11.glVertex2f(x + w - radius + (float) Math.cos(angle) * radius, y + radius + (float) Math.sin(angle) * radius);
-        }
-        for (int i = 0; i <= segments; i++) {
-            float angle = i * step;
-            GL11.glVertex2f(x + w - radius + (float) Math.cos(angle) * radius, y + h - radius + (float) Math.sin(angle) * radius);
-        }
-        for (int i = 0; i <= segments; i++) {
-            float angle = (float) Math.PI / 2 + i * step;
-            GL11.glVertex2f(x + radius + (float) Math.cos(angle) * radius, y + h - radius + (float) Math.sin(angle) * radius);
-        }
+        renderRoundedRectBorder(x, y, w, h, 6f, 6);
         GL11.glEnd();
         GLStateUtil.resetColor();
     }

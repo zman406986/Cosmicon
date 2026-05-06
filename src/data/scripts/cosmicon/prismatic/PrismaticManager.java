@@ -2,7 +2,6 @@ package data.scripts.cosmicon.prismatic;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.CharacterCard;
@@ -69,10 +68,13 @@ public class PrismaticManager {
         PrismaticState ps = getState(forPlayer);
         ConditionContext context = createConditionContext(state, forPlayer);
         
-        return PrismaticDiceRegistry.getAll().values().stream()
-            .filter(type -> ps.getUsesByType(type) > 0)
-            .filter(type -> type.isAvailable(context))
-            .collect(Collectors.toList());
+        List<PrismaticDiceType> available = new ArrayList<>();
+        for (PrismaticDiceType type : PrismaticDiceRegistry.getAll().values()) {
+            if (ps.getUsesByType(type) > 0 && type.isAvailable(context)) {
+                available.add(type);
+            }
+        }
+        return available;
     }
     
     public void applyQueuedEffects(BattleState state) {
@@ -101,7 +103,9 @@ public class PrismaticManager {
     
     public void addPrismaticUse(PrismaticDiceType type, boolean forPlayer) {
         PrismaticState ps = getState(forPlayer);
-        ps.incrementUsesByType(type);
+        if (type != null) {
+            ps.incrementUsesByType(type);
+        }
         ps.incrementUses();
     }
     

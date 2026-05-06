@@ -73,6 +73,8 @@ public class BattleUILabels {
     private Map<StatusEffectProcessor.StatusEffect, Integer> opponentEffectDisplayIndex;
     private StatusEffectAnimator statusEffectAnimator;
 
+    private long lastStatusEffectStateHash = -1;
+
     private ValueChangeAnimator attackerValueAnimator;
     private ValueChangeAnimator defenderValueAnimator;
 
@@ -271,12 +273,12 @@ public class BattleUILabels {
         playerStatusLabels = new ArrayList<>();
         opponentStatusLabels = new ArrayList<>();
 
-        float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
-        float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        float playerCardX = BattleRenderingUtils.getPlayerCardX();
+        float playerCardY = BattleRenderingUtils.getPlayerCardY();
         float playerBoxX = playerCardX - BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
 
-        float opponentCardX = BattleRenderingUtils.MARGIN;
-        float opponentCardY = BattleRenderingUtils.MARGIN;
+        float opponentCardX = BattleRenderingUtils.getOpponentCardX();
+        float opponentCardY = BattleRenderingUtils.getOpponentCardY();
         float opponentBoxX = opponentCardX + BattleRenderingUtils.CARD_WIDTH + 20f;
 
         for (int i = 0; i < MAX_STATUS_EFFECTS; i++) {
@@ -296,8 +298,8 @@ public class BattleUILabels {
     }
 
     private void createAtkDefLabels() {
-        float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
-        float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        float playerCardX = BattleRenderingUtils.getPlayerCardX();
+        float playerCardY = BattleRenderingUtils.getPlayerCardY();
 
         float labelCenterY = playerCardY + BattleRenderingUtils.CARD_HEIGHT
             - BattleRenderingUtils.ATK_DEF_BOTTOM_MARGIN
@@ -313,8 +315,8 @@ public class BattleUILabels {
             playerCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DEF_RIGHT_MARGIN - (BattleRenderingUtils.ATK_DEF_ICON_SIZE + 30f) / 2f,
             labelCenterY);
 
-        float opponentCardX = BattleRenderingUtils.MARGIN;
-        float opponentCardY = BattleRenderingUtils.MARGIN;
+        float opponentCardX = BattleRenderingUtils.getOpponentCardX();
+        float opponentCardY = BattleRenderingUtils.getOpponentCardY();
 
         float opponentLabelCenterY = opponentCardY + BattleRenderingUtils.CARD_HEIGHT
             - BattleRenderingUtils.ATK_DEF_BOTTOM_MARGIN
@@ -332,8 +334,8 @@ public class BattleUILabels {
     }
 
     private void createDiceCountLabels() {
-        float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
-        float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        float playerCardX = BattleRenderingUtils.getPlayerCardX();
+        float playerCardY = BattleRenderingUtils.getPlayerCardY();
 
         float diceX = playerCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DICE_POOL_RIGHT_MARGIN - BattleRenderingUtils.DICE_ICON_SIZE / 2f - 11f;
         float diceStartY = playerCardY + BattleRenderingUtils.DICE_POOL_TOP_MARGIN + 3f;
@@ -343,8 +345,8 @@ public class BattleUILabels {
         playerBlueLabel = createCountLabel(diceX, diceStartY + 42);
         playerPrismaticLabel = createCountLabel(diceX, diceStartY + 63);
 
-        float opponentCardX = BattleRenderingUtils.MARGIN;
-        float opponentCardY = BattleRenderingUtils.MARGIN;
+        float opponentCardX = BattleRenderingUtils.getOpponentCardX();
+        float opponentCardY = BattleRenderingUtils.getOpponentCardY();
 
         diceX = opponentCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DICE_POOL_RIGHT_MARGIN - BattleRenderingUtils.DICE_ICON_SIZE / 2f - 11f;
         diceStartY = opponentCardY + BattleRenderingUtils.DICE_POOL_TOP_MARGIN + 3f;
@@ -476,6 +478,15 @@ public class BattleUILabels {
         StatusEffectProcessor playerEffects = battleState.getPlayerEffects();
         StatusEffectProcessor opponentEffects = battleState.getOpponentEffects();
 
+        long stateHash = 0;
+        for (StatusEffectProcessor.StatusEffect effect : StatusEffectProcessor.StatusEffect.values()) {
+            stateHash = 31 * stateHash + playerEffects.getLayers(effect);
+            stateHash = 31 * stateHash + playerEffects.getDuration(effect);
+            stateHash = 31 * stateHash + opponentEffects.getLayers(effect);
+            stateHash = 31 * stateHash + opponentEffects.getDuration(effect);
+        }
+        if (stateHash == lastStatusEffectStateHash) return;
+
         playerEffectDisplayIndex.clear();
         opponentEffectDisplayIndex.clear();
 
@@ -568,11 +579,13 @@ public class BattleUILabels {
                 previousOpponentLayers.remove(effect);
             }
         }
+
+        lastStatusEffectStateHash = stateHash;
     }
 
     private float[] getPlayerStatusLabelPosition(int displayIndex) {
-        float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
-        float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        float playerCardX = BattleRenderingUtils.getPlayerCardX();
+        float playerCardY = BattleRenderingUtils.getPlayerCardY();
         float playerBoxX = playerCardX - BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
         float x = playerBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
         float y = playerCardY + BattleRenderingUtils.STATUS_BOX_PADDING + displayIndex * 20f;
@@ -582,8 +595,8 @@ public class BattleUILabels {
     }
 
     private float[] getOpponentStatusLabelPosition(int displayIndex) {
-        float opponentCardX = BattleRenderingUtils.MARGIN;
-        float opponentCardY = BattleRenderingUtils.MARGIN;
+        float opponentCardX = BattleRenderingUtils.getOpponentCardX();
+        float opponentCardY = BattleRenderingUtils.getOpponentCardY();
         float opponentBoxX = opponentCardX + BattleRenderingUtils.CARD_WIDTH + 20f;
         float x = opponentBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
         float y = opponentCardY + BattleRenderingUtils.STATUS_BOX_PADDING + displayIndex * 20f;

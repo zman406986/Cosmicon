@@ -172,17 +172,25 @@ public class DiceRollManager {
     }
 
     public void advance(float amount) {
-        for (DiceAnimator animator : animators) {
-            animator.advance(amount);
+        if (!animators.isEmpty()) {
+            for (DiceAnimator animator : animators) {
+                animator.advance(amount);
+            }
         }
-        for (DiceAnimator animator : opponentAnimators) {
-            animator.advance(amount);
+        if (!opponentAnimators.isEmpty()) {
+            for (DiceAnimator animator : opponentAnimators) {
+                animator.advance(amount);
+            }
         }
-        for (DiceAnimator animator : playerRestAnimators) {
-            animator.advance(amount);
+        if (!playerRestAnimators.isEmpty()) {
+            for (DiceAnimator animator : playerRestAnimators) {
+                animator.advance(amount);
+            }
         }
-        for (DiceAnimator animator : opponentRestAnimators) {
-            animator.advance(amount);
+        if (!opponentRestAnimators.isEmpty()) {
+            for (DiceAnimator animator : opponentRestAnimators) {
+                animator.advance(amount);
+            }
         }
         
         if (!animators.isEmpty()) {

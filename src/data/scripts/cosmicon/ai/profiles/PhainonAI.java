@@ -74,32 +74,7 @@ public class PhainonAI extends AttackRerollAI {
     protected List<Set<Integer>> generateComboCandidates(SimPool pool, int rerollsLeft, int requiredCount,
                                                           boolean isAttacking, BattleState state, boolean forPlayer) {
         if (isAttacking) return Collections.emptyList();
-
-        Map<Integer, List<Integer>> valueToIndices = new HashMap<>();
-        for (int i = 0; i < pool.size(); i++) {
-            valueToIndices.computeIfAbsent(pool.getValue(i), k -> new ArrayList<>()).add(i);
-        }
-
-        int bestValue = -1;
-        int bestCount = 0;
-        for (Map.Entry<Integer, List<Integer>> entry : valueToIndices.entrySet()) {
-            if (entry.getValue().size() > bestCount) {
-                bestCount = entry.getValue().size();
-                bestValue = entry.getKey();
-            }
-        }
-
-        if (bestCount >= requiredCount - 1 && bestCount < requiredCount) {
-            Set<Integer> nonMatching = new HashSet<>();
-            for (int i = 0; i < pool.size(); i++) {
-                if (pool.getValue(i) != bestValue) {
-                    nonMatching.add(i);
-                }
-            }
-            if (!nonMatching.isEmpty()) {
-                return Collections.singletonList(nonMatching);
-            }
-        }
-        return Collections.emptyList();
+        Set<Integer> result = findComboForMostCommonValue(pool, requiredCount);
+        return result != null ? Collections.singletonList(result) : Collections.emptyList();
     }
 }

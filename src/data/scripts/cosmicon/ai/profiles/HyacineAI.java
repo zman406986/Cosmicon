@@ -43,15 +43,7 @@ public class HyacineAI extends AttackRerollAI {
     @Override
     protected List<Set<Integer>> generateComboCandidates(SimPool pool, int rerollsLeft, int requiredCount,
                                                           boolean isAttacking, BattleState state, boolean forPlayer) {
-        List<Integer> nonSixIndices = new ArrayList<>();
-        int sixCount = 0;
-        for (int i = 0; i < pool.size(); i++) {
-            if (pool.getValue(i) == 6) sixCount++;
-            else nonSixIndices.add(i);
-        }
-        if (sixCount >= requiredCount - 1 && sixCount < requiredCount && !nonSixIndices.isEmpty()) {
-            return Collections.singletonList(new HashSet<>(nonSixIndices));
-        }
-        return Collections.emptyList();
+        Set<Integer> result = findComboForSpecificValue(pool, requiredCount, 6);
+        return result != null ? Collections.singletonList(result) : Collections.emptyList();
     }
 }

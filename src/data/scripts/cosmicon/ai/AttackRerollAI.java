@@ -14,8 +14,17 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
     protected int rolloutsPerEvaluation = 20;
     protected int maxExactOutcomeEnumeration = 256;
-    private final Map<String, DieStoppingPolicy> policyCache = new HashMap<>();
+    private static final Map<String, DieStoppingPolicy> policyCache = new HashMap<>();
     private static final Random SIM_RAND = new Random(42);
+    private static final int MAX_REROLLS = 7;
+
+    static {
+        for (int maxFace : new int[]{4, 6, 8, 12}) {
+            DieStoppingPolicy policy = computePolicyStatic(maxFace, MAX_REROLLS);
+            policyCache.put(DiceType.fromMaxFace(maxFace).name(), policy);
+        }
+        policyCache.put(DiceType.PRISMATIC.name(), computePolicyStatic(6, MAX_REROLLS));
+    }
 
     public AttackRerollAI() {}
 
@@ -220,6 +229,48 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         return Collections.emptyList();
     }
 
+    protected static Set<Integer> findComboForSpecificValue(SimPool pool, int requiredCount, int targetValue) {
+        List<Integer> nonMatchingIndices = new ArrayList<>();
+        int matchCount = 0;
+        for (int i = 0; i < pool.size(); i++) {
+            if (pool.getValue(i) == targetValue) matchCount++;
+            else nonMatchingIndices.add(i);
+        }
+        if (matchCount >= requiredCount - 1 && matchCount < requiredCount && !nonMatchingIndices.isEmpty()) {
+            return new HashSet<>(nonMatchingIndices);
+        }
+        return null;
+    }
+
+    protected static Set<Integer> findComboForMostCommonValue(SimPool pool, int requiredCount) {
+        Map<Integer, Integer> freq = new HashMap<>();
+        for (int i = 0; i < pool.size(); i++) {
+            freq.merge(pool.getValue(i), 1, Integer::sum);
+        }
+
+        int bestValue = -1;
+        int bestCount = 0;
+        for (Map.Entry<Integer, Integer> entry : freq.entrySet()) {
+            if (entry.getValue() > bestCount) {
+                bestCount = entry.getValue();
+                bestValue = entry.getKey();
+            }
+        }
+
+        if (bestCount >= requiredCount - 1 && bestCount < requiredCount) {
+            Set<Integer> nonMatching = new HashSet<>();
+            for (int i = 0; i < pool.size(); i++) {
+                if (pool.getValue(i) != bestValue) {
+                    nonMatching.add(i);
+                }
+            }
+            if (!nonMatching.isEmpty()) {
+                return nonMatching;
+            }
+        }
+        return null;
+    }
+
     // ==================== Die stopping policy ====================
 
     protected static class DieStoppingPolicy {
@@ -243,15 +294,10 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
     }
 
     protected DieStoppingPolicy getPolicyForDie(DiceType type) {
-        String key = type.name();
-        return policyCache.computeIfAbsent(key, k -> computePolicy(type.getMaxFace(), getMaxRerolls()));
+        return policyCache.get(type.name());
     }
 
-    protected int getMaxRerolls() {
-        return 7;
-    }
-
-    private DieStoppingPolicy computePolicy(int maxFace, int maxRerolls) {
+    private static DieStoppingPolicy computePolicyStatic(int maxFace, int maxRerolls) {
         double[][] expected = new double[maxRerolls + 1][maxFace + 1];
         int[] thresholds = new int[maxRerolls + 1];
 
@@ -338,10 +384,15 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
     protected List<Set<Integer>> enumerateLegalSubsets(SimPool pool, int requiredCount, BattleState state, boolean forPlayer) {
         Set<Integer> destinedIndices = findDestinedIndices(pool.size(), state, forPlayer);
-        List<Set<Integer>> results = new ArrayList<>();
-        findCombinations(pool.size(), 0, requiredCount, new HashSet<>(), results, destinedIndices);
-        return results;
+        String cacheKey = pool.size() + "_" + requiredCount + "_" + destinedIndices;
+        return subsetCache.computeIfAbsent(cacheKey, k -> {
+            List<Set<Integer>> results = new ArrayList<>();
+            findCombinations(pool.size(), 0, requiredCount, new HashSet<>(), results, destinedIndices);
+            return results;
+        });
     }
+
+    private final Map<String, List<Set<Integer>>> subsetCache = new HashMap<>();
 
     private Set<Integer> findDestinedIndices(int poolSize, BattleState state, boolean forPlayer) {
         Set<Integer> destined = new HashSet<>();
@@ -453,7 +504,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         }
 
         public SimPool createCopy() {
-            return new SimPool(values.clone(), types.clone(), possibleFaces);
+            return new SimPool(values.clone(), types, possibleFaces);
         }
     }
 
@@ -483,12 +534,16 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         return new SimPool(values, types, possibleFaces);
     }
 
+    private static final Map<Integer, int[]> regularFacesCache = new HashMap<>();
+
     private static int[] regularFaces(int maxFace) {
-        int[] faces = new int[maxFace];
-        for (int i = 0; i < maxFace; i++) {
-            faces[i] = i + 1;
-        }
-        return faces;
+        return regularFacesCache.computeIfAbsent(maxFace, mf -> {
+            int[] faces = new int[mf];
+            for (int i = 0; i < mf; i++) {
+                faces[i] = i + 1;
+            }
+            return faces;
+        });
     }
 
     // ==================== Inner classes ====================

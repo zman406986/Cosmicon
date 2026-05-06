@@ -277,13 +277,13 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         damageImpactHandled = false;
         inputHandler.setDamageAnimator(damageAnimator);
 
-        float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
-        float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        float playerCardX = BattleRenderingUtils.getPlayerCardX();
+        float playerCardY = BattleRenderingUtils.getPlayerCardY();
         float playerCardCenterX = playerCardX + BattleRenderingUtils.CARD_WIDTH / 2f;
         float playerCardCenterY = playerCardY + BattleRenderingUtils.CARD_HEIGHT / 2f;
 
-        float opponentCardX = BattleRenderingUtils.MARGIN;
-        float opponentCardY = BattleRenderingUtils.MARGIN;
+        float opponentCardX = BattleRenderingUtils.getOpponentCardX();
+        float opponentCardY = BattleRenderingUtils.getOpponentCardY();
         float opponentCardCenterX = opponentCardX + BattleRenderingUtils.CARD_WIDTH / 2f;
         float opponentCardCenterY = opponentCardY + BattleRenderingUtils.CARD_HEIGHT / 2f;
 
@@ -635,8 +635,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         float cardCenterX;
         float cardCenterY;
         if (isPlayer) {
-            float cardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
-            float cardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+            float cardX = BattleRenderingUtils.getPlayerCardX();
+            float cardY = BattleRenderingUtils.getPlayerCardY();
             cardCenterX = cardX + BattleRenderingUtils.CARD_WIDTH / 2f;
             cardCenterY = cardY + BattleRenderingUtils.CARD_HEIGHT / 2f;
         } else {
@@ -1168,8 +1168,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void renderPlayerCard(float alphaMult) {
-        float cardUiX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
-        float cardUiY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        float cardUiX = BattleRenderingUtils.getPlayerCardX();
+        float cardUiY = BattleRenderingUtils.getPlayerCardY();
         UnifiedCoord cardPos = new UnifiedCoord(cardUiX, cardUiY);
 
         float cardX = cardPos.glX();
@@ -1232,8 +1232,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void renderStatusEffectBoxes(float alphaMult) {
-        float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
-        float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        float playerCardX = BattleRenderingUtils.getPlayerCardX();
+        float playerCardY = BattleRenderingUtils.getPlayerCardY();
         float playerBoxX = playerCardX - BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
         UnifiedCoord playerBoxPos = new UnifiedCoord(playerBoxX, playerCardY);
         float playerBoxGlX = playerBoxPos.glX();
@@ -1242,8 +1242,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         BattleRenderingUtils.renderStatusEffectBox(playerBoxGlX, playerBoxGlY,
             BattleRenderingUtils.STATUS_BOX_WIDTH, BattleRenderingUtils.CARD_HEIGHT, alphaMult);
 
-        float opponentCardX = BattleRenderingUtils.MARGIN;
-        float opponentCardY = BattleRenderingUtils.MARGIN;
+        float opponentCardX = BattleRenderingUtils.getOpponentCardX();
+        float opponentCardY = BattleRenderingUtils.getOpponentCardY();
         float opponentBoxX = opponentCardX + BattleRenderingUtils.CARD_WIDTH + 20f;
         UnifiedCoord opponentBoxPos = new UnifiedCoord(opponentBoxX, opponentCardY);
         float opponentBoxGlX = opponentBoxPos.glX();

@@ -32,6 +32,20 @@ public class DiceRoller {
         rollForParticipant(state, defenderIsPlayer);
     }
     
+    private int getMinRoll() {
+        if (weatherController != null && weatherController.shouldPreventMinimumRoll()) {
+            return 2;
+        }
+        return 1;
+    }
+    
+    private int getMaxRoll(int typeMaxFace, boolean isAttacker) {
+        if (weatherController != null && weatherController.shouldPreventMaxRoll(!isAttacker)) {
+            return Math.max(1, typeMaxFace - 1);
+        }
+        return typeMaxFace;
+    }
+
     public void rollForParticipant(BattleState state, boolean forPlayer) {
         if (tutorialDiceRoller != null) {
             tutorialDiceRoller.rollForParticipant(state, forPlayer);
@@ -48,13 +62,10 @@ public class DiceRoller {
         List<Integer> values = new ArrayList<>();
         List<Boolean> selected = new ArrayList<>();
         
-        boolean preventMinimum = weatherController != null && weatherController.shouldPreventMinimumRoll();
-        boolean preventMax = weatherController != null && weatherController.shouldPreventMaxRoll(!isAttacker);
+        int minRoll = getMinRoll();
         
         for (DiceType type : types) {
-            int minRoll = preventMinimum ? 2 : 1;
-            int maxRoll = type.getMaxFace();
-            if (preventMax) maxRoll = Math.max(1, maxRoll - 1);
+            int maxRoll = getMaxRoll(type.getMaxFace(), isAttacker);
             
             int value = CosmiconRandom.nextInt(maxRoll - minRoll + 1) + minRoll;
             values.add(value);
@@ -111,8 +122,7 @@ public class DiceRoller {
         List<Integer> rerolledIndices = new ArrayList<>();
         
         boolean isAttacker = state.isAttacker(forPlayer);
-        boolean preventMinimum = weatherController != null && weatherController.shouldPreventMinimumRoll();
-        boolean preventMax = weatherController != null && weatherController.shouldPreventMaxRoll(!isAttacker);
+        int minRoll = getMinRoll();
         
         for (int i = 0; i < selected.size(); i++) {
             if (selected.get(i)) {
@@ -129,9 +139,7 @@ public class DiceRoller {
                         state.updatePrismaticDiceAt(i, newInstance, forPlayer);
                     }
                 } else {
-                    int minRoll = preventMinimum ? 2 : 1;
-                    int maxRoll = type.getMaxFace();
-                    if (preventMax) maxRoll = Math.max(1, maxRoll - 1);
+                    int maxRoll = getMaxRoll(type.getMaxFace(), isAttacker);
                     
                     int value = CosmiconRandom.nextInt(maxRoll - minRoll + 1) + minRoll;
                     values.set(i, value);

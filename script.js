@@ -17,7 +17,7 @@
  * @author: Dmitry Batkovich
  */
 function navigate(an_id) {
-  let problem_div = document.getElementById("d" + an_id);
-  let preview_div = document.getElementById("preview");
+  problem_div = document.getElementById("d" + an_id);
+  preview_div = document.getElementById("preview");
   preview_div.innerHTML = problem_div != null ? problem_div.innerHTML : "Select a problem element in tree";
 }

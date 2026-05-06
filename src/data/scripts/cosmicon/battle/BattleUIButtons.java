@@ -120,8 +120,8 @@ public class BattleUIButtons implements ActionListenerDelegate {
         TooltipMakerAPI abilityTp = UIComponentFactory.createTooltipForButtons(panel, this, 
             PASSIVE_BTN_WIDTH, PASSIVE_BTN_HEIGHT, 0f, 0f);
 
-        float opponentCardUiX = BattleRenderingUtils.MARGIN;
-        float opponentCardUiY = BattleRenderingUtils.MARGIN;
+        float opponentCardUiX = BattleRenderingUtils.getOpponentCardX();
+        float opponentCardUiY = BattleRenderingUtils.getOpponentCardY();
         float opponentAbilityY = opponentCardUiY + BattleRenderingUtils.CARD_HEIGHT + 15f;
 
         ButtonAPI opponentAbilityButton = abilityTp.addButton(Strings.get("battle.ability_btn"), "opponent_ability",
@@ -142,8 +142,8 @@ public class BattleUIButtons implements ActionListenerDelegate {
             }
         }, TooltipLocation.RIGHT, false);
 
-        float playerCardUiX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
-        float playerCardUiY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        float playerCardUiX = BattleRenderingUtils.getPlayerCardX();
+        float playerCardUiY = BattleRenderingUtils.getPlayerCardY();
         float playerAbilityY = playerCardUiY - PASSIVE_BTN_HEIGHT - 5f;
 
         ButtonAPI playerAbilityButton = abilityTp.addButton(Strings.get("battle.ability_btn"), "player_ability",
@@ -182,8 +182,8 @@ public class BattleUIButtons implements ActionListenerDelegate {
         float btnHeight = 18f;
         float spacing = 20f;
 
-        float opponentCardX = BattleRenderingUtils.MARGIN;
-        float opponentCardY = BattleRenderingUtils.MARGIN;
+        float opponentCardX = BattleRenderingUtils.getOpponentCardX();
+        float opponentCardY = BattleRenderingUtils.getOpponentCardY();
         float opponentBoxX = opponentCardX + BattleRenderingUtils.CARD_WIDTH + 20f;
         float opponentBtnX = opponentBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
 
@@ -224,8 +224,8 @@ public class BattleUIButtons implements ActionListenerDelegate {
             }, TooltipLocation.LEFT, false);
         }
 
-        float playerCardX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN;
-        float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        float playerCardX = BattleRenderingUtils.getPlayerCardX();
+        float playerCardY = BattleRenderingUtils.getPlayerCardY();
         float playerBoxX = playerCardX - BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
         float playerBtnX = playerBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
 
@@ -272,7 +272,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
         float descBoxHeight = 55f;
         float descBoxPadding = 10f;
         float titleHeight = 18f;
-        float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
+        float playerCardY = BattleRenderingUtils.getPlayerCardY();
 
         float weatherX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.MARGIN - boxWidth;
         float titleY = playerCardY - PASSIVE_BTN_HEIGHT - titleHeight - descBoxHeight - 15f;

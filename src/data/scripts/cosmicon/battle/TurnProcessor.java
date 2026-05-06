@@ -470,13 +470,7 @@ public class TurnProcessor {
         notifyRestDiceValueChanges(preSelectValues, postSelectValues, forPlayer);
         notifyRestDiceTypeChanges(preSelectTypes, state.getDiceTypes(forPlayer), forPlayer);
         
-        int newValue = isAttackPhase ? state.getAttackValue() : state.getDefenseValue();
-        if (newValue != oldValue) {
-            int delta = newValue - oldValue;
-            String changeType = isAttackPhase ? "ATTACK_LEVEL_UP" : "DEFENSE_LEVEL_UP";
-            state.queueValueChange(forPlayer, changeType, delta);
-            state.notifyValueChange(forPlayer, "LEVEL_UP", oldValue, newValue, delta);
-        }
+        notifyLevelUpValueChange(forPlayer, isAttackPhase, oldValue);
         
         if (aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
             state.setAttackValue(state.calculateSelectedSum(false) + passiveAtkBonus);
@@ -484,21 +478,7 @@ public class TurnProcessor {
             state.setDefenseValue(state.calculateSelectedSum(false) + passiveDefBonus);
         }
         
-        int oldAtk = state.getAttackValue();
-        int oldDef = state.getDefenseValue();
-        weatherController.applySelectionPhase(state, forPlayer);
-        int newAtk = state.getAttackValue();
-        int newDef = state.getDefenseValue();
-        if (newAtk != oldAtk) {
-            int delta = newAtk - oldAtk;
-            state.queueValueChange(forPlayer, "WEATHER", delta);
-            state.notifyValueChange(forPlayer, "WEATHER", oldAtk, newAtk, delta);
-        }
-        if (newDef != oldDef) {
-            int delta = newDef - oldDef;
-            state.queueValueChange(forPlayer, "WEATHER", delta);
-            state.notifyValueChange(forPlayer, "WEATHER", oldDef, newDef, delta);
-        }
+        applyWeatherAndNotifyValueChanges(forPlayer);
         
         if (aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
             state.setAttackerConfirmedSelection(state.getSelectedDiceValuesFormatted(false));
@@ -544,13 +524,7 @@ public class TurnProcessor {
         notifyRestDiceValueChanges(preSelectValues, postSelectValues, false);
         notifyRestDiceTypeChanges(preSelectTypes, state.getDiceTypes(false), false);
         
-        int newValue = isAttackPhase ? state.getAttackValue() : state.getDefenseValue();
-        if (newValue != oldValue) {
-            int delta = newValue - oldValue;
-            String changeType = isAttackPhase ? "ATTACK_LEVEL_UP" : "DEFENSE_LEVEL_UP";
-            state.queueValueChange(false, changeType, delta);
-            state.notifyValueChange(false, "LEVEL_UP", oldValue, newValue, delta);
-        }
+        notifyLevelUpValueChange(false, isAttackPhase, oldValue);
         
         if (aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
             state.setAttackValue(state.calculateSelectedSum(false) + passiveAtkBonus);
@@ -558,22 +532,7 @@ public class TurnProcessor {
             state.setDefenseValue(state.calculateSelectedSum(false) + passiveDefBonus);
         }
         
-        int oldAtk = state.getAttackValue();
-        int oldDef = state.getDefenseValue();
-        boolean isPlayer = state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE;
-        weatherController.applySelectionPhase(state, isPlayer);
-        int newAtk = state.getAttackValue();
-        int newDef = state.getDefenseValue();
-        if (newAtk != oldAtk) {
-            int delta = newAtk - oldAtk;
-            state.queueValueChange(isPlayer, "WEATHER", delta);
-            state.notifyValueChange(isPlayer, "WEATHER", oldAtk, newAtk, delta);
-        }
-        if (newDef != oldDef) {
-            int delta = newDef - oldDef;
-            state.queueValueChange(isPlayer, "WEATHER", delta);
-            state.notifyValueChange(isPlayer, "WEATHER", oldDef, newDef, delta);
-        }
+        applyWeatherAndNotifyValueChanges(false);
         
         aiSelectionComplete = true;
         
@@ -650,7 +609,6 @@ public class TurnProcessor {
                 effects.processedEffectsFromModification(StatusEffect.ARISE);
                 int ariseDiceIndex = context.applyArise();
                 if (ariseDiceIndex >= 0) {
-                    state.setAriseDiceIndex(forPlayer, ariseDiceIndex);
                     if (diceRollManager != null) {
                         diceRollManager.setRestDiceEffect(ariseDiceIndex, StatusEffect.ARISE, forPlayer);
                     }
@@ -683,7 +641,6 @@ public class TurnProcessor {
                 effects.processedEffectsFromModification(StatusEffect.HACK);
                 int hackDiceIndex = targetContext.applyHackToSelectedDice();
                 if (hackDiceIndex >= 0) {
-                    state.setHackDiceIndex(targetIsPlayer, hackDiceIndex);
                     if (diceRollManager != null) {
                         diceRollManager.setRestDiceEffect(hackDiceIndex, StatusEffect.HACK, targetIsPlayer);
                     }
@@ -1075,13 +1032,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         notifyRestDiceValueChanges(preSelectValues, postSelectValues, true);
         notifyRestDiceTypeChanges(preSelectTypes, state.getDiceTypes(true), true);
         
-        int newValue = isAttackPhase ? state.getAttackValue() : state.getDefenseValue();
-        if (newValue != oldValue) {
-            int delta = newValue - oldValue;
-            String changeType = isAttackPhase ? "ATTACK_LEVEL_UP" : "DEFENSE_LEVEL_UP";
-            state.queueValueChange(true, changeType, delta);
-            state.notifyValueChange(true, "LEVEL_UP", oldValue, newValue, delta);
-        }
+        notifyLevelUpValueChange(true, isAttackPhase, oldValue);
         
         int calcSum = state.calculateSelectedSum(true);
         List<Integer> vals = state.getDiceValues(true);
@@ -1100,21 +1051,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
             state.setDefenseValue(calcSum + passiveDefBonus);
         }
         
-        int oldAtk = state.getAttackValue();
-        int oldDef = state.getDefenseValue();
-        weatherController.applySelectionPhase(state, true);
-        int newAtk = state.getAttackValue();
-        int newDef = state.getDefenseValue();
-        if (newAtk != oldAtk) {
-            int delta = newAtk - oldAtk;
-            state.queueValueChange(true, "WEATHER", delta);
-            state.notifyValueChange(true, "WEATHER", oldAtk, newAtk, delta);
-        }
-        if (newDef != oldDef) {
-            int delta = newDef - oldDef;
-            state.queueValueChange(true, "WEATHER", delta);
-            state.notifyValueChange(true, "WEATHER", oldDef, newDef, delta);
-        }
+        applyWeatherAndNotifyValueChanges(true);
         
         if (state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
             state.setAttackerConfirmedSelection(state.getSelectedDiceValuesFormatted(true));
@@ -1128,6 +1065,34 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
     
     private StatusEffectProcessor.BattleContext createBattleContext(boolean forPlayer) {
         return state.createBattleContext(forPlayer);
+    }
+    
+    private void notifyLevelUpValueChange(boolean forPlayer, boolean isAttackPhase, int oldValue) {
+        int newValue = isAttackPhase ? state.getAttackValue() : state.getDefenseValue();
+        if (newValue != oldValue) {
+            int delta = newValue - oldValue;
+            String changeType = isAttackPhase ? "ATTACK_LEVEL_UP" : "DEFENSE_LEVEL_UP";
+            state.queueValueChange(forPlayer, changeType, delta);
+            state.notifyValueChange(forPlayer, "LEVEL_UP", oldValue, newValue, delta);
+        }
+    }
+    
+    private void applyWeatherAndNotifyValueChanges(boolean forPlayer) {
+        int oldAtk = state.getAttackValue();
+        int oldDef = state.getDefenseValue();
+        weatherController.applySelectionPhase(state, forPlayer);
+        int newAtk = state.getAttackValue();
+        int newDef = state.getDefenseValue();
+        if (newAtk != oldAtk) {
+            int delta = newAtk - oldAtk;
+            state.queueValueChange(forPlayer, "WEATHER", delta);
+            state.notifyValueChange(forPlayer, "WEATHER", oldAtk, newAtk, delta);
+        }
+        if (newDef != oldDef) {
+            int delta = newDef - oldDef;
+            state.queueValueChange(forPlayer, "WEATHER", delta);
+            state.notifyValueChange(forPlayer, "WEATHER", oldDef, newDef, delta);
+        }
     }
     
     private void processPassiveEffects(boolean forPlayer) {

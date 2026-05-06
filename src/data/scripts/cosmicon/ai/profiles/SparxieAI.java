@@ -58,31 +58,7 @@ public class SparxieAI extends AttackRerollAI {
     @Override
     protected List<Set<Integer>> generateComboCandidates(SimPool pool, int rerollsLeft, int requiredCount,
                                                           boolean isAttacking, BattleState state, boolean forPlayer) {
-        Map<Integer, Integer> freq = new HashMap<>();
-        for (int i = 0; i < pool.size(); i++) {
-            freq.merge(pool.getValue(i), 1, Integer::sum);
-        }
-
-        int bestValue = -1;
-        int bestCount = 0;
-        for (Map.Entry<Integer, Integer> entry : freq.entrySet()) {
-            if (entry.getValue() > bestCount) {
-                bestCount = entry.getValue();
-                bestValue = entry.getKey();
-            }
-        }
-
-        if (bestCount >= requiredCount - 1 && bestCount < requiredCount) {
-            Set<Integer> nonMatching = new HashSet<>();
-            for (int i = 0; i < pool.size(); i++) {
-                if (pool.getValue(i) != bestValue) {
-                    nonMatching.add(i);
-                }
-            }
-            if (!nonMatching.isEmpty()) {
-                return Collections.singletonList(nonMatching);
-            }
-        }
-        return Collections.emptyList();
+        Set<Integer> result = findComboForMostCommonValue(pool, requiredCount);
+        return result != null ? Collections.singletonList(result) : Collections.emptyList();
     }
 }

@@ -121,6 +121,8 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private final List<DiceEntryLabels> diceEntryLabels = new ArrayList<>();
     private LabelAPI noPrismaticLabel;
 
+    private final List<PrismaticDiceType> filteredDiceList;
+
     private final CharacterSetupCallback callback;
 
     private record ClickRegion(float boxX, float boxY, int index) {}
@@ -168,6 +170,13 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         if (!characters.isEmpty()) {
             this.selectedIndex = 0;
+        }
+
+        this.filteredDiceList = new ArrayList<>();
+        for (PrismaticDiceType type : PrismaticDiceRegistry.getAll().values()) {
+            if (CosmiconStats.isPrismaticDiceUnlocked(type.getId())) {
+                this.filteredDiceList.add(type);
+            }
         }
     }
 
@@ -948,13 +957,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     }
 
     private List<PrismaticDiceType> getFilteredDiceList() {
-        List<PrismaticDiceType> filtered = new ArrayList<>();
-        for (PrismaticDiceType type : PrismaticDiceRegistry.getAll().values()) {
-            if (CosmiconStats.isPrismaticDiceUnlocked(type.getId())) {
-                filtered.add(type);
-            }
-        }
-        return filtered;
+        return filteredDiceList;
     }
 
     private void handleDiceSelection(int entryIndex) {

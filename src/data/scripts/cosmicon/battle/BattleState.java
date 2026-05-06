@@ -116,11 +116,6 @@ public class BattleState {
     private final List<ModificationRecord> modificationOrder;
     private int modificationSequenceCounter;
 
-    private int playerHackDiceIndex = -1;
-    private int opponentHackDiceIndex = -1;
-    private int playerAriseDiceIndex = -1;
-    private int opponentAriseDiceIndex = -1;
-
     public record ModificationRecord(StatusEffectProcessor.StatusEffect effect, boolean forPlayer, int sequence, int diceIndex) {
         public ModificationRecord(StatusEffectProcessor.StatusEffect effect, boolean forPlayer, int sequence) {
             this(effect, forPlayer, sequence, -1);
@@ -433,30 +428,6 @@ public class BattleState {
         CosmiconLogger.debug("Effect applied to %s (%d layers)", toPlayer ? "Player" : "Opponent", layers);
     }
 
-    public void setHackDiceIndex(boolean forPlayer, int diceIndex) {
-        if (forPlayer) {
-            playerHackDiceIndex = diceIndex;
-        } else {
-            opponentHackDiceIndex = diceIndex;
-        }
-    }
-
-    public void setAriseDiceIndex(boolean forPlayer, int diceIndex) {
-        if (forPlayer) {
-            playerAriseDiceIndex = diceIndex;
-        } else {
-            opponentAriseDiceIndex = diceIndex;
-        }
-    }
-
-    public int getHackDiceIndex(boolean forPlayer) {
-        return forPlayer ? playerHackDiceIndex : opponentHackDiceIndex;
-    }
-
-    public int getAriseDiceIndex(boolean forPlayer) {
-        return forPlayer ? playerAriseDiceIndex : opponentAriseDiceIndex;
-    }
-
     public List<ModificationRecord> getModificationOrder() {
         return new ArrayList<>(modificationOrder);
     }
@@ -478,10 +449,6 @@ public class BattleState {
         opponentEffects.resetTurnState();
         modificationOrder.clear();
         modificationSequenceCounter = 0;
-        playerHackDiceIndex = -1;
-        opponentHackDiceIndex = -1;
-        playerAriseDiceIndex = -1;
-        opponentAriseDiceIndex = -1;
     }
     
     public void clearTemporaryEffects() {
