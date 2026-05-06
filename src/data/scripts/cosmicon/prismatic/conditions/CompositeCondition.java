@@ -52,12 +52,4 @@ public class CompositeCondition implements AvailabilityCondition {
         }
         return sb.toString();
     }
-    
-    public List<AvailabilityCondition> getConditions() {
-        return new ArrayList<>(conditions);
-    }
-    
-    public boolean isRequireAll() {
-        return requireAll;
-    }
 }

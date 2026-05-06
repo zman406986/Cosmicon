@@ -2,19 +2,14 @@ package data.scripts.cosmicon.prismatic;
 
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.prismatic.conditions.*;
-import data.scripts.cosmicon.state.CosmiconStats;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 public final class PrismaticDiceRegistry {
     
     private static final Map<String, PrismaticDiceType> REGISTRY = new HashMap<>();
-    private static final Random RANDOM = new Random();
     
     static {
         registerAllDice();
@@ -62,17 +57,6 @@ public final class PrismaticDiceRegistry {
     
     public static Map<String, PrismaticDiceType> getAll() {
         return new HashMap<>(REGISTRY);
-    }
-
-    public static PrismaticDiceType getRandomPrismatic() {
-        List<PrismaticDiceType> unlocked = new ArrayList<>();
-        for (PrismaticDiceType type : REGISTRY.values()) {
-            if (CosmiconStats.isPrismaticDiceUnlocked(type.getId())) {
-                unlocked.add(type);
-            }
-        }
-        if (unlocked.isEmpty()) return null;
-        return unlocked.get(RANDOM.nextInt(unlocked.size()));
     }
     
     private static Set<Integer> indices(int... indices) {

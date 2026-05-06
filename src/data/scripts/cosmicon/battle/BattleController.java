@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
 
-import data.scripts.cosmicon.ai.DiceProbabilityCalculator;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
 import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.state.CosmiconPlayerState;
@@ -294,7 +293,6 @@ public class BattleController implements BattleState.DamageAnimationCallback {
         if (wc != null) {
             wc.reset();
         }
-        DiceProbabilityCalculator.clearCache();
         CosmiconSprites.clearCache();
         CosmiconLogger.info("====================================");
     }

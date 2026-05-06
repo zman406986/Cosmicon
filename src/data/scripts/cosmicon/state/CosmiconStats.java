@@ -16,7 +16,6 @@ public class CosmiconStats {
     private static final String KEY_UNLOCKED_CHARACTERS = "$cos_unlocked_characters";
     private static final String KEY_UNLOCKED_PRISMATIC = "$cos_unlocked_prismatic";
     private static final String KEY_PRISMATIC_FEATURE_UNLOCKED = "$cos_prismatic_feature_unlocked";
-    private static final String KEY_STARTING_CHAR_GRANTED = "$cos_starting_char_granted";
     private static final String KEY_HAS_GALLERY_CHARACTERS = "$cos_has_gallery_characters";
 
     private static final int TUTORIAL_GAMES = 2;
@@ -34,7 +33,7 @@ public class CosmiconStats {
     public static void incrementGamesPlayed() {
         MemoryAPI mem = getMemory();
         mem.set(KEY_GAMES_PLAYED, getGamesPlayed() + 1);
-        if (getGamesPlayed() >= TUTORIAL_GAMES && !isPrismaticFeatureUnlocked()) {
+        if (getGamesPlayed() >= TUTORIAL_GAMES && isPrismaticFeatureUnlocked()) {
             setPrismaticFeatureUnlocked();
         }
     }
@@ -85,8 +84,8 @@ public class CosmiconStats {
 
     public static boolean isPrismaticFeatureUnlocked() {
         MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_PRISMATIC_FEATURE_UNLOCKED)) return false;
-        return mem.getBoolean(KEY_PRISMATIC_FEATURE_UNLOCKED);
+        if (!mem.contains(KEY_PRISMATIC_FEATURE_UNLOCKED)) return true;
+        return !mem.getBoolean(KEY_PRISMATIC_FEATURE_UNLOCKED);
     }
 
     static void setPrismaticFeatureUnlocked() {
@@ -116,10 +115,6 @@ public class CosmiconStats {
         getUnlockedCharacters().add(charId);
     }
 
-    public static boolean hasAnyCharacterUnlocked() {
-        return !getUnlockedCharacters().isEmpty();
-    }
-
     @SuppressWarnings("unchecked")
     public static Set<String> getUnlockedPrismaticDice() {
         MemoryAPI mem = getMemory();
@@ -143,22 +138,6 @@ public class CosmiconStats {
         getUnlockedPrismaticDice().add(diceId);
     }
 
-    public static boolean isStartingCharGranted() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_STARTING_CHAR_GRANTED)) return false;
-        return mem.getBoolean(KEY_STARTING_CHAR_GRANTED);
-    }
-
-    public static void setStartingCharGranted(boolean granted) {
-        getMemory().set(KEY_STARTING_CHAR_GRANTED, granted);
-    }
-
-    public static void grantStartingCharacter(String charId) {
-        if (isStartingCharGranted()) return;
-        unlockCharacter(charId);
-        setStartingCharGranted(true);
-    }
-
     public static void completeTutorialGame1() {
         unlockCharacter("sparxie");
         CosmiconPlayerState.saveCharacter("sparxie");
@@ -167,7 +146,7 @@ public class CosmiconStats {
     public static void completeTutorialGame2() {
         unlockCharacter("acheron");
         unlockPrismaticDice("repeater");
-        if (!isPrismaticFeatureUnlocked()) {
+        if (isPrismaticFeatureUnlocked()) {
             setPrismaticFeatureUnlocked();
         }
         CosmiconPlayerState.saveCharacter("acheron");
@@ -198,7 +177,7 @@ public class CosmiconStats {
             if (!isPrismaticDiceUnlocked("repeater")) {
                 unlockPrismaticDice("repeater");
             }
-            if (!isPrismaticFeatureUnlocked()) {
+            if (isPrismaticFeatureUnlocked()) {
                 setPrismaticFeatureUnlocked();
             }
         }

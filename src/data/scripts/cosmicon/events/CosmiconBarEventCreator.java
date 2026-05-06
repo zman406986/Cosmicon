@@ -30,11 +30,6 @@ public class CosmiconBarEventCreator extends BaseBarEventCreator {
         return 7f + (float) Math.random() * 3f;
     }
 
-    public boolean isPriority()
-    {
-        return super.isPriority();
-    }
-
     @Override
     public String getBarEventId() {
         return "cosmicon_bar_event";

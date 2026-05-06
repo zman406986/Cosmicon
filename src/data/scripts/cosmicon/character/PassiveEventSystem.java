@@ -27,7 +27,7 @@ public final class PassiveEventSystem {
 
     public static void onStartOfDefenseTurn(BattleState state, boolean forPlayer) {
         String characterId = state.getCardId(forPlayer);
-        if (characterId == null || isAttacker(state, forPlayer)) return;
+        if (characterId == null || !isAttacker(state, forPlayer)) return;
 
         CharacterPassives.onStartOfDefenseTurn(characterId, state, forPlayer);
     }
@@ -41,7 +41,7 @@ public final class PassiveEventSystem {
 
     public static void onRerollCompleted(BattleState state, boolean forPlayer) {
         String characterId = state.getCardId(forPlayer);
-        if (characterId == null || isAttacker(state, forPlayer)) return;
+        if (characterId == null) return;
 
         CharacterPassives.onRerollCompleted(characterId, state, forPlayer);
     }
