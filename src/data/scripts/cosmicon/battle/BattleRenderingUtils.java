@@ -28,9 +28,15 @@ public final class BattleRenderingUtils {
     public static final float DICE_POOL_RIGHT_MARGIN = 3f;
     public static final float DICE_POOL_TOP_MARGIN = 0f;
     public static final float ATK_DEF_ICON_SIZE = 49f;
-    public static final float ATK_LEFT_MARGIN = 1f;
-    public static final float DEF_RIGHT_MARGIN = 1f;
-    public static final float ATK_DEF_BOTTOM_MARGIN = 1f;
+    public static final float ATK_LEFT_MARGIN = 3f;
+    public static final float DEF_RIGHT_MARGIN = 3f;
+    public static final float ATK_DEF_BOTTOM_MARGIN = 3f;
+
+    private static final float INDICATOR_ARROW_WIDTH = 12f;
+    private static final float INDICATOR_ARROW_HEIGHT = 16f;
+    private static final float INDICATOR_ARROW_OFFSET = 2f;
+    private static final Color COLOR_ARROW_UP = new Color(100, 220, 100);
+    private static final Color COLOR_ARROW_DOWN = new Color(220, 80, 80);
 
     public static final float PORTRAIT_DISPLAY_W = CARD_WIDTH * PORTRAIT_SCALE;
     public static final float PORTRAIT_DISPLAY_H = CARD_HEIGHT * PORTRAIT_SCALE;
@@ -239,7 +245,49 @@ public final class BattleRenderingUtils {
         Misc.renderQuad(x + 15, portraitY, w - 30, 80, color.darker(), alphaMult * 0.5f);
     }
 
-    public static void renderCharacterCard(float x, float y, CharacterCard card, float alphaMult) {
+    public static void renderIndicatorArrow(float x, float y, boolean isUp, float alphaMult) {
+        GLStateUtil.resetBlendState();
+
+        Color baseColor = isUp ? COLOR_ARROW_UP : COLOR_ARROW_DOWN;
+        float[] c = ColorHelper.toGLComponents(baseColor, alphaMult);
+        GL11.glColor4f(c[0], c[1], c[2], c[3]);
+
+        float w = INDICATOR_ARROW_WIDTH;
+        float h = INDICATOR_ARROW_HEIGHT;
+
+        GL11.glBegin(GL11.GL_TRIANGLES);
+        if (isUp) {
+            GL11.glVertex2f(x, y);
+            GL11.glVertex2f(x + w, y);
+            GL11.glVertex2f(x + w / 2f, y + h);
+        } else {
+            GL11.glVertex2f(x + w / 2f, y);
+            GL11.glVertex2f(x, y + h);
+            GL11.glVertex2f(x + w, y + h);
+        }
+        GL11.glEnd();
+
+        Color strokeColor = baseColor.darker();
+        float[] sc = ColorHelper.toGLComponents(strokeColor, alphaMult);
+        GL11.glColor4f(sc[0], sc[1], sc[2], sc[3]);
+        GL11.glLineWidth(1.5f);
+
+        GL11.glBegin(GL11.GL_LINE_LOOP);
+        if (isUp) {
+            GL11.glVertex2f(x, y);
+            GL11.glVertex2f(x + w, y);
+            GL11.glVertex2f(x + w / 2f, y + h);
+        } else {
+            GL11.glVertex2f(x + w / 2f, y);
+            GL11.glVertex2f(x, y + h);
+            GL11.glVertex2f(x + w, y + h);
+        }
+        GL11.glEnd();
+
+        GLStateUtil.resetColor();
+    }
+
+    public static void renderCharacterCard(float x, float y, CharacterCard card, int effectiveAtk, int effectiveDef, float alphaMult) {
         GLStateUtil.enableTexturingWithBlend();
 
         SpriteAPI portrait = CosmiconSprites.getPortrait(card.getId());
@@ -275,6 +323,19 @@ public final class BattleRenderingUtils {
             float atkY = y + ATK_DEF_BOTTOM_MARGIN;
             atkIcon.render(atkX, atkY);
             GLStateUtil.disableTexturing();
+
+            if (card != null) {
+                int baseAtk = card.getAtkLevel();
+                if (effectiveAtk > baseAtk) {
+                    float arrowX = atkX + ATK_DEF_ICON_SIZE + INDICATOR_ARROW_OFFSET;
+                    float arrowY = atkY + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
+                    renderIndicatorArrow(arrowX, arrowY, true, alphaMult);
+                } else if (effectiveAtk < baseAtk) {
+                    float arrowX = atkX + ATK_DEF_ICON_SIZE + INDICATOR_ARROW_OFFSET;
+                    float arrowY = atkY + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
+                    renderIndicatorArrow(arrowX, arrowY, false, alphaMult);
+                }
+            }
         }
 
         SpriteAPI defIcon = CosmiconSprites.getDefIcon();
@@ -286,6 +347,19 @@ public final class BattleRenderingUtils {
             float defY = y + ATK_DEF_BOTTOM_MARGIN;
             defIcon.render(defX, defY);
             GLStateUtil.disableTexturing();
+
+            if (card != null) {
+                int baseDef = card.getDefLevel();
+                if (effectiveDef > baseDef) {
+                    float arrowX = defX - INDICATOR_ARROW_WIDTH - INDICATOR_ARROW_OFFSET;
+                    float arrowY = defY + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
+                    renderIndicatorArrow(arrowX, arrowY, true, alphaMult);
+                } else if (effectiveDef < baseDef) {
+                    float arrowX = defX - INDICATOR_ARROW_WIDTH - INDICATOR_ARROW_OFFSET;
+                    float arrowY = defY + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
+                    renderIndicatorArrow(arrowX, arrowY, false, alphaMult);
+                }
+            }
         }
 
         GLStateUtil.resetColor();

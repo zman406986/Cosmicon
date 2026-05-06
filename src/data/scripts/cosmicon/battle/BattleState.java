@@ -86,6 +86,9 @@ public class BattleState {
     
     private boolean isDefenderRolling;
 
+    private List<DiceType> playerUpgradedDicePool;
+    private List<DiceType> opponentUpgradedDicePool;
+
     private List<DiceType> playerDiceTypes;
     private List<Integer> playerDiceValues;
     private List<Boolean> playerDiceSelected;
@@ -113,7 +116,16 @@ public class BattleState {
     private final List<ModificationRecord> modificationOrder;
     private int modificationSequenceCounter;
 
-    public record ModificationRecord(StatusEffectProcessor.StatusEffect effect, boolean forPlayer, int sequence) {}
+    private int playerHackDiceIndex = -1;
+    private int opponentHackDiceIndex = -1;
+    private int playerAriseDiceIndex = -1;
+    private int opponentAriseDiceIndex = -1;
+
+    public record ModificationRecord(StatusEffectProcessor.StatusEffect effect, boolean forPlayer, int sequence, int diceIndex) {
+        public ModificationRecord(StatusEffectProcessor.StatusEffect effect, boolean forPlayer, int sequence) {
+            this(effect, forPlayer, sequence, -1);
+        }
+    }
 
     public interface BattleEventListener {
         void onPhaseChange(Phase newPhase);
@@ -196,6 +208,8 @@ public class BattleState {
         this.opponentCard = opponentCard;
         this.playerDicePoolCounts = DicePoolCounts.fromPool(playerCard.getDicePool());
         this.opponentDicePoolCounts = DicePoolCounts.fromPool(opponentCard.getDicePool());
+        this.playerUpgradedDicePool = null;
+        this.opponentUpgradedDicePool = null;
         resetBattleState(playerCard.getMaxHp(), opponentCard.getMaxHp(), playerIsAttacker);
         playerCumulativeAtkDef = 0;
         opponentCumulativeAtkDef = 0;
@@ -373,10 +387,12 @@ public class BattleState {
     }
     
     public DicePoolCounts getPlayerDicePoolCounts() {
+        if (playerUpgradedDicePool != null) return DicePoolCounts.fromPool(playerUpgradedDicePool);
         return playerDicePoolCounts;
     }
 
     public DicePoolCounts getOpponentDicePoolCounts() {
+        if (opponentUpgradedDicePool != null) return DicePoolCounts.fromPool(opponentUpgradedDicePool);
         return opponentDicePoolCounts;
     }
 
@@ -408,6 +424,40 @@ public class BattleState {
         CosmiconLogger.debug("Effect applied to %s (%d layers)", toPlayer ? "Player" : "Opponent", layers);
     }
 
+    public void setHackDiceIndex(boolean forPlayer, int diceIndex) {
+        if (forPlayer) {
+            playerHackDiceIndex = diceIndex;
+        } else {
+            opponentHackDiceIndex = diceIndex;
+        }
+    }
+
+    public void setAriseDiceIndex(boolean forPlayer, int diceIndex) {
+        if (forPlayer) {
+            playerAriseDiceIndex = diceIndex;
+        } else {
+            opponentAriseDiceIndex = diceIndex;
+        }
+    }
+
+    public int getHackDiceIndex(boolean forPlayer) {
+        return forPlayer ? playerHackDiceIndex : opponentHackDiceIndex;
+    }
+
+    public int getAriseDiceIndex(boolean forPlayer) {
+        return forPlayer ? playerAriseDiceIndex : opponentAriseDiceIndex;
+    }
+
+    public StatusEffectProcessor.StatusEffect getLatestDiceEffect(boolean forPlayer, int diceIndex) {
+        if (diceIndex == getHackDiceIndex(forPlayer)) {
+            return StatusEffectProcessor.StatusEffect.HACK;
+        }
+        if (diceIndex == getAriseDiceIndex(forPlayer)) {
+            return StatusEffectProcessor.StatusEffect.ARISE;
+        }
+        return null;
+    }
+
     public List<ModificationRecord> getModificationOrder() {
         return new ArrayList<>(modificationOrder);
     }
@@ -429,6 +479,10 @@ public class BattleState {
         opponentEffects.resetTurnState();
         modificationOrder.clear();
         modificationSequenceCounter = 0;
+        playerHackDiceIndex = -1;
+        opponentHackDiceIndex = -1;
+        playerAriseDiceIndex = -1;
+        opponentAriseDiceIndex = -1;
     }
     
     public void clearTemporaryEffects() {
@@ -828,6 +882,20 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         if (forPlayer) playerDiceTypes = types;
         else opponentDiceTypes = types;
     }
+
+    public List<DiceType> getUpgradedDicePool(boolean forPlayer) {
+        return forPlayer ? playerUpgradedDicePool : opponentUpgradedDicePool;
+    }
+
+    public void setUpgradedDicePool(boolean forPlayer, List<DiceType> pool) {
+        if (forPlayer) playerUpgradedDicePool = pool;
+        else opponentUpgradedDicePool = pool;
+    }
+
+    public void clearUpgradedDicePool(boolean forPlayer) {
+        if (forPlayer) playerUpgradedDicePool = null;
+        else opponentUpgradedDicePool = null;
+    }
     
     public void setDiceSelected(boolean forPlayer, List<Boolean> selected) {
         if (forPlayer) playerDiceSelected = selected;
@@ -1212,6 +1280,9 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         opponentDiceTypes = null;
         opponentDiceValues = null;
         opponentDiceSelected = null;
+
+        playerUpgradedDicePool = null;
+        opponentUpgradedDicePool = null;
         
         playerPrismaticDiceByIndex.clear();
         opponentPrismaticDiceByIndex.clear();

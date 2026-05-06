@@ -40,8 +40,11 @@ public class DiceRoller {
 
         CharacterCard card = state.getCard(forPlayer);
         boolean isAttacker = state.isAttacker(forPlayer);
-        
-        List<DiceType> types = card.getDicePool();
+
+        List<DiceType> types = state.getUpgradedDicePool(forPlayer);
+        if (types == null) {
+            types = card.getDicePool();
+        }
         List<Integer> values = new ArrayList<>();
         List<Boolean> selected = new ArrayList<>();
         

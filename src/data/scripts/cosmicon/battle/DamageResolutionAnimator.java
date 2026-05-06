@@ -525,15 +525,8 @@ public class DamageResolutionAnimator {
     
     private void advanceComboPause() {
         if (phaseElapsed >= COMBO_PAUSE_DURATION) {
-            comboResultNumber = new FlyingNumber();
-            comboResultNumber.setValue(comboDamage);
-            comboResultNumber.setColor(DAMAGE_RESULT_COLOR);
-            comboResultNumber.startFrom(centerX, centerY);
-            comboResultNumber.flyTo(defenderTargetX, defenderTargetY, RESULT_FLIGHT_DURATION);
-            
             if (atkFlyingIcon != null) {
                 atkFlyingIcon.setValue(comboDamage);
-                atkFlyingIcon.setLabelOpacity(0f);
                 atkFlyingIcon.setTargetRotation(playerAttacker ? ATK_ROTATION_TO_BOTTOM_RIGHT : ATK_ROTATION_TO_TOP_LEFT);
                 atkFlyingIcon.flyDirectTo(defenderTargetX, defenderTargetY, COMBO_ICON_FLY_DURATION);
             }
@@ -545,9 +538,8 @@ public class DamageResolutionAnimator {
     
     private void advanceComboSecondClash() {
         boolean iconDone = atkFlyingIcon == null || atkFlyingIcon.isComplete();
-        boolean numberDone = comboResultNumber == null || comboResultNumber.hasImpacted();
         
-        if ((phaseElapsed >= RESULT_FLIGHT_DURATION || numberDone) && iconDone) {
+        if (phaseElapsed >= COMBO_ICON_FLY_DURATION || iconDone) {
             impactEffect.triggerFlash(defenderTargetX, defenderTargetY, 40f, DAMAGE_RESULT_COLOR);
             impactEffect.triggerShockwave(defenderTargetX, defenderTargetY);
             
@@ -562,6 +554,12 @@ public class DamageResolutionAnimator {
     
     private void advanceComboSecondImpact() {
         if (phaseElapsed >= IMPACT_FLASH_DURATION) {
+            comboResultNumber = new FlyingNumber();
+            comboResultNumber.setValue(comboDamage);
+            comboResultNumber.setColor(DAMAGE_RESULT_COLOR);
+            comboResultNumber.startFrom(defenderTargetX, defenderTargetY);
+            comboResultNumber.flyTo(defenderTargetX, defenderTargetY - 30f, RESULT_FLIGHT_DURATION);
+            
             if (atkFlyingIcon != null) {
                 atkFlyingIcon.setTargetRotation(0f);
                 atkFlyingIcon.flyDirectTo(atkIconCenterX, atkIconCenterY, ICON_RETREAT_DURATION);
@@ -622,7 +620,7 @@ public class DamageResolutionAnimator {
         if (isComboPhase) {
             if (atkFlyingIcon != null) {
                 atkFlyingIcon.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
-                atkFlyingIcon.setLabelOpacity(0f);
+                atkFlyingIcon.setLabelOpacity(phase == Phase.COMBO_SECOND_CLASH ? alphaMult : 0f);
             }
             return;
         }

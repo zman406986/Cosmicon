@@ -11,6 +11,7 @@ import data.scripts.cosmicon.character.PassiveEventSystem;
 import data.scripts.cosmicon.util.PassiveEvaluator;
 import data.scripts.cosmicon.util.PassiveResults.PassiveResult;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.BooleanSupplier;
@@ -440,6 +441,7 @@ public class TurnProcessor {
         
         List<Boolean> selected = state.getDiceSelected(forPlayer);
         if (selected != null) {
+            Collections.fill(selected, false);
             for (int idx : aiPlannedIndices) {
                 if (idx < selected.size()) {
                     selected.set(idx, true);
@@ -455,11 +457,14 @@ public class TurnProcessor {
         
         int oldValue = isAttackPhase ? state.getAttackValue() : state.getDefenseValue();
         List<Integer> preSelectValues = new ArrayList<>(state.getDiceValues(forPlayer));
+        List<DiceType> preSelectTypes = state.getDiceTypes(forPlayer) != null ? new ArrayList<>(state.getDiceTypes(forPlayer)) : null;
         state.getEffects(forPlayer).processPhase(Phase.AFTER_SELECT, turnType, context);
         state.setDiceValues(forPlayer, context.getDiceValues());
         state.setDiceTypes(forPlayer, context.getDiceTypes());
+        updateUpgradedDicePool(forPlayer);
         List<Integer> postSelectValues = state.getDiceValues(forPlayer);
         notifyRestDiceValueChanges(preSelectValues, postSelectValues, forPlayer);
+        notifyRestDiceTypeChanges(preSelectTypes, state.getDiceTypes(forPlayer), forPlayer);
         
         int newValue = isAttackPhase ? state.getAttackValue() : state.getDefenseValue();
         if (newValue != oldValue) {
@@ -518,11 +523,14 @@ public class TurnProcessor {
         
         int oldValue = isAttackPhase ? state.getAttackValue() : state.getDefenseValue();
         List<Integer> preSelectValues = new ArrayList<>(state.getDiceValues(false));
+        List<DiceType> preSelectTypes = state.getDiceTypes(false) != null ? new ArrayList<>(state.getDiceTypes(false)) : null;
         state.getOpponentEffects().processPhase(Phase.AFTER_SELECT, opponentTurnType, opponentContext);
         state.setDiceValues(false, opponentContext.getDiceValues());
         state.setDiceTypes(false, opponentContext.getDiceTypes());
+        updateUpgradedDicePool(false);
         List<Integer> postSelectValues = state.getDiceValues(false);
         notifyRestDiceValueChanges(preSelectValues, postSelectValues, false);
+        notifyRestDiceTypeChanges(preSelectTypes, state.getDiceTypes(false), false);
         
         int newValue = isAttackPhase ? state.getAttackValue() : state.getDefenseValue();
         if (newValue != oldValue) {
@@ -628,7 +636,13 @@ public class TurnProcessor {
                 int oldSum = state.calculateSelectedSum(forPlayer);
 
                 effects.processedEffectsFromModification(StatusEffect.ARISE);
-                context.applyArise();
+                int ariseDiceIndex = context.applyArise();
+                if (ariseDiceIndex >= 0) {
+                    state.setAriseDiceIndex(forPlayer, ariseDiceIndex);
+                    if (diceRollManager != null) {
+                        diceRollManager.setRestDiceEffect(ariseDiceIndex, StatusEffect.ARISE, forPlayer);
+                    }
+                }
                 effects.removeEffect(StatusEffect.ARISE);
                 state.setDiceValues(forPlayer, context.getDiceValues());
 
@@ -655,19 +669,24 @@ public class TurnProcessor {
                 int oldTargetSum = state.calculateSelectedSum(targetIsPlayer);
 
                 effects.processedEffectsFromModification(StatusEffect.HACK);
-                if (targetContext.applyHackToSelectedDice()) {
-                    state.setDiceValues(targetIsPlayer, targetContext.getDiceValues());
-                    boolean targetIsAttacker = state.isAttacker(targetIsPlayer);
-                    if (targetIsAttacker) state.setAttackValue(state.calculateSelectedSum(targetIsPlayer));
-                    else state.setDefenseValue(state.calculateSelectedSum(targetIsPlayer));
+                int hackDiceIndex = targetContext.applyHackToSelectedDice();
+                if (hackDiceIndex >= 0) {
+                    state.setHackDiceIndex(targetIsPlayer, hackDiceIndex);
+                    if (diceRollManager != null) {
+                        diceRollManager.setRestDiceEffect(hackDiceIndex, StatusEffect.HACK, targetIsPlayer);
+                    }
                 }
+                state.setDiceValues(targetIsPlayer, targetContext.getDiceValues());
+                boolean targetIsAttacker = state.isAttacker(targetIsPlayer);
+                if (targetIsAttacker) state.setAttackValue(state.calculateSelectedSum(targetIsPlayer));
+                else state.setDefenseValue(state.calculateSelectedSum(targetIsPlayer));
+
                 List<Integer> postHackValues = state.getDiceValues(targetIsPlayer);
                 notifyRestDiceValueChanges(preHackValues, postHackValues, targetIsPlayer);
 
                 int newTargetSum = state.calculateSelectedSum(targetIsPlayer);
                 if (newTargetSum != oldTargetSum) {
                     int delta = newTargetSum - oldTargetSum;
-                    boolean targetIsAttacker = state.isAttacker(targetIsPlayer);
                     String changeType = targetIsAttacker ? "ATTACK_LEVEL_UP" : "DEFENSE_LEVEL_UP";
                     state.queueValueChange(targetIsPlayer, changeType, delta);
                     state.notifyValueChange(targetIsPlayer, "HACK", oldTargetSum, newTargetSum, delta);
@@ -1001,11 +1020,14 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         boolean isAttackPhase = state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK;
         int oldValue = isAttackPhase ? state.getAttackValue() : state.getDefenseValue();
         List<Integer> preSelectValues = new ArrayList<>(state.getDiceValues(true));
+        List<DiceType> preSelectTypes = state.getDiceTypes(true) != null ? new ArrayList<>(state.getDiceTypes(true)) : null;
         state.getPlayerEffects().processPhase(Phase.AFTER_SELECT, playerTurnType, playerContext);
         state.setDiceValues(true, playerContext.getDiceValues());
         state.setDiceTypes(true, playerContext.getDiceTypes());
+        updateUpgradedDicePool(true);
         List<Integer> postSelectValues = state.getDiceValues(true);
         notifyRestDiceValueChanges(preSelectValues, postSelectValues, true);
+        notifyRestDiceTypeChanges(preSelectTypes, state.getDiceTypes(true), true);
         
         int newValue = isAttackPhase ? state.getAttackValue() : state.getDefenseValue();
         if (newValue != oldValue) {
@@ -1125,6 +1147,36 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
             if (!oldValues.get(i).equals(newValues.get(i))) {
                 diceRollManager.updateRestDiceValue(i, newValues.get(i), forPlayer);
             }
+        }
+    }
+
+    private void notifyRestDiceTypeChanges(List<DiceType> oldTypes, List<DiceType> newTypes, boolean forPlayer) {
+        if (diceRollManager == null || oldTypes == null || newTypes == null) return;
+        if (!diceRollManager.hasRestAnimators(forPlayer)) return;
+
+        int minSize = Math.min(oldTypes.size(), newTypes.size());
+        for (int i = 0; i < minSize; i++) {
+            if (oldTypes.get(i) != newTypes.get(i)) {
+                diceRollManager.updateRestDiceType(i, newTypes.get(i), forPlayer);
+            }
+        }
+    }
+
+    private void updateUpgradedDicePool(boolean forPlayer) {
+        List<DiceType> currentTypes = state.getDiceTypes(forPlayer);
+        if (currentTypes == null) return;
+
+        List<DiceType> basePool = state.getCard(forPlayer).getDicePool();
+        boolean hasUpgrade = false;
+        for (int i = 0; i < currentTypes.size(); i++) {
+            if (i < basePool.size() && currentTypes.get(i) != basePool.get(i)) {
+                hasUpgrade = true;
+                break;
+            }
+        }
+
+        if (hasUpgrade) {
+            state.setUpgradedDicePool(forPlayer, new ArrayList<>(currentTypes));
         }
     }
 }

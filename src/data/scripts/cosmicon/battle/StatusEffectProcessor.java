@@ -407,7 +407,7 @@ public class StatusEffectProcessor {
             return diceValues;
         }
 
-        public boolean applyHackToSelectedDice() {
+        public int applyHackToSelectedDice() {
             int maxIndex = -1;
             int maxValue = -1;
             for (int i = 0; i < diceValues.size(); i++) {
@@ -419,12 +419,12 @@ public class StatusEffectProcessor {
             if (maxIndex >= 0) {
                 CosmiconLogger.debug("HACK: Transformed highest dice %d to 2", maxValue);
                 diceValues.set(maxIndex, 2);
-                return true;
+                return maxIndex;
             }
-            return false;
+            return -1;
         }
 
-        public void applyArise() {
+        public int applyArise() {
             int minIndex = -1;
             int minValue = Integer.MAX_VALUE;
             int minMaxFace = 0;
@@ -437,7 +437,9 @@ public class StatusEffectProcessor {
             }
             if (minIndex >= 0) {
                 diceValues.set(minIndex, minMaxFace);
+                return minIndex;
             }
+            return -1;
         }
 
         private int getDiceMaxFace(int index) {

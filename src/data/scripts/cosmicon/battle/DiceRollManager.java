@@ -653,11 +653,26 @@ public class DiceRollManager {
             restList.get(index).animateValueChange(displayValue);
         }
     }
+
+    public void updateRestDiceType(int index, DiceType newType, boolean forPlayer) {
+        List<DiceAnimator> restList = forPlayer ? playerRestAnimators : opponentRestAnimators;
+        if (index >= 0 && index < restList.size()) {
+            restList.get(index).setType(newType);
+        }
+    }
+
+    public void setRestDiceEffect(int index, StatusEffectProcessor.StatusEffect effect, boolean forPlayer) {
+        List<DiceAnimator> restList = forPlayer ? playerRestAnimators : opponentRestAnimators;
+        if (index >= 0 && index < restList.size()) {
+            restList.get(index).setDiceEffect(effect);
+        }
+    }
     
     public void clearRestAnimators(boolean forPlayer) {
         List<DiceAnimator> restList = forPlayer ? playerRestAnimators : opponentRestAnimators;
         for (DiceAnimator animator : restList) {
             animator.forceComplete();
+            animator.setDiceEffect(null);
         }
         restList.clear();
     }

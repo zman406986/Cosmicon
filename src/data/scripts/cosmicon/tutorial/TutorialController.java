@@ -55,6 +55,7 @@ public class TutorialController {
         G2_T3_ATTACK_ROLL,
         G2_T3_ATTACK_PRISMATIC,
         G2_T3_ATTACK_REROLL,
+        G2_T3_ATTACK_REROLL2,
         G2_T3_ATTACK_SELECT,
         G2_T3_ATTACK_CONFIRM,
         G2_T3_ATTACK_WAIT,
@@ -124,6 +125,7 @@ public class TutorialController {
                  G2_T2_ATTACK_PRISMATIC, G2_T2_ATTACK_SELECT,
                  G2_T2_DEFENSE_SELECT,
                  G2_T3_ATTACK_PRISMATIC, G2_T3_ATTACK_REROLL,
+                 G2_T3_ATTACK_REROLL2,
                  G2_T3_ATTACK_SELECT,
                  G2_T3_DEFENSE_SELECT,
                  G2_T4_ATTACK_SELECT -> true;
@@ -153,7 +155,7 @@ public class TutorialController {
 
             case G1_T2_ATTACK_REROLL -> !isAmongHighest(diceIndex, values, 2);
 
-            case G2_T3_ATTACK_REROLL -> !isPrismatic;
+            case G2_T3_ATTACK_REROLL, G2_T3_ATTACK_REROLL2 -> !isPrismatic;
 
             case G2_T2_ATTACK_PRISMATIC, G2_T2_ATTACK_SELECT ->
                 isPrismatic || (value == 4 && isPrismaticDiceSelected());
@@ -182,7 +184,8 @@ public class TutorialController {
             return true;
         }
 
-        if (currentStep == TutorialStep.G2_T3_ATTACK_REROLL) {
+        if (currentStep == TutorialStep.G2_T3_ATTACK_REROLL
+                || currentStep == TutorialStep.G2_T3_ATTACK_REROLL2) {
             List<DiceType> types = battleState.getPlayerDiceTypes();
             List<Boolean> selected = battleState.getPlayerDiceSelected();
             for (int i = 0; i < types.size(); i++) {
@@ -249,7 +252,8 @@ public class TutorialController {
         if (complete) return true;
 
         return currentStep == TutorialStep.G1_T2_ATTACK_REROLL
-            || currentStep == TutorialStep.G2_T3_ATTACK_REROLL;
+            || currentStep == TutorialStep.G2_T3_ATTACK_REROLL
+            || currentStep == TutorialStep.G2_T3_ATTACK_REROLL2;
     }
 
     public boolean isPrismaticAllowed() {
@@ -260,6 +264,7 @@ public class TutorialController {
             || currentStep == TutorialStep.G2_T2_ATTACK_SELECT
             || currentStep == TutorialStep.G2_T3_ATTACK_PRISMATIC
             || currentStep == TutorialStep.G2_T3_ATTACK_REROLL
+            || currentStep == TutorialStep.G2_T3_ATTACK_REROLL2
             || currentStep == TutorialStep.G2_T3_ATTACK_SELECT;
 
         if (!isAttackPhase) return false;
@@ -383,6 +388,8 @@ public class TutorialController {
         if (currentStep == TutorialStep.G1_T2_ATTACK_REROLL) {
             currentStep = TutorialStep.G1_T2_ATTACK_SELECT;
         } else if (currentStep == TutorialStep.G2_T3_ATTACK_REROLL) {
+            currentStep = TutorialStep.G2_T3_ATTACK_REROLL2;
+        } else if (currentStep == TutorialStep.G2_T3_ATTACK_REROLL2) {
             currentStep = TutorialStep.G2_T3_ATTACK_SELECT;
         }
     }

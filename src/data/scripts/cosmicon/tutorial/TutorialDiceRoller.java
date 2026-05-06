@@ -1,7 +1,9 @@
 package data.scripts.cosmicon.tutorial;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.CharacterCard;
@@ -15,7 +17,8 @@ public class TutorialDiceRoller {
     private final TutorialController controller;
     private int playerRollIndex;
     private int opponentRollIndex;
-    private boolean rerollDone;
+    private final Set<String> completedRerolls;
+    private int opponentRerollCount;
 
     private static final int[][] GAME1_PLAYER_ROLLS = {
         {6, 5, 4, 3, 2},
@@ -50,6 +53,12 @@ public class TutorialDiceRoller {
     };
 
     private static final int[] GAME2_REROLL_RESULT = {3, 3, 2, 2, 1};
+    private static final int[] GAME2_REROLL2_RESULT = {4, 3, 2, 2, 1};
+
+    private static final int[][] GAME2_OPPONENT_REROLL_RESULTS = {
+        {4, 3, 2, 2, 1},
+        {4, 3, 2, 2, 1}
+    };
 
     private static final int GAME2_PRISMATIC_FACE = 4;
     private static final int GAME2_PRISMATIC_FACE_INDEX = 4;
@@ -58,7 +67,8 @@ public class TutorialDiceRoller {
         this.controller = controller;
         this.playerRollIndex = 0;
         this.opponentRollIndex = 0;
-        this.rerollDone = false;
+        this.completedRerolls = new HashSet<>();
+        this.opponentRerollCount = 0;
     }
 
     public boolean shouldInterceptPrismaticRoll() {
@@ -78,15 +88,36 @@ public class TutorialDiceRoller {
     }
 
     public boolean shouldInterceptReroll(boolean forPlayer) {
-        if (!forPlayer || rerollDone) return false;
-
-        if (controller.getGame() == TutorialController.TutorialGame.GAME_1_SPARXIE) {
-            return controller.getCurrentStep() == TutorialController.TutorialStep.G1_T2_ATTACK_REROLL;
+        if (forPlayer) {
+            String key = getPlayerRerollKey();
+            return key != null && !completedRerolls.contains(key);
         }
-        if (controller.getGame() == TutorialController.TutorialGame.GAME_2_ACHERON) {
-            return controller.getCurrentStep() == TutorialController.TutorialStep.G2_T3_ATTACK_REROLL;
+        return shouldInterceptOpponentReroll();
+    }
+
+    private boolean shouldInterceptOpponentReroll() {
+        if (controller.getGame() == TutorialController.TutorialGame.GAME_2_ACHERON
+                && controller.getCurrentStep() == TutorialController.TutorialStep.G2_T1_DEFENSE_ROLL) {
+            return opponentRerollCount < GAME2_OPPONENT_REROLL_RESULTS.length;
         }
         return false;
+    }
+
+    private String getPlayerRerollKey() {
+        if (controller.getGame() == TutorialController.TutorialGame.GAME_1_SPARXIE) {
+            if (controller.getCurrentStep() == TutorialController.TutorialStep.G1_T2_ATTACK_REROLL) {
+                return "G1_T2_PLAYER";
+            }
+        }
+        if (controller.getGame() == TutorialController.TutorialGame.GAME_2_ACHERON) {
+            if (controller.getCurrentStep() == TutorialController.TutorialStep.G2_T3_ATTACK_REROLL) {
+                return "G2_T3_PLAYER_1";
+            }
+            if (controller.getCurrentStep() == TutorialController.TutorialStep.G2_T3_ATTACK_REROLL2) {
+                return "G2_T3_PLAYER_2";
+            }
+        }
+        return null;
     }
 
     public void rollForParticipant(BattleState state, boolean forPlayer) {
@@ -98,16 +129,24 @@ public class TutorialDiceRoller {
     }
 
     public void rerollSelected(BattleState state, boolean forPlayer) {
-        if (rerollDone) return;
+        if (forPlayer) {
+            String key = getPlayerRerollKey();
+            if (key == null || completedRerolls.contains(key)) return;
 
-        if (controller.getGame() == TutorialController.TutorialGame.GAME_1_SPARXIE
-                && controller.getCurrentStep() == TutorialController.TutorialStep.G1_T2_ATTACK_REROLL) {
-            rerollGame1Turn3(state, forPlayer);
-            rerollDone = true;
-        } else if (controller.getGame() == TutorialController.TutorialGame.GAME_2_ACHERON
-                && controller.getCurrentStep() == TutorialController.TutorialStep.G2_T3_ATTACK_REROLL) {
-            rerollGame2T3(state, forPlayer);
-            rerollDone = true;
+            switch (key)
+            {
+                case "G1_T2_PLAYER" -> rerollGame1Turn3(state);
+                case "G2_T3_PLAYER_1" -> rerollGame2T3(state);
+                case "G2_T3_PLAYER_2" -> rerollGame2T3Second(state);
+            }
+            completedRerolls.add(key);
+        } else {
+            if (controller.getGame() == TutorialController.TutorialGame.GAME_2_ACHERON
+                    && controller.getCurrentStep() == TutorialController.TutorialStep.G2_T1_DEFENSE_ROLL
+                    && opponentRerollCount < GAME2_OPPONENT_REROLL_RESULTS.length) {
+                rerollGame2Opponent(state);
+                opponentRerollCount++;
+            }
         }
     }
 
@@ -123,9 +162,9 @@ public class TutorialDiceRoller {
         }
     }
 
-    private void rerollGame1Turn3(BattleState state, boolean forPlayer) {
-        List<Integer> values = state.getDiceValues(forPlayer);
-        List<Boolean> selected = state.getDiceSelected(forPlayer);
+    private void rerollGame1Turn3(BattleState state) {
+        List<Integer> values = state.getDiceValues(true);
+        List<Boolean> selected = state.getDiceSelected(true);
         List<Integer> rerolledIndices = new ArrayList<>();
 
         int resultIdx = 0;
@@ -138,9 +177,9 @@ public class TutorialDiceRoller {
             }
         }
 
-        state.setDiceValues(forPlayer, values);
-        state.decrementRerolls(forPlayer);
-        state.incrementRerollsUsed(forPlayer);
+        state.setDiceValues(true, values);
+        state.decrementRerolls(true);
+        state.incrementRerollsUsed(true);
 
         CosmiconLogger.debug("TutorialDiceRoller: Game 1 Turn 3 reroll - indices: %s", rerolledIndices);
     }
@@ -157,10 +196,10 @@ public class TutorialDiceRoller {
         }
     }
 
-    private void rerollGame2T3(BattleState state, boolean forPlayer) {
-        List<Integer> values = state.getDiceValues(forPlayer);
-        List<Boolean> selected = state.getDiceSelected(forPlayer);
-        List<DiceType> types = state.getDiceTypes(forPlayer);
+    private void rerollGame2T3(BattleState state) {
+        List<Integer> values = state.getDiceValues(true);
+        List<Boolean> selected = state.getDiceSelected(true);
+        List<DiceType> types = state.getDiceTypes(true);
         List<Integer> rerolledIndices = new ArrayList<>();
 
         int resultIdx = 0;
@@ -173,11 +212,58 @@ public class TutorialDiceRoller {
             }
         }
 
-        state.setDiceValues(forPlayer, values);
-        state.decrementRerolls(forPlayer);
-        state.incrementRerollsUsed(forPlayer);
+        state.setDiceValues(true, values);
+        state.decrementRerolls(true);
+        state.incrementRerollsUsed(true);
 
         CosmiconLogger.debug("TutorialDiceRoller: Game 2 T3 reroll (non-prismatic) - indices: %s", rerolledIndices);
+    }
+
+    private void rerollGame2T3Second(BattleState state) {
+        List<Integer> values = state.getDiceValues(true);
+        List<Boolean> selected = state.getDiceSelected(true);
+        List<DiceType> types = state.getDiceTypes(true);
+        List<Integer> rerolledIndices = new ArrayList<>();
+
+        int resultIdx = 0;
+        for (int i = 0; i < selected.size(); i++) {
+            if (selected.get(i) && types.get(i) != DiceType.PRISMATIC) {
+                if (resultIdx < GAME2_REROLL2_RESULT.length) {
+                    values.set(i, GAME2_REROLL2_RESULT[resultIdx++]);
+                }
+                rerolledIndices.add(i);
+            }
+        }
+
+        state.setDiceValues(true, values);
+        state.decrementRerolls(true);
+        state.incrementRerollsUsed(true);
+
+        CosmiconLogger.debug("TutorialDiceRoller: Game 2 T3 second reroll (non-prismatic) - indices: %s", rerolledIndices);
+    }
+
+    private void rerollGame2Opponent(BattleState state) {
+        List<Integer> values = state.getDiceValues(false);
+        List<Boolean> selected = state.getDiceSelected(false);
+        List<Integer> rerolledIndices = new ArrayList<>();
+
+        int[] results = GAME2_OPPONENT_REROLL_RESULTS[opponentRerollCount];
+        int resultIdx = 0;
+        for (int i = 0; i < selected.size(); i++) {
+            if (selected.get(i)) {
+                if (resultIdx < results.length) {
+                    values.set(i, results[resultIdx++]);
+                }
+                rerolledIndices.add(i);
+            }
+        }
+
+        state.setDiceValues(false, values);
+        state.decrementRerolls(false);
+        state.incrementRerollsUsed(false);
+
+        CosmiconLogger.debug("TutorialDiceRoller: Game 2 T1 opponent reroll #%d - indices: %s",
+            opponentRerollCount + 1, rerolledIndices);
     }
 
     private void setFixedRoll(BattleState state, boolean forPlayer, int[] values) {

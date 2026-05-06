@@ -538,7 +538,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             float cardGlY = cardPos.glSpriteY(CARD_HEIGHT);
 
             CharacterCard card = characters.get(i);
-            BattleRenderingUtils.renderCharacterCard(cardGlX, cardGlY, card, alphaMult);
+            BattleRenderingUtils.renderCharacterCard(cardGlX, cardGlY, card, card.getAtkLevel(), card.getDefLevel(), alphaMult);
 
             if (i == selectedIndex) {
                 GLStateUtil.resetBlendState();

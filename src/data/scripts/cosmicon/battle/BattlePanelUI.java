@@ -1032,7 +1032,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         if (battleState != null) {
             CharacterCard card = battleState.getPlayerCard();
-            BattleRenderingUtils.renderCharacterCard(cardX, cardY, card, alphaMult);
+            int effectiveAtk = battleState.getEffectiveAtkLevel(true);
+            int effectiveDef = battleState.getEffectiveDefLevel(true);
+            BattleRenderingUtils.renderCharacterCard(cardX, cardY, card, effectiveAtk, effectiveDef, alphaMult);
         } else {
             Color playerCardColor = ColorHelper.PLAYER_CARD_PLACEHOLDER;
             BattleRenderingUtils.renderCardPlaceholder(cardX, cardY, BattleRenderingUtils.CARD_WIDTH,
@@ -1048,7 +1050,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         if (battleState != null) {
             CharacterCard card = battleState.getOpponentCard();
-            BattleRenderingUtils.renderCharacterCard(cardX, cardY, card, alphaMult);
+            int effectiveAtk = battleState.getEffectiveAtkLevel(false);
+            int effectiveDef = battleState.getEffectiveDefLevel(false);
+            BattleRenderingUtils.renderCharacterCard(cardX, cardY, card, effectiveAtk, effectiveDef, alphaMult);
         } else {
             Color opponentCardColor = ColorHelper.OPPONENT_CARD_PLACEHOLDER;
             BattleRenderingUtils.renderCardPlaceholder(cardX, cardY, BattleRenderingUtils.CARD_WIDTH,

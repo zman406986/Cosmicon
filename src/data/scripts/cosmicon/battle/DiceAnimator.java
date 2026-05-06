@@ -1,5 +1,7 @@
 package data.scripts.cosmicon.battle;
 
+import java.awt.Color;
+
 import org.lwjgl.opengl.GL11;
 
 import com.fs.starfarer.api.graphics.SpriteAPI;
@@ -79,8 +81,10 @@ public class DiceAnimator {
     private int stationaryFrameIndex;
     private int stationaryResultIndex;
     private float rollPickupStartScale;
-    
+
     private boolean reserve;
+
+    private StatusEffectProcessor.StatusEffect diceEffect;
     
     public static float getTotalDuration() {
         return TOTAL_DURATION;
@@ -88,6 +92,18 @@ public class DiceAnimator {
     
     public float getDisplaySize() {
         return type != null ? type.getDisplaySize() : AnimationConstants.DICE_SIZE;
+    }
+
+    public void setDiceEffect(StatusEffectProcessor.StatusEffect effect) {
+        this.diceEffect = effect;
+    }
+
+    public StatusEffectProcessor.StatusEffect getDiceEffect() {
+        return diceEffect;
+    }
+
+    public boolean hasDiceEffect() {
+        return diceEffect != null;
     }
     
 public DiceAnimator() {
@@ -102,6 +118,7 @@ public DiceAnimator() {
         directionRad = 0f;
         phase = Phase.ROLLING;
         phaseElapsed = 0f;
+        diceEffect = null;
     }
     
     public void init() {
@@ -629,6 +646,50 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
 
             float visualRotation = getVisualRotation(isSettledPhase);
             DiceSpriteRenderer.render(sprite, renderX, renderY, alphaMult, scale, displaySize, visualRotation);
+
+            if (diceEffect != null) {
+                boolean isUp = (diceEffect == StatusEffectProcessor.StatusEffect.ARISE);
+                float arrowSize = 10f;
+                float arrowX = renderX + displaySize - arrowSize - 2f;
+                float arrowY = renderY + 2f;
+
+                GLStateUtil.resetBlendState();
+
+                Color baseColor = isUp ? new Color(100, 220, 100) : new Color(220, 80, 80);
+                float[] c = data.scripts.cosmicon.util.ColorHelper.toGLComponents(baseColor, alphaMult);
+                GL11.glColor4f(c[0], c[1], c[2], c[3]);
+
+                GL11.glBegin(GL11.GL_TRIANGLES);
+                if (isUp) {
+                    GL11.glVertex2f(arrowX, arrowY);
+                    GL11.glVertex2f(arrowX + arrowSize, arrowY);
+                    GL11.glVertex2f(arrowX + arrowSize / 2f, arrowY + arrowSize);
+                } else {
+                    GL11.glVertex2f(arrowX + arrowSize / 2f, arrowY);
+                    GL11.glVertex2f(arrowX, arrowY + arrowSize);
+                    GL11.glVertex2f(arrowX + arrowSize, arrowY + arrowSize);
+                }
+                GL11.glEnd();
+
+                Color strokeColor = baseColor.darker();
+                float[] sc = data.scripts.cosmicon.util.ColorHelper.toGLComponents(strokeColor, alphaMult);
+                GL11.glColor4f(sc[0], sc[1], sc[2], sc[3]);
+                GL11.glLineWidth(1.5f);
+
+                GL11.glBegin(GL11.GL_LINE_LOOP);
+                if (isUp) {
+                    GL11.glVertex2f(arrowX, arrowY);
+                    GL11.glVertex2f(arrowX + arrowSize, arrowY);
+                    GL11.glVertex2f(arrowX + arrowSize / 2f, arrowY + arrowSize);
+                } else {
+                    GL11.glVertex2f(arrowX + arrowSize / 2f, arrowY);
+                    GL11.glVertex2f(arrowX, arrowY + arrowSize);
+                    GL11.glVertex2f(arrowX + arrowSize, arrowY + arrowSize);
+                }
+                GL11.glEnd();
+
+                GLStateUtil.resetColor();
+            }
         } finally {
             if (needsContextCleanup) {
                 UnifiedCoord.clearCurrent();
@@ -892,5 +953,9 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
     
     public float getPosYOffset() {
         return posYOffset;
+    }
+
+    public void setType(DiceType newType) {
+        this.type = newType;
     }
 }

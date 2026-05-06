@@ -1,6 +1,7 @@
 package data.scripts.cosmicon.util;
 
 import data.scripts.cosmicon.battle.BattleState;
+import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
@@ -226,9 +227,14 @@ public class CharacterPassives {
             int attackValue = state.getAttackValue();
             if (attackValue >= YAO_GUANG_ATTACK_THRESHOLD) {
                 state.getEffects(forPlayer).removeEffect(StatusEffect.THORNS);
-                state.addPrismaticUse(1);
-                for (PrismaticDiceType type : PrismaticDiceRegistry.getAll().values()) {
-                    state.addPrismaticUseByType(type, forPlayer, 1);
+                CharacterCard card = state.getCard(forPlayer);
+                if (card != null) {
+                    for (String diceId : card.getPrismaticDiceIds().keySet()) {
+                        PrismaticDiceType type = PrismaticDiceRegistry.get(diceId);
+                        if (type != null) {
+                            state.addPrismaticUseByType(type, forPlayer, 1);
+                        }
+                    }
                 }
             }
         }

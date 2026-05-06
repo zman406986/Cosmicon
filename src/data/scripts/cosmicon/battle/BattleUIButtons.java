@@ -256,7 +256,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
     private void createWeatherLabel() {
         float boxWidth = 255f;
         float descBoxHeight = 55f;
-        float descBoxPadding = 4f;
+        float descBoxPadding = 10f;
         float titleHeight = 18f;
         float playerCardY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN;
 
