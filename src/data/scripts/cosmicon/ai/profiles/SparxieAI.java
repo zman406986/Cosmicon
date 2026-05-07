@@ -2,7 +2,6 @@ package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleState;
-import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.DiceEvaluator;
 import java.util.*;

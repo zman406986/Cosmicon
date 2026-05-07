@@ -1,7 +1,5 @@
 package data.scripts.cosmicon.battle;
 
-import java.awt.Color;
-
 import org.lwjgl.opengl.GL11;
 
 import com.fs.starfarer.api.graphics.SpriteAPI;

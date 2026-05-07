@@ -993,8 +993,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private boolean shouldShowOpponentDice() {
-        if (battleState == null) return false;
-
         TurnState.Phase phase = battleState.getCurrentPhase();
         AISelectionVisualizer viz = battleState.getAiSelectionVisualizer();
 
@@ -1015,8 +1013,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void startOpponentDiceAnimation() {
-        if (battleState == null || diceRollManager == null) return;
-
         List<DiceType> types = battleState.getOpponentDiceTypes();
         List<Integer> values = battleState.getOpponentDiceValues();
 
@@ -1052,8 +1048,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
     @Override
     public void renderBelow(float alphaMult) {
-        if (battleState == null || diceRollManager == null) return;
-
         PositionAPI pos = panel.getPosition();
         float x = pos.getX();
         float y = pos.getY();
@@ -1068,7 +1062,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             boolean hideRoleIcons = damageAnimator != null && damageAnimator.isIconClashActive();
 
             BattleRenderingUtils.renderBattleBackground(x, y, w, h,
-                cachedRotationAngle, alphaMult, battleState != null, hideRoleIcons);
+                cachedRotationAngle, alphaMult, true, hideRoleIcons);
 
             renderCard(true, alphaMult);
             renderPlayerHpCircle(alphaMult);
@@ -1077,17 +1071,17 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             renderStatusEffectBoxes(alphaMult);
             renderWeatherDescBox(alphaMult);
 
-            if (labels.getStatusEffectAnimator() != null && labels.getStatusEffectAnimator().hasActiveAnimations()) {
+            if (labels.getStatusEffectAnimator().hasActiveAnimations()) {
                 labels.getStatusEffectAnimator().render(x, y, w, h, alphaMult);
             }
 
             ValueChangeAnimator attackerAnimator = labels.getAttackerValueAnimator();
             ValueChangeAnimator defenderAnimator = labels.getDefenderValueAnimator();
 
-            if (attackerAnimator != null && !attackerAnimator.isComplete()) {
+            if (!attackerAnimator.isComplete()) {
                 attackerAnimator.render(x, y, h, alphaMult);
             }
-            if (defenderAnimator != null && !defenderAnimator.isComplete()) {
+            if (!defenderAnimator.isComplete()) {
                 defenderAnimator.render(x, y, h, alphaMult);
             }
 
@@ -1113,7 +1107,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             renderOpponentPrismaticButton(alphaMult);
             renderPrismaticButton(alphaMult);
 
-            if (buttons.isPrismaticPopupActive() && buttons.getPrismaticPopup() != null) {
+            if (buttons.isPrismaticPopupActive()) {
                 buttons.getPrismaticPopup().renderBelow(alphaMult);
             }
 
@@ -1129,38 +1123,27 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
     private void renderCard(boolean isPlayer, float alphaMult) {
         float cardUiX, cardUiY;
-        Color placeholderColor;
 
         if (isPlayer) {
             cardUiX = BattleRenderingUtils.getPlayerCardX();
             cardUiY = BattleRenderingUtils.getPlayerCardY();
-            placeholderColor = ColorHelper.PLAYER_CARD_PLACEHOLDER;
         } else {
             cardUiX = BattleRenderingUtils.MARGIN;
             cardUiY = BattleRenderingUtils.MARGIN;
-            placeholderColor = ColorHelper.OPPONENT_CARD_PLACEHOLDER;
         }
 
         UnifiedCoord cardPos = new UnifiedCoord(cardUiX, cardUiY);
         float cardX = cardPos.glX();
         float cardY = cardPos.glSpriteY(BattleRenderingUtils.CARD_HEIGHT);
 
-        if (battleState != null) {
-            CharacterCard card = isPlayer ? battleState.getPlayerCard() : battleState.getOpponentCard();
-            int effectiveAtk = battleState.getEffectiveAtkLevel(isPlayer);
-            int effectiveDef = battleState.getEffectiveDefLevel(isPlayer);
-            BattleRenderingUtils.renderCharacterCard(cardX, cardY, card, effectiveAtk, effectiveDef, alphaMult);
-        } else {
-            BattleRenderingUtils.renderCardPlaceholder(cardX, cardY, BattleRenderingUtils.CARD_WIDTH,
-                BattleRenderingUtils.CARD_HEIGHT, placeholderColor, alphaMult);
-        }
+        CharacterCard card = isPlayer ? battleState.getPlayerCard() : battleState.getOpponentCard();
+        int effectiveAtk = battleState.getEffectiveAtkLevel(isPlayer);
+        int effectiveDef = battleState.getEffectiveDefLevel(isPlayer);
+        BattleRenderingUtils.renderCharacterCard(cardX, cardY, card, effectiveAtk, effectiveDef, alphaMult);
     }
 
     private void renderPlayerHpCircle(float alphaMult) {
-        if (battleState == null) return;
         CharacterCard card = battleState.getPlayerCard();
-        if (card == null) return;
-
         float cx = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.MARGIN + 5f + 17f;
         float cy = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.CARD_HEIGHT - BattleRenderingUtils.MARGIN + 14f + 10f;
 
@@ -1170,9 +1153,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void renderOpponentHpCircle(float alphaMult) {
-        if (battleState == null) return;
         CharacterCard card = battleState.getOpponentCard();
-        if (card == null) return;
 
         float cx = BattleRenderingUtils.MARGIN + 5f + 17f;
         float cy = BattleRenderingUtils.MARGIN + 14f + 10f;
@@ -1205,7 +1186,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void renderWeatherDescBox(float alphaMult) {
-        if (buttons == null) return;
         float boxW = buttons.getWeatherDescBoxW();
         float boxH = buttons.getWeatherDescBoxH();
         if (boxW <= 0f || boxH <= 0f) return;
@@ -1215,8 +1195,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void checkProcessedEffects() {
-        if (battleState == null || labels.getStatusEffectAnimator() == null) return;
-
         StatusEffectAnimator animator = labels.getStatusEffectAnimator();
 
         List<StatusEffectProcessor.ProcessedEffect> playerProcessed =
@@ -1296,15 +1274,12 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void renderDiceSelectionHighlights(float alphaMult) {
-        if (battleState == null) return;
         if (battleState.getCurrentPhase() != Phase.SELECTING_ATTACK &&
             battleState.getCurrentPhase() != Phase.SELECTING_DEFENSE) return;
 
         List<Boolean> selected = battleState.getPlayerDiceSelected();
-        if (selected == null) return;
 
         List<DiceAnimator> animators = diceRollManager.getAnimators();
-        if (animators == null || animators.isEmpty()) return;
 
         GLStateUtil.resetBlendState();
 
@@ -1347,8 +1322,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void renderOpponentSelectionHighlights(float alphaMult) {
-        if (battleState == null) return;
-
         AISelectionVisualizer viz = battleState.getAiSelectionVisualizer();
         if (viz == null || !viz.hasStarted() || viz.isRerollPhase()) return;
 

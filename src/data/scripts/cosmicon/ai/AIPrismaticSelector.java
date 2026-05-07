@@ -7,7 +7,6 @@ import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticEffect;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
-import data.scripts.cosmicon.util.CharacterIds;
 
 import java.util.List;
 
