@@ -43,6 +43,7 @@ public class FlyingIcon {
     private float targetRotation = 0f;
     private float rotationElapsed = 0f;
     private float originalRotation = 0f;
+    private float cachedLabelWidth = -1f;
 
     private LabelAPI valueLabel;
     private CustomPanelAPI labelPanel;
@@ -149,6 +150,7 @@ public class FlyingIcon {
     
     public void setValue(int value) {
         this.value = value;
+        this.cachedLabelWidth = -1f;
         updateLabelText();
     }
     
@@ -256,6 +258,7 @@ public class FlyingIcon {
         valueLabel.setAlignment(Alignment.MID);
         
         float labelWidth = valueLabel.computeTextWidth(text) + 10f;
+        this.cachedLabelWidth = labelWidth;
         panel.addComponent((UIComponentAPI) valueLabel)
             .setSize(labelWidth, LABEL_HEIGHT)
             .inTL(currentX - labelWidth / 2f, currentY - LABEL_HEIGHT / 2f);
@@ -266,7 +269,10 @@ public class FlyingIcon {
     
     private void updateLabelPosition() {
         if (valueLabel != null && labelCreated) {
-            float labelWidth = valueLabel.computeTextWidth(String.valueOf(value)) + 10f;
+            if (cachedLabelWidth < 0f) {
+                cachedLabelWidth = valueLabel.computeTextWidth(String.valueOf(value)) + 10f;
+            }
+            float labelWidth = cachedLabelWidth;
             ((UIComponentAPI) valueLabel).getPosition()
                 .setSize(labelWidth, LABEL_HEIGHT)
                 .inTL(currentX - labelWidth / 2f, currentY - LABEL_HEIGHT / 2f);

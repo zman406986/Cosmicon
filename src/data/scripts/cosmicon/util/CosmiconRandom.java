@@ -1,26 +1,25 @@
 package data.scripts.cosmicon.util;
 
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 public final class CosmiconRandom {
-
-    private static final Random RANDOM = new Random();
 
     private CosmiconRandom() {}
 
     public static Random getRandom() {
-        return RANDOM;
+        return ThreadLocalRandom.current();
     }
 
     public static int nextInt(int bound) {
-        return RANDOM.nextInt(bound);
+        return ThreadLocalRandom.current().nextInt(bound);
     }
 
     public static float nextFloat() {
-        return RANDOM.nextFloat();
+        return ThreadLocalRandom.current().nextFloat();
     }
 
     public static boolean nextBoolean() {
-        return RANDOM.nextBoolean();
+        return ThreadLocalRandom.current().nextBoolean();
     }
 }

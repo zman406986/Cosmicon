@@ -1,5 +1,7 @@
 package data.scripts.cosmicon.prismatic;
 
+import data.scripts.cosmicon.util.CosmiconRandom;
+
 public class PrismaticDiceInstance {
     
     public final PrismaticDiceType type;
@@ -29,7 +31,7 @@ public class PrismaticDiceInstance {
     }
     
     public static PrismaticDiceInstance roll(PrismaticDiceType type, boolean isTrueVersion) {
-        return roll(type, isTrueVersion, new java.util.Random());
+        return roll(type, isTrueVersion, CosmiconRandom.getRandom());
     }
     
     public boolean isMustSelect() {

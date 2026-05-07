@@ -5,6 +5,7 @@ import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.CharacterRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
+import data.scripts.cosmicon.util.CharacterIds;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -19,6 +20,7 @@ public class CosmiconStats {
     private static final String KEY_HAS_GALLERY_CHARACTERS = "$cos_has_gallery_characters";
 
     private static final int TUTORIAL_GAMES = 2;
+    private static final String REPEATER_ID = "repeater";
 
     private static MemoryAPI getMemory() {
         return Global.getSector().getPlayerMemoryWithoutUpdate();
@@ -139,18 +141,18 @@ public class CosmiconStats {
     }
 
     public static void completeTutorialGame1() {
-        unlockCharacter("sparxie");
-        CosmiconPlayerState.saveCharacter("sparxie");
+        unlockCharacter(CharacterIds.SPARXIE);
+        CosmiconPlayerState.saveCharacter(CharacterIds.SPARXIE);
     }
 
     public static void completeTutorialGame2() {
-        unlockCharacter("acheron");
-        unlockPrismaticDice("repeater");
+        unlockCharacter(CharacterIds.ACHERON);
+        unlockPrismaticDice(REPEATER_ID);
         if (isPrismaticFeatureUnlocked()) {
             setPrismaticFeatureUnlocked();
         }
-        CosmiconPlayerState.saveCharacter("acheron");
-        CosmiconPlayerState.savePrismaticDice("repeater");
+        CosmiconPlayerState.saveCharacter(CharacterIds.ACHERON);
+        CosmiconPlayerState.savePrismaticDice(REPEATER_ID);
     }
 
     public static int calculateCreditReward(int playerLevel) {
@@ -168,14 +170,14 @@ public class CosmiconStats {
         }
 
         if (getGamesPlayed() >= TUTORIAL_GAMES) {
-            if (!isCharacterUnlocked("sparxie")) {
-                unlockCharacter("sparxie");
+            if (!isCharacterUnlocked(CharacterIds.SPARXIE)) {
+                unlockCharacter(CharacterIds.SPARXIE);
             }
-            if (!isCharacterUnlocked("acheron")) {
-                unlockCharacter("acheron");
+            if (!isCharacterUnlocked(CharacterIds.ACHERON)) {
+                unlockCharacter(CharacterIds.ACHERON);
             }
-            if (!isPrismaticDiceUnlocked("repeater")) {
-                unlockPrismaticDice("repeater");
+            if (!isPrismaticDiceUnlocked(REPEATER_ID)) {
+                unlockPrismaticDice(REPEATER_ID);
             }
             if (isPrismaticFeatureUnlocked()) {
                 setPrismaticFeatureUnlocked();

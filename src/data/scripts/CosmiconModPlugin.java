@@ -14,11 +14,16 @@ public class CosmiconModPlugin extends BaseModPlugin {
 
     @Override
     public void onApplicationLoad() {
-        Global.getLogger(this.getClass()).info("Cosmicon Dice Loaded");
-        CosmiconConfig.loadSettings();
-        Strings.loadStrings();
-        CharacterRegistry.loadCards();
-        CosmiconSprites.load();
+        try {
+            CosmiconConfig.loadSettings();
+            Strings.loadStrings();
+            CharacterRegistry.loadCards();
+            CosmiconSprites.load();
+            Global.getLogger(this.getClass()).info("Cosmicon Dice Loaded");
+        } catch (Exception e) {
+            Global.getLogger(this.getClass()).error("Failed to load Cosmicon Dice", e);
+            throw e;
+        }
     }
 
     @Override

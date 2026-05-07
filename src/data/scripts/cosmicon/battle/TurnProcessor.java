@@ -446,39 +446,13 @@ public class TurnProcessor {
             }
         }
         
-        processPassiveEffects(forPlayer);
-        
-        int passiveAtkBonus = 0;
-        int passiveDefBonus = 0;
         if (isAttackPhase) {
-            passiveAtkBonus = state.getAttackValue() - state.calculateSelectedSum(forPlayer);
+            state.setAttackValue(state.calculateSelectedSum(forPlayer));
         } else {
-            passiveDefBonus = state.getDefenseValue() - state.calculateSelectedSum(forPlayer);
+            state.setDefenseValue(state.calculateSelectedSum(forPlayer));
         }
         
-        StatusEffectProcessor.BattleContext context = createBattleContext(forPlayer);
-        TurnType turnType = state.isPlayerAttacker() ? TurnType.DEFENSE : TurnType.ATTACK;
-        
-        int oldValue = isAttackPhase ? state.getAttackValue() : state.getDefenseValue();
-        List<Integer> preSelectValues = new ArrayList<>(state.getDiceValues(forPlayer));
-        List<DiceType> preSelectTypes = state.getDiceTypes(forPlayer) != null ? new ArrayList<>(state.getDiceTypes(forPlayer)) : null;
-        state.getEffects(forPlayer).processPhase(Phase.AFTER_SELECT, turnType, context);
-        state.setDiceValues(forPlayer, context.getDiceValues());
-        state.setDiceTypes(forPlayer, context.getDiceTypes());
-        updateUpgradedDicePool(forPlayer);
-        List<Integer> postSelectValues = state.getDiceValues(forPlayer);
-        notifyRestDiceValueChanges(preSelectValues, postSelectValues, forPlayer);
-        notifyRestDiceTypeChanges(preSelectTypes, state.getDiceTypes(forPlayer), forPlayer);
-        
-        notifyLevelUpValueChange(forPlayer, isAttackPhase, oldValue);
-        
-        if (aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
-            state.setAttackValue(state.calculateSelectedSum(false) + passiveAtkBonus);
-        } else if (!aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
-            state.setDefenseValue(state.calculateSelectedSum(false) + passiveDefBonus);
-        }
-        
-        applyWeatherAndNotifyValueChanges(forPlayer);
+        applyPostSelectionProcessing(forPlayer);
         
         if (aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
             state.setAttackerConfirmedSelection(state.getSelectedDiceValuesFormatted(false));
@@ -500,39 +474,13 @@ public class TurnProcessor {
         
         aiEngine.executeSelection(state, forPlayer);
         
-        processPassiveEffects(forPlayer);
-        
-        int passiveAtkBonus = 0;
-        int passiveDefBonus = 0;
         if (isAttackPhase) {
-            passiveAtkBonus = state.getAttackValue() - state.calculateSelectedSum(forPlayer);
+            state.setAttackValue(state.calculateSelectedSum(forPlayer));
         } else {
-            passiveDefBonus = state.getDefenseValue() - state.calculateSelectedSum(forPlayer);
+            state.setDefenseValue(state.calculateSelectedSum(forPlayer));
         }
         
-        StatusEffectProcessor.BattleContext opponentContext = createBattleContext(false);
-        TurnType opponentTurnType = state.isPlayerAttacker() ? TurnType.DEFENSE : TurnType.ATTACK;
-        
-        int oldValue = isAttackPhase ? state.getAttackValue() : state.getDefenseValue();
-        List<Integer> preSelectValues = new ArrayList<>(state.getDiceValues(false));
-        List<DiceType> preSelectTypes = state.getDiceTypes(false) != null ? new ArrayList<>(state.getDiceTypes(false)) : null;
-        state.getOpponentEffects().processPhase(Phase.AFTER_SELECT, opponentTurnType, opponentContext);
-        state.setDiceValues(false, opponentContext.getDiceValues());
-        state.setDiceTypes(false, opponentContext.getDiceTypes());
-        updateUpgradedDicePool(false);
-        List<Integer> postSelectValues = state.getDiceValues(false);
-        notifyRestDiceValueChanges(preSelectValues, postSelectValues, false);
-        notifyRestDiceTypeChanges(preSelectTypes, state.getDiceTypes(false), false);
-        
-        notifyLevelUpValueChange(false, isAttackPhase, oldValue);
-        
-        if (aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
-            state.setAttackValue(state.calculateSelectedSum(false) + passiveAtkBonus);
-        } else if (!aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
-            state.setDefenseValue(state.calculateSelectedSum(false) + passiveDefBonus);
-        }
-        
-        applyWeatherAndNotifyValueChanges(false);
+        applyPostSelectionProcessing(forPlayer);
         
         aiSelectionComplete = true;
         
@@ -1008,50 +956,13 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         
         boolean isAttackPhase = state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK;
         
-        processPassiveEffects(true);
-        
-        int passiveAtkBonus = 0;
-        int passiveDefBonus = 0;
         if (isAttackPhase) {
-            passiveAtkBonus = state.getAttackValue() - state.calculateSelectedSum(true);
+            state.setAttackValue(state.calculateSelectedSum(true));
         } else {
-            passiveDefBonus = state.getDefenseValue() - state.calculateSelectedSum(true);
+            state.setDefenseValue(state.calculateSelectedSum(true));
         }
         
-        StatusEffectProcessor.BattleContext playerContext = createBattleContext(true);
-        TurnType playerTurnType = state.isPlayerAttacker() ? TurnType.ATTACK : TurnType.DEFENSE;
-        
-        int oldValue = isAttackPhase ? state.getAttackValue() : state.getDefenseValue();
-        List<Integer> preSelectValues = new ArrayList<>(state.getDiceValues(true));
-        List<DiceType> preSelectTypes = state.getDiceTypes(true) != null ? new ArrayList<>(state.getDiceTypes(true)) : null;
-        state.getPlayerEffects().processPhase(Phase.AFTER_SELECT, playerTurnType, playerContext);
-        state.setDiceValues(true, playerContext.getDiceValues());
-        state.setDiceTypes(true, playerContext.getDiceTypes());
-        updateUpgradedDicePool(true);
-        List<Integer> postSelectValues = state.getDiceValues(true);
-        notifyRestDiceValueChanges(preSelectValues, postSelectValues, true);
-        notifyRestDiceTypeChanges(preSelectTypes, state.getDiceTypes(true), true);
-        
-        notifyLevelUpValueChange(true, isAttackPhase, oldValue);
-        
-        int calcSum = state.calculateSelectedSum(true);
-        List<Integer> vals = state.getDiceValues(true);
-        List<Boolean> selectedFlags = state.getDiceSelected(true);
-        int prismaticCount = 0;
-        for (int i = 0; i < (vals != null ? vals.size() : 0); i++) {
-            if (state.isPrismaticDiceAt(i, true)) prismaticCount++;
-        }
-        CosmiconLogger.info("[ATK_DIAG] confirmPlayerSelection: required=%d, selected=%d, calcSum=%d, values=%s, selected=%s, prismaticInMap=%d",
-            requiredCount, selectedCount, calcSum, vals != null ? vals.toString() : "null",
-            selectedFlags != null ? selectedFlags.toString() : "null", prismaticCount);
-
-        if (state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
-            state.setAttackValue(calcSum + passiveAtkBonus);
-        } else if (!state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
-            state.setDefenseValue(calcSum + passiveDefBonus);
-        }
-        
-        applyWeatherAndNotifyValueChanges(true);
+        applyPostSelectionProcessing(true);
         
         if (state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
             state.setAttackerConfirmedSelection(state.getSelectedDiceValuesFormatted(true));
@@ -1061,6 +972,44 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
             weatherController.applyDefenderSelectionPhase(state, true);
             advanceToDiceDisplayDefense();
         }
+    }
+    
+    private void applyPostSelectionProcessing(boolean forPlayer) {
+        processPassiveEffects(forPlayer);
+        
+        boolean isAttackPhase = state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK;
+        boolean isAttackerSide = forPlayer == state.isPlayerAttacker();
+        
+        int passiveBonus;
+        if (isAttackPhase) {
+            passiveBonus = state.getAttackValue() - state.calculateSelectedSum(forPlayer);
+        } else {
+            passiveBonus = state.getDefenseValue() - state.calculateSelectedSum(forPlayer);
+        }
+        
+        StatusEffectProcessor.BattleContext context = createBattleContext(forPlayer);
+        TurnType turnType = isAttackerSide ? TurnType.ATTACK : TurnType.DEFENSE;
+        
+        int oldValue = isAttackPhase ? state.getAttackValue() : state.getDefenseValue();
+        List<Integer> preSelectValues = new ArrayList<>(state.getDiceValues(forPlayer));
+        List<DiceType> preSelectTypes = state.getDiceTypes(forPlayer) != null ? new ArrayList<>(state.getDiceTypes(forPlayer)) : null;
+        state.getEffects(forPlayer).processPhase(Phase.AFTER_SELECT, turnType, context);
+        state.setDiceValues(forPlayer, context.getDiceValues());
+        state.setDiceTypes(forPlayer, context.getDiceTypes());
+        updateUpgradedDicePool(forPlayer);
+        List<Integer> postSelectValues = state.getDiceValues(forPlayer);
+        notifyRestDiceValueChanges(preSelectValues, postSelectValues, forPlayer);
+        notifyRestDiceTypeChanges(preSelectTypes, state.getDiceTypes(forPlayer), forPlayer);
+        
+        notifyLevelUpValueChange(forPlayer, isAttackPhase, oldValue);
+        
+        if (isAttackPhase) {
+            state.setAttackValue(state.calculateSelectedSum(forPlayer) + passiveBonus);
+        } else {
+            state.setDefenseValue(state.calculateSelectedSum(forPlayer) + passiveBonus);
+        }
+        
+        applyWeatherAndNotifyValueChanges(forPlayer);
     }
     
     private StatusEffectProcessor.BattleContext createBattleContext(boolean forPlayer) {

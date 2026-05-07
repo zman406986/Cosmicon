@@ -20,7 +20,7 @@ public class CosmiconEventState {
 
     public static void setOpponentCharacter(String charId) {
         if (charId != null) {
-            getMemory().set(KEY_OPPONENT_CHAR, charId, 0f);
+            getMemory().set(KEY_OPPONENT_CHAR, charId);
         } else {
             getMemory().unset(KEY_OPPONENT_CHAR);
         }
@@ -33,17 +33,11 @@ public class CosmiconEventState {
     }
 
     public static void setPlayerCharacter(String charId) {
-        getMemory().set(KEY_PLAYER_CHAR, charId, 0f);
-    }
-
-    public static String getPlayerCharacter() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_PLAYER_CHAR)) return null;
-        return mem.getString(KEY_PLAYER_CHAR);
+        getMemory().set(KEY_PLAYER_CHAR, charId);
     }
 
     public static void setOpponentPrismatic(String diceId) {
-        getMemory().set(KEY_OPPONENT_PRISMATIC, diceId, 0f);
+        getMemory().set(KEY_OPPONENT_PRISMATIC, diceId);
     }
 
     public static String getOpponentPrismatic() {
@@ -57,7 +51,7 @@ public class CosmiconEventState {
     }
 
     public static void setIsBarEvent(boolean isBarEvent) {
-        getMemory().set(KEY_IS_BAR_EVENT, isBarEvent, 0f);
+        getMemory().set(KEY_IS_BAR_EVENT, isBarEvent);
     }
 
     public static boolean isBarEvent() {
@@ -67,7 +61,7 @@ public class CosmiconEventState {
     }
 
     public static void setIsTutorialMode(boolean isTutorial) {
-        getMemory().set(KEY_IS_TUTORIAL, isTutorial, 0f);
+        getMemory().set(KEY_IS_TUTORIAL, isTutorial);
     }
 
     public static boolean isTutorialMode() {
@@ -95,7 +89,7 @@ public class CosmiconEventState {
     }
 
     public static void setReplayTutorialGame(int gameNumber) {
-        getMemory().set(KEY_REPLAY_TUTORIAL, gameNumber, 0f);
+        getMemory().set(KEY_REPLAY_TUTORIAL, gameNumber);
     }
 
     public static int getReplayTutorialGame() {
@@ -109,7 +103,7 @@ public class CosmiconEventState {
     }
 
     public static void setSessionWon(boolean won) {
-        getMemory().set(KEY_SESSION_WON, won, 0f);
+        getMemory().set(KEY_SESSION_WON, won);
     }
 
     public static boolean isSessionWon() {
@@ -119,7 +113,7 @@ public class CosmiconEventState {
     }
 
     public static void setOpponentUsesTrue(boolean usesTrue) {
-        getMemory().set(KEY_OPPONENT_USES_TRUE, usesTrue, 0f);
+        getMemory().set(KEY_OPPONENT_USES_TRUE, usesTrue);
     }
 
     public static boolean getOpponentUsesTrue() {

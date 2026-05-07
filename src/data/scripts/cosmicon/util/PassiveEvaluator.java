@@ -14,50 +14,6 @@ public class PassiveEvaluator {
 
     private PassiveEvaluator() {}
 
-    public static boolean allDiceEqualFour(List<Integer> values) {
-        return DiceEvaluator.allDiceEqualFour(values);
-    }
-
-    public static boolean hasTwoPairs(List<Integer> values) {
-        return DiceEvaluator.hasTwoPairs(values);
-    }
-
-    public static boolean allEven(List<Integer> values) {
-        return DiceEvaluator.allEven(values);
-    }
-
-    public static boolean allSame(List<Integer> values) {
-        return DiceEvaluator.allSame(values);
-    }
-
-    public static boolean allDiceEqualSix(List<Integer> values) {
-        return DiceEvaluator.allDiceEqualSix(values);
-    }
-
-    public static int countPairs(List<Integer> values) {
-        return DiceEvaluator.countPairs(values);
-    }
-
-    public static int countOddNumbers(List<Integer> values) {
-        return DiceEvaluator.countOddNumbers(values);
-    }
-
-    public static int countDistinctValues(List<Integer> values) {
-        return DiceEvaluator.countDistinctValues(values);
-    }
-
-    public static int sumOfValues(List<Integer> values) {
-        return DiceEvaluator.sumOfValues(values);
-    }
-
-    public static boolean sumAtLeast(List<Integer> values, int threshold) {
-        return DiceEvaluator.sumAtLeast(values, threshold);
-    }
-
-    public static boolean hasIdenticalNumbers(List<Integer> values) {
-        return DiceEvaluator.hasIdenticalNumbers(values);
-    }
-
     public static PassiveResult evaluateForCharacter(String characterId, List<Integer> diceValues, boolean isAttacking) {
         return evaluateForCharacter(characterId, diceValues, isAttacking, -1, -1, 0, 0);
     }
@@ -83,7 +39,7 @@ public class PassiveEvaluator {
         if (result.isEmpty()) {
             return PassiveEvaluation.notTriggered();
         }
-        int totalBonus = result.getAttackBonus() + result.getDefenseBonus();
+        int totalBonus = result.getAttackBonus();
         for (GrantedEffect ge : result.getGrantedEffects()) {
             totalBonus += ge.layers();
         }
@@ -108,10 +64,6 @@ public class PassiveEvaluator {
             } else {
                 effects.addEffect(ge.effect(), ge.layers());
             }
-        }
-        
-        for (GrantedEffect ge : result.getSetGrantedEffects()) {
-            effects.setEffect(ge.effect(), ge.layers());
         }
         
         if (result.shouldTriggerToughnessInstantDamage()) {

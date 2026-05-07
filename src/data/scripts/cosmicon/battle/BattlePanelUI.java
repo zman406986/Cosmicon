@@ -508,17 +508,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         if (!defenderIsPlayer) {
             opponentAutoRollDelay = OPPONENT_AUTO_ROLL_DELAY;
         }
-        
-        if (diceRollManager.hasRestAnimators(defenderIsPlayer)) {
-            List<DiceType> types = defenderIsPlayer ? battleState.getPlayerDiceTypes() : battleState.getOpponentDiceTypes();
-            List<Integer> values = defenderIsPlayer ? battleState.getPlayerDiceValues() : battleState.getOpponentDiceValues();
-            float centerX = defenderIsPlayer ? diceZoneCenterX : opponentDiceZoneCenterX;
-            float centerY = defenderIsPlayer ? diceZoneCenterY : opponentDiceZoneCenterY;
-            if (types != null && values != null) {
-                diceRollManager.startRollFromRest(defenderIsPlayer, types, values, centerX, centerY);
-                inputHandler.consumeClick();
-            }
-        }
     }
 
     @Override

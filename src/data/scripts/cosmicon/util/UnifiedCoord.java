@@ -8,16 +8,15 @@ public final class UnifiedCoord {
     
     public record PanelContext(float panelX, float panelY, float panelWidth, float panelHeight) {}
     
-    private static final ThreadLocal<PanelContext> CURRENT_CONTEXT = new ThreadLocal<>();
+    private static PanelContext currentContext;
     
-    public static void setCurrent(PanelContext context) { CURRENT_CONTEXT.set(context); }
+    public static void setCurrent(PanelContext context) { currentContext = context; }
     public static PanelContext getCurrent() {
-        PanelContext ctx = CURRENT_CONTEXT.get();
-        if (ctx == null) throw new IllegalStateException("PanelContext not set. Call setCurrent() first.");
-        return ctx;
+        if (currentContext == null) throw new IllegalStateException("PanelContext not set. Call setCurrent() first.");
+        return currentContext;
     }
-    public static PanelContext getCurrentOrNull() { return CURRENT_CONTEXT.get(); }
-    public static void clearCurrent() { CURRENT_CONTEXT.remove(); }
+    public static PanelContext getCurrentOrNull() { return currentContext; }
+    public static void clearCurrent() { currentContext = null; }
     
     private final float uiX, uiY;
     private final PanelContext context;

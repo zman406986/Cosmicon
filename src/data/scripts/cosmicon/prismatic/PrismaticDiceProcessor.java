@@ -55,6 +55,9 @@ public class PrismaticDiceProcessor {
             state.notifySecondaryDamage(!forPlayer, damage, "INSTANT_DAMAGE");
             CosmiconLogger.debug("Prismatic effect applied: InstantDamage %d to %s", 
                 damage, forPlayer ? "Opponent" : "Player");
+            return;
         }
+        
+        CosmiconLogger.warn("Unhandled prismatic effect type: %s for dice %s", effect.getType(), dice.type.getId());
     }
 }

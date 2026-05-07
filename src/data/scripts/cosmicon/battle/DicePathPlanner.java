@@ -217,8 +217,8 @@ public class DicePathPlanner {
         float[] bounceHeights = new float[bounceCount];
         for (int j = 0; j < bounceCount; j++) {
             float factor = 1f - (j * 0.2f);
-            bounceHeights[j] = (1.15f + rand.nextFloat() * 0.25f) * factor;
-            bounceHeights[j] = Math.max(1.15f, bounceHeights[j]);
+            bounceHeights[j] = (1.25f + rand.nextFloat() * 0.25f) * factor;
+            bounceHeights[j] = Math.max(1.25f, bounceHeights[j]);
         }
 
         return PlannedPath.create(bestRotation, bestTravelDistance, bounceCount, bounceHeights,
