@@ -10,7 +10,7 @@ import com.fs.starfarer.api.graphics.SpriteAPI;
 import data.scripts.cosmicon.util.CharacterIds;
 
 public final class CosmiconSprites {
-    private static final SettingsAPI settings = Global.getSettings();
+    private static SettingsAPI settings;
     private static final Map<String, SpriteAPI> portraitCache = new HashMap<>();
 
     private CosmiconSprites() {}
@@ -46,6 +46,7 @@ public final class CosmiconSprites {
 
     public static void load() {
         if (loaded) return;
+        settings = Global.getSettings();
         try {
             frameSprite = settings.getSprite("cosmicon_cards", "frame");
             diceD4Sprite = settings.getSprite("cosmicon_dice", "d4");
@@ -81,8 +82,9 @@ public final class CosmiconSprites {
     public static SpriteAPI getPortrait(String cardId) {
         if (!loaded) load();
         
+        SpriteAPI cached = portraitCache.get(cardId);
         if (portraitCache.containsKey(cardId)) {
-            return portraitCache.get(cardId);
+            return cached;
         }
 
         String portraitKey = PORTRAIT_KEYS.get(cardId);

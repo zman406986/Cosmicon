@@ -72,6 +72,8 @@ public class DiceAnimator {
     
     private int bounceCount;
     private float[] bounceHeights;
+    private float bounceScale;
+    private float bounceYOffset;
     
     private Phase phase;
     private float phaseElapsed;
@@ -104,6 +106,8 @@ public DiceAnimator() {
         useDirectionalAnimation = false;
         bounceCount = 0;
         bounceHeights = new float[0];
+        bounceScale = 1f;
+        bounceYOffset = 0f;
         travelDistance = 0f;
         travelProgress = 0f;
         rotation = 0f;
@@ -134,6 +138,8 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.travelProgress = 0f;
         this.bounceCount = 0;
         this.bounceHeights = new float[0];
+        this.bounceScale = 1f;
+        this.bounceYOffset = 0f;
         this.phase = Phase.ROLLING;
         this.phaseElapsed = 0f;
     }
@@ -156,6 +162,8 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.travelDistance = travelDistance;
         this.bounceCount = bounceCount;
         this.bounceHeights = bounceHeights;
+        this.bounceScale = 1f;
+        this.bounceYOffset = 0f;
         this.phase = Phase.DROP;
         this.phaseElapsed = 0f;
         this.scale = INITIAL_SCALE;
@@ -178,6 +186,8 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.targetCenterY = 0f;
         this.bounceHeights = new float[0];
         this.bounceCount = 0;
+        this.bounceScale = 1f;
+        this.bounceYOffset = 0f;
         if (useDirectionalAnimation) {
             this.phase = Phase.DROP;
             this.scale = INITIAL_SCALE;
@@ -209,6 +219,8 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.travelDistance = travelDistance;
         this.bounceCount = bounceCount;
         this.bounceHeights = bounceHeights;
+        this.bounceScale = 1f;
+        this.bounceYOffset = 0f;
         this.useDirectionalAnimation = true;
         this.phase = Phase.SCATTER_PICKUP;
         this.scale = 1f;
@@ -248,6 +260,8 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.travelProgress = 0f;
         this.bounceCount = 0;
         this.bounceHeights = new float[0];
+        this.bounceScale = 1f;
+        this.bounceYOffset = 0f;
         this.targetCenterX = targetCenterX;
         this.targetCenterY = targetCenterY;
     }
@@ -268,6 +282,8 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         this.travelDistance = travelDistance;
         this.bounceCount = bounceCount;
         this.bounceHeights = bounceHeights;
+        this.bounceScale = 1f;
+        this.bounceYOffset = 0f;
         this.rollPickupStartScale = scale;
         this.phaseElapsed = 0f;
         this.elapsed = -delay;
@@ -300,6 +316,8 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         this.travelDistance = travelDistance;
         this.bounceCount = bounceCount;
         this.bounceHeights = bounceHeights;
+        this.bounceScale = 1f;
+        this.bounceYOffset = 0f;
         this.phase = Phase.DROP;
         this.phaseElapsed = 0f;
         this.scale = INITIAL_SCALE;
@@ -428,7 +446,9 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         posXOffset = (float)Math.cos(directionRad) * travelDistance * travelProgress;
         posYOffset = (float)Math.sin(directionRad) * travelDistance * travelProgress;
         
-        scale = calculateBounceAtStart();
+        calculateBounceAtStart();
+        scale = bounceScale;
+        posYOffset += bounceYOffset;
         
         if (phaseElapsed >= travelDuration) {
             travelProgress = 1.0f;
@@ -462,19 +482,35 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         return TRAVEL_DISTANCES.length;
     }
     
-    private float calculateBounceAtStart() {
-        if (bounceCount == 0) return 1f;
-        
+    private void calculateBounceAtStart() {
+        if (bounceCount == 0) {
+            bounceScale = 1f;
+            bounceYOffset = 0f;
+            return;
+        }
+
         float bounceTotalTime = bounceCount * AnimationConstants.BOUNCE_DURATION;
-        if (phaseElapsed >= bounceTotalTime) return 1f;
-        
+        if (phaseElapsed >= bounceTotalTime) {
+            bounceScale = 1f;
+            bounceYOffset = 0f;
+            return;
+        }
+
         int bounceIndex = (int)(phaseElapsed / AnimationConstants.BOUNCE_DURATION);
-        if (bounceIndex >= bounceHeights.length) return 1f;
-        
+        if (bounceIndex >= bounceHeights.length) {
+            bounceScale = 1f;
+            bounceYOffset = 0f;
+            return;
+        }
+
         float bounceLocalTime = phaseElapsed - bounceIndex * AnimationConstants.BOUNCE_DURATION;
         float bounceProgress = bounceLocalTime / AnimationConstants.BOUNCE_DURATION;
         float bounceHeight = bounceHeights[bounceIndex];
-        return 1f + (bounceHeight - 1f) * (float)Math.sin(bounceProgress * Math.PI);
+        float sinValue = (float)Math.sin(bounceProgress * Math.PI);
+
+        bounceScale = 1f + (bounceHeight - 1f) * sinValue;
+        float scaleDelta = bounceScale - 1f;
+        bounceYOffset = -scaleDelta * getDisplaySize() * 0.5f;
     }
     
     private void advanceSettle() {
@@ -780,6 +816,8 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         this.travelDistance = travelDistance;
         this.bounceCount = bounceCount;
         this.bounceHeights = bounceHeights;
+        this.bounceScale = 1f;
+        this.bounceYOffset = 0f;
         this.phase = Phase.SCATTER_PICKUP;
         this.phaseElapsed = 0f;
         this.scale = 1f;
@@ -887,6 +925,8 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         directionRad = 0f;
         bounceCount = 0;
         bounceHeights = new float[0];
+        bounceScale = 1f;
+        bounceYOffset = 0f;
         travelDistance = 0f;
         travelProgress = 0f;
         useDirectionalAnimation = false;

@@ -566,13 +566,7 @@ public class BattleState {
         prismaticManager.addPrismaticUse(type, isPlayer);
     }
 
-    @SuppressWarnings("unused")
-    public void consumePrismaticUse(PrismaticDiceType type, boolean forPlayer) {
-        prismaticManager.consumePrismaticUse(type, forPlayer);
-    }
-    
-    
-    
+
 public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         return prismaticManager.canConfirmPrismaticSelection(isPlayer);
     }
@@ -1163,10 +1157,6 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         }
     }
 
-    @SuppressWarnings("unused")
-    public int getPendingStrength(boolean forPlayer) {
-        return forPlayer ? playerPendingStrength : opponentPendingStrength;
-    }
 
     public void setPendingStrength(boolean forPlayer, int strength) {
         if (forPlayer) {

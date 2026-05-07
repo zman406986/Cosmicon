@@ -475,6 +475,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     // --- Rendering ---
 
     public void renderBelow(float alphaMult) {
+        if (panel == null) return;
         PositionAPI pos = panel.getPosition();
         float panelX = pos.getX();
         float panelY = pos.getY();
@@ -804,6 +805,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
     @Override
     public void advance(float amount) {
+        if (panel == null) return;
         if (maxScroll > 0f || diceMaxScroll > 0f) {
             int wheel = Mouse.getDWheel();
             if (wheel != 0) {
@@ -826,6 +828,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     }
 
     public void processInput(List<InputEventAPI> events) {
+        if (panel == null) return;
         boolean mouseDown = Mouse.isButtonDown(0);
 
         PositionAPI pos = panel.getPosition();

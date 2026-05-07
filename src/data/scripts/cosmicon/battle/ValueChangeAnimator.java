@@ -53,6 +53,9 @@ public class ValueChangeAnimator {
     private boolean isAttack;
     private SpriteAPI roleIcon;
 
+    private float cachedDeltaLabelWidth = -1f;
+    private float cachedTotalLabelWidth = -1f;
+
     public ValueChangeAnimator() {
         changeQueue = new ArrayList<>();
         phase = Phase.IDLE;
@@ -100,6 +103,7 @@ public class ValueChangeAnimator {
         deltaLabel.setAlignment(Alignment.MID);
         
         float deltaWidth = deltaLabel.computeTextWidth(current.deltaText) + 20f;
+        this.cachedDeltaLabelWidth = deltaWidth;
         panel.addComponent((UIComponentAPI) deltaLabel)
             .setSize(deltaWidth, LABEL_HEIGHT)
             .inTL(iconCenterX - deltaWidth / 2f, deltaCurrentY - LABEL_HEIGHT / 2f);
@@ -109,6 +113,7 @@ public class ValueChangeAnimator {
         totalLabel.setAlignment(Alignment.MID);
         
         float totalWidth = totalLabel.computeTextWidth(String.valueOf(currentValue)) + 20f;
+        this.cachedTotalLabelWidth = totalWidth;
         panel.addComponent((UIComponentAPI) totalLabel)
             .setSize(totalWidth, LABEL_HEIGHT)
             .inTL(iconCenterX - totalWidth / 2f, iconCenterY - LABEL_HEIGHT / 2f);
@@ -184,7 +189,9 @@ public class ValueChangeAnimator {
         deltaLabel.setText(next.deltaText);
         deltaLabel.setColor(next.color);
         
+        cachedDeltaLabelWidth = -1f;
         float deltaWidth = deltaLabel.computeTextWidth(next.deltaText) + 20f;
+        cachedDeltaLabelWidth = deltaWidth;
         ((UIComponentAPI) deltaLabel).getPosition().setSize(deltaWidth, LABEL_HEIGHT);
         
         deltaCurrentY = iconCenterY + DELTA_START_OFFSET_Y;
@@ -199,7 +206,9 @@ public class ValueChangeAnimator {
         if (totalLabel != null) {
             String totalText = String.valueOf(currentValue);
             totalLabel.setText(totalText);
+            cachedTotalLabelWidth = -1f;
             float width = totalLabel.computeTextWidth(totalText) + 20f;
+            cachedTotalLabelWidth = width;
             ((UIComponentAPI) totalLabel).getPosition()
                 .setSize(width, LABEL_HEIGHT)
                 .inTL(iconCenterX - width / 2f, iconCenterY - LABEL_HEIGHT / 2f);
@@ -209,7 +218,10 @@ public class ValueChangeAnimator {
     private void updateLabelPositions() {
         if (deltaLabel != null && labelsCreated) {
             String text = changeQueue.isEmpty() ? "" : changeQueue.get(0).deltaText;
-            float width = deltaLabel.computeTextWidth(text) + 20f;
+            if (cachedDeltaLabelWidth < 0f) {
+                cachedDeltaLabelWidth = deltaLabel.computeTextWidth(text) + 20f;
+            }
+            float width = cachedDeltaLabelWidth;
             ((UIComponentAPI) deltaLabel).getPosition()
                 .setSize(width, LABEL_HEIGHT)
                 .inTL(iconCenterX - width / 2f, deltaCurrentY - LABEL_HEIGHT / 2f);
@@ -218,7 +230,10 @@ public class ValueChangeAnimator {
         
         if (totalLabel != null && labelsCreated) {
             String totalText = String.valueOf(currentValue);
-            float width = totalLabel.computeTextWidth(totalText) + 20f;
+            if (cachedTotalLabelWidth < 0f) {
+                cachedTotalLabelWidth = totalLabel.computeTextWidth(totalText) + 20f;
+            }
+            float width = cachedTotalLabelWidth;
             ((UIComponentAPI) totalLabel).getPosition()
                 .setSize(width, LABEL_HEIGHT)
                 .inTL(iconCenterX - width / 2f, iconCenterY - LABEL_HEIGHT / 2f);

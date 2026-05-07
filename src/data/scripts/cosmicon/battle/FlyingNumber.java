@@ -49,6 +49,7 @@ public class FlyingNumber {
     private float scale;
     
     private boolean shatterOnImpact;
+    private float cachedLabelWidth = -1f;
     private final List<Particle> particles;
     private final Random random;
     
@@ -109,6 +110,7 @@ public class FlyingNumber {
     
     public void setValue(int value) {
         this.displayText = String.valueOf(value);
+        this.cachedLabelWidth = -1f;
         updateLabelText();
     }
     
@@ -254,7 +256,8 @@ public class FlyingNumber {
         label.setAlignment(Alignment.MID);
         
         float labelWidth = label.computeTextWidth(text) + 10f;
-        
+        this.cachedLabelWidth = labelWidth;
+
         panel.addComponent((UIComponentAPI) label)
             .setSize(labelWidth, LABEL_HEIGHT)
             .inTL(currentX - labelWidth / 2f, currentY - LABEL_HEIGHT / 2f);
@@ -277,7 +280,10 @@ public class FlyingNumber {
     
     private void updateLabelPosition() {
         if (label != null && labelCreated) {
-            float labelWidth = label.computeTextWidth(displayText) + 10f;
+            if (cachedLabelWidth < 0f) {
+                cachedLabelWidth = label.computeTextWidth(displayText) + 10f;
+            }
+            float labelWidth = cachedLabelWidth;
             ((UIComponentAPI) label).getPosition()
                 .setSize(labelWidth, LABEL_HEIGHT)
                 .inTL(currentX - labelWidth / 2f, currentY - LABEL_HEIGHT / 2f);

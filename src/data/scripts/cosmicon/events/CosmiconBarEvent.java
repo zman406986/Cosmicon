@@ -17,6 +17,8 @@ import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.state.CosmiconStats;
+import data.scripts.cosmicon.util.CharacterIds;
+import data.scripts.CosmiconConfig;
 
 public class CosmiconBarEvent extends BaseBarEvent {
 
@@ -32,7 +34,7 @@ public class CosmiconBarEvent extends BaseBarEvent {
     public boolean shouldShowAtMarket(MarketAPI market) {
         if (!super.shouldShowAtMarket(market)) return false;
         if (market == null) return false;
-        if (market.getSize() < 3) return false;
+        if (market.getSize() < CosmiconConfig.MARKET_SIZE_MIN) return false;
         return true;
     }
 
@@ -86,9 +88,9 @@ public class CosmiconBarEvent extends BaseBarEvent {
                         int gamesPlayed = CosmiconStats.getGamesPlayed();
                         String opponentId;
                         if (gamesPlayed == 0) {
-                            opponentId = "trashcan";
+                            opponentId = CharacterIds.TRASHCAN;
                         } else {
-                            opponentId = "robin";
+                            opponentId = CharacterIds.ROBIN;
                         }
                         CosmiconEventState.setOpponentCharacter(opponentId);
                         CosmiconEventState.setIsTutorialMode(true);
@@ -97,7 +99,7 @@ public class CosmiconBarEvent extends BaseBarEvent {
                         if (opponentCard != null) {
                             CosmiconEventState.setOpponentCharacter(opponentCard.getId());
 
-                            java.util.Map<String, Integer> oppPrismatic = opponentCard.getPrismaticDiceIds();
+                            Map<String, Integer> oppPrismatic = opponentCard.getPrismaticDiceIds();
                             if (!oppPrismatic.isEmpty()) {
                                 String defaultPrismaticId = oppPrismatic.keySet().iterator().next();
                                 CosmiconEventState.setOpponentPrismatic(defaultPrismaticId);

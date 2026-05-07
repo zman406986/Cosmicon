@@ -124,6 +124,36 @@ public class StatusEffectAnimator {
         }
     }
 
+    private void renderSingleBox(float uiX, float uiY, float width, float height,
+                                 float elapsed, float duration, Color color, float alphaMult) {
+        float progress = elapsed / duration;
+        float expand = EXPAND_AMOUNT * progress;
+        float alpha = INITIAL_ALPHA * (1f - progress) * alphaMult;
+
+        float x = uiX - expand;
+        float y = uiY - expand;
+        float w = width + expand * 2f;
+        float h = height + expand * 2f;
+
+        UnifiedCoord topLeft = new UnifiedCoord(x, y);
+        UnifiedCoord bottomRight = new UnifiedCoord(x + w, y + h);
+        float glX1 = topLeft.glX();
+        float glY1 = topLeft.glY();
+        float glX2 = bottomRight.glX();
+        float glY2 = bottomRight.glY();
+
+        float[] c = ColorHelper.toGLComponents(color, alpha);
+        GL11.glColor4f(c[0], c[1], c[2], c[3]);
+        GL11.glLineWidth(2f);
+
+        GL11.glBegin(GL11.GL_LINE_LOOP);
+        GL11.glVertex2f(glX1, glY1);
+        GL11.glVertex2f(glX2, glY1);
+        GL11.glVertex2f(glX2, glY2);
+        GL11.glVertex2f(glX1, glY2);
+        GL11.glEnd();
+    }
+
     private void renderAnimation(BoxAnimation anim, float alphaMult) {
         for (int box = 0; box < anim.boxCount; box++) {
             float boxStart = box * anim.staggerDelay;
@@ -131,34 +161,8 @@ public class StatusEffectAnimator {
             if (boxElapsed < 0f) continue;
             if (boxElapsed >= anim.duration) continue;
 
-            float progress = boxElapsed / anim.duration;
-            float expand = EXPAND_AMOUNT * progress;
-            float alpha = INITIAL_ALPHA * (1f - progress) * alphaMult;
-
-            float x = anim.uiX - expand;
-            float y = anim.uiY - expand;
-            float w = anim.width + expand * 2f;
-            float h = anim.height + expand * 2f;
-
-            UnifiedCoord topLeft = new UnifiedCoord(x, y);
-            UnifiedCoord bottomRight = new UnifiedCoord(x + w, y + h);
-            float glX1 = topLeft.glX();
-            float glY1 = topLeft.glY();
-            float glX2 = bottomRight.glX();
-            float glY2 = bottomRight.glY();
-
-
-
-            float[] c = ColorHelper.toGLComponents(anim.color, alpha);
-            GL11.glColor4f(c[0], c[1], c[2], c[3]);
-            GL11.glLineWidth(2f);
-
-            GL11.glBegin(GL11.GL_LINE_LOOP);
-            GL11.glVertex2f(glX1, glY1);
-            GL11.glVertex2f(glX2, glY1);
-            GL11.glVertex2f(glX2, glY2);
-            GL11.glVertex2f(glX1, glY2);
-            GL11.glEnd();
+            renderSingleBox(anim.uiX, anim.uiY, anim.width, anim.height,
+                    boxElapsed, anim.duration, anim.color, alphaMult);
         }
     }
 
@@ -194,32 +198,8 @@ public class StatusEffectAnimator {
             if (boxElapsed < 0f) continue;
             if (boxElapsed >= anim.cycleDuration) continue;
 
-            float progress = boxElapsed / anim.cycleDuration;
-            float expand = EXPAND_AMOUNT * progress;
-            float alpha = INITIAL_ALPHA * (1f - progress) * alphaMult;
-
-            float x = anim.uiX - expand;
-            float y = anim.uiY - expand;
-            float w = anim.width + expand * 2f;
-            float h = anim.height + expand * 2f;
-
-            UnifiedCoord topLeft = new UnifiedCoord(x, y);
-            UnifiedCoord bottomRight = new UnifiedCoord(x + w, y + h);
-            float glX1 = topLeft.glX();
-            float glY1 = topLeft.glY();
-            float glX2 = bottomRight.glX();
-            float glY2 = bottomRight.glY();
-
-            float[] c = ColorHelper.toGLComponents(anim.color, alpha);
-            GL11.glColor4f(c[0], c[1], c[2], c[3]);
-            GL11.glLineWidth(2f);
-
-            GL11.glBegin(GL11.GL_LINE_LOOP);
-            GL11.glVertex2f(glX1, glY1);
-            GL11.glVertex2f(glX2, glY1);
-            GL11.glVertex2f(glX2, glY2);
-            GL11.glVertex2f(glX1, glY2);
-            GL11.glEnd();
+            renderSingleBox(anim.uiX, anim.uiY, anim.width, anim.height,
+                    boxElapsed, anim.cycleDuration, anim.color, alphaMult);
         }
     }
 

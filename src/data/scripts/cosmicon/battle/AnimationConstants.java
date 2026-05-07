@@ -13,7 +13,7 @@ public class AnimationConstants {
     
     public static final float BASE_DURATION_PER_CYCLE = 0.8f;
     
-    public static final float BOUNCE_DURATION = 0.3f;
+    public static final float BOUNCE_DURATION = 0.5f;
     
     public static final float SCATTER_PANEL_EDGE_MARGIN = 57.5f;
     

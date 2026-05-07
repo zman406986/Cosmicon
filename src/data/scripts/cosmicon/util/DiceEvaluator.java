@@ -2,8 +2,10 @@ package data.scripts.cosmicon.util;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class DiceEvaluator {
 
@@ -70,11 +72,8 @@ public class DiceEvaluator {
 
     public static int countDistinctValues(List<Integer> values) {
         if (values == null || values.isEmpty()) return 0;
-        Map<Integer, Integer> counts = new HashMap<>();
-        for (int v : values) {
-            counts.put(v, 1);
-        }
-        return counts.size();
+        Set<Integer> distinct = new HashSet<>(values);
+        return distinct.size();
     }
 
     public static int sumOfValues(List<Integer> values) {

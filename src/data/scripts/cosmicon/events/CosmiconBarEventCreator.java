@@ -2,6 +2,7 @@ package data.scripts.cosmicon.events;
 
 import com.fs.starfarer.api.impl.campaign.intel.bar.PortsideBarEvent;
 import com.fs.starfarer.api.impl.campaign.intel.bar.events.BaseBarEventCreator;
+import data.scripts.cosmicon.util.CosmiconRandom;
 
 public class CosmiconBarEventCreator extends BaseBarEventCreator {
 
@@ -17,17 +18,17 @@ public class CosmiconBarEventCreator extends BaseBarEventCreator {
 
     @Override
     public float getBarEventActiveDuration() {
-        return 30f + (float) Math.random() * 20f;
+        return 30f + CosmiconRandom.nextFloat() * 20f;
     }
 
     @Override
     public float getBarEventTimeoutDuration() {
-        return 10f + (float) Math.random() * 5f;
+        return 10f + CosmiconRandom.nextFloat() * 5f;
     }
 
     @Override
     public float getBarEventAcceptedTimeoutDuration() {
-        return 7f + (float) Math.random() * 3f;
+        return 7f + CosmiconRandom.nextFloat() * 3f;
     }
 
     @Override

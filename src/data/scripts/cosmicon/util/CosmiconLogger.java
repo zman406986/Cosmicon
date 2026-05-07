@@ -1,11 +1,14 @@
 package data.scripts.cosmicon.util;
 
 import com.fs.starfarer.api.Global;
+import data.scripts.CosmiconConfig;
 import org.apache.log4j.Logger;
 
 public final class CosmiconLogger {
     
-    public static final boolean DEBUG = true;
+    public static boolean isDebugEnabled() {
+        return CosmiconConfig.DEBUG_ENABLED;
+    }
     
     private static final Logger LOG = Global.getLogger(CosmiconLogger.class);
     
@@ -16,17 +19,19 @@ public final class CosmiconLogger {
     }
     
     public static void info(String format, Object... args) {
-        LOG.info(String.format(format, args));
+        if (LOG.isInfoEnabled()) {
+            LOG.info(String.format(format, args));
+        }
     }
     
     public static void debug(String message) {
-        if (DEBUG) {
+        if (isDebugEnabled()) {
             LOG.info("[DEBUG] " + message);
         }
     }
     
     public static void debug(String format, Object... args) {
-        if (DEBUG) {
+        if (isDebugEnabled()) {
             LOG.info("[DEBUG] " + String.format(format, args));
         }
     }
@@ -36,7 +41,9 @@ public final class CosmiconLogger {
     }
     
     public static void warn(String format, Object... args) {
-        LOG.warn(String.format(format, args));
+        if (LOG.isEnabledFor(org.apache.log4j.Level.WARN)) {
+            LOG.warn(String.format(format, args));
+        }
     }
     
     public static void error(String message) {
@@ -44,7 +51,9 @@ public final class CosmiconLogger {
     }
     
     public static void error(String format, Object... args) {
-        LOG.error(String.format(format, args));
+        if (LOG.isEnabledFor(org.apache.log4j.Level.ERROR)) {
+            LOG.error(String.format(format, args));
+        }
     }
     
     public static void error(String message, Throwable t) {
