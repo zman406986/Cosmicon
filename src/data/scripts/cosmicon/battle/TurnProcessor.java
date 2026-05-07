@@ -5,8 +5,8 @@ import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.ai.AIPrismaticSelector.PrismaticDecision;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.Phase;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
-import data.scripts.cosmicon.battle.BattleState.ModificationRecord;
-import data.scripts.cosmicon.battle.BattleState.TurnType;
+import data.scripts.cosmicon.battle.EffectState.ModificationRecord;
+import data.scripts.cosmicon.battle.TurnState.TurnType;
 import data.scripts.cosmicon.character.PassiveEventSystem;
 import data.scripts.cosmicon.util.PassiveEvaluator;
 import data.scripts.cosmicon.util.PassiveResults.PassiveResult;
@@ -177,8 +177,8 @@ public class TurnProcessor {
         
         diceRoller.rollForAttacker(state);
         
-        state.setCurrentPhase(BattleState.Phase.ROLLING);
-        state.notifyPhaseChange(BattleState.Phase.ROLLING);
+        state.setCurrentPhase(TurnState.Phase.ROLLING);
+        state.notifyPhaseChange(TurnState.Phase.ROLLING);
         
         StatusEffectProcessor.BattleContext attackerContext = createBattleContext(playerIsAttacker);
         TurnType attackerTurnType = TurnType.ATTACK;
@@ -189,13 +189,13 @@ public class TurnProcessor {
     }
     
     public void advanceToSelectPhase() {
-        if (state.getCurrentPhase() != BattleState.Phase.ROLLING) return;
+        if (state.getCurrentPhase() != TurnState.Phase.ROLLING) return;
         
         state.clearDiceSelection(true);
         state.clearDiceSelection(false);
         
-        state.setCurrentPhase(BattleState.Phase.SELECTING_ATTACK);
-        state.notifyPhaseChange(BattleState.Phase.SELECTING_ATTACK);
+        state.setCurrentPhase(TurnState.Phase.SELECTING_ATTACK);
+        state.notifyPhaseChange(TurnState.Phase.SELECTING_ATTACK);
         
         if (!state.isPlayerAttacker()) {
             startAiSelection();
@@ -212,8 +212,8 @@ public class TurnProcessor {
         
         state.notifyTransitionToDefenderRoll();
         
-        state.setCurrentPhase(BattleState.Phase.ROLLING);
-        state.notifyPhaseChange(BattleState.Phase.ROLLING);
+        state.setCurrentPhase(TurnState.Phase.ROLLING);
+        state.notifyPhaseChange(TurnState.Phase.ROLLING);
         
         boolean defenderIsPlayer = !state.isPlayerAttacker();
         StatusEffectProcessor.BattleContext defenderContext = createBattleContext(defenderIsPlayer);
@@ -223,13 +223,13 @@ public class TurnProcessor {
     }
     
     public void advanceToDiceDisplayAttack() {
-        state.setCurrentPhase(BattleState.Phase.DICE_DISPLAY_ATTACK);
-        state.notifyPhaseChange(BattleState.Phase.DICE_DISPLAY_ATTACK);
+        state.setCurrentPhase(TurnState.Phase.DICE_DISPLAY_ATTACK);
+        state.notifyPhaseChange(TurnState.Phase.DICE_DISPLAY_ATTACK);
     }
     
     public void advanceToDiceDisplayDefense() {
-        state.setCurrentPhase(BattleState.Phase.DICE_DISPLAY_DEFENSE);
-        state.notifyPhaseChange(BattleState.Phase.DICE_DISPLAY_DEFENSE);
+        state.setCurrentPhase(TurnState.Phase.DICE_DISPLAY_DEFENSE);
+        state.notifyPhaseChange(TurnState.Phase.DICE_DISPLAY_DEFENSE);
     }
     
     public void advanceFromDiceDisplayAttack() {
@@ -249,8 +249,8 @@ public class TurnProcessor {
 
         weatherController.applyDefenderPreSelectionEffects(state, defenderIsPlayer);
 
-        state.setCurrentPhase(BattleState.Phase.SELECTING_DEFENSE);
-        state.notifyPhaseChange(BattleState.Phase.SELECTING_DEFENSE);
+        state.setCurrentPhase(TurnState.Phase.SELECTING_DEFENSE);
+        state.notifyPhaseChange(TurnState.Phase.SELECTING_DEFENSE);
 
         if (state.isPlayerAttacker()) {
             startAiSelection();
@@ -431,7 +431,7 @@ public class TurnProcessor {
     private void executePlannedAiSelection() {
         if (aiPlannedIndices == null) return;
         
-        boolean isAttackPhase = state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK;
+        boolean isAttackPhase = state.getCurrentPhase() == TurnState.Phase.SELECTING_ATTACK;
         boolean aiIsAttacker = !state.isPlayerAttacker();
         boolean forPlayer = false;
         
@@ -454,11 +454,11 @@ public class TurnProcessor {
         
         applyPostSelectionProcessing(forPlayer);
         
-        if (aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
+        if (aiIsAttacker && state.getCurrentPhase() == TurnState.Phase.SELECTING_ATTACK) {
             state.setAttackerConfirmedSelection(state.getSelectedDiceValuesFormatted(false));
             state.getAiSelectionVisualizer().reset();
             advanceToDiceDisplayAttack();
-        } else if (!aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
+        } else if (!aiIsAttacker && state.getCurrentPhase() == TurnState.Phase.SELECTING_DEFENSE) {
             state.setDefenderConfirmedSelection(state.getSelectedDiceValuesFormatted(false));
             weatherController.applyDefenderSelectionPhase(state, false);
             advanceToDiceDisplayDefense();
@@ -468,7 +468,7 @@ public class TurnProcessor {
     }
     
     private void performAiSelection() {
-        boolean isAttackPhase = state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK;
+        boolean isAttackPhase = state.getCurrentPhase() == TurnState.Phase.SELECTING_ATTACK;
         boolean aiIsAttacker = !state.isPlayerAttacker();
         boolean forPlayer = false;
         
@@ -484,10 +484,10 @@ public class TurnProcessor {
         
         aiSelectionComplete = true;
         
-        if (aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
+        if (aiIsAttacker && state.getCurrentPhase() == TurnState.Phase.SELECTING_ATTACK) {
             state.setAttackerConfirmedSelection(state.getSelectedDiceValuesFormatted(false));
             advanceToDiceDisplayAttack();
-        } else if (!aiIsAttacker && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
+        } else if (!aiIsAttacker && state.getCurrentPhase() == TurnState.Phase.SELECTING_DEFENSE) {
             state.setDefenderConfirmedSelection(state.getSelectedDiceValuesFormatted(false));
             weatherController.applyDefenderSelectionPhase(state, false);
             advanceToDiceDisplayDefense();
@@ -517,16 +517,16 @@ public class TurnProcessor {
             state.notifyValueChange(!playerIsAttacker, "PRISMATIC", prePrismaticDefense, postPrismaticDefense, delta);
         }
 
-        state.setCurrentPhase(BattleState.Phase.RESOLVING_PRE_CLASH);
-        state.notifyPhaseChange(BattleState.Phase.RESOLVING_PRE_CLASH);
+        state.setCurrentPhase(TurnState.Phase.RESOLVING_PRE_CLASH);
+        state.notifyPhaseChange(TurnState.Phase.RESOLVING_PRE_CLASH);
     }
     
     public void proceedToModificationPause() {
-        if (state.getCurrentPhase() != BattleState.Phase.RESOLVING_PRE_CLASH) return;
+        if (state.getCurrentPhase() != TurnState.Phase.RESOLVING_PRE_CLASH) return;
 
         if (state.hasPendingModification()) {
-            state.setCurrentPhase(BattleState.Phase.RESOLVING_MODIFICATION);
-            state.notifyPhaseChange(BattleState.Phase.RESOLVING_MODIFICATION);
+            state.setCurrentPhase(TurnState.Phase.RESOLVING_MODIFICATION);
+            state.notifyPhaseChange(TurnState.Phase.RESOLVING_MODIFICATION);
             return;
         }
 
@@ -534,7 +534,7 @@ public class TurnProcessor {
     }
 
     public void proceedFromModificationPause() {
-        if (state.getCurrentPhase() != BattleState.Phase.RESOLVING_MODIFICATION) return;
+        if (state.getCurrentPhase() != TurnState.Phase.RESOLVING_MODIFICATION) return;
         applyPendingModifications();
         continueToClash();
     }
@@ -617,8 +617,8 @@ public class TurnProcessor {
     }
 
     public void continueToClash() {
-        if (state.getCurrentPhase() != BattleState.Phase.RESOLVING_PRE_CLASH &&
-            state.getCurrentPhase() != BattleState.Phase.RESOLVING_MODIFICATION) return;
+        if (state.getCurrentPhase() != TurnState.Phase.RESOLVING_PRE_CLASH &&
+            state.getCurrentPhase() != TurnState.Phase.RESOLVING_MODIFICATION) return;
 
         StatusEffectProcessor.BattleContext attackerContext = createBattleContext(state.isPlayerAttacker());
         StatusEffectProcessor.BattleContext defenderContext = createBattleContext(!state.isPlayerAttacker());
@@ -635,6 +635,9 @@ public class TurnProcessor {
         
         int attackerInstantDamage = attackerContext.getInstantDamageToOpponent();
         int defenderInstantDamage = defenderContext.getInstantDamageToOpponent();
+        
+        int attackerHolderDamage = attackerContext.getInstantDamageFromHolder();
+        int defenderHolderDamage = defenderContext.getInstantDamageFromHolder();
         
         if (attackerInstantDamage > 0) {
             if (state.isPlayerAttacker()) {
@@ -655,6 +658,26 @@ public class TurnProcessor {
                 state.notifySecondaryDamage(false, defenderInstantDamage, "INSTANT_DAMAGE");
             }
         }
+        
+        if (attackerHolderDamage > 0) {
+            if (state.isPlayerAttacker()) {
+                state.applyDamageTo(false, attackerHolderDamage);
+                state.notifySecondaryDamage(false, attackerHolderDamage, "INSTANT_DAMAGE");
+            } else {
+                state.applyDamageTo(true, attackerHolderDamage);
+                state.notifySecondaryDamage(true, attackerHolderDamage, "INSTANT_DAMAGE");
+            }
+        }
+        
+        if (defenderHolderDamage > 0) {
+            if (state.isPlayerAttacker()) {
+                state.applyDamageTo(true, defenderHolderDamage);
+                state.notifySecondaryDamage(true, defenderHolderDamage, "INSTANT_DAMAGE");
+            } else {
+                state.applyDamageTo(false, defenderHolderDamage);
+                state.notifySecondaryDamage(false, defenderHolderDamage, "INSTANT_DAMAGE");
+            }
+        }
 
         PassiveEventSystem.onAttackResolution(state, state.isPlayerAttacker());
         PassiveEventSystem.onAttackResolution(state, !state.isPlayerAttacker());
@@ -668,8 +691,8 @@ public class TurnProcessor {
             state.notifySecondaryDamage(false, opponentThornsDamage, "THORNS");
         }
 
-        state.setCurrentPhase(BattleState.Phase.RESOLVING);
-        state.notifyPhaseChange(BattleState.Phase.RESOLVING);
+        state.setCurrentPhase(TurnState.Phase.RESOLVING);
+        state.notifyPhaseChange(TurnState.Phase.RESOLVING);
 
         DamageResolver.DamageResult result = damageResolver.resolve(state);
         pendingDamageResult = result;
@@ -780,8 +803,8 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         if (state.getPlayerHp() <= 0 || state.getOpponentHp() <= 0) {
             endBattle();
         } else {
-            state.setCurrentPhase(BattleState.Phase.WAITING_NEXT_TURN);
-            state.notifyPhaseChange(BattleState.Phase.WAITING_NEXT_TURN);
+            state.setCurrentPhase(TurnState.Phase.WAITING_NEXT_TURN);
+            state.notifyPhaseChange(TurnState.Phase.WAITING_NEXT_TURN);
         }
     }
     
@@ -840,7 +863,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
 }
     
     public void advanceToNextTurn() {
-        if (state.getCurrentPhase() != BattleState.Phase.WAITING_NEXT_TURN) return;
+        if (state.getCurrentPhase() != TurnState.Phase.WAITING_NEXT_TURN) return;
         
         StatusEffectProcessor.BattleContext playerContext = createBattleContext(true);
         StatusEffectProcessor.BattleContext opponentContext = createBattleContext(false);
@@ -918,7 +941,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
     }
     
     private void endBattle() {
-        state.setCurrentPhase(BattleState.Phase.ENDED);
+        state.setCurrentPhase(TurnState.Phase.ENDED);
         String winner = state.getPlayerHp() <= 0 ? "opponent" : "player";
         state.setWinner(winner);
         state.notifyBattleEnd(winner);
@@ -939,8 +962,8 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
     }
     
     public void confirmPlayerSelection() {
-        if (state.getCurrentPhase() != BattleState.Phase.SELECTING_ATTACK && 
-            state.getCurrentPhase() != BattleState.Phase.SELECTING_DEFENSE) return;
+        if (state.getCurrentPhase() != TurnState.Phase.SELECTING_ATTACK && 
+            state.getCurrentPhase() != TurnState.Phase.SELECTING_DEFENSE) return;
         
         int requiredCount = state.getRequiredDiceCount(true);
         int selectedCount = state.countSelectedDice(true);
@@ -954,7 +977,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         
         state.recordSelectedFaces(true);
         
-        boolean isAttackPhase = state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK;
+        boolean isAttackPhase = state.getCurrentPhase() == TurnState.Phase.SELECTING_ATTACK;
         
         if (isAttackPhase) {
             state.setAttackValue(state.calculateSelectedSum(true));
@@ -964,10 +987,10 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         
         applyPostSelectionProcessing(true);
         
-        if (state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK) {
+        if (state.isPlayerAttacker() && state.getCurrentPhase() == TurnState.Phase.SELECTING_ATTACK) {
             state.setAttackerConfirmedSelection(state.getSelectedDiceValuesFormatted(true));
             advanceToDiceDisplayAttack();
-        } else if (!state.isPlayerAttacker() && state.getCurrentPhase() == BattleState.Phase.SELECTING_DEFENSE) {
+        } else if (!state.isPlayerAttacker() && state.getCurrentPhase() == TurnState.Phase.SELECTING_DEFENSE) {
             state.setDefenderConfirmedSelection(state.getSelectedDiceValuesFormatted(true));
             weatherController.applyDefenderSelectionPhase(state, true);
             advanceToDiceDisplayDefense();
@@ -977,7 +1000,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
     private void applyPostSelectionProcessing(boolean forPlayer) {
         processPassiveEffects(forPlayer);
         
-        boolean isAttackPhase = state.getCurrentPhase() == BattleState.Phase.SELECTING_ATTACK;
+        boolean isAttackPhase = state.getCurrentPhase() == TurnState.Phase.SELECTING_ATTACK;
         boolean isAttackerSide = forPlayer == state.isPlayerAttacker();
         
         int passiveBonus;

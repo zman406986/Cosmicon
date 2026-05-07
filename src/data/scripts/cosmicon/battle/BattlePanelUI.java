@@ -19,8 +19,8 @@ import com.fs.starfarer.api.ui.UIComponentAPI;
 
 import data.scripts.CosmiconConfig;
 import data.scripts.Strings;
-import data.scripts.cosmicon.battle.BattleState.BattleEventListener;
-import data.scripts.cosmicon.battle.BattleState.Phase;
+import data.scripts.cosmicon.battle.BattleEventBus.BattleEventListener;
+import data.scripts.cosmicon.battle.TurnState.Phase;
 import data.scripts.cosmicon.state.CosmiconStats;
 import data.scripts.cosmicon.tutorial.TutorialController;
 import data.scripts.cosmicon.tutorial.TutorialUIRenderer;
@@ -92,10 +92,12 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     private static class SecondaryDamageEntry {
         final FlyingNumber number;
         final boolean isPlayer;
+        final ImpactEffect impactEffect;
         float timeAlive;
-        SecondaryDamageEntry(FlyingNumber number, boolean isPlayer) {
+        SecondaryDamageEntry(FlyingNumber number, boolean isPlayer, ImpactEffect impactEffect) {
             this.number = number;
             this.isPlayer = isPlayer;
+            this.impactEffect = impactEffect;
             this.timeAlive = 0f;
         }
     }
@@ -480,7 +482,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         labels.updateDiceRolledCounts(isPlayer, types);
         
         if (!isPlayer && types != null && battleState != null 
-                && battleState.getCurrentPhase() == BattleState.Phase.ROLLING) {
+                && battleState.getCurrentPhase() == TurnState.Phase.ROLLING) {
             triggerOpponentDiceRoll();
         }
     }
@@ -555,13 +557,13 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         float defenderCenterX = playerIsAttacker ? topIconCenterX : bottomIconCenterX;
         float defenderCenterY = playerIsAttacker ? topIconCenterY : bottomIconCenterY;
 
-        List<BattleState.ValueChangeRecord> attackerChanges = battleState.getPendingValueChanges(playerIsAttacker);
-        List<BattleState.ValueChangeRecord> defenderChanges = battleState.getPendingValueChanges(!playerIsAttacker);
+        List<BattleEventBus.ValueChangeRecord> attackerChanges = battleState.getPendingValueChanges(playerIsAttacker);
+        List<BattleEventBus.ValueChangeRecord> defenderChanges = battleState.getPendingValueChanges(!playerIsAttacker);
 
         int attackerDelta = 0;
-        for (BattleState.ValueChangeRecord record : attackerChanges) attackerDelta += record.delta();
+        for (BattleEventBus.ValueChangeRecord record : attackerChanges) attackerDelta += record.delta();
         int defenderDelta = 0;
-        for (BattleState.ValueChangeRecord record : defenderChanges) defenderDelta += record.delta();
+        for (BattleEventBus.ValueChangeRecord record : defenderChanges) defenderDelta += record.delta();
 
         int attackValue = labels.getAttackerTotalDisplayValue() - attackerDelta;
         int defenseValue = labels.getDefenderTotalDisplayValue() - defenderDelta;
@@ -645,7 +647,12 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         fn.setColor(color);
         fn.startFrom(cardCenterX, cardCenterY - yOffset);
         fn.flyTo(cardCenterX, cardCenterY - 30f - yOffset, SECONDARY_DAMAGE_FLIGHT_DURATION);
-        secondaryDamageNumbers.add(new SecondaryDamageEntry(fn, isPlayer));
+
+        ImpactEffect impactEffect = new ImpactEffect();
+        impactEffect.triggerFlash(cardCenterX, cardCenterY, 30f, color);
+        impactEffect.triggerParticles(cardCenterX, cardCenterY, 5, color);
+
+        secondaryDamageNumbers.add(new SecondaryDamageEntry(fn, isPlayer, impactEffect));
 
         labels.updateLabelsFromState();
     }
@@ -691,6 +698,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         List<SecondaryDamageEntry> toRemove = new ArrayList<>();
         for (SecondaryDamageEntry entry : secondaryDamageNumbers) {
             entry.number.advance(amount);
+            entry.impactEffect.advance(amount);
             entry.timeAlive += amount;
             if (entry.timeAlive >= SECONDARY_DAMAGE_LIFETIME) {
                 toRemove.add(entry);
@@ -1029,18 +1037,18 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     private boolean shouldShowOpponentDice() {
         if (battleState == null) return false;
 
-        BattleState.Phase phase = battleState.getCurrentPhase();
+        TurnState.Phase phase = battleState.getCurrentPhase();
         AISelectionVisualizer viz = battleState.getAiSelectionVisualizer();
 
-        boolean aiIsSelecting = (phase == BattleState.Phase.SELECTING_ATTACK && !battleState.isPlayerAttacker()) ||
-                                (phase == BattleState.Phase.SELECTING_DEFENSE && battleState.isPlayerAttacker());
+        boolean aiIsSelecting = (phase == TurnState.Phase.SELECTING_ATTACK && !battleState.isPlayerAttacker()) ||
+                                (phase == TurnState.Phase.SELECTING_DEFENSE && battleState.isPlayerAttacker());
 
         boolean vizActive = viz != null && viz.hasStarted();
 
         boolean isDefenderRolling = battleState.isDefenderRolling();
         boolean isOpponentTurn = isDefenderRolling == battleState.isPlayerAttacker();
 
-        boolean opponentRolling = phase == BattleState.Phase.ROLLING &&
+        boolean opponentRolling = phase == TurnState.Phase.ROLLING &&
                                   diceRollManager != null &&
                                   isOpponentTurn &&
                                   (diceRollManager.hasOpponentAnimators() || diceRollManager.isOpponentWaitingForRollTrigger());
@@ -1130,6 +1138,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             }
 
             for (SecondaryDamageEntry entry : secondaryDamageNumbers) {
+                entry.impactEffect.render(x, y, w, h, alphaMult);
                 entry.number.render(x, y, h, alphaMult, panel);
             }
 

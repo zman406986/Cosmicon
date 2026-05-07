@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import data.scripts.cosmicon.battle.BattleState;
+import data.scripts.cosmicon.battle.TurnState;
 import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.prismatic.AvailabilityCondition.ConditionContext;
 import data.scripts.cosmicon.util.CosmiconLogger;
@@ -179,9 +180,9 @@ public class PrismaticManager {
         CharacterCard card = forPlayer ? state.getPlayerCard() : state.getOpponentCard();
         int maxHp = card != null ? card.getMaxHp() : hp;
         int turnNumber = state.getTurnNumber();
-        BattleState.TurnType turnType = state.isPlayerAttacker() 
-            ? (forPlayer ? BattleState.TurnType.ATTACK : BattleState.TurnType.DEFENSE)
-            : (forPlayer ? BattleState.TurnType.DEFENSE : BattleState.TurnType.ATTACK);
+        TurnState.TurnType turnType = state.isPlayerAttacker() 
+            ? (forPlayer ? TurnState.TurnType.ATTACK : TurnState.TurnType.DEFENSE)
+            : (forPlayer ? TurnState.TurnType.DEFENSE : TurnState.TurnType.ATTACK);
         int dmgTaken = forPlayer ? state.getPlayerTotalDamageTaken() : state.getOpponentTotalDamageTaken();
         Map<Integer, Integer> history = forPlayer ? state.getPlayerFaceSelectionHistory() : state.getOpponentFaceSelectionHistory();
         

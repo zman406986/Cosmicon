@@ -13,7 +13,7 @@ import com.fs.starfarer.api.ui.LabelAPI;
 import com.fs.starfarer.api.ui.UIComponentAPI;
 
 import data.scripts.Strings;
-import data.scripts.cosmicon.battle.BattleState.Phase;
+import data.scripts.cosmicon.battle.TurnState.Phase;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
@@ -893,8 +893,8 @@ public class BattleUILabels {
         boolean isAttacking = battleState.isAttacker(forPlayer);
         StatusEffectProcessor effects = battleState.getEffects(forPlayer);
         int bonus = isAttacking
-            ? effects.calculateAttackBonus(BattleState.TurnType.ATTACK)
-            : effects.calculateDefenseBonus(BattleState.TurnType.DEFENSE);
+            ? effects.calculateAttackBonus(TurnState.TurnType.ATTACK)
+            : effects.calculateDefenseBonus(TurnState.TurnType.DEFENSE);
         int prismatic = battleState.getPrismaticDiceTotalValue(forPlayer);
         return base + bonus + prismatic;
     }
@@ -903,7 +903,7 @@ public class BattleUILabels {
         int baseValue = battleState.getAttackValue();
         StatusEffectProcessor attackerEffects = battleState.isPlayerAttacker()
             ? battleState.getPlayerEffects() : battleState.getOpponentEffects();
-        int bonus = attackerEffects.calculateAttackBonus(BattleState.TurnType.ATTACK);
+        int bonus = attackerEffects.calculateAttackBonus(TurnState.TurnType.ATTACK);
         int prismaticValue = battleState.getPrismaticDiceTotalValue(battleState.isPlayerAttacker());
         return baseValue + bonus + prismaticValue;
     }
@@ -912,7 +912,7 @@ public class BattleUILabels {
         int baseValue = battleState.getDefenseValue();
         StatusEffectProcessor defenderEffects = battleState.isPlayerAttacker()
             ? battleState.getOpponentEffects() : battleState.getPlayerEffects();
-        int bonus = defenderEffects.calculateDefenseBonus(BattleState.TurnType.DEFENSE);
+        int bonus = defenderEffects.calculateDefenseBonus(TurnState.TurnType.DEFENSE);
         int prismaticValue = battleState.getPrismaticDiceTotalValue(!battleState.isPlayerAttacker());
         return baseValue + bonus + prismaticValue;
     }

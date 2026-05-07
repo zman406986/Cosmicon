@@ -1,7 +1,7 @@
 package data.scripts.cosmicon.prismatic.conditions;
 
 import data.scripts.Strings;
-import data.scripts.cosmicon.battle.BattleState.TurnType;
+import data.scripts.cosmicon.battle.TurnState.TurnType;
 import data.scripts.cosmicon.prismatic.AvailabilityCondition;
 
 public class ActionTypeCondition implements AvailabilityCondition {

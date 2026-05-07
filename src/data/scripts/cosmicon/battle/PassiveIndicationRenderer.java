@@ -22,16 +22,16 @@ public class PassiveIndicationRenderer {
                                           float alphaMult) {
         if (battleState == null || diceRollManager == null) return;
 
-        BattleState.Phase phase = battleState.getCurrentPhase();
-        if (phase != BattleState.Phase.SELECTING_ATTACK &&
-            phase != BattleState.Phase.SELECTING_DEFENSE) {
+        TurnState.Phase phase = battleState.getCurrentPhase();
+        if (phase != TurnState.Phase.SELECTING_ATTACK &&
+            phase != TurnState.Phase.SELECTING_DEFENSE) {
             return;
         }
 
         boolean playerShouldSelect = (battleState.isAttacker(true) &&
-            phase == BattleState.Phase.SELECTING_ATTACK) ||
+            phase == TurnState.Phase.SELECTING_ATTACK) ||
             (battleState.isDefender(true) &&
-            phase == BattleState.Phase.SELECTING_DEFENSE);
+            phase == TurnState.Phase.SELECTING_DEFENSE);
 
         renderIndicationsForSide(battleState, diceRollManager, alphaMult, playerShouldSelect);
     }

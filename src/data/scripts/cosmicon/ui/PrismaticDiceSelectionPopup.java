@@ -18,6 +18,7 @@ import com.fs.starfarer.api.ui.TooltipMakerAPI.ActionListenerDelegate;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleState;
+import data.scripts.cosmicon.battle.TurnState;
 import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.prismatic.AvailabilityCondition.ConditionContext;
@@ -195,7 +196,7 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
         CharacterCard card = battleState.getPlayerCard();
         int maxHp = card != null ? card.getMaxHp() : hp;
         int turnNumber = battleState.getTurnNumber();
-        BattleState.TurnType turnType = battleState.isPlayerAttacker() ? BattleState.TurnType.ATTACK : BattleState.TurnType.DEFENSE;
+        TurnState.TurnType turnType = battleState.isPlayerAttacker() ? TurnState.TurnType.ATTACK : TurnState.TurnType.DEFENSE;
         int dmgTaken = battleState.getPlayerTotalDamageTaken();
         Map<Integer, Integer> history = battleState.getPlayerFaceSelectionHistory();
 

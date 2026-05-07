@@ -56,9 +56,11 @@ public class PassiveEvaluator {
         StatusEffectProcessor effects = state.getEffects(forPlayer);
         
         for (GrantedEffect ge : result.getGrantedEffects()) {
-            if (ge.effect() == StatusEffect.POISON || ge.effect() == StatusEffect.INSTANT_DAMAGE) {
+            if (ge.effect() == StatusEffect.POISON) {
                 boolean opponent = !forPlayer;
                 state.getEffects(opponent).addEffect(ge.effect(), ge.layers());
+            } else if (ge.effect() == StatusEffect.INSTANT_DAMAGE) {
+                effects.addEffect(ge.effect(), ge.layers());
             } else if (ge.effect() == StatusEffect.HACK || ge.effect() == StatusEffect.ARISE) {
                 state.applyEffect(ge.effect(), ge.layers(), forPlayer);
             } else {
@@ -71,8 +73,7 @@ public class PassiveEvaluator {
             int newToughness = Math.max(0, currentToughness - result.getToughnessToRemove());
             effects.setEffect(StatusEffect.TOUGHNESS, newToughness);
             
-            boolean opponent = !forPlayer;
-            state.applyEffect(StatusEffect.INSTANT_DAMAGE, result.getInstantDamageToOpponent(), opponent);
+            effects.addEffect(StatusEffect.INSTANT_DAMAGE, result.getInstantDamageToOpponent());
         }
         
         if (result.getHealAmount() > 0) {

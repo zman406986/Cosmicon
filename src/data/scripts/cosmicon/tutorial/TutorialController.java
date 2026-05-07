@@ -6,7 +6,7 @@ import java.util.List;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleState;
-import data.scripts.cosmicon.battle.BattleState.Phase;
+import data.scripts.cosmicon.battle.TurnState.Phase;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.state.CosmiconStats;

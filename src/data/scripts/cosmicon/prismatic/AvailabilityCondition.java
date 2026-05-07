@@ -1,6 +1,6 @@
 package data.scripts.cosmicon.prismatic;
 
-import data.scripts.cosmicon.battle.BattleState.TurnType;
+import data.scripts.cosmicon.battle.TurnState.TurnType;
 
 import java.util.HashMap;
 import java.util.Map;

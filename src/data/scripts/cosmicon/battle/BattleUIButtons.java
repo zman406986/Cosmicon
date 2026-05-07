@@ -16,7 +16,7 @@ import com.fs.starfarer.api.ui.TooltipMakerAPI.TooltipLocation;
 import com.fs.starfarer.api.util.Misc;
 
 import data.scripts.Strings;
-import data.scripts.cosmicon.battle.BattleState.Phase;
+import data.scripts.cosmicon.battle.TurnState.Phase;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;

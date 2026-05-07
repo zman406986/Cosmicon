@@ -1,6 +1,6 @@
 package data.scripts.cosmicon.battle;
 
-import data.scripts.cosmicon.battle.BattleState.TurnType;
+import data.scripts.cosmicon.battle.TurnState.TurnType;
 import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class DamageResolver {

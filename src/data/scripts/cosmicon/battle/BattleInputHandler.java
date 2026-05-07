@@ -5,7 +5,7 @@ import java.util.List;
 import org.lwjgl.input.Mouse;
 
 import data.scripts.Strings;
-import data.scripts.cosmicon.battle.BattleState.Phase;
+import data.scripts.cosmicon.battle.TurnState.Phase;
 import data.scripts.cosmicon.tutorial.TutorialController;
 import data.scripts.cosmicon.util.UnifiedCoord;
 

@@ -1,6 +1,6 @@
 package data.scripts.cosmicon.battle;
 
-import data.scripts.cosmicon.battle.BattleState.TurnType;
+import data.scripts.cosmicon.battle.TurnState.TurnType;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -233,7 +233,7 @@ public class StatusEffectProcessor {
         if (hasEffect(StatusEffect.INSTANT_DAMAGE)) {
             int instantDamage = getLayers(StatusEffect.INSTANT_DAMAGE);
             processedEffects.add(new ProcessedEffect(StatusEffect.INSTANT_DAMAGE, instantDamage));
-            context.addInstantDamageToOpponent(instantDamage);
+            context.subtractInstantDamageFromHolder(instantDamage);
             effects.remove(StatusEffect.INSTANT_DAMAGE);
             durations.remove(StatusEffect.INSTANT_DAMAGE);
         }
@@ -352,6 +352,7 @@ public class StatusEffectProcessor {
         private final List<Integer> diceMaxFaces;
         private final List<DiceType> diceTypes;
         private int instantDamageToOpponent;
+        private int instantDamageFromHolder;
 
         public BattleContext(int hp, int maxHp) {
             this.currentHp = hp;
@@ -363,6 +364,7 @@ public class StatusEffectProcessor {
             this.diceMaxFaces = new ArrayList<>();
             this.diceTypes = new ArrayList<>();
             this.instantDamageToOpponent = 0;
+            this.instantDamageFromHolder = 0;
         }
 
         public void setDiceValues(List<Integer> values, List<Boolean> isPrismatic) {
@@ -507,6 +509,14 @@ public class StatusEffectProcessor {
 
         public int getInstantDamageToOpponent() {
             return instantDamageToOpponent;
+        }
+
+        public void subtractInstantDamageFromHolder(int damage) {
+            this.instantDamageFromHolder += damage;
+        }
+
+        public int getInstantDamageFromHolder() {
+            return instantDamageFromHolder;
         }
     }
 }

@@ -12,7 +12,7 @@ import data.scripts.cosmicon.tutorial.TutorialController;
 import data.scripts.cosmicon.tutorial.TutorialDiceRoller;
 import data.scripts.cosmicon.util.CosmiconLogger;
 
-public class BattleController implements BattleState.DamageAnimationCallback {
+public class BattleController implements BattleEventBus.DamageAnimationCallback {
 
     private final BattleState state;
     private final TurnProcessor turnProcessor;
@@ -264,9 +264,9 @@ public class BattleController implements BattleState.DamageAnimationCallback {
 
     public void forcePlayerWin() {
         state.setOpponentHp(0);
-        state.setCurrentPhase(BattleState.Phase.ENDED);
+        state.setCurrentPhase(TurnState.Phase.ENDED);
         state.setWinner("player");
-        state.notifyPhaseChange(BattleState.Phase.ENDED);
+        state.notifyPhaseChange(TurnState.Phase.ENDED);
         state.notifyBattleEnd("player");
     }
 

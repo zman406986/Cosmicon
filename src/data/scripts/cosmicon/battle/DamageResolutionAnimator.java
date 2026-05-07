@@ -132,10 +132,10 @@ public class DamageResolutionAnimator {
         StatusEffectProcessor defenderEffects = state.isPlayerAttacker() 
             ? state.getOpponentEffects() : state.getPlayerEffects();
         
-        this.attackValue += attackerEffects.calculateAttackBonus(BattleState.TurnType.ATTACK);
+        this.attackValue += attackerEffects.calculateAttackBonus(TurnState.TurnType.ATTACK);
         this.attackValue += state.getPrismaticDiceTotalValue(state.isPlayerAttacker());
         
-        this.defenseValue += defenderEffects.calculateDefenseBonus(BattleState.TurnType.DEFENSE);
+        this.defenseValue += defenderEffects.calculateDefenseBonus(TurnState.TurnType.DEFENSE);
         this.defenseValue += state.getPrismaticDiceTotalValue(!state.isPlayerAttacker());
         
         this.originalDefenseValue = this.defenseValue;
