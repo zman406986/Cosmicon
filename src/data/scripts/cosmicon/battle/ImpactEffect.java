@@ -75,6 +75,43 @@ public class ImpactEffect {
         this.shockwaveActive = true;
     }
     
+    public void triggerHeavyImpact(float x, float y, Color color) {
+        triggerFlash(x, y, 80f, new Color(255, 255, 220));
+        triggerShockwave(x, y);
+        
+        for (int i = 0; i < 16; i++) {
+            Particle p = new Particle();
+            p.x = x;
+            p.y = y;
+            float angle = (float)(Math.random() * 2 * Math.PI);
+            float speed = 80f + (float)(Math.random() * 180f);
+            p.vx = (float)Math.cos(angle) * speed;
+            p.vy = (float)Math.sin(angle) * speed;
+            p.scale = 3f + (float)(Math.random() * 5f);
+            p.alpha = 1f;
+            p.lifetime = 0.4f + (float)(Math.random() * 0.3f);
+            p.elapsed = 0f;
+            p.color = color;
+            particles.add(p);
+        }
+        
+        for (int i = 0; i < 6; i++) {
+            Particle p = new Particle();
+            p.x = x;
+            p.y = y;
+            float angle = (float)(Math.random() * 2 * Math.PI);
+            float speed = 30f + (float)(Math.random() * 60f);
+            p.vx = (float)Math.cos(angle) * speed;
+            p.vy = (float)Math.sin(angle) * speed;
+            p.scale = 4f + (float)(Math.random() * 4f);
+            p.alpha = 1f;
+            p.lifetime = 0.2f + (float)(Math.random() * 0.15f);
+            p.elapsed = 0f;
+            p.color = new Color(255, 255, 255);
+            particles.add(p);
+        }
+    }
+    
     public void advance(float amount) {
         if (flashActive) {
             flashElapsed += amount;

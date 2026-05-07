@@ -764,6 +764,11 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         if (result.counterDamage() > 0) {
             state.applyDamageTo(playerIsAttacker, result.counterDamage());
             state.notifySecondaryDamage(playerIsAttacker, result.counterDamage(), "COUNTER");
+
+            if (state.getEffects(playerIsAttacker).hasEffect(StatusEffectProcessor.StatusEffect.COMBO)) {
+                state.applyDamageTo(playerIsAttacker, result.counterDamage());
+                state.notifySecondaryDamage(playerIsAttacker, result.counterDamage(), "COUNTER");
+            }
         }
 
         if (result.selfThornsDamage() > 0) {

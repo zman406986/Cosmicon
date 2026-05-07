@@ -652,6 +652,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         ImpactEffect impactEffect = new ImpactEffect();
         impactEffect.triggerFlash(cardCenterX, cardCenterY, 30f, color);
         impactEffect.triggerParticles(cardCenterX, cardCenterY, 5, color);
+        if ("COUNTER".equals(damageType)) {
+            impactEffect.triggerShockwave(cardCenterX, cardCenterY);
+            impactEffect.triggerParticles(cardCenterX, cardCenterY, 6, color);
+        }
 
         secondaryDamageNumbers.add(new SecondaryDamageEntry(fn, isPlayer, impactEffect));
 

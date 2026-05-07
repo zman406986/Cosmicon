@@ -38,6 +38,7 @@ public class FlyingIcon {
     private final Color color;
     private boolean usePullback;
     private boolean useLinearFlight;
+    private boolean autoLaunch;
     
     private float currentRotation = 0f;
     private float targetRotation = 0f;
@@ -57,6 +58,7 @@ public class FlyingIcon {
         this.elapsed = 0f;
         this.labelCreated = false;
         this.usePullback = false;
+        this.autoLaunch = false;
         this.startX = startX;
         this.startY = startY;
         this.currentX = startX;
@@ -148,6 +150,29 @@ public class FlyingIcon {
         }
     }
     
+    public void drawbackThenLaunchTo(float targetX, float targetY,
+                                     float drawbackDist, float drawbackDuration,
+                                     float launchDuration, boolean useLinear) {
+        float dx = targetX - currentX;
+        float dy = targetY - currentY;
+        float dist = (float) Math.sqrt(dx * dx + dy * dy);
+        if (dist > 0f) {
+            pullbackX = currentX - (dx / dist) * drawbackDist;
+            pullbackY = currentY - (dy / dist) * drawbackDist;
+        } else {
+            pullbackX = currentX;
+            pullbackY = currentY;
+        }
+        this.targetX = targetX;
+        this.targetY = targetY;
+        this.flyDuration = launchDuration;
+        this.elapsed = 0f;
+        this.usePullback = true;
+        this.useLinearFlight = useLinear;
+        this.autoLaunch = true;
+        flyPhase = FlyPhase.PULLBACK;
+    }
+    
     public void setValue(int value) {
         this.value = value;
         this.cachedLabelWidth = -1f;
@@ -206,7 +231,12 @@ public class FlyingIcon {
             startX = pullbackX;
             startY = pullbackY;
             elapsed = 0f;
-            flyPhase = FlyPhase.READY;
+            if (autoLaunch) {
+                flyPhase = FlyPhase.FLYING;
+                autoLaunch = false;
+            } else {
+                flyPhase = FlyPhase.READY;
+            }
             return;
         }
         
@@ -242,6 +272,7 @@ public class FlyingIcon {
     public boolean isComplete() { return flyPhase == FlyPhase.COMPLETE; }
 
     public boolean isReady() { return flyPhase == FlyPhase.READY; }
+    public boolean isFlying() { return flyPhase == FlyPhase.FLYING; }
     public float getX() { return currentX; }
     public float getY() { return currentY; }
     public float getSize() { return size; }

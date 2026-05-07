@@ -227,16 +227,23 @@ public final class SelectionOptimizer {
             List<DiceType> selectedTypes = new ArrayList<>();
             int sum = 0;
 
+            float prismaticBonus = 0f;
             for (int idx : selection) {
                 selectedValues.add(diceValues.get(idx));
                 selectedTypes.add(diceTypes.get(idx));
                 sum += diceValues.get(idx);
+                if (diceTypes.get(idx) == DiceType.PRISMATIC && state != null) {
+                    PrismaticDiceInstance pd = state.getPrismaticDiceAt(idx, forPlayer);
+                    if (pd != null && pd.isSpecialFace) {
+                        prismaticBonus += getEffectBonusForSelection(pd.type.getEffect(), isAttacking, state, forPlayer);
+                    }
+                }
             }
 
             CharacterAIProfile.PassiveEvaluation eval = profile.evaluatePassiveTrigger(selectedValues, selectedTypes, isAttacking, state, forPlayer);
 
             float passiveScore = profile.getPassiveBonusValue(selectedValues, isAttacking, state, forPlayer);
-            float score = sum + passiveScore;
+            float score = sum + passiveScore + prismaticBonus;
             if (eval.triggered()) {
                 score += 100f;
             }
