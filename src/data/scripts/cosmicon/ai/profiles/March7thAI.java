@@ -50,13 +50,8 @@ public class March7thAI extends AttackRerollAI {
     }
 
     @Override
-    public boolean isAttackPassive() {
-        return true;
-    }
-
-    @Override
     public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
-        if (selectedValues == null || selectedValues.isEmpty()) return PassiveEvaluation.notTriggered();
+        if (selectedValues.isEmpty()) return PassiveEvaluation.notTriggered();
         PassiveResult result = PassiveEvaluator.evaluateForCharacter(getCharacterId(), selectedValues, isAttacking);
         int pairs = DiceEvaluator.countPairs(selectedValues);
         if (pairs >= 1) {
@@ -69,7 +64,7 @@ public class March7thAI extends AttackRerollAI {
 
     @Override
     public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
-        if (selectedValues == null || selectedValues.isEmpty()) return 0f;
+        if (selectedValues.isEmpty()) return 0f;
         return DiceEvaluator.countPairs(selectedValues) * INSTANT_DAMAGE_PER_PAIR;
     }
 

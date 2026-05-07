@@ -12,23 +12,24 @@ import java.util.stream.Collectors;
 
 public abstract class AttackRerollAI implements CharacterAIProfile {
 
-    protected int rolloutsPerEvaluation = 100;
+    protected int rolloutsPerEvaluation = 50;
     protected int maxExactOutcomeEnumeration = 256;
-    private static final Map<String, DieStoppingPolicy> policyCache = new HashMap<>();
+    private static final Map<DiceType, DieStoppingPolicy> policyCache = new EnumMap<>(DiceType.class);
     private static final Random SIM_RAND = new Random(42);
     private static final int MAX_REROLLS = 7;
 
     // Pre-computed destined indices for current planReroll call (avoids repeated lookups)
     private Set<Integer> currentDestinedIndices = Set.of();
-    private String currentDestinedKey = "[]"; // Cached toString to avoid repeated allocation
+    private String currentDestinedKey = "[]";
     private final Map<String, List<Set<Integer>>> subsetCache = new HashMap<>();
+    private final Map<Integer, Double> evalCache = new HashMap<>();
 
     static {
         for (int maxFace : new int[]{4, 6, 8, 12}) {
             DieStoppingPolicy policy = computePolicyStatic(maxFace);
-            policyCache.put(DiceType.fromMaxFace(maxFace).name(), policy);
+            policyCache.put(DiceType.fromMaxFace(maxFace), policy);
         }
-        policyCache.put(DiceType.PRISMATIC.name(), computePolicyStatic(6));
+        policyCache.put(DiceType.PRISMATIC, computePolicyStatic(6));
     }
 
     public AttackRerollAI() {}
@@ -79,8 +80,9 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
         // Pre-compute destined indices once per planReroll call (4.7 optimization)
         this.currentDestinedIndices = findDestinedIndices(pool.size(), state, forPlayer);
-        this.currentDestinedKey = currentDestinedIndices.toString(); // Cache key string
+        this.currentDestinedKey = currentDestinedIndices.toString();
         this.subsetCache.clear();
+        this.evalCache.clear();
 
         double currentEV = evaluateFinalPool(pool, 0, effectiveRequired, isAttacking, state, forPlayer);
 
@@ -179,7 +181,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         Set<Integer> toReroll = new HashSet<>();
         for (int i = 0; i < pool.size(); i++) {
             if (isSpecialFaceNeverReroll(i, pool.getType(i), isAttacking, state, forPlayer)) continue;
-            DieStoppingPolicy policy = getPolicyForDie(pool.getType(i));
+            DieStoppingPolicy policy = getStoppingPolicy(pool.getType(i));
             boolean shouldReroll = isAttacking
                 ? policy.shouldReroll(pool.getValue(i), rerollsLeft)
                 : policy.shouldRerollConservative(pool.getValue(i), rerollsLeft);
@@ -190,10 +192,15 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
     private double evaluateFinalPool(SimPool pool, int rerollsUsed, int requiredCount,
                                       boolean isAttacking, BattleState state, boolean forPlayer) {
+        int cacheKey = pool.fingerprint() * 31 + rerollsUsed * 31 + requiredCount;
+        Double cached = evalCache.get(cacheKey);
+        if (cached != null) return cached;
+
         SubsetEvaluator evaluator = getSubsetEvaluator();
         List<Set<Integer>> choices = enumerateLegalSubsets(pool, requiredCount);
 
         if (choices.isEmpty()) {
+            evalCache.put(cacheKey, 0.0);
             return 0;
         }
 
@@ -209,6 +216,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             util -= calculateRerollSelfDamage(rerollsUsed);
             if (util > bestUtil) bestUtil = util;
         }
+        evalCache.put(cacheKey, bestUtil);
         return bestUtil;
     }
 
@@ -245,7 +253,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         Set<Integer> thresholdSet = new HashSet<>();
         for (int i = 0; i < pool.size(); i++) {
             if (!neverReroll[i]) {
-                DieStoppingPolicy policy = getPolicyForDie(pool.getType(i));
+                DieStoppingPolicy policy = getStoppingPolicy(pool.getType(i));
                 if (policy.shouldReroll(pool.getValue(i), rerollsLeft)) {
                     thresholdSet.add(i);
                 }
@@ -254,7 +262,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
         List<Integer> belowThreshold = new ArrayList<>(thresholdSet);
         if (!belowThreshold.isEmpty()) {
-            generateAllSubsets(belowThreshold, 0, new HashSet<>(), candidates);
+            generateCandidateSubsets(belowThreshold, candidates);
         }
 
         for (int i = 0; i < pool.size(); i++) {
@@ -268,13 +276,33 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         return candidates.stream().distinct().collect(Collectors.toList());
     }
 
-    private void generateAllSubsets(List<Integer> elements, int start, Set<Integer> current, List<Set<Integer>> result) {
+    private void generateCandidateSubsets(List<Integer> elements, List<Set<Integer>> result) {
+        int n = elements.size();
+        if (n <= 5) {
+            generateAllSubsetsRec(elements, 0, new HashSet<>(), result);
+            return;
+        }
+
+        for (int i = 0; i < n; i++) {
+            result.add(new HashSet<>(Collections.singletonList(elements.get(i))));
+        }
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                Set<Integer> pair = new HashSet<>();
+                pair.add(elements.get(i));
+                pair.add(elements.get(j));
+                result.add(pair);
+            }
+        }
+    }
+
+    private void generateAllSubsetsRec(List<Integer> elements, int start, Set<Integer> current, List<Set<Integer>> result) {
         if (!current.isEmpty()) {
             result.add(new HashSet<>(current));
         }
         for (int i = start; i < elements.size(); i++) {
             current.add(elements.get(i));
-            generateAllSubsets(elements, i + 1, current, result);
+            generateAllSubsetsRec(elements, i + 1, current, result);
             current.remove(elements.get(i));
         }
     }
@@ -348,8 +376,8 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
     }
 
-    protected DieStoppingPolicy getPolicyForDie(DiceType type) {
-        return policyCache.get(type.name());
+    public static DieStoppingPolicy getStoppingPolicy(DiceType type) {
+        return policyCache.computeIfAbsent(type, k -> computePolicyStatic(k.getMaxFace()));
     }
 
     private static DieStoppingPolicy computePolicyStatic(int maxFace) {
@@ -477,6 +505,13 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             return;
         }
         if (start >= n) return;
+
+        for (int idx : destinedIndices) {
+            if (idx < start && !current.contains(idx)) {
+                return;
+            }
+        }
+
         current.add(start);
         findCombinations(n, start + 1, remaining - 1, current, results, destinedIndices);
         current.remove(start);
@@ -558,6 +593,10 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
         public SimPool createCopy() {
             return new SimPool(values.clone(), types, possibleFaces);
+        }
+
+        public int fingerprint() {
+            return java.util.Arrays.hashCode(values);
         }
     }
 

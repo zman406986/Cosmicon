@@ -1,16 +1,13 @@
 package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
-import data.scripts.cosmicon.ai.AttackRerollAI;
 import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.DiceEvaluator;
-import data.scripts.cosmicon.util.PassiveEvaluator;
-import data.scripts.cosmicon.util.PassiveResults.PassiveResult;
 import java.util.*;
 
-public class RobinAI extends AttackRerollAI {
+public class RobinAI extends SimplePassiveAI {
 
     @Override
     public String getCharacterId() {
@@ -23,17 +20,18 @@ public class RobinAI extends AttackRerollAI {
     }
 
     @Override
-    public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
-        if (selectedValues == null || selectedValues.isEmpty()) return PassiveEvaluation.notTriggered();
-        PassiveResult result = PassiveEvaluator.evaluateForCharacter(getCharacterId(), selectedValues, isAttacking);
-        return PassiveEvaluator.toPassiveEvaluation(result,
-            DiceEvaluator.allEven(selectedValues) ? Strings.get("character.robin.passive_desc") : "");
+    protected boolean checkPassiveCondition(List<Integer> selectedValues, boolean isAttacking) {
+        return DiceEvaluator.allEven(selectedValues);
     }
 
     @Override
-    public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
-        if (selectedValues == null || selectedValues.isEmpty()) return 0f;
-        return DiceEvaluator.allEven(selectedValues) ? 10f : 0f;
+    protected float computePassiveBonus(List<Integer> selectedValues, boolean isAttacking) {
+        return 10f;
+    }
+
+    @Override
+    protected String getPassiveDescription(List<Integer> selectedValues, boolean isAttacking) {
+        return Strings.get("character.robin.passive_desc");
     }
 
     @Override

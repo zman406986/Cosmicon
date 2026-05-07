@@ -39,11 +39,6 @@ public class CastoriceAI extends AttackRerollAI {
     }
 
     @Override
-    public boolean isAttackPassive() {
-        return false;
-    }
-
-    @Override
     public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
         return PassiveEvaluation.notTriggered();
     }

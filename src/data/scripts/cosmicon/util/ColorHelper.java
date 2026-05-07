@@ -41,11 +41,14 @@ public final class ColorHelper {
     public static final Color OVERLOAD_DAMAGE = new Color(255, 80, 50);
 
     public static float[] toGLComponents(Color color, float alphaMult) {
-        return new float[] {
-            color.getRed() / 255f,
-            color.getGreen() / 255f,
-            color.getBlue() / 255f,
-            (color.getAlpha() / 255f) * alphaMult
-        };
+        return toGLComponents(color, alphaMult, new float[4]);
+    }
+
+    public static float[] toGLComponents(Color color, float alphaMult, float[] out) {
+        out[0] = color.getRed() / 255f;
+        out[1] = color.getGreen() / 255f;
+        out[2] = color.getBlue() / 255f;
+        out[3] = (color.getAlpha() / 255f) * alphaMult;
+        return out;
     }
 }

@@ -66,7 +66,7 @@ public class CharacterCard {
     }
 
     public List<DiceType> getDicePool() {
-        return new ArrayList<>(dicePool);
+        return Collections.unmodifiableList(dicePool);
     }
 
     public String getPassiveDescription() {

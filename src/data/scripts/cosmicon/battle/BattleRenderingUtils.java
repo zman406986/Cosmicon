@@ -112,16 +112,27 @@ public final class BattleRenderingUtils {
         }
     }
 
+    private static float cachedScissorPX = -1f, cachedScissorPY = -1f;
+    private static float cachedScissorPW = -1f, cachedScissorPH = -1f;
+    private static int cachedScissorX, cachedScissorY, cachedScissorW, cachedScissorH;
+
     static void setupScissor(float panelX, float panelY, float panelW, float panelH) {
-        float scale = Global.getSettings().getScreenScaleMult();
-        
-        int scissorX = Math.round(panelX * scale);
-        int scissorY = Math.round(panelY * scale);
-        int scissorW = Math.round(panelW * scale);
-        int scissorH = Math.round(panelH * scale);
-        
+        if (panelX != cachedScissorPX || panelY != cachedScissorPY
+            || panelW != cachedScissorPW || panelH != cachedScissorPH) {
+            cachedScissorPX = panelX;
+            cachedScissorPY = panelY;
+            cachedScissorPW = panelW;
+            cachedScissorPH = panelH;
+
+            float scale = Global.getSettings().getScreenScaleMult();
+            cachedScissorX = Math.round(panelX * scale);
+            cachedScissorY = Math.round(panelY * scale);
+            cachedScissorW = Math.round(panelW * scale);
+            cachedScissorH = Math.round(panelH * scale);
+        }
+
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
-        GL11.glScissor(scissorX, scissorY, scissorW, scissorH);
+        GL11.glScissor(cachedScissorX, cachedScissorY, cachedScissorW, cachedScissorH);
     }
 
     private static void disableScissor() {
@@ -260,14 +271,15 @@ public final class BattleRenderingUtils {
     }
 
     public static void renderIndicatorArrow(float x, float y, boolean isUp, float alphaMult) {
+        renderIndicatorArrow(x, y, isUp, INDICATOR_ARROW_WIDTH, INDICATOR_ARROW_HEIGHT, alphaMult);
+    }
+
+    public static void renderIndicatorArrow(float x, float y, boolean isUp, float w, float h, float alphaMult) {
         GLStateUtil.resetBlendState();
 
         Color baseColor = isUp ? COLOR_ARROW_UP : COLOR_ARROW_DOWN;
         float[] c = ColorHelper.toGLComponents(baseColor, alphaMult);
         GL11.glColor4f(c[0], c[1], c[2], c[3]);
-
-        float w = INDICATOR_ARROW_WIDTH;
-        float h = INDICATOR_ARROW_HEIGHT;
 
         GL11.glBegin(GL11.GL_TRIANGLES);
         if (isUp) {
@@ -327,45 +339,54 @@ public final class BattleRenderingUtils {
         renderDicePoolIcons(x, y, alphaMult);
 
         SpriteAPI atkIcon = CosmiconSprites.getAtkIcon();
-        if (atkIcon != null) {
+        SpriteAPI defIcon = CosmiconSprites.getDefIcon();
+
+        if (atkIcon != null || defIcon != null) {
             GLStateUtil.enableTexturing();
+        }
+
+        if (atkIcon != null) {
             atkIcon.setSize(ATK_DEF_ICON_SIZE, ATK_DEF_ICON_SIZE);
             atkIcon.setAlphaMult(alphaMult);
             float atkX = x + ATK_LEFT_MARGIN;
             float atkY = y + ATK_DEF_BOTTOM_MARGIN;
             atkIcon.render(atkX, atkY);
-            GLStateUtil.disableTexturing();
-
-            int baseAtk = card.getAtkLevel();
-            if (effectiveAtk > baseAtk) {
-                float arrowX = atkX + ATK_DEF_ICON_SIZE + INDICATOR_ARROW_OFFSET;
-                float arrowY = atkY + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
-                renderIndicatorArrow(arrowX, arrowY, true, alphaMult);
-            } else if (effectiveAtk < baseAtk) {
-                float arrowX = atkX + ATK_DEF_ICON_SIZE + INDICATOR_ARROW_OFFSET;
-                float arrowY = atkY + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
-                renderIndicatorArrow(arrowX, arrowY, false, alphaMult);
-            }
         }
 
-        SpriteAPI defIcon = CosmiconSprites.getDefIcon();
         if (defIcon != null) {
-            GLStateUtil.enableTexturing();
             defIcon.setSize(ATK_DEF_ICON_SIZE, ATK_DEF_ICON_SIZE);
             defIcon.setAlphaMult(alphaMult);
             float defX = x + CARD_WIDTH - DEF_RIGHT_MARGIN - ATK_DEF_ICON_SIZE;
             float defY = y + ATK_DEF_BOTTOM_MARGIN;
             defIcon.render(defX, defY);
-            GLStateUtil.disableTexturing();
+        }
 
+        if (atkIcon != null || defIcon != null) {
+            GLStateUtil.disableTexturing();
+        }
+
+        if (atkIcon != null) {
+            int baseAtk = card.getAtkLevel();
+            if (effectiveAtk > baseAtk) {
+                float arrowX = x + ATK_LEFT_MARGIN + ATK_DEF_ICON_SIZE + INDICATOR_ARROW_OFFSET;
+                float arrowY = y + ATK_DEF_BOTTOM_MARGIN + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
+                renderIndicatorArrow(arrowX, arrowY, true, alphaMult);
+            } else if (effectiveAtk < baseAtk) {
+                float arrowX = x + ATK_LEFT_MARGIN + ATK_DEF_ICON_SIZE + INDICATOR_ARROW_OFFSET;
+                float arrowY = y + ATK_DEF_BOTTOM_MARGIN + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
+                renderIndicatorArrow(arrowX, arrowY, false, alphaMult);
+            }
+        }
+
+        if (defIcon != null) {
             int baseDef = card.getDefLevel();
             if (effectiveDef > baseDef) {
-                float arrowX = defX - INDICATOR_ARROW_WIDTH - INDICATOR_ARROW_OFFSET;
-                float arrowY = defY + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
+                float arrowX = x + CARD_WIDTH - DEF_RIGHT_MARGIN - ATK_DEF_ICON_SIZE - INDICATOR_ARROW_WIDTH - INDICATOR_ARROW_OFFSET;
+                float arrowY = y + ATK_DEF_BOTTOM_MARGIN + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
                 renderIndicatorArrow(arrowX, arrowY, true, alphaMult);
             } else if (effectiveDef < baseDef) {
-                float arrowX = defX - INDICATOR_ARROW_WIDTH - INDICATOR_ARROW_OFFSET;
-                float arrowY = defY + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
+                float arrowX = x + CARD_WIDTH - DEF_RIGHT_MARGIN - ATK_DEF_ICON_SIZE - INDICATOR_ARROW_WIDTH - INDICATOR_ARROW_OFFSET;
+                float arrowY = y + ATK_DEF_BOTTOM_MARGIN + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
                 renderIndicatorArrow(arrowX, arrowY, false, alphaMult);
             }
         }

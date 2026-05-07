@@ -250,13 +250,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         if (panel == null) return;
 
         diceEntryLabels.clear();
-        Map<String, PrismaticDiceType> allDice = PrismaticDiceRegistry.getAll();
-        List<PrismaticDiceType> diceList = new ArrayList<>();
-        for (PrismaticDiceType type : allDice.values()) {
-            if (CosmiconStats.isPrismaticDiceUnlocked(type.getId())) {
-                diceList.add(type);
-            }
-        }
+        List<PrismaticDiceType> diceList = filteredDiceList;
 
         float listStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 50f;
         float titleOffset = 20f;
@@ -650,13 +644,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         diceClickRegions.clear();
         versionClickRegions.clear();
 
-        Map<String, PrismaticDiceType> allDice = PrismaticDiceRegistry.getAll();
-        List<PrismaticDiceType> diceList = new ArrayList<>();
-        for (PrismaticDiceType type : allDice.values()) {
-            if (CosmiconStats.isPrismaticDiceUnlocked(type.getId())) {
-                diceList.add(type);
-            }
-        }
+        List<PrismaticDiceType> diceList = filteredDiceList;
 
         float titleOffset = 20f;
         float totalContentHeight = titleOffset + diceList.size() * DICE_ENTRY_HEIGHT;

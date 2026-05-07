@@ -5,6 +5,7 @@ import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.CharacterRegistry;
 
+import java.util.List;
 import java.util.Map;
 
 public class CosmiconPlayerState {
@@ -13,8 +14,13 @@ public class CosmiconPlayerState {
     private static final String KEY_EQUIPPED_PRISMATIC = "$cos_equipped_prismatic";
     private static final String KEY_EQUIPPED_PRISMATIC_TRUE = "$cos_equipped_prismatic_true";
 
+    private static MemoryAPI memory;
+
     private static MemoryAPI getMemory() {
-        return Global.getSector().getMemory();
+        if (memory == null) {
+            memory = Global.getSector().getMemory();
+        }
+        return memory;
     }
 
     public static void saveCharacter(String charId) {
@@ -62,7 +68,7 @@ public class CosmiconPlayerState {
         String charId = loadCharacter();
         
         if (charId == null || charId.isEmpty()) {
-            java.util.List<CharacterCard> allCards = CharacterRegistry.getAllCards();
+            List<CharacterCard> allCards = CharacterRegistry.getAllCards();
             if (allCards.isEmpty()) return null;
             charId = allCards.get(0).getId();
         }

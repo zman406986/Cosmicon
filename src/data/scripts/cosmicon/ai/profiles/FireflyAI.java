@@ -1,16 +1,13 @@
 package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
-import data.scripts.cosmicon.ai.AttackRerollAI;
 import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.DiceEvaluator;
-import data.scripts.cosmicon.util.PassiveEvaluator;
-import data.scripts.cosmicon.util.PassiveResults.PassiveResult;
 import java.util.*;
 
-public class FireflyAI extends AttackRerollAI {
+public class FireflyAI extends SimplePassiveAI {
 
     @Override
     public String getCharacterId() {
@@ -23,17 +20,18 @@ public class FireflyAI extends AttackRerollAI {
     }
 
     @Override
-    public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
-        if (selectedValues == null || selectedValues.isEmpty()) return PassiveEvaluation.notTriggered();
-        PassiveResult result = PassiveEvaluator.evaluateForCharacter(getCharacterId(), selectedValues, isAttacking);
-        return PassiveEvaluator.toPassiveEvaluation(result,
-            DiceEvaluator.hasTwoPairs(selectedValues) ? Strings.get("character.firefly.passive_desc") : "");
+    protected boolean checkPassiveCondition(List<Integer> selectedValues, boolean isAttacking) {
+        return DiceEvaluator.hasTwoPairs(selectedValues);
     }
 
     @Override
-    public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
-        if (selectedValues == null || selectedValues.isEmpty()) return 0f;
-        return DiceEvaluator.hasTwoPairs(selectedValues) ? 15f : 0f;
+    protected float computePassiveBonus(List<Integer> selectedValues, boolean isAttacking) {
+        return 15f;
+    }
+
+    @Override
+    protected String getPassiveDescription(List<Integer> selectedValues, boolean isAttacking) {
+        return Strings.get("character.firefly.passive_desc");
     }
 
     @Override

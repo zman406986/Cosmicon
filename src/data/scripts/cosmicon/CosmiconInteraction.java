@@ -93,7 +93,8 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         }
 
         boolean sessionWon = CosmiconEventState.isBarEvent() && CosmiconEventState.isSessionWon();
-        if (sessionWon) {
+        boolean isTutorial = CosmiconStats.isInTutorialMode();
+        if (sessionWon && !isTutorial) {
             textPanel.addPara(Strings.get("menu.session_won"));
         } else {
             options.addOption(Strings.get("menu.start_game"), "start_game");

@@ -65,9 +65,9 @@ public class PrismaticDiceType {
     
     public int[] getFaces(boolean useTrueVersion) {
         if (useTrueVersion && trueFaces != null) {
-            return trueFaces.clone();
+            return trueFaces;
         }
-        return defaultFaces.clone();
+        return defaultFaces;
     }
     
     public boolean isSpecialFace(int index, boolean useTrueVersion) {
@@ -84,7 +84,7 @@ public class PrismaticDiceType {
     }
     
     public int roll(boolean useTrueVersion, java.util.Random random) {
-        int[] faces = getFaces(useTrueVersion);
+        int[] faces = useTrueVersion && trueFaces != null ? trueFaces : defaultFaces;
         int index = random.nextInt(faces.length);
         return faces[index];
     }

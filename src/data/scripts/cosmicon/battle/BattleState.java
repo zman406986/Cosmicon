@@ -263,14 +263,13 @@ public class BattleState {
         int hp = isPlayer ? hpManager.getPlayerHp() : hpManager.getOpponentHp();
         int maxHp = isPlayer ? (playerCard != null ? playerCard.getMaxHp() : hp) : (opponentCard != null ? opponentCard.getMaxHp() : hp);
         StatusEffectProcessor.BattleContext context = new StatusEffectProcessor.BattleContext(hp, maxHp);
-        
+
         List<Integer> values = diceState.getDiceValues(isPlayer);
         List<Boolean> selected = diceState.getDiceSelected(isPlayer);
-        List<Boolean> isPrismatic = diceState.getPrismaticFlagsForDice(isPlayer);
         List<DiceType> types = diceState.getDiceTypes(isPlayer);
-        
+
         if (values != null && selected != null) {
-            context.setDiceValues(values, isPrismatic);
+            context.setDiceValues(values, types);
             context.setDiceSelected(selected);
         }
 
@@ -282,7 +281,7 @@ public class BattleState {
             }
             context.setDiceMaxFaces(maxFaces);
         }
-        
+
         return context;
     }
 

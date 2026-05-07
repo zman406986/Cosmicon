@@ -4,6 +4,8 @@ import data.scripts.Strings;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticEffect;
 
+import java.util.MissingResourceException;
+
 public final class PrismaticDisplayHelper {
     private PrismaticDisplayHelper() {}
 
@@ -14,7 +16,7 @@ public final class PrismaticDisplayHelper {
         String key = "prismatic." + diceId + ".name";
         try {
             return Strings.get(key);
-        } catch (Exception e) {
+        } catch (MissingResourceException e) {
             return diceId;
         }
     }
@@ -27,21 +29,23 @@ public final class PrismaticDisplayHelper {
     }
 
     public static String getEffectDescription(PrismaticEffect effect) {
-        if (effect == null || effect.isNone()) return Strings.get("prismatic.equip.no_effect");
-        if (effect.isDoubleValue()) return Strings.get("prismatic.equip.effect_double");
-        if (effect.isHealHp()) return Strings.get("prismatic.equip.effect_heal");
-        if (effect.isGainPrismaticUse()) return Strings.get("prismatic.equip.effect_gain_use");
-        if (effect.isInstantDamage()) return Strings.format("prismatic.equip.effect_instant_damage", effect.getInstantDamageAmount());
-        if (effect.isGrantStatus()) {
-            String statusKey = "status." + effect.getGrantedEffect().name().toLowerCase();
-            try {
-                String statusName = Strings.get(statusKey);
-                return Strings.format("prismatic.equip.effect_status", statusName);
-            } catch (Exception e) {
-                return Strings.format("prismatic.equip.effect_status", effect.getGrantedEffect().name());
+        if (effect == null) return Strings.get("prismatic.equip.no_effect");
+        return switch (effect.getType()) {
+            case NONE -> Strings.get("prismatic.equip.no_effect");
+            case DOUBLE_VALUE -> Strings.get("prismatic.equip.effect_double");
+            case HEAL_HP -> Strings.get("prismatic.equip.effect_heal");
+            case GAIN_PRISMATIC_USE -> Strings.get("prismatic.equip.effect_gain_use");
+            case INSTANT_DAMAGE -> Strings.format("prismatic.equip.effect_instant_damage", effect.getInstantDamageAmount());
+            case GRANT_STATUS -> {
+                String statusKey = "status." + effect.getGrantedEffect().name().toLowerCase();
+                try {
+                    String statusName = Strings.get(statusKey);
+                    yield Strings.format("prismatic.equip.effect_status", statusName);
+                } catch (MissingResourceException e) {
+                    yield Strings.format("prismatic.equip.effect_status", effect.getGrantedEffect().name());
+                }
             }
-        }
-        return Strings.get("prismatic.equip.no_effect");
+        };
     }
 
     public static String getEffectDescription(PrismaticDiceType type) {
@@ -51,7 +55,7 @@ public final class PrismaticDisplayHelper {
         String key = "prismatic." + type.getId() + ".description";
         try {
             return Strings.get(key);
-        } catch (Exception e) {
+        } catch (MissingResourceException e) {
             return getEffectDescription(type.getEffect());
         }
     }

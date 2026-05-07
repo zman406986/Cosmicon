@@ -2,14 +2,20 @@ package data.scripts.cosmicon.util;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class DiceEvaluator {
 
     private DiceEvaluator() {}
+
+    private static int[] frequencies(List<Integer> values) {
+        int[] freq = new int[13];
+        for (int v : values) {
+            if (v >= 1 && v <= 12) freq[v]++;
+        }
+        return freq;
+    }
 
     public static boolean allDiceEqualFour(List<Integer> values) {
         if (values == null || values.isEmpty()) return false;
@@ -50,14 +56,9 @@ public class DiceEvaluator {
 
     public static int countPairs(List<Integer> values) {
         if (values == null || values.isEmpty()) return 0;
-        Map<Integer, Integer> counts = new HashMap<>();
-        for (int v : values) {
-            counts.merge(v, 1, Integer::sum);
-        }
+        int[] freq = frequencies(values);
         int pairs = 0;
-        for (int count : counts.values()) {
-            pairs += count / 2;
-        }
+        for (int f : freq) pairs += f / 2;
         return pairs;
     }
 
@@ -72,8 +73,12 @@ public class DiceEvaluator {
 
     public static int countDistinctValues(List<Integer> values) {
         if (values == null || values.isEmpty()) return 0;
-        Set<Integer> distinct = new HashSet<>(values);
-        return distinct.size();
+        int[] freq = frequencies(values);
+        int distinct = 0;
+        for (int f : freq) {
+            if (f > 0) distinct++;
+        }
+        return distinct;
     }
 
     public static int sumOfValues(List<Integer> values) {
@@ -91,19 +96,19 @@ public class DiceEvaluator {
 
     public static boolean hasIdenticalNumbers(List<Integer> values) {
         if (values == null || values.size() < 2) return false;
-        Map<Integer, Integer> counts = new HashMap<>();
-        for (int v : values) {
-            counts.merge(v, 1, Integer::sum);
-            if (counts.get(v) >= 2) return true;
+        int[] freq = frequencies(values);
+        for (int f : freq) {
+            if (f >= 2) return true;
         }
         return false;
     }
 
     public static Map<Integer, Integer> computeFrequencyMap(List<Integer> values) {
         if (values == null || values.isEmpty()) return Collections.emptyMap();
+        int[] freq = frequencies(values);
         Map<Integer, Integer> counts = new HashMap<>();
-        for (int v : values) {
-            counts.merge(v, 1, Integer::sum);
+        for (int v = 1; v <= 12; v++) {
+            if (freq[v] > 0) counts.put(v, freq[v]);
         }
         return counts;
     }

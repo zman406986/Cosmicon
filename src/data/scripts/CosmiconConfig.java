@@ -31,7 +31,7 @@ public class CosmiconConfig {
             MARKET_SIZE_MIN = settings.optInt("marketSizeMin", 3);
             DEFAULT_HP = settings.optInt("defaultHP", 20);
             DEFAULT_REROLLS = settings.optInt("defaultRerolls", 2);
-            DEBUG_ENABLED = settings.optBoolean("debugEnabled", true);
+            DEBUG_ENABLED = settings.optBoolean("debugEnabled", false);
 
             Global.getLogger(CosmiconConfig.class).info("Cosmicon config loaded: marketSizeMin=" + MARKET_SIZE_MIN);
         } catch (IOException | JSONException e) {

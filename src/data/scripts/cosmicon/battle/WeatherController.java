@@ -1,8 +1,6 @@
 package data.scripts.cosmicon.battle;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
@@ -138,7 +136,7 @@ public class WeatherController {
         
         List<Integer> values = isPlayer ? state.getPlayerDiceValues() : state.getOpponentDiceValues();
         List<Boolean> selected = isPlayer ? state.getPlayerDiceSelected() : state.getOpponentDiceSelected();
-        int sum = calculateSelectedSum(values, selected);
+        int sum = state.calculateSelectedSum(isPlayer);
         boolean isAttacker = state.isAttacker(isPlayer);
         
         switch (weather) {
@@ -198,11 +196,14 @@ public class WeatherController {
                 }
             }
             case MODERATE_SNOW -> {
-                Map<Integer, Integer> counts = countSelectedValues(values, selected);
-                for (int count : counts.values()) {
-                    if (count >= 3) {
-                        state.applyHealTo(isPlayer, 10);
-                        break;
+                int[] freq = new int[13];
+                for (int i = 0; i < values.size(); i++) {
+                    if (selected.get(i)) {
+                        int v = values.get(i);
+                        if (v >= 1 && v <= 12 && ++freq[v] >= 3) {
+                            state.applyHealTo(isPlayer, 10);
+                            break;
+                        }
                     }
                 }
             }
@@ -262,8 +263,17 @@ public class WeatherController {
                 boolean attackerIsPlayer = !isPlayer;
                 List<Integer> attackerValues = state.getDiceValues(attackerIsPlayer);
                 List<Boolean> attackerSelected = state.getDiceSelected(attackerIsPlayer);
-                Map<Integer, Integer> counts = countSelectedValues(attackerValues, attackerSelected);
-                boolean hasMatch = counts.values().stream().anyMatch(c -> c >= 2);
+                int[] freq = new int[13];
+                boolean hasMatch = false;
+                for (int i = 0; i < attackerValues.size(); i++) {
+                    if (attackerSelected.get(i)) {
+                        int v = attackerValues.get(i);
+                        if (v >= 1 && v <= 12 && ++freq[v] >= 2) {
+                            hasMatch = true;
+                            break;
+                        }
+                    }
+                }
                 if (hasMatch) {
                     state.modifyWeatherDefMod(isPlayer, 1);
                     CosmiconLogger.debug("%s: DEF level +1 for defender (%s)", weather, isPlayer ? "Player" : "Opponent");
@@ -330,16 +340,6 @@ public class WeatherController {
         return false;
     }
     
-    private int calculateSelectedSum(List<Integer> values, List<Boolean> selected) {
-        int sum = 0;
-        for (int i = 0; i < values.size(); i++) {
-            if (selected.get(i)) {
-                sum += values.get(i);
-            }
-        }
-        return sum;
-    }
-    
     private int countSelected(List<Boolean> selected) {
         int count = 0;
         for (Boolean aBoolean : selected)
@@ -387,16 +387,6 @@ public class WeatherController {
             }
         }
         return true;
-    }
-    
-    private Map<Integer, Integer> countSelectedValues(List<Integer> values, List<Boolean> selected) {
-        Map<Integer, Integer> counts = new HashMap<>();
-        for (int i = 0; i < values.size(); i++) {
-            if (selected.get(i)) {
-                counts.merge(values.get(i), 1, Integer::sum);
-            }
-        }
-        return counts;
     }
     
     public void reset() {

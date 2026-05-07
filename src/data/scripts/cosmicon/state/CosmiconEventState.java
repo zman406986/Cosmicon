@@ -3,6 +3,8 @@ package data.scripts.cosmicon.state;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 
+import java.util.List;
+
 public class CosmiconEventState {
 
     private static final String KEY_OPPONENT_CHAR = "$cos_temp_opponent_char";
@@ -14,8 +16,19 @@ public class CosmiconEventState {
     private static final String KEY_SESSION_WON = "$cos_temp_session_won";
     private static final String KEY_OPPONENT_USES_TRUE = "$cos_temp_opponent_uses_true";
 
+    private static final List<String> ALL_KEYS = List.of(
+        KEY_OPPONENT_CHAR, KEY_PLAYER_CHAR, KEY_OPPONENT_PRISMATIC,
+        KEY_IS_BAR_EVENT, KEY_IS_TUTORIAL, KEY_REPLAY_TUTORIAL,
+        KEY_OPPONENT_USES_TRUE, KEY_SESSION_WON
+    );
+
+    private static MemoryAPI memory;
+
     private static MemoryAPI getMemory() {
-        return Global.getSector().getMemory();
+        if (memory == null) {
+            memory = Global.getSector().getMemory();
+        }
+        return memory;
     }
 
     public static void setOpponentCharacter(String charId) {
@@ -78,14 +91,9 @@ public class CosmiconEventState {
 
     public static void clearAll() {
         MemoryAPI mem = getMemory();
-        mem.unset(KEY_OPPONENT_CHAR);
-        mem.unset(KEY_PLAYER_CHAR);
-        mem.unset(KEY_OPPONENT_PRISMATIC);
-        mem.unset(KEY_IS_BAR_EVENT);
-        mem.unset(KEY_IS_TUTORIAL);
-        mem.unset(KEY_REPLAY_TUTORIAL);
-        mem.unset(KEY_OPPONENT_USES_TRUE);
-        mem.unset(KEY_SESSION_WON);
+        for (String key : ALL_KEYS) {
+            mem.unset(key);
+        }
     }
 
     public static void setReplayTutorialGame(int gameNumber) {

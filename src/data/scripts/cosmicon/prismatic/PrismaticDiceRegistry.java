@@ -2,6 +2,7 @@ package data.scripts.cosmicon.prismatic;
 
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.prismatic.conditions.*;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -56,7 +57,7 @@ public final class PrismaticDiceRegistry {
     }
     
     public static Map<String, PrismaticDiceType> getAll() {
-        return new HashMap<>(REGISTRY);
+        return Collections.unmodifiableMap(REGISTRY);
     }
     
     private static Set<Integer> indices(int... indices) {

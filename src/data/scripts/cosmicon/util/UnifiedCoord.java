@@ -6,7 +6,11 @@ import org.lwjgl.input.Mouse;
 /** Read starsector reference api/UI tutorial concise.md first. UI coords: Y=0 at TOP (↓), GL coords: Y=0 at BOTTOM (↑). */
 public final class UnifiedCoord {
     
-    public record PanelContext(float panelX, float panelY, float panelWidth, float panelHeight) {}
+    public record PanelContext(float panelX, float panelY, float panelWidth, float panelHeight, float screenScaleMult) {
+        public PanelContext(float panelX, float panelY, float panelWidth, float panelHeight) {
+            this(panelX, panelY, panelWidth, panelHeight, Global.getSettings().getScreenScaleMult());
+        }
+    }
     
     private static PanelContext currentContext;
     
@@ -39,12 +43,12 @@ public final class UnifiedCoord {
     
     public static UnifiedCoord fromMouse() {
         PanelContext c = getCurrent();
-        float scale = Global.getSettings().getScreenScaleMult();
+        float scale = c.screenScaleMult();
         float glX = Mouse.getX() / scale, glY = Mouse.getY() / scale;
         return new UnifiedCoord(glX - c.panelX(), c.panelHeight() - (glY - c.panelY()));
     }
     public static UnifiedCoord fromMouse(PanelContext ctx) {
-        float scale = Global.getSettings().getScreenScaleMult();
+        float scale = ctx.screenScaleMult();
         float glX = Mouse.getX() / scale, glY = Mouse.getY() / scale;
         return new UnifiedCoord(glX - ctx.panelX(), ctx.panelHeight() - (glY - ctx.panelY()), ctx);
     }

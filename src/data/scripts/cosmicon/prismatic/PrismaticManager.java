@@ -23,7 +23,6 @@ public class PrismaticManager {
         this.processor = new PrismaticDiceProcessor();
         this.playerPrismatic = new PrismaticState();
         this.opponentPrismatic = new PrismaticState();
-        initializePrismaticUses();
     }
     
     private void initializePrismaticUses() {

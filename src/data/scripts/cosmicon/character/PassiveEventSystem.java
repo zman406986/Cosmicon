@@ -20,14 +20,14 @@ public final class PassiveEventSystem {
 
     public static void onStartOfAttackTurn(BattleState state, boolean forPlayer) {
         String characterId = state.getCardId(forPlayer);
-        if (characterId == null || isAttacker(state, forPlayer)) return;
+        if (characterId == null || isDefender(state, forPlayer)) return;
 
         CharacterPassives.onStartOfAttackTurn(characterId, state, forPlayer);
     }
 
     public static void onStartOfDefenseTurn(BattleState state, boolean forPlayer) {
         String characterId = state.getCardId(forPlayer);
-        if (characterId == null || !isAttacker(state, forPlayer)) return;
+        if (characterId == null || !isDefender(state, forPlayer)) return;
 
         CharacterPassives.onStartOfDefenseTurn(characterId, state, forPlayer);
     }
@@ -48,7 +48,7 @@ public final class PassiveEventSystem {
 
     public static void onAttackResolution(BattleState state, boolean forPlayer) {
         String characterId = state.getCardId(forPlayer);
-        if (characterId == null || isAttacker(state, forPlayer)) return;
+        if (characterId == null || isDefender(state, forPlayer)) return;
 
         CharacterPassives.onAttackResolution(characterId, state, forPlayer);
     }
@@ -145,7 +145,7 @@ public final class PassiveEventSystem {
         CharacterPassives.onDefenseFail(characterId, state, defenderIsPlayer);
     }
 
-    private static boolean isAttacker(BattleState state, boolean forPlayer) {
+    private static boolean isDefender(BattleState state, boolean forPlayer) {
         return state.isPlayerAttacker() != forPlayer;
     }
 }

@@ -283,7 +283,6 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
         if (wc != null) {
             wc.reset();
         }
-        CosmiconSprites.clearCache();
         CosmiconLogger.info("====================================");
     }
 }

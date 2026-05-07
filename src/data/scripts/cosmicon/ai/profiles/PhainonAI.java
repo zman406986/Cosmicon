@@ -36,18 +36,13 @@ public class PhainonAI extends AttackRerollAI {
     }
 
     @Override
-    public boolean isAttackPassive() {
-        return true;
-    }
-
-    @Override
     public boolean isDefensePassive() {
         return true;
     }
 
     @Override
     public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
-        if (selectedValues == null || selectedValues.isEmpty()) return PassiveEvaluation.notTriggered();
+        if (selectedValues.isEmpty()) return PassiveEvaluation.notTriggered();
         if (isAttacking) {
             return PassiveEvaluation.triggered(15f, Strings.get("character.phainon.passive_desc"));
         }

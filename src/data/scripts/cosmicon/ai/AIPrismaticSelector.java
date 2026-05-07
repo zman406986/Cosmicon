@@ -1,8 +1,5 @@
 package data.scripts.cosmicon.ai;
 
-import java.util.Arrays;
-import java.util.List;
-
 import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
@@ -10,6 +7,9 @@ import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticEffect;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
+import data.scripts.cosmicon.util.CharacterIds;
+
+import java.util.List;
 
 public class AIPrismaticSelector {
 
@@ -29,25 +29,32 @@ public class AIPrismaticSelector {
         CharacterCard card = state.getCard(forPlayer);
         boolean useTrueVersion = card != null && card.isUseTruePrismatic();
 
-        PrismaticDecision bestDecision = null;
+        PrismaticDiceType bestType = null;
         float bestScore = 0f;
 
         for (PrismaticDiceType type : available) {
             float score = evaluatePrismaticValue(type, state, isAttacking, currentSelectionSum, forPlayer, useTrueVersion);
             if (score > bestScore) {
                 bestScore = score;
-                PrismaticDiceInstance instance = PrismaticDiceInstance.roll(type, useTrueVersion);
-                bestDecision = new PrismaticDecision(instance, score, score >= USE_THRESHOLD);
+                bestType = type;
             }
         }
 
-        return bestDecision;
+        if (bestType != null) {
+            PrismaticDiceInstance instance = PrismaticDiceInstance.roll(bestType, useTrueVersion);
+            return new PrismaticDecision(instance, bestScore, bestScore >= USE_THRESHOLD);
+        }
+
+        return null;
     }
 
     private static float evaluatePrismaticValue(PrismaticDiceType type, BattleState state,
                                                  boolean isAttacking, int currentSelectionSum,
                                                  boolean forPlayer, boolean useTrueVersion) {
-        float baseValue = (float) Arrays.stream(type.getFaces(useTrueVersion)).average().orElse(0f);
+        int[] faces = type.getFaces(useTrueVersion);
+        int sum = 0;
+        for (int f : faces) sum += f;
+        float baseValue = (float) sum / faces.length;
 
         PrismaticEffect effect = type.getEffect();
         float effectBonus = calculateEffectBonus(effect, state, isAttacking, currentSelectionSum, forPlayer);

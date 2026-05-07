@@ -75,6 +75,9 @@ public class BattleUILabels {
 
     private long lastStatusEffectStateHash = -1;
 
+    private int cachedPlayerPrisCount = -1;
+    private int cachedOpponentPrisCount = -1;
+
     private ValueChangeAnimator attackerValueAnimator;
     private ValueChangeAnimator defenderValueAnimator;
 
@@ -109,6 +112,11 @@ public class BattleUILabels {
         playerEffectDisplayIndex = new EnumMap<>(StatusEffectProcessor.StatusEffect.class);
         opponentEffectDisplayIndex = new EnumMap<>(StatusEffectProcessor.StatusEffect.class);
         statusEffectAnimator = new StatusEffectAnimator();
+    }
+
+    public void invalidatePrismaticCounts() {
+        cachedPlayerPrisCount = -1;
+        cachedOpponentPrisCount = -1;
     }
 
     public void cleanup() {
@@ -450,7 +458,7 @@ public class BattleUILabels {
             hintLabelX, hintLabelY);
         playerPrismaticClickHintLabel.setOpacity(0f);
 
-        if (battleState != null && data.scripts.cosmicon.state.CosmiconStats.isInTutorialMode()) {
+        if (battleState != null && TutorialController.shouldActivateTutorial()) {
             opponentPrismaticUsesLabel.setOpacity(0f);
             opponentPrismaticFaceMappingLabel.setOpacity(0f);
             opponentPrismaticEffectLabel.setOpacity(0f);
@@ -641,19 +649,23 @@ public class BattleUILabels {
         DicePoolCounts playerCounts = battleState.getPlayerDicePoolCounts();
         DicePoolCounts opponentCounts = battleState.getOpponentDicePoolCounts();
 
-        int playerPrisCount = playerCard != null ? playerCard.getPrismaticDiceIds().values().stream().mapToInt(Integer::intValue).sum() : 0;
-        playerPrismaticLabel.setText(String.valueOf(playerPrisCount));
+        if (cachedPlayerPrisCount < 0) {
+            cachedPlayerPrisCount = playerCard != null ? playerCard.getPrismaticDiceIds().values().stream().mapToInt(Integer::intValue).sum() : 0;
+        }
+        playerPrismaticLabel.setText(String.valueOf(cachedPlayerPrisCount));
         playerOrangeLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.ORANGE_D8) : 0));
         playerPurpleLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.PURPLE_D6) : 0));
         playerBlueLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.BLUE_D4) : 0));
 
-        int opponentPrisCount = opponentCard != null ? opponentCard.getPrismaticDiceIds().values().stream().mapToInt(Integer::intValue).sum() : 0;
-        opponentPrismaticLabel.setText(String.valueOf(opponentPrisCount));
+        if (cachedOpponentPrisCount < 0) {
+            cachedOpponentPrisCount = opponentCard != null ? opponentCard.getPrismaticDiceIds().values().stream().mapToInt(Integer::intValue).sum() : 0;
+        }
+        opponentPrismaticLabel.setText(String.valueOf(cachedOpponentPrisCount));
         opponentOrangeLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.ORANGE_D8) : 0));
         opponentPurpleLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.PURPLE_D6) : 0));
         opponentBlueLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.BLUE_D4) : 0));
 
-        if (data.scripts.cosmicon.state.CosmiconStats.isInTutorialMode()) {
+        if (TutorialController.shouldActivateTutorial()) {
             playerPrismaticLabel.setOpacity(0f);
             opponentPrismaticLabel.setOpacity(0f);
         }
@@ -919,7 +931,7 @@ public class BattleUILabels {
 
     public void updatePrismaticButton() {
         if (playerPrismaticUsesLabel == null || battleState == null) return;
-        if (data.scripts.cosmicon.state.CosmiconStats.isInTutorialMode()) {
+        if (TutorialController.shouldActivateTutorial()) {
             boolean prismaticAllowed = tutorialController != null && tutorialController.isPrismaticAllowed();
             opponentPrismaticUsesLabel.setOpacity(0f);
             opponentPrismaticFaceMappingLabel.setOpacity(0f);
@@ -1033,7 +1045,7 @@ public class BattleUILabels {
 
     public void updatePrismaticRolledLabel() {
         if (playerPrismaticRolledLabel == null) return;
-        if (data.scripts.cosmicon.state.CosmiconStats.isInTutorialMode()) {
+        if (TutorialController.shouldActivateTutorial()) {
             boolean prismaticAllowed = tutorialController != null && tutorialController.isPrismaticAllowed();
             if (!prismaticAllowed) {
                 playerPrismaticRolledLabel.setOpacity(0f);
@@ -1107,7 +1119,7 @@ public class BattleUILabels {
 
     public void updatePrismaticClickHint(boolean enabled) {
         if (playerPrismaticClickHintLabel != null) {
-            if (data.scripts.cosmicon.state.CosmiconStats.isInTutorialMode()) {
+            if (TutorialController.shouldActivateTutorial()) {
                 boolean prismaticAllowed = tutorialController != null && tutorialController.isPrismaticAllowed();
                 if (prismaticAllowed) {
                     playerPrismaticClickHintLabel.setColor(ColorHelper.PRISMATIC_HINT_ENABLED);

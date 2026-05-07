@@ -22,8 +22,13 @@ public class CosmiconStats {
     private static final int TUTORIAL_GAMES = 2;
     private static final String REPEATER_ID = "repeater";
 
+    private static MemoryAPI memory;
+
     private static MemoryAPI getMemory() {
-        return Global.getSector().getPlayerMemoryWithoutUpdate();
+        if (memory == null) {
+            memory = Global.getSector().getPlayerMemoryWithoutUpdate();
+        }
+        return memory;
     }
 
     public static int getGamesPlayed() {
@@ -87,7 +92,7 @@ public class CosmiconStats {
     public static boolean isPrismaticFeatureUnlocked() {
         MemoryAPI mem = getMemory();
         if (!mem.contains(KEY_PRISMATIC_FEATURE_UNLOCKED)) return true;
-        return !mem.getBoolean(KEY_PRISMATIC_FEATURE_UNLOCKED);
+        return mem.getBoolean(KEY_PRISMATIC_FEATURE_UNLOCKED);
     }
 
     static void setPrismaticFeatureUnlocked() {
@@ -95,18 +100,22 @@ public class CosmiconStats {
     }
 
     @SuppressWarnings("unchecked")
-    public static Set<String> getUnlockedCharacters() {
+    private static Set<String> getStringSet(String key) {
         MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_UNLOCKED_CHARACTERS)) {
+        if (!mem.contains(key)) {
             Set<String> empty = new HashSet<>();
-            mem.set(KEY_UNLOCKED_CHARACTERS, empty);
+            mem.set(key, empty);
             return empty;
         }
-        Object obj = mem.get(KEY_UNLOCKED_CHARACTERS);
+        Object obj = mem.get(key);
         if (obj instanceof Set) {
             return (Set<String>) obj;
         }
         return new HashSet<>();
+    }
+
+    public static Set<String> getUnlockedCharacters() {
+        return getStringSet(KEY_UNLOCKED_CHARACTERS);
     }
 
     public static boolean isCharacterUnlocked(String charId) {
@@ -117,19 +126,8 @@ public class CosmiconStats {
         getUnlockedCharacters().add(charId);
     }
 
-    @SuppressWarnings("unchecked")
     public static Set<String> getUnlockedPrismaticDice() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_UNLOCKED_PRISMATIC)) {
-            Set<String> empty = new HashSet<>();
-            mem.set(KEY_UNLOCKED_PRISMATIC, empty);
-            return empty;
-        }
-        Object obj = mem.get(KEY_UNLOCKED_PRISMATIC);
-        if (obj instanceof Set) {
-            return (Set<String>) obj;
-        }
-        return new HashSet<>();
+        return getStringSet(KEY_UNLOCKED_PRISMATIC);
     }
 
     public static boolean isPrismaticDiceUnlocked(String diceId) {

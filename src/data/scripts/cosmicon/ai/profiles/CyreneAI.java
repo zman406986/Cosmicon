@@ -37,7 +37,7 @@ public class CyreneAI extends AttackRerollAI {
 
     @Override
     public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
-        if (selectedValues == null || selectedValues.isEmpty()) return PassiveEvaluation.notTriggered();
+        if (selectedValues.isEmpty()) return PassiveEvaluation.notTriggered();
         int sum = DiceEvaluator.sumOfValues(selectedValues);
         float bonus = calculateCumulativeBonus(sum);
         return PassiveEvaluation.potential(1f, bonus, Strings.format("character.cyrene.passive_progress", sum));
@@ -45,7 +45,7 @@ public class CyreneAI extends AttackRerollAI {
 
     @Override
     public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking, BattleState state, boolean forPlayer) {
-        if (selectedValues == null || selectedValues.isEmpty()) return PassiveEvaluation.notTriggered();
+        if (selectedValues.isEmpty()) return PassiveEvaluation.notTriggered();
         int currentSum = DiceEvaluator.sumOfValues(selectedValues);
         int cumulative = state.getCumulativeAtkDef(forPlayer);
         int projectedTotal = cumulative + currentSum;
@@ -65,14 +65,14 @@ public class CyreneAI extends AttackRerollAI {
 
     @Override
     public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
-        if (selectedValues == null || selectedValues.isEmpty()) return 0f;
+        if (selectedValues.isEmpty()) return 0f;
         int sum = DiceEvaluator.sumOfValues(selectedValues);
         return calculateCumulativeBonus(sum);
     }
 
     @Override
     public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking, BattleState state, boolean forPlayer) {
-        if (selectedValues == null || selectedValues.isEmpty()) return 0f;
+        if (selectedValues.isEmpty()) return 0f;
         int currentSum = DiceEvaluator.sumOfValues(selectedValues);
         int cumulative = state.getCumulativeAtkDef(forPlayer);
         int projectedTotal = cumulative + currentSum;

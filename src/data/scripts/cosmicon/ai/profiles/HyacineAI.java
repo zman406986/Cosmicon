@@ -23,7 +23,7 @@ public class HyacineAI extends AttackRerollAI {
 
     @Override
     public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
-        if (selectedValues == null || selectedValues.isEmpty()) return PassiveEvaluation.notTriggered();
+        if (selectedValues.isEmpty()) return PassiveEvaluation.notTriggered();
         if (DiceEvaluator.allDiceEqualSix(selectedValues)) {
             return PassiveEvaluation.triggered(DiceEvaluator.sumOfValues(selectedValues) + 6f,
                 Strings.get("character.hyacine.passive_desc_full"));
@@ -34,7 +34,7 @@ public class HyacineAI extends AttackRerollAI {
 
     @Override
     public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
-        if (selectedValues == null || selectedValues.isEmpty()) return 0f;
+        if (selectedValues.isEmpty()) return 0f;
         int sum = DiceEvaluator.sumOfValues(selectedValues);
         if (DiceEvaluator.allDiceEqualSix(selectedValues)) return sum + 6f;
         return sum * 0.5f;

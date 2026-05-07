@@ -16,38 +16,36 @@ public class Strings {
 
     private static final String STRINGS_PATH = "data/config/strings.json";
     private static final Pattern PLACEHOLDER = Pattern.compile("\\{(\\d+)}");
-    private static JSONObject strings = null;
     private static final Map<String, String> cache = new HashMap<>();
 
     public static void loadStrings() {
         try {
-            strings = Global.getSettings().loadJSON(STRINGS_PATH, CosmiconConfig.MOD_ID);
+            JSONObject strings = Global.getSettings().loadJSON(STRINGS_PATH, CosmiconConfig.MOD_ID);
             cache.clear();
+            flattenJson("", strings, cache);
             Global.getLogger(Strings.class).info("Cosmicon strings loaded successfully");
         } catch (IOException | JSONException e) {
             throw new RuntimeException("Strings from " + STRINGS_PATH + " could not be loaded.", e);
         }
     }
 
-    public static String get(String key) {
-        if (strings == null) { loadStrings(); }
-
-        String cached = cache.get(key);
-        if (cached != null) return cached;
-
-        final String[] parts = key.split("\\.");
-        try {
-            JSONObject current = strings;
-            for (int i = 0; i < parts.length - 1; i++) {
-                current = current.getJSONObject(parts[i]);
+    private static void flattenJson(String prefix, JSONObject node, Map<String, String> target) {
+        for (String key : node.keySet()) {
+            String fullKey = prefix.isEmpty() ? key : prefix + "." + key;
+            Object value = node.get(key);
+            if (value instanceof JSONObject) {
+                flattenJson(fullKey, (JSONObject) value, target);
+            } else {
+                target.put(fullKey, String.valueOf(value));
             }
-            String value = current.getString(parts[parts.length - 1]);
-            cache.put(key, value);
-            return value;
-
-        } catch (JSONException e) {
-            throw new MissingResourceException("Missing translation for key: " + key, "Strings", key);
         }
+    }
+
+    public static String get(String key) {
+        String value = cache.get(key);
+        if (value != null) return value;
+
+        throw new MissingResourceException("Missing translation for key: " + key, "Strings", key);
     }
 
     public static String format(String key, Object... args) {

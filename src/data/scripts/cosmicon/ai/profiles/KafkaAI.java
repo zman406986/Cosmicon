@@ -1,14 +1,13 @@
 package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
-import data.scripts.cosmicon.ai.AttackRerollAI;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.DiceEvaluator;
 
 import java.util.*;
 
-public class KafkaAI extends AttackRerollAI {
+public class KafkaAI extends SimplePassiveAI {
 
     @Override
     public String getCharacterId() {
@@ -21,15 +20,17 @@ public class KafkaAI extends AttackRerollAI {
     }
 
     @Override
-    public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
-        if (selectedValues == null || selectedValues.isEmpty()) return PassiveEvaluation.notTriggered();
-        int distinct = DiceEvaluator.countDistinctValues(selectedValues);
-        return PassiveEvaluation.triggered(distinct, Strings.format("character.kafka.passive_desc", distinct));
+    protected boolean checkPassiveCondition(List<Integer> selectedValues, boolean isAttacking) {
+        return true;
     }
 
     @Override
-    public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
-        if (selectedValues == null || selectedValues.isEmpty()) return 0f;
+    protected float computePassiveBonus(List<Integer> selectedValues, boolean isAttacking) {
         return DiceEvaluator.countDistinctValues(selectedValues);
+    }
+
+    @Override
+    protected String getPassiveDescription(List<Integer> selectedValues, boolean isAttacking) {
+        return Strings.format("character.kafka.passive_desc", DiceEvaluator.countDistinctValues(selectedValues));
     }
 }

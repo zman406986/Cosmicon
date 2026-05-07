@@ -34,7 +34,7 @@ public class YaoGuangAI extends AttackRerollAI {
 
     @Override
     public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
-        if (!isAttacking || selectedValues == null || selectedValues.isEmpty()) return PassiveEvaluation.notTriggered();
+        if (!isAttacking || selectedValues.isEmpty()) return PassiveEvaluation.notTriggered();
         int sum = DiceEvaluator.sumOfValues(selectedValues);
         if (sum >= ATTACK_THRESHOLD) {
             return PassiveEvaluation.triggered(PRISMATIC_USE_VALUE, Strings.get("character.yao_guang.passive_desc"));
@@ -44,7 +44,7 @@ public class YaoGuangAI extends AttackRerollAI {
 
     @Override
     public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
-        if (!isAttacking || selectedValues == null || selectedValues.isEmpty()) return 0f;
+        if (!isAttacking || selectedValues.isEmpty()) return 0f;
         int sum = DiceEvaluator.sumOfValues(selectedValues);
         return sum >= ATTACK_THRESHOLD ? PRISMATIC_USE_VALUE : 0f;
     }

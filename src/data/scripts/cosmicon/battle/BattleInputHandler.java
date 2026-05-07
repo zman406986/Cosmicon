@@ -19,6 +19,7 @@ public class BattleInputHandler {
     private DiceRollManager diceRollManager;
     private BattleUILabels labels;
     private BattleUIButtons buttons;
+    private BattlePanelUI battlePanelUI;
     private DamageResolutionAnimator damageAnimator;
     private TutorialController tutorialController;
 
@@ -52,6 +53,10 @@ public class BattleInputHandler {
 
     public void setDamageAnimator(DamageResolutionAnimator animator) {
         this.damageAnimator = animator;
+    }
+
+    public void setBattlePanelUI(BattlePanelUI ui) {
+        this.battlePanelUI = ui;
     }
 
     public void setTutorialController(TutorialController controller) {
@@ -93,172 +98,163 @@ public class BattleInputHandler {
     public void handleMouseInput() {
         UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(
             panelX, panelY, 0, BattleRenderingUtils.PANEL_HEIGHT));
+        try {
+            int currentButton = Mouse.isButtonDown(0) ? 1 : 0;
 
-        int currentButton = Mouse.isButtonDown(0) ? 1 : 0;
+            if (currentButton == 1 && lastMouseButtonState == 0) {
+                UnifiedCoord mousePos = UnifiedCoord.fromMouse();
 
-        if (currentButton == 1 && lastMouseButtonState == 0) {
-            UnifiedCoord mousePos = UnifiedCoord.fromMouse();
+                if (!buttons.isPrismaticPopupActive()) {
+                    boolean playerShouldSelect = (battleState.isAttacker(true) &&
+                        battleState.getCurrentPhase() == Phase.SELECTING_ATTACK) ||
+                        (battleState.isDefender(true) &&
+                        battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE);
 
-            if (!buttons.isPrismaticPopupActive()) {
-                boolean playerShouldSelect = (battleState.isAttacker(true) &&
-                    battleState.getCurrentPhase() == Phase.SELECTING_ATTACK) ||
-                    (battleState.isDefender(true) &&
-                    battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE);
+                    int uses = battleState.getPlayerPrismaticUses();
 
-                int uses = battleState.getPlayerPrismaticUses();
+                    if (playerShouldSelect && uses > 0) {
+                        boolean prismaticAllowed = tutorialController == null || tutorialController.isPrismaticAllowed();
+                        if (prismaticAllowed) {
+                            boolean insidePrismatic = mousePos.isInsideRect(
+                                buttons.getPlayerPrismaticBtnX() + 50f, buttons.getPlayerPrismaticBtnY(),
+                                PRISMATIC_BTN_SIZE, PRISMATIC_BTN_SIZE);
 
-                if (playerShouldSelect && uses > 0) {
-                    boolean prismaticAllowed = tutorialController == null || tutorialController.isPrismaticAllowed();
-                    if (prismaticAllowed) {
-                        boolean insidePrismatic = mousePos.isInsideRect(
-                            buttons.getPlayerPrismaticBtnX() + 50f, buttons.getPlayerPrismaticBtnY(),
-                            PRISMATIC_BTN_SIZE, PRISMATIC_BTN_SIZE);
-
-                        if (insidePrismatic) {
-                            buttons.showPrismaticSelectionPopup();
-                            lastMouseButtonState = currentButton;
-                            UnifiedCoord.clearCurrent();
-                            return;
+                            if (insidePrismatic) {
+                                buttons.showPrismaticSelectionPopup();
+                                lastMouseButtonState = currentButton;
+                                return;
+                            }
                         }
                     }
                 }
-            }
 
-            if (buttons.isPrismaticPopupActive()) {
-                lastMouseButtonState = currentButton;
-                UnifiedCoord.clearCurrent();
-                return;
-            }
-
-            if (battleState.getCurrentPhase() == Phase.ROLLING) {
-                if (tutorialController != null && !tutorialController.isClickToRollAllowed()) {
+                if (buttons.isPrismaticPopupActive()) {
                     lastMouseButtonState = currentButton;
-                    UnifiedCoord.clearCurrent();
                     return;
                 }
 
-                if (waitingForClickToRoll && diceRollManager.isWaitingForRollTrigger()) {
-                    diceRollManager.triggerRollFromStationary();
-                    waitingForClickToRoll = false;
-                    labels.hideClickHint();
-                } else if (diceRollManager.hasAnimators() || diceRollManager.isWaitingForRollTrigger()) {
-                    boolean showPlayerDice = battleState.isDefenderRolling() != battleState.isPlayerAttacker();
-                    if (showPlayerDice && diceHitboxes.isEmpty()) {
-                        List<DiceType> types = battleState.getPlayerDiceTypes();
-                        if (types != null && !types.isEmpty()) {
-                            createDiceHitboxes(types);
+                if (battleState.getCurrentPhase() == Phase.ROLLING) {
+                    if (tutorialController != null && !tutorialController.isClickToRollAllowed()) {
+                        lastMouseButtonState = currentButton;
+                        return;
+                    }
+
+                    if (waitingForClickToRoll && diceRollManager.isWaitingForRollTrigger()) {
+                        diceRollManager.triggerRollFromStationary();
+                        waitingForClickToRoll = false;
+                        labels.hideClickHint();
+                    } else if (diceRollManager.hasAnimators() || diceRollManager.isWaitingForRollTrigger()) {
+                        boolean showPlayerDice = battleState.isDefenderRolling() != battleState.isPlayerAttacker();
+                        if (showPlayerDice && diceHitboxes.isEmpty()) {
+                            List<DiceType> types = battleState.getPlayerDiceTypes();
+                            if (types != null && !types.isEmpty()) {
+                                createDiceHitboxes(types);
+                            }
+                        }
+
+                        diceRollManager.forceCompleteAll();
+                        labels.hideClickHint();
+                        labels.updatePrismaticRolledLabel();
+
+                        if (battleState.isDefenderRolling()) {
+                            battleController.advanceToDefenderSelectPhase();
+                        } else {
+                            battleController.advanceToSelectPhase();
+                        }
+                    } else if (diceRollManager.hasOpponentAnimators() || diceRollManager.isOpponentWaitingForRollTrigger()) {
+                        if (diceRollManager.isOpponentWaitingForRollTrigger()) {
+                            diceRollManager.triggerOpponentRollFromStationary();
+                        }
+                        diceRollManager.forceCompleteAllOpponent();
+                        labels.hideClickHint();
+                        labels.updatePrismaticRolledLabel();
+
+                        if (battleState.isDefenderRolling()) {
+                            battleController.advanceToDefenderSelectPhase();
+                        } else {
+                            battleController.advanceToSelectPhase();
                         }
                     }
-
-                    diceRollManager.forceCompleteAll();
-                    labels.hideClickHint();
-                    labels.updatePrismaticRolledLabel();
-
-                    if (battleState.isDefenderRolling()) {
-                        battleController.advanceToDefenderSelectPhase();
-                    } else {
-                        battleController.advanceToSelectPhase();
-                    }
-                } else if (diceRollManager.hasOpponentAnimators() || diceRollManager.isOpponentWaitingForRollTrigger()) {
-                    if (diceRollManager.isOpponentWaitingForRollTrigger()) {
-                        diceRollManager.triggerOpponentRollFromStationary();
-                    }
-                    diceRollManager.forceCompleteAllOpponent();
-                    labels.hideClickHint();
-                    labels.updatePrismaticRolledLabel();
-
-                    if (battleState.isDefenderRolling()) {
-                        battleController.advanceToDefenderSelectPhase();
-                    } else {
-                        battleController.advanceToSelectPhase();
-                    }
+                    lastMouseButtonState = currentButton;
+                    return;
                 }
-                lastMouseButtonState = currentButton;
-                UnifiedCoord.clearCurrent();
-                return;
-            }
 
-            if (damageAnimator != null) {
-                damageAnimator.forceComplete();
-                lastMouseButtonState = currentButton;
-                UnifiedCoord.clearCurrent();
-                return;
-            }
-
-            if (battleState.getCurrentPhase() == Phase.RESOLVING_MODIFICATION) {
-                if (battleController != null) {
-                    battleController.proceedFromModificationPause();
+                if (damageAnimator != null) {
+                    damageAnimator.forceComplete();
+                    lastMouseButtonState = currentButton;
+                    return;
                 }
-                lastMouseButtonState = currentButton;
-                UnifiedCoord.clearCurrent();
-                return;
-            }
 
-            if (battleState.getCurrentPhase() == Phase.DICE_DISPLAY_ATTACK ||
-                battleState.getCurrentPhase() == Phase.DICE_DISPLAY_DEFENSE ||
-                (battleState.getCurrentPhase() != Phase.SELECTING_ATTACK &&
-                battleState.getCurrentPhase() != Phase.SELECTING_DEFENSE)) {
-                lastMouseButtonState = currentButton;
-                UnifiedCoord.clearCurrent();
-                return;
-            }
-
-            boolean playerRerollAnimating = diceRollManager.hasAnimators() && !diceRollManager.isComplete();
-            boolean opponentRerollAnimating = diceRollManager.hasOpponentAnimators() && !diceRollManager.isOpponentComplete();
-
-            if (playerRerollAnimating || opponentRerollAnimating) {
-                if (playerRerollAnimating) {
-                    diceRollManager.forceCompleteAll();
-                }
-                if (opponentRerollAnimating) {
-                    diceRollManager.forceCompleteAllOpponent();
+                if (battleState.getCurrentPhase() == Phase.RESOLVING_MODIFICATION) {
                     if (battleController != null) {
-                        battleController.skipAiAnimation();
+                        battleController.proceedFromModificationPause();
+                    }
+                    lastMouseButtonState = currentButton;
+                    return;
+                }
+
+                if (battleState.getCurrentPhase() == Phase.DICE_DISPLAY_ATTACK ||
+                    battleState.getCurrentPhase() == Phase.DICE_DISPLAY_DEFENSE ||
+                    (battleState.getCurrentPhase() != Phase.SELECTING_ATTACK &&
+                    battleState.getCurrentPhase() != Phase.SELECTING_DEFENSE)) {
+                    lastMouseButtonState = currentButton;
+                    return;
+                }
+
+                boolean playerRerollAnimating = diceRollManager.hasAnimators() && !diceRollManager.isComplete();
+                boolean opponentRerollAnimating = diceRollManager.hasOpponentAnimators() && !diceRollManager.isOpponentComplete();
+
+                if (playerRerollAnimating || opponentRerollAnimating) {
+            if (playerRerollAnimating && canSkipPlayerAnim()) {
+                diceRollManager.forceCompleteAll();
+            }
+            if (opponentRerollAnimating) {
+                        diceRollManager.forceCompleteAllOpponent();
+                        if (battleController != null) {
+                            battleController.skipAiAnimation();
+                        }
+                    }
+                    labels.hideClickHint();
+                    lastMouseButtonState = currentButton;
+                    return;
+                }
+
+                boolean playerShouldSelect = (battleState.isAttacker(true) &&
+                                               battleState.getCurrentPhase() == Phase.SELECTING_ATTACK) ||
+                                              (battleState.isDefender(true) &&
+                                               battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE);
+
+                if (!playerShouldSelect) {
+                    lastMouseButtonState = currentButton;
+                    return;
+                }
+
+                for (int i = 0; i < diceHitboxes.size(); i++) {
+                    float[] hb = diceHitboxes.get(i);
+                    boolean inside = mousePos.isInsideRect(hb[0], hb[1], hb[2], hb[3]);
+                    if (inside) {
+                        if (tutorialController != null && !tutorialController.isDiceClickable()) {
+                            lastMouseButtonState = currentButton;
+                            return;
+                        }
+                        if (tutorialController != null && !tutorialController.isDiceSelectionAllowed(i)) {
+                            lastMouseButtonState = currentButton;
+                            return;
+                        }
+                        battleController.onPlayerSelectDice(i);
+                        if (tutorialController != null) {
+                            tutorialController.onDiceSelected();
+                        }
+                        buttons.updateButtons(battleState.getCurrentPhase());
+                        labels.updateSelectionDisplayLabels();
+                        break;
                     }
                 }
-                labels.hideClickHint();
-                lastMouseButtonState = currentButton;
-                UnifiedCoord.clearCurrent();
-                return;
             }
-
-            boolean playerShouldSelect = (battleState.isAttacker(true) &&
-                                           battleState.getCurrentPhase() == Phase.SELECTING_ATTACK) ||
-                                          (battleState.isDefender(true) &&
-                                           battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE);
-
-            if (!playerShouldSelect) {
-                lastMouseButtonState = currentButton;
-                UnifiedCoord.clearCurrent();
-                return;
-            }
-
-            for (int i = 0; i < diceHitboxes.size(); i++) {
-                float[] hb = diceHitboxes.get(i);
-                boolean inside = mousePos.isInsideRect(hb[0], hb[1], hb[2], hb[3]);
-                if (inside) {
-                    if (tutorialController != null && !tutorialController.isDiceClickable()) {
-                        lastMouseButtonState = currentButton;
-                        UnifiedCoord.clearCurrent();
-                        return;
-                    }
-                    if (tutorialController != null && !tutorialController.isDiceSelectionAllowed(i)) {
-                        lastMouseButtonState = currentButton;
-                        UnifiedCoord.clearCurrent();
-                        return;
-                    }
-                    battleController.onPlayerSelectDice(i);
-                    if (tutorialController != null) {
-                        tutorialController.onDiceSelected();
-                    }
-                    buttons.updateButtons(battleState.getCurrentPhase());
-                    labels.updateSelectionDisplayLabels();
-                    break;
-                }
-            }
+            lastMouseButtonState = currentButton;
+        } finally {
+            UnifiedCoord.clearCurrent();
         }
-        lastMouseButtonState = currentButton;
-        UnifiedCoord.clearCurrent();
     }
 
     public void createDiceHitboxes(List<DiceType> types) {
@@ -281,12 +277,6 @@ public class BattleInputHandler {
                 slotY = diceZoneCenterY - maxDiceSize / 2f;
             }
 
-            if (slotX < 0 || slotY < 0) {
-                float totalWidth = DICE_SPACING * (count - 1) + maxDiceSize;
-                slotX = diceZoneCenterX - totalWidth / 2f + i * DICE_SPACING;
-                slotY = diceZoneCenterY - maxDiceSize / 2f;
-            }
-
             float hbX = slotX - DICE_CLICK_PADDING;
             float hbY = slotY - DICE_CLICK_PADDING;
             diceHitboxes.add(new float[]{hbX, hbY, hbSize, hbSize});
@@ -294,6 +284,10 @@ public class BattleInputHandler {
     }
 
     
+
+    private boolean canSkipPlayerAnim() {
+        return battlePanelUI == null || battlePanelUI.canSkipRerollAnim();
+    }
 
     public void updateClickHintForRoll() {
         if (waitingForClickToRoll && diceRollManager.isWaitingForRollTrigger()) {

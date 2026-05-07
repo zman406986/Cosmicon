@@ -12,16 +12,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.MissingResourceException;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class CharacterRegistry {
 
-    private static final Random random = new Random();
     private static final String CARDS_PATH = "data/config/cards.json";
     private static List<CharacterCard> threeStarCards;
+    private static Map<String, Integer> cardIndex;
+    private static List<CharacterCard> eligibleOpponents;
 
     static { 
         threeStarCards = new ArrayList<>();
+        cardIndex = new HashMap<>();
+        eligibleOpponents = new ArrayList<>();
     }
 
     public static void loadCards() {
@@ -30,11 +34,25 @@ public class CharacterRegistry {
             
             threeStarCards = parseCardArray(cardsJson.getJSONArray("threeStar"));
             
+            cardIndex = new HashMap<>();
+            for (int i = 0; i < threeStarCards.size(); i++) {
+                cardIndex.put(threeStarCards.get(i).getId(), i);
+            }
+
+            eligibleOpponents = new ArrayList<>();
+            for (CharacterCard card : threeStarCards) {
+                if (!"trashcan".equals(card.getId())) {
+                    eligibleOpponents.add(card);
+                }
+            }
+            
             Global.getLogger(CharacterRegistry.class).info(
                 "Loaded " + threeStarCards.size() + " threeStar cards from " + CARDS_PATH);
         } catch (IOException | JSONException e) {
             Global.getLogger(CharacterRegistry.class).error("Error loading cards from " + CARDS_PATH, e);
             threeStarCards = new ArrayList<>();
+            cardIndex = new HashMap<>();
+            eligibleOpponents = new ArrayList<>();
         }
     }
 
@@ -67,7 +85,7 @@ public class CharacterRegistry {
     private static String getLocalizedString(String id, String field, String fallback) {
         try {
             return Strings.get("character." + id + "." + field);
-        } catch (Exception e) {
+        } catch (MissingResourceException e) {
             return fallback;
         }
     }
@@ -158,25 +176,17 @@ public class CharacterRegistry {
 
     public static CharacterCard getRandomCharacter() {
         if (threeStarCards.isEmpty()) return null;
-        return threeStarCards.get(random.nextInt(threeStarCards.size())).copy();
+        return threeStarCards.get(ThreadLocalRandom.current().nextInt(threeStarCards.size())).copy();
     }
 
     public static CharacterCard getRandomOpponent() {
-        if (threeStarCards.isEmpty()) return null;
-        List<CharacterCard> eligible = new ArrayList<>();
-        for (CharacterCard card : threeStarCards) {
-            if (!"trashcan".equals(card.getId())) {
-                eligible.add(card);
-            }
-        }
-        if (eligible.isEmpty()) return null;
-        return eligible.get(random.nextInt(eligible.size())).copy();
+        if (eligibleOpponents.isEmpty()) return null;
+        return eligibleOpponents.get(ThreadLocalRandom.current().nextInt(eligibleOpponents.size())).copy();
     }
 
     public static CharacterCard getCharacterById(String id) {
-        for (CharacterCard card : threeStarCards) {
-            if (card.getId().equals(id)) return card.copy();
-        }
+        Integer index = cardIndex.get(id);
+        if (index != null) return threeStarCards.get(index).copy();
         return getRandomCharacter();
     }
 

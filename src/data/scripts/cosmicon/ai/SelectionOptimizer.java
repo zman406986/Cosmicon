@@ -60,7 +60,7 @@ public final class SelectionOptimizer {
         if (profile != null && profile.prefersPairs()) {
             SelectionResult pairResult = selectForPairs(diceValues, diceTypes, freeSlots);
             if (pairResult.passiveTriggered) {
-                pairResult = mergeForcedIndices(pairResult, forcedIndices);
+                pairResult = mergeForcedIndices(pairResult, forcedIndices, diceValues, diceTypes);
                 CosmiconLogger.debug("Selection: pair optimization triggered, pairs found, indices: %s", 
                     pairResult.selectedIndices);
                 return pairResult;
@@ -69,11 +69,11 @@ public final class SelectionOptimizer {
 
         SelectionResult greedyResult = greedyHighSelection(diceValues, diceTypes, freeSlots, 
             isAttacking, profile, state, forPlayer);
-        greedyResult = mergeForcedIndices(greedyResult, forcedIndices);
+        greedyResult = mergeForcedIndices(greedyResult, forcedIndices, diceValues, diceTypes);
         
         if (profile != null && !profile.shouldOptimizeForPassive(isAttacking)) {
             SelectionResult enhancedResult = considerPassiveBonus(diceValues, diceTypes, freeSlots, profile, isAttacking);
-            enhancedResult = mergeForcedIndices(enhancedResult, forcedIndices);
+            enhancedResult = mergeForcedIndices(enhancedResult, forcedIndices, diceValues, diceTypes);
             if (enhancedResult.totalScore > greedyResult.totalScore) {
                 CosmiconLogger.debug("Selection: passive bonus enhanced score from %.1f to %.1f", 
                     greedyResult.totalScore, enhancedResult.totalScore);
@@ -99,7 +99,8 @@ public final class SelectionOptimizer {
         return forced;
     }
 
-    private static SelectionResult mergeForcedIndices(SelectionResult result, Set<Integer> forcedIndices) {
+    private static SelectionResult mergeForcedIndices(SelectionResult result, Set<Integer> forcedIndices,
+                                                        List<Integer> diceValues, List<DiceType> diceTypes) {
         if (forcedIndices.isEmpty() || result == null) return result;
         Set<Integer> merged = new HashSet<>(result.selectedIndices);
         merged.addAll(forcedIndices);
@@ -111,8 +112,9 @@ public final class SelectionOptimizer {
         
         for (int idx : forcedIndices) {
             if (!result.selectedIndices.contains(idx)) {
-                mergedValues.add(null);
-                mergedTypes.add(null);
+                mergedValues.add(diceValues.get(idx));
+                mergedTypes.add(diceTypes.get(idx));
+                mergedSum += diceValues.get(idx);
             }
         }
         

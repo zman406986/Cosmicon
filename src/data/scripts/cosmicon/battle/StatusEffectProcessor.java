@@ -346,11 +346,11 @@ public class StatusEffectProcessor {
         private int currentHp;
         private final int maxHp;
         private int rerollCount;
-        private final List<Integer> diceValues;
-        private final List<Boolean> diceSelected;
-        private final List<Boolean> diceIsPrismatic;
-        private final List<Integer> diceMaxFaces;
-        private final List<DiceType> diceTypes;
+        private List<Integer> diceValues;
+        private List<Boolean> diceSelected;
+        private List<Boolean> diceIsPrismatic;
+        private List<Integer> diceMaxFaces;
+        private List<DiceType> diceTypes;
         private int instantDamageToOpponent;
         private int instantDamageFromHolder;
 
@@ -368,24 +368,26 @@ public class StatusEffectProcessor {
         }
 
         public void setDiceValues(List<Integer> values, List<Boolean> isPrismatic) {
-            diceValues.clear();
-            diceValues.addAll(values);
-            diceIsPrismatic.clear();
-            diceIsPrismatic.addAll(isPrismatic);
-            diceSelected.clear();
-            for (int i = 0; i < values.size(); i++) {
-                diceSelected.add(false);
+            this.diceValues = new ArrayList<>(values);
+            this.diceIsPrismatic = new ArrayList<>(isPrismatic);
+            this.diceSelected = new ArrayList<>(java.util.Collections.nCopies(values.size(), false));
+        }
+
+        public void setDiceValues(List<Integer> values, List<DiceType> types) {
+            this.diceValues = new ArrayList<>(values);
+            this.diceIsPrismatic = new ArrayList<>();
+            for (DiceType type : types) {
+                this.diceIsPrismatic.add(type == DiceType.PRISMATIC);
             }
+            this.diceSelected = new ArrayList<>(java.util.Collections.nCopies(values.size(), false));
         }
 
         public void setDiceMaxFaces(List<Integer> maxFaces) {
-            diceMaxFaces.clear();
-            diceMaxFaces.addAll(maxFaces);
+            this.diceMaxFaces = new ArrayList<>(maxFaces);
         }
 
         public void setDiceTypes(List<DiceType> types) {
-            diceTypes.clear();
-            diceTypes.addAll(types);
+            this.diceTypes = new ArrayList<>(types);
         }
 
         public List<DiceType> getDiceTypes() {
@@ -393,8 +395,7 @@ public class StatusEffectProcessor {
         }
 
         public void setDiceSelected(List<Boolean> selected) {
-            diceSelected.clear();
-            diceSelected.addAll(selected);
+            this.diceSelected = new ArrayList<>(selected);
         }
 
         public int getCurrentHp() {

@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 import data.scripts.cosmicon.util.CharacterIds;
 
@@ -24,7 +24,6 @@ public class WeatherManager {
     private final String storyBattleId;
     private Map<Integer, WeatherType> forcedWeatherSchedule;
     private boolean weatherDisabled;
-    private final Random random;
     
     private static final Map<String, List<WeatherType>> STORY_BATTLE_WEATHERS = new HashMap<>();
     
@@ -71,7 +70,6 @@ public class WeatherManager {
         this.storyBattleId = storyBattleId;
         this.weatherSchedule = new ArrayList<>();
         this.forcedWeatherSchedule = null;
-        this.random = new Random();
         
         initializeWeatherSchedule();
     }
@@ -103,7 +101,7 @@ public class WeatherManager {
         for (int turn : WEATHER_TURN_SCHEDULE) {
             List<WeatherType> candidates = getWeathersForTurn(turn);
             if (!candidates.isEmpty()) {
-                Collections.shuffle(candidates, random);
+                Collections.shuffle(candidates, ThreadLocalRandom.current());
                 weatherSchedule.add(candidates.get(0));
             }
         }
@@ -169,7 +167,7 @@ public class WeatherManager {
             candidates = getWeathersForTurn(currentTurn);
         }
         if (!candidates.isEmpty()) {
-            Collections.shuffle(candidates, random);
+            Collections.shuffle(candidates, ThreadLocalRandom.current());
             setCurrentWeather(candidates.get(0));
         }
     }

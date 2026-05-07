@@ -33,11 +33,15 @@ public class BattleEventBus {
     private final List<BattleEventListener> listeners;
     private DamageAnimationCallback damageAnimationCallback;
     private final List<ValueChangeRecord> pendingValueChanges;
+    private final List<ValueChangeRecord> pendingValueChangesPlayer;
+    private final List<ValueChangeRecord> pendingValueChangesOpponent;
     private boolean valueChangeAnimationInProgress;
 
     public BattleEventBus() {
         this.listeners = new ArrayList<>();
         this.pendingValueChanges = new ArrayList<>();
+        this.pendingValueChangesPlayer = new ArrayList<>();
+        this.pendingValueChangesOpponent = new ArrayList<>();
         this.valueChangeAnimationInProgress = false;
     }
 
@@ -142,17 +146,17 @@ public class BattleEventBus {
 
     public void queueValueChange(boolean isPlayer, String changeType, int delta) {
         String displayText = delta >= 0 ? "+" + delta : String.valueOf(delta);
-        pendingValueChanges.add(new ValueChangeRecord(changeType, delta, displayText, isPlayer));
+        ValueChangeRecord record = new ValueChangeRecord(changeType, delta, displayText, isPlayer);
+        pendingValueChanges.add(record);
+        if (isPlayer) {
+            pendingValueChangesPlayer.add(record);
+        } else {
+            pendingValueChangesOpponent.add(record);
+        }
     }
 
     public List<ValueChangeRecord> getPendingValueChanges(boolean isPlayer) {
-        List<ValueChangeRecord> result = new ArrayList<>();
-        for (ValueChangeRecord record : pendingValueChanges) {
-            if (record.isPlayer == isPlayer) {
-                result.add(record);
-            }
-        }
-        return result;
+        return isPlayer ? pendingValueChangesPlayer : pendingValueChangesOpponent;
     }
 
     public void clearPendingValueChanges() {
@@ -161,18 +165,25 @@ public class BattleEventBus {
             return;
         }
         pendingValueChanges.clear();
+        pendingValueChangesPlayer.clear();
+        pendingValueChangesOpponent.clear();
     }
 
     public void setValueChangeAnimationInProgress(boolean inProgress) {
         this.valueChangeAnimationInProgress = inProgress;
         if (!inProgress) {
             pendingValueChanges.clear();
+            pendingValueChangesPlayer.clear();
+            pendingValueChangesOpponent.clear();
         }
     }
 
     public void cleanup() {
         listeners.clear();
         pendingValueChanges.clear();
+        pendingValueChangesPlayer.clear();
+        pendingValueChangesOpponent.clear();
         valueChangeAnimationInProgress = false;
+        damageAnimationCallback = null;
     }
 }

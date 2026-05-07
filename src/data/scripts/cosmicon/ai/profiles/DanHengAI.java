@@ -1,14 +1,13 @@
 package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
-import data.scripts.cosmicon.ai.AttackRerollAI;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.DiceEvaluator;
 
 import java.util.*;
 
-public class DanHengAI extends AttackRerollAI {
+public class DanHengAI extends SimplePassiveAI {
 
     @Override
     public String getCharacterId() {
@@ -26,17 +25,18 @@ public class DanHengAI extends AttackRerollAI {
     }
 
     @Override
-    public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
-        if (selectedValues == null || selectedValues.isEmpty()) return PassiveEvaluation.notTriggered();
-        return DiceEvaluator.sumAtLeast(selectedValues, 18)
-            ? PassiveEvaluation.triggered(10f, Strings.get("character.dan_heng.passive_desc"))
-            : PassiveEvaluation.notTriggered();
+    protected boolean checkPassiveCondition(List<Integer> selectedValues, boolean isAttacking) {
+        return DiceEvaluator.sumAtLeast(selectedValues, 18);
     }
 
     @Override
-    public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
-        if (selectedValues == null || selectedValues.isEmpty()) return 0f;
-        return DiceEvaluator.sumAtLeast(selectedValues, 18) ? 10f : 0f;
+    protected float computePassiveBonus(List<Integer> selectedValues, boolean isAttacking) {
+        return 10f;
+    }
+
+    @Override
+    protected String getPassiveDescription(List<Integer> selectedValues, boolean isAttacking) {
+        return Strings.get("character.dan_heng.passive_desc");
     }
 
     @Override

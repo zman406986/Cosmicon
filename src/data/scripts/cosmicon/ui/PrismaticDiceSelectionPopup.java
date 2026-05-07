@@ -156,7 +156,9 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
             PrismaticDiceType type = PrismaticDiceRegistry.get(diceId);
             if (type == null) continue;
 
-            boolean isTutorial = CosmiconEventState.isTutorialMode() || CosmiconStats.isInTutorialMode();
+            boolean isTutorial = CosmiconEventState.isTutorialMode()
+                || CosmiconStats.isInTutorialMode()
+                || CosmiconEventState.isReplayTutorial();
             if (!isTutorial && !CosmiconStats.isPrismaticDiceUnlocked(diceId)) continue;
 
             int uses = manager != null ? manager.getUsesByType(type, true) : entry.getValue();

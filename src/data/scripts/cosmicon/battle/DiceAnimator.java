@@ -101,8 +101,9 @@ public class DiceAnimator {
     }
     
 public DiceAnimator() {
+        resetCommonFields();
         scale = 1f;
-        complete = false;
+        directionRad = 0f;
         useDirectionalAnimation = false;
         bounceCount = 0;
         bounceHeights = new float[0];
@@ -111,10 +112,27 @@ public DiceAnimator() {
         travelDistance = 0f;
         travelProgress = 0f;
         rotation = 0f;
-        directionRad = 0f;
         phase = Phase.ROLLING;
-        phaseElapsed = 0f;
         diceEffect = null;
+    }
+
+    private void resetCommonFields() {
+        complete = false;
+        currentFrame = 0;
+        posXOffset = 0f;
+        posYOffset = 0f;
+        phaseElapsed = 0f;
+    }
+
+    private void applyDirectional(float rotation, float travelDistance, int bounceCount,
+                                   float[] bounceHeights) {
+        this.rotation = rotation;
+        this.directionRad = (float) Math.toRadians(rotation);
+        this.travelDistance = travelDistance;
+        this.bounceCount = bounceCount;
+        this.bounceHeights = bounceHeights;
+        this.bounceScale = 1f;
+        this.bounceYOffset = 0f;
     }
     
     public void init() {
@@ -126,11 +144,8 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.x = x;
         this.y = y;
         this.elapsed = -delay;
+        resetCommonFields();
         this.scale = 1f;
-        this.complete = false;
-        this.currentFrame = 0;
-        this.posXOffset = 0f;
-        this.posYOffset = 0f;
         this.useDirectionalAnimation = false;
         this.rotation = 0f;
         this.directionRad = 0f;
@@ -141,7 +156,6 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.bounceScale = 1f;
         this.bounceYOffset = 0f;
         this.phase = Phase.ROLLING;
-        this.phaseElapsed = 0f;
     }
     
     public void start(DiceType type, int finalValue, float x, float y, float delay,
@@ -152,20 +166,10 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.x = x;
         this.y = y;
         this.elapsed = -delay;
-        this.complete = false;
-        this.currentFrame = 0;
-        this.posXOffset = 0f;
-        this.posYOffset = 0f;
-        
-        this.rotation = rotation;
-        this.directionRad = (float)Math.toRadians(rotation);
-        this.travelDistance = travelDistance;
-        this.bounceCount = bounceCount;
-        this.bounceHeights = bounceHeights;
-        this.bounceScale = 1f;
-        this.bounceYOffset = 0f;
+        resetCommonFields();
+
+        applyDirectional(rotation, travelDistance, bounceCount, bounceHeights);
         this.phase = Phase.DROP;
-        this.phaseElapsed = 0f;
         this.scale = INITIAL_SCALE;
         this.useDirectionalAnimation = true;
         this.targetCenterX = targetCenterX;
@@ -175,13 +179,9 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
     public void reroll(int newFinalValue) {
         this.finalValue = newFinalValue;
         this.elapsed = 0f;
+        resetCommonFields();
         this.scale = 1f;
-        this.complete = false;
-        this.currentFrame = 0;
-        this.phaseElapsed = 0f;
         this.travelProgress = 0f;
-        this.posXOffset = 0f;
-        this.posYOffset = 0f;
         this.targetCenterX = 0f;
         this.targetCenterY = 0f;
         this.bounceHeights = new float[0];
@@ -207,20 +207,10 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.scatterTargetY = startY;
 
         this.elapsed = 0f;
-        this.complete = false;
-        this.currentFrame = 0;
-        this.phaseElapsed = 0f;
+        resetCommonFields();
         this.travelProgress = 0f;
-        this.posXOffset = 0f;
-        this.posYOffset = 0f;
 
-        this.rotation = rotation;
-        this.directionRad = (float)Math.toRadians(rotation);
-        this.travelDistance = travelDistance;
-        this.bounceCount = bounceCount;
-        this.bounceHeights = bounceHeights;
-        this.bounceScale = 1f;
-        this.bounceYOffset = 0f;
+        applyDirectional(rotation, travelDistance, bounceCount, bounceHeights);
         this.useDirectionalAnimation = true;
         this.phase = Phase.SCATTER_PICKUP;
         this.scale = 1f;
@@ -237,6 +227,7 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
     public void startStationaryPreview(DiceType type, int result, float targetCenterX, float targetCenterY) {
         this.type = type;
         this.finalValue = result;
+        resetCommonFields();
         this.stationaryFrameIndex = 0;
         if (type == DiceType.PRISMATIC) {
             this.stationaryResultIndex = (int)(Math.random() * 6);
@@ -245,14 +236,9 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         }
         this.x = targetCenterX;
         this.y = targetCenterY;
-        this.posXOffset = 0f;
-        this.posYOffset = 0f;
         this.scale = 1.0f;
         this.phase = Phase.STATIONARY_PREVIEW;
-        this.complete = false;
-        this.phaseElapsed = 0f;
         this.elapsed = 0f;
-        this.currentFrame = 0;
         this.useDirectionalAnimation = false;
         this.rotation = 0f;
         this.directionRad = 0f;
@@ -267,27 +253,18 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
     }
     
     
-    
+
 public void startScatterFromPreview(float scatterX, float scatterY, float delay,
                                           float rotation, float travelDistance, int bounceCount,
                                           float[] bounceHeights, float targetCenterX, float targetCenterY) {
         this.scatterTargetX = scatterX;
         this.scatterTargetY = scatterY;
-        this.posXOffset = 0f;
-        this.posYOffset = 0f;
         this.targetCenterX = targetCenterX;
         this.targetCenterY = targetCenterY;
-        this.rotation = rotation;
-        this.directionRad = (float)Math.toRadians(rotation);
-        this.travelDistance = travelDistance;
-        this.bounceCount = bounceCount;
-        this.bounceHeights = bounceHeights;
-        this.bounceScale = 1f;
-        this.bounceYOffset = 0f;
+        applyDirectional(rotation, travelDistance, bounceCount, bounceHeights);
         this.rollPickupStartScale = scale;
-        this.phaseElapsed = 0f;
+        resetCommonFields();
         this.elapsed = -delay;
-        this.currentFrame = 0;
         this.phase = Phase.SCATTER_PICKUP;
         this.useDirectionalAnimation = true;
     }
@@ -307,19 +284,9 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         this.targetCenterX = targetCenterX;
         this.targetCenterY = targetCenterY;
         this.elapsed = -delay;
-        this.complete = false;
-        this.currentFrame = 0;
-        this.posXOffset = 0f;
-        this.posYOffset = 0f;
-        this.rotation = rotation;
-        this.directionRad = (float)Math.toRadians(rotation);
-        this.travelDistance = travelDistance;
-        this.bounceCount = bounceCount;
-        this.bounceHeights = bounceHeights;
-        this.bounceScale = 1f;
-        this.bounceYOffset = 0f;
+        resetCommonFields();
+        applyDirectional(rotation, travelDistance, bounceCount, bounceHeights);
         this.phase = Phase.DROP;
-        this.phaseElapsed = 0f;
         this.scale = INITIAL_SCALE;
         this.useDirectionalAnimation = true;
         this.stationaryFrameIndex = 0;
@@ -680,43 +647,7 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
                 float arrowSize = 10f;
                 float arrowX = renderX + displaySize - arrowSize - 2f;
                 float arrowY = renderY + 2f;
-
-                GLStateUtil.resetBlendState();
-
-                Color baseColor = isUp ? new Color(100, 220, 100) : new Color(220, 80, 80);
-                float[] c = data.scripts.cosmicon.util.ColorHelper.toGLComponents(baseColor, alphaMult);
-                GL11.glColor4f(c[0], c[1], c[2], c[3]);
-
-                GL11.glBegin(GL11.GL_TRIANGLES);
-                if (isUp) {
-                    GL11.glVertex2f(arrowX, arrowY);
-                    GL11.glVertex2f(arrowX + arrowSize, arrowY);
-                    GL11.glVertex2f(arrowX + arrowSize / 2f, arrowY + arrowSize);
-                } else {
-                    GL11.glVertex2f(arrowX + arrowSize / 2f, arrowY);
-                    GL11.glVertex2f(arrowX, arrowY + arrowSize);
-                    GL11.glVertex2f(arrowX + arrowSize, arrowY + arrowSize);
-                }
-                GL11.glEnd();
-
-                Color strokeColor = baseColor.darker();
-                float[] sc = data.scripts.cosmicon.util.ColorHelper.toGLComponents(strokeColor, alphaMult);
-                GL11.glColor4f(sc[0], sc[1], sc[2], sc[3]);
-                GL11.glLineWidth(1.5f);
-
-                GL11.glBegin(GL11.GL_LINE_LOOP);
-                if (isUp) {
-                    GL11.glVertex2f(arrowX, arrowY);
-                    GL11.glVertex2f(arrowX + arrowSize, arrowY);
-                    GL11.glVertex2f(arrowX + arrowSize / 2f, arrowY + arrowSize);
-                } else {
-                    GL11.glVertex2f(arrowX + arrowSize / 2f, arrowY);
-                    GL11.glVertex2f(arrowX, arrowY + arrowSize);
-                    GL11.glVertex2f(arrowX + arrowSize, arrowY + arrowSize);
-                }
-                GL11.glEnd();
-
-                GLStateUtil.resetColor();
+                BattleRenderingUtils.renderIndicatorArrow(arrowX, arrowY, isUp, arrowSize, arrowSize, alphaMult);
             }
         } finally {
             if (needsContextCleanup) {
@@ -780,15 +711,11 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         this.targetCenterX = targetX;
         this.targetCenterY = targetY;
         this.phase = Phase.TRAVEL_TO_REST;
-        this.phaseElapsed = 0f;
+        resetCommonFields();
         this.elapsed = 0f;
-        this.complete = false;
         this.scale = source.getScale();
-        this.currentFrame = 0;
         this.stationaryFrameIndex = 0;
         this.stationaryResultIndex = value;
-        this.posXOffset = 0f;
-        this.posYOffset = 0f;
         this.useDirectionalAnimation = true;
     }
     
@@ -807,19 +734,9 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         this.targetCenterX = targetCenterX;
         this.targetCenterY = targetCenterY;
         this.elapsed = -delay;
-        this.complete = false;
-        this.currentFrame = 0;
-        this.posXOffset = 0f;
-        this.posYOffset = 0f;
-        this.rotation = rotation;
-        this.directionRad = (float)Math.toRadians(rotation);
-        this.travelDistance = travelDistance;
-        this.bounceCount = bounceCount;
-        this.bounceHeights = bounceHeights;
-        this.bounceScale = 1f;
-        this.bounceYOffset = 0f;
+        resetCommonFields();
+        applyDirectional(rotation, travelDistance, bounceCount, bounceHeights);
         this.phase = Phase.SCATTER_PICKUP;
-        this.phaseElapsed = 0f;
         this.scale = 1f;
         this.useDirectionalAnimation = true;
         this.stationaryFrameIndex = 0;
@@ -830,8 +747,7 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
     public void animateValueChange(int newValue) {
         this.finalValue = newValue;
         this.phase = Phase.VALUE_CHANGE;
-        this.phaseElapsed = 0f;
-        this.complete = false;
+        resetCommonFields();
         this.stationaryResultIndex = newValue;
     }
     
