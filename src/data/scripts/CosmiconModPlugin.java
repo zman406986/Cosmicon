@@ -9,7 +9,6 @@ import data.scripts.cosmicon.battle.CosmiconSprites;
 import data.scripts.cosmicon.events.CosmiconBarEventCreator;
 import data.scripts.cosmicon.state.CosmiconStats;
 
-@SuppressWarnings("unused")
 public class CosmiconModPlugin extends BaseModPlugin {
 
     @Override
