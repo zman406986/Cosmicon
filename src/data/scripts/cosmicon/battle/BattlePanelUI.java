@@ -387,6 +387,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             float gridCenterX = attackerIsPlayer ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_X : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_X;
             float gridCenterY = attackerIsPlayer ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_Y : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_Y;
             diceRollManager.moveSelectedToRestGrid(attackerIsPlayer, gridCenterX, gridCenterY);
+            labels.updateLabelsFromState();
         }
 
         if (newPhase == Phase.DICE_DISPLAY_DEFENSE) {

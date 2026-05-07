@@ -50,26 +50,6 @@ public class BattleState {
     final RerollState rerollState = new RerollState();
     private final AISelectionVisualizer aiSelectionVisualizer;
 
-    public TurnState getTurnState() {
-        return turnState;
-    }
-
-    public RerollState getRerollState() {
-        return rerollState;
-    }
-
-    public EffectState getEffectState() {
-        return effectState;
-    }
-
-    public DiceState getDiceState() {
-        return diceState;
-    }
-
-    public PrismaticState getPrismaticState() {
-        return prismaticState;
-    }
-
     public List<DiceType> getPlayerDiceTypes() {
         return diceState.getPlayerDiceTypes();
     }
@@ -156,10 +136,6 @@ public class BattleState {
 
     public List<Boolean> getPrismaticFlagsForDice(boolean isPlayer) {
         return diceState.getPrismaticFlagsForDice(isPlayer);
-    }
-
-    public BattleEventBus getEventBus() {
-        return eventBus;
     }
 
     public void setDamageAnimationCallback(BattleEventBus.DamageAnimationCallback callback) {
@@ -392,10 +368,6 @@ public class BattleState {
 
     
 
-    public HpManager getHpManager() {
-        return hpManager;
-    }
-
     public int getPlayerHp() {
         return hpManager.getPlayerHp();
     }
@@ -501,16 +473,15 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
             isPlayer ? playerCard : opponentCard, this::consumeUnyieldingCheck);
     }
 
-    private boolean consumeUnyieldingCheck(boolean isPlayer) {
+    private void consumeUnyieldingCheck(boolean isPlayer) {
         StatusEffectProcessor effects = getEffects(isPlayer);
         if (!effects.hasEffect(StatusEffectProcessor.StatusEffect.UNYIELDING)) {
-            return false;
+            return;
         }
         CharacterCard card = isPlayer ? playerCard : opponentCard;
         if (card != null && CharacterIds.PHAINON.equals(card.getId())) {
             consumePhainonUnyielding(isPlayer);
         }
-        return true;
     }
     
     public void applyHealTo(boolean isPlayer, int heal) {
@@ -629,7 +600,12 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
 
     public int getEffectiveDefLevel(boolean forPlayer) {
-        return turnState.getEffectiveDefLevel(getCard(forPlayer), forPlayer);
+        int base = turnState.getEffectiveDefLevel(getCard(forPlayer), forPlayer);
+        int pending = getPendingDefLevelBoost(forPlayer);
+        if (pending > 0) {
+            base = Math.max(1, Math.min(base + pending, 5));
+        }
+        return base;
     }
 
     public void modifyWeatherAtkMod(boolean forPlayer, int delta) {

@@ -12,6 +12,14 @@ import java.util.*;
 
 public class PhainonAI extends AttackRerollAI {
 
+    private boolean shouldValueUnyielding(BattleState state, boolean forPlayer) {
+        if (state == null) return true;
+        if (state.isPhainonUnyieldingAvailable(forPlayer)) return false;
+        int currentHp = forPlayer ? state.getPlayerHp() : state.getOpponentHp();
+        int attackValue = state.getAttackValue();
+        return attackValue >= currentHp;
+    }
+
     @Override
     public String getCharacterId() {
         return CharacterIds.PHAINON;
@@ -50,7 +58,7 @@ public class PhainonAI extends AttackRerollAI {
 
     @Override
     public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking, BattleState state, boolean forPlayer) {
-        if (!isAttacking && state != null && state.isPhainonUnyieldingAvailable(forPlayer)) {
+        if (!isAttacking && !shouldValueUnyielding(state, forPlayer)) {
             return PassiveEvaluation.notTriggered();
         }
         return evaluatePassiveTrigger(selectedValues, selectedTypes, isAttacking);
@@ -64,7 +72,7 @@ public class PhainonAI extends AttackRerollAI {
 
     @Override
     public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking, BattleState state, boolean forPlayer) {
-        if (!isAttacking && state != null && state.isPhainonUnyieldingAvailable(forPlayer)) {
+        if (!isAttacking && !shouldValueUnyielding(state, forPlayer)) {
             return 0f;
         }
         return getPassiveBonusValue(selectedValues, isAttacking);
@@ -74,6 +82,7 @@ public class PhainonAI extends AttackRerollAI {
     protected List<Set<Integer>> generateComboCandidates(SimPool pool, int rerollsLeft, int requiredCount,
                                                           boolean isAttacking, BattleState state, boolean forPlayer) {
         if (isAttacking) return Collections.emptyList();
+        if (!shouldValueUnyielding(state, forPlayer)) return Collections.emptyList();
         Set<Integer> result = findComboForMostCommonValue(pool, requiredCount);
         return result != null ? Collections.singletonList(result) : Collections.emptyList();
     }

@@ -7,7 +7,7 @@ import data.scripts.Strings;
 public class HpManager {
 
     public interface UnyieldingCheck {
-        boolean checkAndConsumeUnyielding(boolean isPlayer);
+        void checkAndConsumeUnyielding(boolean isPlayer);
     }
 
     private int playerHp;

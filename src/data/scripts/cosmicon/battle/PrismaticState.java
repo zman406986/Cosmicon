@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
-import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 
 public class PrismaticState {
 
