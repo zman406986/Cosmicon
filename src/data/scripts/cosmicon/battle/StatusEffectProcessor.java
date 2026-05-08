@@ -75,8 +75,8 @@ public class StatusEffectProcessor {
         } else {
             durations.remove(effect);
         }
-        CosmiconLogger.info("[STATUS] +%d %s (now %d layers, duration=%s)",
-            layers, effect.name(), getLayers(effect),
+        CosmiconLogger.info("[STATUS] +%d %s (was %d, now %d layers, duration=%s)",
+            layers, effect.name(), oldLayers, getLayers(effect),
             duration < PERMANENT_DURATION ? duration + "t" : "permanent");
     }
 

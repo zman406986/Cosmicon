@@ -111,8 +111,8 @@ public class AIEngine {
         PrismaticDecision decision = AIPrismaticSelector.selectPrismaticDice(state, forPlayer);
         if (decision != null) {
             CosmiconLogger.info("[AI] Prismatic decision: %s, score=%.1f, use=%s (for %s)",
-                decision.instance != null ? decision.instance.getType() : "none",
-                decision.score, decision.shouldUse,
+                decision.instance() != null ? decision.instance().type : "none",
+                decision.score(), decision.shouldUse(),
                 forPlayer ? "player" : "opponent");
         }
         return decision;
