@@ -336,29 +336,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             diceRollManager.clearOpponentAnimators();
 
             if (!battleState.isDefenderRolling()) {
-                boolean attackerIsPlayer = battleState.isPlayerAttacker();
-                if (diceRollManager.hasRestAnimators(attackerIsPlayer)) {
-                    List<DiceType> types = attackerIsPlayer ? battleState.getPlayerDiceTypes() : battleState.getOpponentDiceTypes();
-                    List<Integer> values = attackerIsPlayer ? battleState.getPlayerDiceValues() : battleState.getOpponentDiceValues();
-                    float centerX = attackerIsPlayer ? diceZoneCenterX : opponentDiceZoneCenterX;
-                    float centerY = attackerIsPlayer ? diceZoneCenterY : opponentDiceZoneCenterY;
-                    if (types != null && values != null) {
-                        diceRollManager.startRollFromRest(attackerIsPlayer, types, values, centerX, centerY);
-                        inputHandler.consumeClick();
-                    }
-                }
+                startRollFromRestForSide(battleState.isPlayerAttacker());
             } else {
-                boolean defenderIsPlayer = !battleState.isPlayerAttacker();
-                if (diceRollManager.hasRestAnimators(defenderIsPlayer)) {
-                    List<DiceType> types = defenderIsPlayer ? battleState.getPlayerDiceTypes() : battleState.getOpponentDiceTypes();
-                    List<Integer> values = defenderIsPlayer ? battleState.getPlayerDiceValues() : battleState.getOpponentDiceValues();
-                    float centerX = defenderIsPlayer ? diceZoneCenterX : opponentDiceZoneCenterX;
-                    float centerY = defenderIsPlayer ? diceZoneCenterY : opponentDiceZoneCenterY;
-                    if (types != null && values != null) {
-                        diceRollManager.startRollFromRest(defenderIsPlayer, types, values, centerX, centerY);
-                        inputHandler.consumeClick();
-                    }
-                }
+                startRollFromRestForSide(!battleState.isPlayerAttacker());
             }
 
             if (damageAnimator != null) {
@@ -375,21 +355,12 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             labels.hideClickHint();
         }
 
-        if (newPhase == Phase.DICE_DISPLAY_ATTACK) {
+        if (newPhase == Phase.DICE_DISPLAY_ATTACK || newPhase == Phase.DICE_DISPLAY_DEFENSE) {
             diceDisplayTimer = 0f;
-            boolean attackerIsPlayer = battleState.isPlayerAttacker();
-            float gridCenterX = attackerIsPlayer ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_X : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_X;
-            float gridCenterY = attackerIsPlayer ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_Y : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_Y;
-            diceRollManager.moveSelectedToRestGrid(attackerIsPlayer, gridCenterX, gridCenterY);
-            labels.updateLabelsFromState();
-        }
-
-        if (newPhase == Phase.DICE_DISPLAY_DEFENSE) {
-            diceDisplayTimer = 0f;
-            boolean defenderIsPlayer = !battleState.isPlayerAttacker();
-            float gridCenterX = defenderIsPlayer ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_X : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_X;
-            float gridCenterY = defenderIsPlayer ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_Y : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_Y;
-            diceRollManager.moveSelectedToRestGrid(defenderIsPlayer, gridCenterX, gridCenterY);
+            boolean isPlayerDice = (newPhase == Phase.DICE_DISPLAY_ATTACK) == battleState.isPlayerAttacker();
+            float gridCenterX = isPlayerDice ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_X : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_X;
+            float gridCenterY = isPlayerDice ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_Y : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_Y;
+            diceRollManager.moveSelectedToRestGrid(isPlayerDice, gridCenterX, gridCenterY);
             labels.updateLabelsFromState();
         }
 
@@ -697,9 +668,37 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
     @Override
     public void advance(float amount) {
+        advanceCommonState(amount);
+        advanceLabelsAndUI(amount);
+        advanceAiAndTutorial(amount);
+
+        Phase currentPhase = battleState.getCurrentPhase();
+        if (currentPhase == Phase.RESOLVING || currentPhase == Phase.RESOLVING_MODIFICATION
+                || currentPhase == Phase.WAITING_NEXT_TURN || damageAnimationPending) {
+            labels.updateLabelsFromState();
+        }
+
+        diceRollManager.advance(amount);
+
+        if (advancePreClash(amount)) return;
+        advanceModificationPause(amount);
+        if (advanceDiceDisplay(amount)) return;
+
+        advanceDiceAnimationState(amount);
+        advanceOpponentTimers(amount);
+        advancePostAnimationTransitions(amount);
+        advanceDamageResolution(amount);
+
+        updatePanelPositionTracking();
+        inputHandler.handleMouseInput();
+    }
+
+    private void advanceCommonState(float amount) {
         advanceDisplayedHp(amount);
         advanceSecondaryDamageNumbers(amount);
+    }
 
+    private void advanceLabelsAndUI(float amount) {
         updateRoleTransition(amount);
         labels.updateSelectionDisplayLabels();
         labels.updateConfirmedSelectionLabels();
@@ -710,72 +709,76 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         checkProcessedEffects();
         labels.getStatusEffectAnimator().advance(amount);
         updatePrismaticClickHint();
+    }
 
+    private void advanceAiAndTutorial(float amount) {
         battleController.advanceAiSelection(amount);
-
         buttons.advance(amount);
-
         if (tutorialRenderer != null) {
             tutorialRenderer.advance(amount);
         }
+    }
 
+    private boolean advancePreClash(float amount) {
         Phase currentPhase = battleState.getCurrentPhase();
-        if (currentPhase == Phase.RESOLVING || currentPhase == Phase.RESOLVING_MODIFICATION || currentPhase == Phase.WAITING_NEXT_TURN || damageAnimationPending) {
-            labels.updateLabelsFromState();
-        }
+        if (currentPhase != Phase.RESOLVING_PRE_CLASH) return false;
 
-        diceRollManager.advance(amount);
+        preClashTimer += amount;
 
-        if (currentPhase == Phase.RESOLVING_PRE_CLASH) {
-            preClashTimer += amount;
+        ValueChangeAnimator attackerAnimator = labels.getAttackerValueAnimator();
+        ValueChangeAnimator defenderAnimator = labels.getDefenderValueAnimator();
 
-            ValueChangeAnimator attackerAnimator = labels.getAttackerValueAnimator();
-            ValueChangeAnimator defenderAnimator = labels.getDefenderValueAnimator();
+        attackerAnimator.advance(amount);
+        defenderAnimator.advance(amount);
 
-            attackerAnimator.advance(amount);
-            defenderAnimator.advance(amount);
+        if (preClashTimer >= PRE_CLASH_DELAY) {
+            boolean attackerComplete = attackerAnimator.isComplete();
+            boolean defenderComplete = defenderAnimator.isComplete();
 
-            if (preClashTimer >= PRE_CLASH_DELAY) {
-                boolean attackerComplete = attackerAnimator.isComplete();
-                boolean defenderComplete = defenderAnimator.isComplete();
-
-                if (attackerComplete && defenderComplete) {
-                    preClashTimer = 0f;
-                    battleState.setValueChangeAnimationInProgress(false);
-                    battleController.proceedToModificationPause();
-                }
+            if (attackerComplete && defenderComplete) {
+                preClashTimer = 0f;
+                battleState.setValueChangeAnimationInProgress(false);
+                battleController.proceedToModificationPause();
             }
-            return;
         }
+        return true;
+    }
 
-        if (currentPhase == Phase.RESOLVING_MODIFICATION) {
-            StatusEffectAnimator effectAnimator = labels.getStatusEffectAnimator();
-            effectAnimator.advance(amount);
+    private void advanceModificationPause(float amount) {
+        Phase currentPhase = battleState.getCurrentPhase();
+        if (currentPhase != Phase.RESOLVING_MODIFICATION) return;
 
-            ValueChangeAnimator attackerAnimator = labels.getAttackerValueAnimator();
-            ValueChangeAnimator defenderAnimator = labels.getDefenderValueAnimator();
-            attackerAnimator.advance(amount);
-            defenderAnimator.advance(amount);
+        StatusEffectAnimator effectAnimator = labels.getStatusEffectAnimator();
+        effectAnimator.advance(amount);
 
-            labels.showClickHint(Strings.get("battle.click_to_continue"), 0.8f);
-        }
+        ValueChangeAnimator attackerAnimator = labels.getAttackerValueAnimator();
+        ValueChangeAnimator defenderAnimator = labels.getDefenderValueAnimator();
+        attackerAnimator.advance(amount);
+        defenderAnimator.advance(amount);
 
-        if (currentPhase == Phase.DICE_DISPLAY_ATTACK || currentPhase == Phase.DICE_DISPLAY_DEFENSE) {
-            diceDisplayTimer += amount;
-            boolean forPlayer = (currentPhase == Phase.DICE_DISPLAY_ATTACK) == battleState.isPlayerAttacker();
-            boolean travelComplete = diceRollManager.isRestTravelComplete(forPlayer);
-            
-            if (diceDisplayTimer >= DICE_DISPLAY_DURATION && travelComplete) {
-                diceDisplayTimer = 0f;
-                if (currentPhase == Phase.DICE_DISPLAY_ATTACK) {
-                    battleController.advanceFromDiceDisplayAttack();
-                } else {
-                    battleController.advanceFromDiceDisplayDefense();
-                }
+        labels.showClickHint(Strings.get("battle.click_to_continue"), 0.8f);
+    }
+
+    private boolean advanceDiceDisplay(float amount) {
+        Phase currentPhase = battleState.getCurrentPhase();
+        if (currentPhase != Phase.DICE_DISPLAY_ATTACK && currentPhase != Phase.DICE_DISPLAY_DEFENSE) return false;
+
+        diceDisplayTimer += amount;
+        boolean forPlayer = (currentPhase == Phase.DICE_DISPLAY_ATTACK) == battleState.isPlayerAttacker();
+        boolean travelComplete = diceRollManager.isRestTravelComplete(forPlayer);
+
+        if (diceDisplayTimer >= DICE_DISPLAY_DURATION && travelComplete) {
+            diceDisplayTimer = 0f;
+            if (currentPhase == Phase.DICE_DISPLAY_ATTACK) {
+                battleController.advanceFromDiceDisplayAttack();
+            } else {
+                battleController.advanceFromDiceDisplayDefense();
             }
-            return;
         }
+        return true;
+    }
 
+    private void advanceDiceAnimationState(float amount) {
         if (diceAnimating) {
             rollAnimationDelay -= amount;
 
@@ -845,7 +848,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                 labels.showClickHint(Strings.get("battle.click_to_continue"), 0.6f);
             }
         }
+    }
 
+    private void advanceOpponentTimers(float amount) {
         if (opponentAutoRollDelay > 0f) {
             opponentAutoRollDelay -= amount;
             if (opponentAutoRollDelay <= 0f && diceRollManager.isOpponentWaitingForRollTrigger()) {
@@ -880,12 +885,15 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                 startOpponentDiceAnimation();
             }
         }
+    }
 
+    private void advancePostAnimationTransitions(float amount) {
         if (rerollSelectionClearPending) {
             rerollSelectionClearPending = false;
             battleState.clearDiceSelection(true);
         }
 
+        Phase currentPhase = battleState.getCurrentPhase();
         if (currentPhase == Phase.SELECTING_ATTACK || currentPhase == Phase.SELECTING_DEFENSE) {
             if (diceAnimating && diceRollManager.hasAnimators() && !diceRollManager.isComplete()
                     && rerollAnimSkipGuard <= 0f) {
@@ -895,6 +903,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             }
         }
 
+        if (rerollAnimSkipGuard > 0f) rerollAnimSkipGuard -= amount;
+    }
+
+    private void advanceDamageResolution(float amount) {
         ValueChangeAnimator attackerAnimator = labels.getAttackerValueAnimator();
         ValueChangeAnimator defenderAnimator = labels.getDefenderValueAnimator();
 
@@ -940,15 +952,13 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         } else {
             labels.hideClickHint();
         }
+    }
 
+    private void updatePanelPositionTracking() {
         PositionAPI pos = panel.getPosition();
         panelX = pos.getX();
         panelY = pos.getY();
         inputHandler.setPanelPosition(panelX, panelY);
-
-        if (rerollAnimSkipGuard > 0f) rerollAnimSkipGuard -= amount;
-
-        inputHandler.handleMouseInput();
     }
 
     private void updateRoleTransition(float amount) {
@@ -1009,6 +1019,18 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                                   (diceRollManager.hasOpponentAnimators() || diceRollManager.isOpponentWaitingForRollTrigger());
 
         return aiIsSelecting || vizActive || opponentRolling;
+    }
+
+    private void startRollFromRestForSide(boolean isPlayer) {
+        if (!diceRollManager.hasRestAnimators(isPlayer)) return;
+        List<DiceType> types = isPlayer ? battleState.getPlayerDiceTypes() : battleState.getOpponentDiceTypes();
+        List<Integer> values = isPlayer ? battleState.getPlayerDiceValues() : battleState.getOpponentDiceValues();
+        float centerX = isPlayer ? diceZoneCenterX : opponentDiceZoneCenterX;
+        float centerY = isPlayer ? diceZoneCenterY : opponentDiceZoneCenterY;
+        if (types != null && values != null) {
+            diceRollManager.startRollFromRest(isPlayer, types, values, centerX, centerY);
+            inputHandler.consumeClick();
+        }
     }
 
     private void startOpponentDiceAnimation() {
