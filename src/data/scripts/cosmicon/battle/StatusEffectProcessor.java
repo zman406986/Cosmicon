@@ -226,7 +226,11 @@ public class StatusEffectProcessor {
         if (hasEffect(StatusEffect.LEVEL_UP)) {
             int layers = getLayers(StatusEffect.LEVEL_UP);
             processedEffects.add(new ProcessedEffect(StatusEffect.LEVEL_UP, layers));
-            CosmiconLogger.info("[STATUS] LEVEL_UP: upgrading %d selected dice", layers);
+            CosmiconLogger.info("[STATUS] LEVEL_UP: layers=%d | context: types=%s selected=%s prismatic=%s",
+                layers,
+                context.getDiceTypes(),
+                context.getDiceSelected(),
+                context.getDiceIsPrismatic());
             context.applyLevelUp(layers);
         }
 
@@ -413,6 +417,14 @@ public class StatusEffectProcessor {
             this.diceSelected = new ArrayList<>(selected);
         }
 
+        public List<Boolean> getDiceSelected() {
+            return diceSelected;
+        }
+
+        public List<Boolean> getDiceIsPrismatic() {
+            return diceIsPrismatic;
+        }
+
         public int getCurrentHp() {
             return currentHp;
         }
@@ -482,22 +494,70 @@ public class StatusEffectProcessor {
         }
 
         public void applyLevelUp(int count) {
-            for (int i = 0; i < diceValues.size(); i++) {
-                if (diceSelected.get(i) && !diceIsPrismatic.get(i)) {
-                    int currentMaxFace = (i < diceMaxFaces.size()) ? diceMaxFaces.get(i) : getDiceMaxFace(i);
-                    for (int j = 0; j < count; j++) {
-                        if (currentMaxFace >= 12) break;
-                        currentMaxFace = upgradeDiceMaxFace(currentMaxFace);
-                    }
-                    if (i < diceMaxFaces.size()) {
-                        diceMaxFaces.set(i, currentMaxFace);
-                    }
-                    if (i < diceTypes.size()) {
-                        diceTypes.set(i, DiceType.fromMaxFace(currentMaxFace));
-                    }
-                }
+        CosmiconLogger.info("[LEVEL_UP] count=%d | dice=%d | selected=%s | prismatic=%s | types=%s | maxFaces=%s",
+            count,
+            diceValues.size(),
+            diceSelected,
+            diceIsPrismatic,
+            diceTypes,
+            diceMaxFaces);
+
+        int processedCount = 0;
+        int skippedUnselected = 0;
+        int skippedPrismatic = 0;
+
+        for (int i = 0; i < diceValues.size(); i++) {
+            boolean isSelected = diceSelected.get(i);
+            boolean isPrismatic = diceIsPrismatic.get(i);
+
+            if (!isSelected) {
+                skippedUnselected++;
+                CosmiconLogger.info("[LEVEL_UP] die[%d] SKIPPED: not selected | type=%s value=%d prismatic=%s",
+                    i, i < diceTypes.size() ? diceTypes.get(i) : "?", diceValues.get(i), isPrismatic);
+                continue;
+            }
+
+            if (isPrismatic) {
+                skippedPrismatic++;
+                CosmiconLogger.info("[LEVEL_UP] die[%d] SKIPPED: prismatic | type=%s value=%d selected=true",
+                    i, i < diceTypes.size() ? diceTypes.get(i) : "?", diceValues.get(i));
+                continue;
+            }
+
+            int currentMaxFace = (i < diceMaxFaces.size()) ? diceMaxFaces.get(i) : getDiceMaxFace(i);
+            int oldMaxFace = currentMaxFace;
+            DiceType oldType = i < diceTypes.size() ? diceTypes.get(i) : null;
+
+            for (int j = 0; j < count; j++) {
+                if (currentMaxFace >= 12) break;
+                currentMaxFace = upgradeDiceMaxFace(currentMaxFace);
+            }
+
+            if (i < diceMaxFaces.size()) {
+                diceMaxFaces.set(i, currentMaxFace);
+            }
+            if (i < diceTypes.size()) {
+                diceTypes.set(i, DiceType.fromMaxFace(currentMaxFace));
+            }
+
+            DiceType newType = DiceType.fromMaxFace(currentMaxFace);
+
+            if (currentMaxFace != oldMaxFace) {
+                CosmiconLogger.info("[LEVEL_UP] die[%d] UPGRADED: %s(d%d) -> %s(d%d) | selected=%s prismatic=%s | diceValue=%d",
+                    i, oldType, oldMaxFace,
+                    newType, currentMaxFace,
+                    isSelected, isPrismatic, diceValues.get(i));
+                processedCount++;
+            } else {
+                CosmiconLogger.info("[LEVEL_UP] die[%d] AT MAX: %s(d%d) | selected=%s prismatic=%s | diceValue=%d",
+                    i, oldType, oldMaxFace,
+                    isSelected, isPrismatic, diceValues.get(i));
             }
         }
+
+        CosmiconLogger.info("[LEVEL_UP] SUMMARY: processed=%d skipped_unselected=%d skipped_prismatic=%d total=%d",
+            processedCount, skippedUnselected, skippedPrismatic, diceValues.size());
+    }
 
         private int upgradeDiceMaxFace(int currentMaxFace) {
             if (currentMaxFace <= 4) return 6;

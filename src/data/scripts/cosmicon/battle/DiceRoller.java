@@ -57,7 +57,12 @@ public class DiceRoller {
 
         List<DiceType> types = state.getUpgradedDicePool(forPlayer);
         if (types == null) {
+            CosmiconLogger.info("[DICE_ROLL] %s using BASE pool: %s",
+                card.getName(), card.getDicePool());
             types = new ArrayList<>(card.getDicePool());
+        } else {
+            CosmiconLogger.info("[DICE_ROLL] %s using UPGRADED pool: %s | base=%s",
+                card.getName(), types, card.getDicePool());
         }
         List<Integer> values = new ArrayList<>();
         List<Boolean> selected = new ArrayList<>();

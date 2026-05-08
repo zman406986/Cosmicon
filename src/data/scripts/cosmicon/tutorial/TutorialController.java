@@ -68,6 +68,7 @@ public class TutorialController {
         G2_T4_ATTACK_ROLL,
         G2_T4_ATTACK_SELECT,
         G2_T4_ATTACK_CONFIRM,
+        G2_T4_ATTACK_WAIT,
         G2_VICTORY
     }
 
@@ -163,7 +164,7 @@ public class TutorialController {
             case G2_T3_ATTACK_REROLL, G2_T3_ATTACK_REROLL2 -> !isPrismatic;
 
             case G2_T2_ATTACK_PRISMATIC, G2_T2_ATTACK_SELECT ->
-                isPrismatic || (value == 4 && isPrismaticDiceSelected());
+                isPrismatic || value == 4;
 
             case G2_T3_ATTACK_PRISMATIC -> isPrismatic;
 
@@ -267,7 +268,6 @@ public class TutorialController {
     public boolean isPrismaticAllowed() {
         if (complete) return false;
         if (game != TutorialGame.GAME_2_ACHERON) return false;
-        if (prismaticUnlocked) return true;
 
         boolean isAttackPhase = currentStep == TutorialStep.G2_T2_ATTACK_PRISMATIC
             || currentStep == TutorialStep.G2_T2_ATTACK_SELECT
@@ -277,6 +277,8 @@ public class TutorialController {
             || currentStep == TutorialStep.G2_T3_ATTACK_SELECT;
 
         if (!isAttackPhase) return false;
+
+        if (prismaticUnlocked) return true;
 
         List<DiceType> types = battleState.getPlayerDiceTypes();
         if (types != null) {
@@ -383,7 +385,7 @@ public class TutorialController {
             case G2_T2_DEFENSE_CONFIRM -> currentStep = TutorialStep.G2_T2_DEFENSE_WAIT;
             case G2_T3_ATTACK_CONFIRM -> currentStep = TutorialStep.G2_T3_ATTACK_WAIT;
             case G2_T3_DEFENSE_CONFIRM -> currentStep = TutorialStep.G2_T3_DEFENSE_WAIT;
-            case G2_T4_ATTACK_CONFIRM -> currentStep = TutorialStep.G2_VICTORY;
+            case G2_T4_ATTACK_CONFIRM -> currentStep = TutorialStep.G2_T4_ATTACK_WAIT;
             default -> {}
         }
 
@@ -471,6 +473,11 @@ public class TutorialController {
                 && currentStep == TutorialStep.G1_T2_ATTACK_WAIT
                 && "player".equals(winner)) {
             currentStep = TutorialStep.G1_VICTORY;
+            complete = true;
+        } else if (game == TutorialGame.GAME_2_ACHERON
+                && currentStep == TutorialStep.G2_T4_ATTACK_WAIT
+                && "player".equals(winner)) {
+            currentStep = TutorialStep.G2_VICTORY;
             complete = true;
         }
     }

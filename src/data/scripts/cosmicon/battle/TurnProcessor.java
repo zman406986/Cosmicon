@@ -1062,9 +1062,20 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         int oldValue = isAttackPhase ? state.getAttackValue() : state.getDefenseValue();
         List<Integer> preSelectValues = new ArrayList<>(state.getDiceValues(forPlayer));
         List<DiceType> preSelectTypes = state.getDiceTypes(forPlayer) != null ? new ArrayList<>(state.getDiceTypes(forPlayer)) : null;
+        List<Boolean> preSelectFlags = state.getDiceSelected(forPlayer) != null ? new ArrayList<>(state.getDiceSelected(forPlayer)) : null;
+        CosmiconLogger.info("[POST_SELECT] %s before effects | types=%s | values=%s | selected=%s",
+            forPlayer ? "Player" : "Opponent",
+            preSelectTypes,
+            preSelectValues,
+            preSelectFlags);
         state.getEffects(forPlayer).processPhase(Phase.AFTER_SELECT, turnType, context);
         state.setDiceValues(forPlayer, context.getDiceValues());
         state.setDiceTypes(forPlayer, context.getDiceTypes());
+        CosmiconLogger.info("[POST_SELECT] %s after effects | types=%s | values=%s | selected=%s",
+            forPlayer ? "Player" : "Opponent",
+            state.getDiceTypes(forPlayer),
+            state.getDiceValues(forPlayer),
+            state.getDiceSelected(forPlayer));
         updateUpgradedDicePool(forPlayer);
         List<Integer> postSelectValues = state.getDiceValues(forPlayer);
         notifyRestDiceValueChanges(preSelectValues, postSelectValues, forPlayer);
@@ -1145,7 +1156,14 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
             characterId, selectedValues, isAttacking, currentHp, maxHp, currentToughness, currentStrengthLayers);
         
         PassiveEvaluator.applyPassiveEffects(result, state, forPlayer);
-        
+
+        CosmiconLogger.info("[PASSIVE] %s (isAttacking=%s) | allValues=%s | selectedFlags=%s | selectedValues=%s | hp=%d/%d",
+            characterId, isAttacking,
+            allValues,
+            selectedFlags,
+            selectedValues,
+            currentHp, maxHp);
+
         if (result.getAttackBonus() > 0) {
             int bonus = result.getAttackBonus();
             int currentAttack = state.getAttackValue();
@@ -1170,11 +1188,16 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
     
     private void notifyRestDiceValueChanges(List<Integer> oldValues, List<Integer> newValues, boolean forPlayer) {
         if (diceRollManager == null || oldValues == null || newValues == null) return;
-        if (!diceRollManager.hasRestAnimators(forPlayer)) return;
-        
+        if (!diceRollManager.hasRestAnimators(forPlayer)) {
+            CosmiconLogger.info("[DICE-REST] notifyRestDiceValueChanges SKIPPED: no rest animators forPlayer=%s", forPlayer);
+            return;
+        }
+
         int minSize = Math.min(oldValues.size(), newValues.size());
         for (int i = 0; i < minSize; i++) {
             if (!oldValues.get(i).equals(newValues.get(i))) {
+                CosmiconLogger.info("[DICE-REST] valueChanged: forPlayer=%s idx=%d old=%d new=%d",
+                        forPlayer, i, oldValues.get(i), newValues.get(i));
                 diceRollManager.updateRestDiceValue(i, newValues.get(i), forPlayer);
             }
         }
@@ -1197,16 +1220,48 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         if (currentTypes == null) return;
 
         List<DiceType> basePool = state.getCard(forPlayer).getDicePool();
-        boolean hasUpgrade = false;
+        List<DiceType> existingUpgraded = state.getUpgradedDicePool(forPlayer);
+        List<DiceType> previousPool = existingUpgraded != null ? existingUpgraded : basePool;
+
+        List<Integer> changedIndices = new ArrayList<>();
+        List<Integer> newUpgradesThisTurn = new ArrayList<>();
+
         for (int i = 0; i < currentTypes.size(); i++) {
-            if (i < basePool.size() && currentTypes.get(i) != basePool.get(i)) {
-                hasUpgrade = true;
-                break;
+            DiceType current = currentTypes.get(i);
+            DiceType base = i < basePool.size() ? basePool.get(i) : null;
+            DiceType previous = i < previousPool.size() ? previousPool.get(i) : base;
+
+            if (base != null && current != base) {
+                changedIndices.add(i);
+            }
+            if (current != previous) {
+                newUpgradesThisTurn.add(i);
             }
         }
 
-        if (hasUpgrade) {
-            state.setUpgradedDicePool(forPlayer, new ArrayList<>(currentTypes));
+        CosmiconLogger.info("[UPGRADE_POOL] %s | base=%s | previous=%s | current=%s | changedFromBase=%s | newThisTurn=%s",
+            forPlayer ? "Player" : "Opponent",
+            basePool,
+            previousPool,
+            currentTypes,
+            changedIndices,
+            newUpgradesThisTurn);
+
+        if (!newUpgradesThisTurn.isEmpty()) {
+            List<DiceType> mergedPool = new ArrayList<>(previousPool);
+            for (int idx : newUpgradesThisTurn) {
+                if (idx < mergedPool.size()) {
+                    mergedPool.set(idx, currentTypes.get(idx));
+                }
+            }
+            if (mergedPool.size() < currentTypes.size()) {
+                for (int i = mergedPool.size(); i < currentTypes.size(); i++) {
+                    mergedPool.add(currentTypes.get(i));
+                }
+            }
+            CosmiconLogger.info("[UPGRADE_POOL] %s saving merged pool: %s",
+                forPlayer ? "Player" : "Opponent", mergedPool);
+            state.setUpgradedDicePool(forPlayer, mergedPool);
         }
     }
 }
