@@ -356,7 +356,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
     // ==================== Die stopping policy ====================
 
-    protected static class DieStoppingPolicy {
+    public static class DieStoppingPolicy {
         private final int[] thresholds;
         public DieStoppingPolicy(int[] thresholds) {
             this.thresholds = thresholds;

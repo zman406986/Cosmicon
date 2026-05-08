@@ -30,9 +30,15 @@ public class Strings {
     }
 
     private static void flattenJson(String prefix, JSONObject node, Map<String, String> target) {
-        for (String key : node.keySet()) {
+        for (java.util.Iterator<String> it = node.keys(); it.hasNext(); ) {
+            String key = it.next();
             String fullKey = prefix.isEmpty() ? key : prefix + "." + key;
-            Object value = node.get(key);
+            Object value;
+            try {
+                value = node.get(key);
+            } catch (JSONException e) {
+                throw new RuntimeException("Failed to read JSON key: " + fullKey, e);
+            }
             if (value instanceof JSONObject) {
                 flattenJson(fullKey, (JSONObject) value, target);
             } else {

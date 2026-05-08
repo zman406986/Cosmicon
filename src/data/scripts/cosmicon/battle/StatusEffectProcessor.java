@@ -367,12 +367,6 @@ public class StatusEffectProcessor {
             this.instantDamageFromHolder = 0;
         }
 
-        public void setDiceValues(List<Integer> values, List<Boolean> isPrismatic) {
-            this.diceValues = new ArrayList<>(values);
-            this.diceIsPrismatic = new ArrayList<>(isPrismatic);
-            this.diceSelected = new ArrayList<>(java.util.Collections.nCopies(values.size(), false));
-        }
-
         public void setDiceValues(List<Integer> values, List<DiceType> types) {
             this.diceValues = new ArrayList<>(values);
             this.diceIsPrismatic = new ArrayList<>();

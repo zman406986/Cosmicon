@@ -2,7 +2,6 @@ package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.ai.AttackRerollAI;
-import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.util.CharacterIds;
 import java.util.*;
 
@@ -36,11 +35,6 @@ public class CastoriceAI extends AttackRerollAI {
     @Override
     public boolean isDefensePassive() {
         return true;
-    }
-
-    @Override
-    public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
-        return PassiveEvaluation.notTriggered();
     }
 
     @Override

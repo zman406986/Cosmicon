@@ -979,8 +979,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void updatePrismaticClickHint() {
-        if (battleState == null) return;
-        if (TutorialController.shouldActivateTutorial() && (tutorialController == null || !tutorialController.isPrismaticAllowed())) return;
+        if (TutorialController.shouldActivateTutorial() && !tutorialController.isPrismaticAllowed()) return;
 
         int uses = battleState.getPlayerPrismaticUses();
         boolean playerShouldSelect = (battleState.isAttacker(true) &&
@@ -1225,8 +1224,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void triggerModificationGlowAnimations() {
-        if (battleState == null || labels == null || labels.getStatusEffectAnimator() == null) return;
-
         StatusEffectAnimator animator = labels.getStatusEffectAnimator();
 
         if (battleState.getPlayerEffects().hasEffect(StatusEffectProcessor.StatusEffect.HACK)) {
@@ -1325,13 +1322,13 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         AISelectionVisualizer viz = battleState.getAiSelectionVisualizer();
         if (viz == null || !viz.hasStarted() || viz.isRerollPhase()) return;
 
-        if (diceRollManager != null && !diceRollManager.isOpponentComplete()) return;
+        if (!diceRollManager.isOpponentComplete()) return;
 
         List<Integer> visibleIndices = viz.getVisibleIndices();
         if (visibleIndices.isEmpty()) return;
 
         List<DiceAnimator> opponentAnimators = diceRollManager.getOpponentAnimators();
-        if (opponentAnimators == null || opponentAnimators.isEmpty()) return;
+        if (opponentAnimators.isEmpty()) return;
 
         GLStateUtil.resetBlendState();
 
@@ -1374,7 +1371,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     private void renderOpponentPrismaticButton(float alphaMult) {
         if (TutorialController.shouldActivateTutorial()) return;
         SpriteAPI sprite = CosmiconSprites.getPrismaticButtonSprite();
-        if (sprite == null) return;
 
         GLStateUtil.enableTexturingWithBlend();
 
@@ -1393,9 +1389,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void renderPrismaticButton(float alphaMult) {
-        if (TutorialController.shouldActivateTutorial() && (tutorialController == null || !tutorialController.isPrismaticAllowed())) return;
+        if (TutorialController.shouldActivateTutorial() && !tutorialController.isPrismaticAllowed()) return;
         SpriteAPI sprite = CosmiconSprites.getPrismaticButtonSprite();
-        if (sprite == null) return;
 
         GLStateUtil.enableTexturingWithBlend();
 

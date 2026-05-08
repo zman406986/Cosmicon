@@ -114,11 +114,6 @@ public class BattleUILabels {
         statusEffectAnimator = new StatusEffectAnimator();
     }
 
-    public void invalidatePrismaticCounts() {
-        cachedPlayerPrisCount = -1;
-        cachedOpponentPrisCount = -1;
-    }
-
     public void cleanup() {
         if (attackerValueAnimator != null) {
             attackerValueAnimator.cleanup();
@@ -458,7 +453,7 @@ public class BattleUILabels {
             hintLabelX, hintLabelY);
         playerPrismaticClickHintLabel.setOpacity(0f);
 
-        if (battleState != null && TutorialController.shouldActivateTutorial()) {
+        if (TutorialController.shouldActivateTutorial()) {
             opponentPrismaticUsesLabel.setOpacity(0f);
             opponentPrismaticFaceMappingLabel.setOpacity(0f);
             opponentPrismaticEffectLabel.setOpacity(0f);
@@ -627,43 +622,37 @@ public class BattleUILabels {
     }
 
     public void updateLabelsFromState() {
-        if (battleState == null || playerNameLabel == null) return;
-
         CharacterCard playerCard = battleState.getPlayerCard();
         CharacterCard opponentCard = battleState.getOpponentCard();
 
-        if (playerCard != null) {
-            playerNameLabel.setText(playerCard.getName());
-            playerHpLabel.setText(String.format("%d/%d", battleState.getPlayerHp(), playerCard.getMaxHp()));
-            playerAtkLabel.setText(String.valueOf(battleState.getEffectiveAtkLevel(true)));
-            playerDefLabel.setText(String.valueOf(battleState.getEffectiveDefLevel(true)));
-        }
+        playerNameLabel.setText(playerCard.getName());
+        playerHpLabel.setText(String.format("%d/%d", battleState.getPlayerHp(), playerCard.getMaxHp()));
+        playerAtkLabel.setText(String.valueOf(battleState.getEffectiveAtkLevel(true)));
+        playerDefLabel.setText(String.valueOf(battleState.getEffectiveDefLevel(true)));
 
-        if (opponentCard != null) {
-            opponentNameLabel.setText(opponentCard.getName());
-            opponentHpLabel.setText(String.format("%d/%d", battleState.getOpponentHp(), opponentCard.getMaxHp()));
-            opponentAtkLabel.setText(String.valueOf(battleState.getEffectiveAtkLevel(false)));
-            opponentDefLabel.setText(String.valueOf(battleState.getEffectiveDefLevel(false)));
-        }
+        opponentNameLabel.setText(opponentCard.getName());
+        opponentHpLabel.setText(String.format("%d/%d", battleState.getOpponentHp(), opponentCard.getMaxHp()));
+        opponentAtkLabel.setText(String.valueOf(battleState.getEffectiveAtkLevel(false)));
+        opponentDefLabel.setText(String.valueOf(battleState.getEffectiveDefLevel(false)));
 
         DicePoolCounts playerCounts = battleState.getPlayerDicePoolCounts();
         DicePoolCounts opponentCounts = battleState.getOpponentDicePoolCounts();
 
         if (cachedPlayerPrisCount < 0) {
-            cachedPlayerPrisCount = playerCard != null ? playerCard.getPrismaticDiceIds().values().stream().mapToInt(Integer::intValue).sum() : 0;
+            cachedPlayerPrisCount = playerCard.getPrismaticDiceIds().values().stream().mapToInt(Integer::intValue).sum();
         }
         playerPrismaticLabel.setText(String.valueOf(cachedPlayerPrisCount));
-        playerOrangeLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.ORANGE_D8) : 0));
-        playerPurpleLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.PURPLE_D6) : 0));
-        playerBlueLabel.setText(String.valueOf(playerCounts != null ? playerCounts.getCount(DiceType.BLUE_D4) : 0));
+        playerOrangeLabel.setText(String.valueOf(playerCounts.getCount(DiceType.ORANGE_D8)));
+        playerPurpleLabel.setText(String.valueOf(playerCounts.getCount(DiceType.PURPLE_D6)));
+        playerBlueLabel.setText(String.valueOf(playerCounts.getCount(DiceType.BLUE_D4)));
 
         if (cachedOpponentPrisCount < 0) {
-            cachedOpponentPrisCount = opponentCard != null ? opponentCard.getPrismaticDiceIds().values().stream().mapToInt(Integer::intValue).sum() : 0;
+            cachedOpponentPrisCount = opponentCard.getPrismaticDiceIds().values().stream().mapToInt(Integer::intValue).sum();
         }
         opponentPrismaticLabel.setText(String.valueOf(cachedOpponentPrisCount));
-        opponentOrangeLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.ORANGE_D8) : 0));
-        opponentPurpleLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.PURPLE_D6) : 0));
-        opponentBlueLabel.setText(String.valueOf(opponentCounts != null ? opponentCounts.getCount(DiceType.BLUE_D4) : 0));
+        opponentOrangeLabel.setText(String.valueOf(opponentCounts.getCount(DiceType.ORANGE_D8)));
+        opponentPurpleLabel.setText(String.valueOf(opponentCounts.getCount(DiceType.PURPLE_D6)));
+        opponentBlueLabel.setText(String.valueOf(opponentCounts.getCount(DiceType.BLUE_D4)));
 
         if (TutorialController.shouldActivateTutorial()) {
             playerPrismaticLabel.setOpacity(0f);
@@ -675,7 +664,6 @@ public class BattleUILabels {
     }
 
     public void updatePhaseLabel() {
-        if (phaseLabel == null || battleState == null) return;
         Phase phase = battleState.getCurrentPhase();
         boolean playerAttacking = battleState.isPlayerAttacker();
 
@@ -722,8 +710,6 @@ public class BattleUILabels {
     }
 
     public void updateSelectionDisplayLabels() {
-        if (battleState == null || attackerSelectionLabel == null) return;
-
         attackerSelectionLabel.setOpacity(0f);
         attackerEffectLabel.setOpacity(0f);
         defenderSelectionLabel.setOpacity(0f);
@@ -733,8 +719,6 @@ public class BattleUILabels {
     
 
     public void updateConfirmedSelectionLabels() {
-        if (battleState == null || attackerConfirmedSelectionLabel == null) return;
-
         Phase phase = battleState.getCurrentPhase();
 
         boolean shouldShowAttacker = phase == Phase.SELECTING_DEFENSE ||
@@ -790,8 +774,6 @@ public class BattleUILabels {
     }
 
     private void updateConfirmedLabelPositions() {
-        if (battleState == null) return;
-
         float halfH = BattleRenderingUtils.PANEL_HEIGHT / 2f;
         float iconSize = halfH * BattleRenderingUtils.ROLE_ICON_SIZE_RATIO;
 
@@ -820,10 +802,7 @@ public class BattleUILabels {
     }
 
     public void updateIconValueLabels() {
-        if (battleState == null || attackerIconValueLabel == null || defenderIconValueLabel == null) return;
-
         Phase phase = battleState.getCurrentPhase();
-
         attackerIconValueLabel.setOpacity(0f);
         defenderIconValueLabel.setOpacity(0f);
 
@@ -930,9 +909,8 @@ public class BattleUILabels {
     }
 
     public void updatePrismaticButton() {
-        if (playerPrismaticUsesLabel == null || battleState == null) return;
         if (TutorialController.shouldActivateTutorial()) {
-            boolean prismaticAllowed = tutorialController != null && tutorialController.isPrismaticAllowed();
+            boolean prismaticAllowed = tutorialController.isPrismaticAllowed();
             opponentPrismaticUsesLabel.setOpacity(0f);
             opponentPrismaticFaceMappingLabel.setOpacity(0f);
             opponentPrismaticEffectLabel.setOpacity(0f);
@@ -963,14 +941,7 @@ public class BattleUILabels {
     }
 
     private void updatePrismaticFaceMappingDisplay() {
-        if (playerPrismaticFaceMappingLabel == null || battleState == null) return;
-
         CharacterCard playerCard = battleState.getPlayerCard();
-        if (playerCard == null) {
-            playerPrismaticFaceMappingLabel.setOpacity(0f);
-            playerPrismaticEffectLabel.setOpacity(0f);
-            return;
-        }
 
         java.util.Map<String, Integer> prismaticIds = playerCard.getPrismaticDiceIds();
         if (prismaticIds == null || prismaticIds.isEmpty()) {
@@ -1004,18 +975,11 @@ public class BattleUILabels {
     }
 
     private void updateOpponentPrismaticDisplay() {
-        if (opponentPrismaticUsesLabel == null || battleState == null) return;
-
         int uses = battleState.getOpponentPrismaticUses();
         opponentPrismaticUsesLabel.setText(String.valueOf(uses));
         opponentPrismaticUsesLabel.setColor(uses > 0 ? ColorHelper.PRISMATIC_GOLD : ColorHelper.PRISMATIC_DISABLED);
 
         CharacterCard opponentCard = battleState.getOpponentCard();
-        if (opponentCard == null) {
-            opponentPrismaticFaceMappingLabel.setOpacity(0f);
-            opponentPrismaticEffectLabel.setOpacity(0f);
-            return;
-        }
 
         java.util.Map<String, Integer> prismaticIds = opponentCard.getPrismaticDiceIds();
         if (prismaticIds == null || prismaticIds.isEmpty()) {
@@ -1044,9 +1008,8 @@ public class BattleUILabels {
     }
 
     public void updatePrismaticRolledLabel() {
-        if (playerPrismaticRolledLabel == null) return;
         if (TutorialController.shouldActivateTutorial()) {
-            boolean prismaticAllowed = tutorialController != null && tutorialController.isPrismaticAllowed();
+            boolean prismaticAllowed = tutorialController.isPrismaticAllowed();
             if (!prismaticAllowed) {
                 playerPrismaticRolledLabel.setOpacity(0f);
                 return;
@@ -1076,9 +1039,7 @@ public class BattleUILabels {
     }
 
     public void clearPrismaticRolledLabel() {
-        if (playerPrismaticRolledLabel != null) {
-            playerPrismaticRolledLabel.setOpacity(0f);
-        }
+        playerPrismaticRolledLabel.setOpacity(0f);
         pendingPrismaticInstance = null;
         pendingPrismaticAnimatorIndex = -1;
     }

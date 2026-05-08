@@ -28,11 +28,11 @@ public class TutorialDiceRoller {
 
     private static final int[][] GAME1_OPPONENT_ROLLS = {
         {3, 2, 2, 1, 1},
-        {4, 3, 2, 1, 1},
+        {6, 5, 3, 2, 1},
         {3, 2, 2, 1, 1}
     };
 
-    private static final int[] GAME1_REROLL_RESULT = {6, 5, 4, 4, 3};
+    private static final int[] GAME1_REROLL_RESULT = {4, 4, 4, 0, 0};
 
     private static final int[][] GAME2_PLAYER_ROLLS = {
         {4, 4, 3, 2, 1, 1, 1},
@@ -40,7 +40,7 @@ public class TutorialDiceRoller {
         {4, 3, 2, 1, 1, 1, 1},
         {3, 2, 2, 1, 1, 1, 1},
         {4, 3, 2, 1, 1, 1, 1},
-        {4, 4, 4, 3, 2, 1, 1}
+        {4, 4, 4, 4, 2, 1, 1}
     };
 
     private static final int[][] GAME2_OPPONENT_ROLLS = {

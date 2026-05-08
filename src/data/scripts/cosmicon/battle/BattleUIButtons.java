@@ -400,8 +400,6 @@ public class BattleUIButtons implements ActionListenerDelegate {
     }
 
     public void updateButtons(Phase phase) {
-        if (confirmButton == null || rerollButton == null || battleState == null) return;
-
         boolean playerIsAttacker = battleState.isPlayerAttacker();
         boolean playerShouldSelect = (playerIsAttacker && phase == Phase.SELECTING_ATTACK) ||
                                       (!playerIsAttacker && phase == Phase.SELECTING_DEFENSE);

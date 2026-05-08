@@ -241,9 +241,7 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
             String action = (String) btn.getCustomData();
 
             if (action.equals("close")) {
-                if (selectionCallback != null) {
-                    selectionCallback.onPopupClosed();
-                }
+                selectionCallback.onPopupClosed();
             } else if (action.equals("cancel_confirm")) {
                 showingConfirmation = false;
                 selectedType = null;
@@ -294,9 +292,7 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
 
         rolledInstance.setMustSelect(shouldShowDestinedWarning());
 
-        if (selectionCallback != null) {
-            selectionCallback.onPrismaticDiceSelected(selectedType, rolledInstance);
-        }
+        selectionCallback.onPrismaticDiceSelected(selectedType, rolledInstance);
     }
 
     @Override

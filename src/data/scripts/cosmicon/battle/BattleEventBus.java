@@ -32,14 +32,12 @@ public class BattleEventBus {
 
     private final List<BattleEventListener> listeners;
     private DamageAnimationCallback damageAnimationCallback;
-    private final List<ValueChangeRecord> pendingValueChanges;
     private final List<ValueChangeRecord> pendingValueChangesPlayer;
     private final List<ValueChangeRecord> pendingValueChangesOpponent;
     private boolean valueChangeAnimationInProgress;
 
     public BattleEventBus() {
         this.listeners = new ArrayList<>();
-        this.pendingValueChanges = new ArrayList<>();
         this.pendingValueChangesPlayer = new ArrayList<>();
         this.pendingValueChangesOpponent = new ArrayList<>();
         this.valueChangeAnimationInProgress = false;
@@ -147,7 +145,6 @@ public class BattleEventBus {
     public void queueValueChange(boolean isPlayer, String changeType, int delta) {
         String displayText = delta >= 0 ? "+" + delta : String.valueOf(delta);
         ValueChangeRecord record = new ValueChangeRecord(changeType, delta, displayText, isPlayer);
-        pendingValueChanges.add(record);
         if (isPlayer) {
             pendingValueChangesPlayer.add(record);
         } else {
@@ -164,7 +161,6 @@ public class BattleEventBus {
             CosmiconLogger.warn("Cannot clear pending value changes while animation is in progress");
             return;
         }
-        pendingValueChanges.clear();
         pendingValueChangesPlayer.clear();
         pendingValueChangesOpponent.clear();
     }
@@ -172,7 +168,6 @@ public class BattleEventBus {
     public void setValueChangeAnimationInProgress(boolean inProgress) {
         this.valueChangeAnimationInProgress = inProgress;
         if (!inProgress) {
-            pendingValueChanges.clear();
             pendingValueChangesPlayer.clear();
             pendingValueChangesOpponent.clear();
         }
@@ -180,7 +175,6 @@ public class BattleEventBus {
 
     public void cleanup() {
         listeners.clear();
-        pendingValueChanges.clear();
         pendingValueChangesPlayer.clear();
         pendingValueChangesOpponent.clear();
         valueChangeAnimationInProgress = false;
