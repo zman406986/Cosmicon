@@ -190,7 +190,10 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
             }
         }
 
-        CosmiconLogger.debug("Battle state initialized, starting turn processor");
+        CosmiconLogger.debug("Battle state initialized");
+    }
+
+    public void startBattle() {
         turnProcessor.startBattle();
     }
 

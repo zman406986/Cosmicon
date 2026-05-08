@@ -175,6 +175,12 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         labels.updateLabelsFromState();
     }
 
+    public void dispose() {
+        if (battleState != null) {
+            battleState.removeListener(this);
+        }
+    }
+
     public void cleanup() {
         CosmiconLogger.info("Battle dialog closed");
         if (battleState != null) {
@@ -264,7 +270,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         }
 
         if (battleState != null) {
-            labels.updateLabelsFromState();
             lastPlayerWasAttacker = battleState.isPlayerAttacker();
             roleTransitionProgress = lastPlayerWasAttacker ? 0f : 1f;
             targetRoleTransition = roleTransitionProgress;
@@ -801,6 +806,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                         dicePreviewActive = true;
                         dicePreviewDelay = CosmiconConfig.DICE_PREVIEW_DELAY;
                     }
+                    if (tutorialController != null && tutorialController.hasRerollPending()) {
+                        tutorialController.processPendingReroll();
+                    }
                 }
             } else if (rollAnimationDelay <= 0f) {
                 boolean isDefenderRolling = battleState.isDefenderRolling();
@@ -1293,8 +1301,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void renderDiceSelectionHighlights(float alphaMult) {
-        if (battleState.getCurrentPhase() != Phase.SELECTING_ATTACK &&
-            battleState.getCurrentPhase() != Phase.SELECTING_DEFENSE) return;
+        boolean playerIsSelecting = (battleState.getCurrentPhase() == Phase.SELECTING_ATTACK && battleState.isPlayerAttacker()) ||
+                                    (battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE && !battleState.isPlayerAttacker());
+        if (!playerIsSelecting) return;
 
         List<Boolean> selected = battleState.getPlayerDiceSelected();
 
@@ -1417,8 +1426,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         GLStateUtil.enableTexturingWithBlend();
 
         UnifiedCoord btnPos = new UnifiedCoord(buttons.getPlayerPrismaticBtnX(), buttons.getPlayerPrismaticBtnY());
-        float renderX = btnPos.glX() + 50f;
-        float renderY = btnPos.glSpriteY(PRISMATIC_BTN_SIZE) + 40f;
+        float renderX = btnPos.glX();
+        float renderY = btnPos.glSpriteY(PRISMATIC_BTN_SIZE);
 
         int uses = battleState.getPlayerPrismaticUses();
         boolean playerShouldSelect = (battleState.isAttacker(true) &&

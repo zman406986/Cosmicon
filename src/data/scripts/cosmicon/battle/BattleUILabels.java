@@ -668,7 +668,10 @@ public class BattleUILabels {
         boolean playerAttacking = battleState.isPlayerAttacker();
 
         String phaseText = switch (phase) {
-            case ROLLING -> Strings.get("phase.rolling");
+            case ROLLING -> {
+                boolean isPlayerRolling = battleState.isDefenderRolling() != playerAttacking;
+                yield isPlayerRolling ? Strings.get("phase.your_rolling") : Strings.get("phase.opponent_rolling");
+            }
             case SELECTING_ATTACK, DICE_DISPLAY_ATTACK -> playerAttacking ? Strings.get("phase.your_attack") : Strings.get("phase.opponent_attack");
             case SELECTING_DEFENSE, DICE_DISPLAY_DEFENSE -> playerAttacking ? Strings.get("phase.opponent_defense") : Strings.get("phase.your_defense");
             case RESOLVING_PRE_CLASH, RESOLVING_MODIFICATION -> Strings.get("phase.pre_clash");
@@ -693,7 +696,12 @@ public class BattleUILabels {
                     instructionText = instructionText + "  " + Strings.format("battle.selected_values", valuesStr);
                 }
             } else {
-                instructionText = Strings.get("phase.opponent_selecting");
+                AISelectionVisualizer viz = battleState.getAiSelectionVisualizer();
+                if (viz != null && viz.hasStarted() && viz.isRerollPhase()) {
+                    instructionText = Strings.get("phase.opponent_rerolling");
+                } else {
+                    instructionText = Strings.get("phase.opponent_selecting");
+                }
             }
         } else if (phase == Phase.WAITING_NEXT_TURN) {
             instructionText = Strings.get("phase.click_continue");

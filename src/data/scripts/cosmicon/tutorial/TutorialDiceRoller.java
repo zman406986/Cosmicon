@@ -1,6 +1,7 @@
 package data.scripts.cosmicon.tutorial;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,9 +20,10 @@ public class TutorialDiceRoller {
     private int opponentRollIndex;
     private final Set<String> completedRerolls;
     private int opponentRerollCount;
+    private int opponentSelectionCount;
 
     private static final int[][] GAME1_PLAYER_ROLLS = {
-        {6, 5, 4, 3, 2},
+        {7, 6, 4, 3, 2},
         {4, 4, 3, 2, 1},
         {1, 1, 2, 4, 3}
     };
@@ -37,27 +39,54 @@ public class TutorialDiceRoller {
     private static final int[][] GAME2_PLAYER_ROLLS = {
         {4, 4, 3, 2, 1, 1, 1},
         {4, 3, 2, 2, 1, 1, 1},
-        {4, 3, 2, 1, 1, 1, 1},
+        {5, 5, 4, 3, 2, 1, 1},
         {3, 2, 2, 1, 1, 1, 1},
         {4, 3, 2, 1, 1, 1, 1},
-        {4, 4, 4, 4, 2, 1, 1}
+        {4, 4, 4, 5, 1, 3, 3}
     };
 
     private static final int[][] GAME2_OPPONENT_ROLLS = {
         {3, 2, 2, 1, 1},
-        {5, 4, 3, 2, 1},
-        {5, 4, 3, 2, 1},
+        {6, 5, 4, 3, 2},
+        {7, 5, 4, 3, 2},
         {6, 5, 4, 4, 3},
         {3, 2, 2, 1, 1},
         {3, 2, 2, 1, 1}
     };
 
-    private static final int[] GAME2_REROLL_RESULT = {3, 3, 2, 2, 1};
-    private static final int[] GAME2_REROLL2_RESULT = {4, 3, 2, 2, 1};
+    private static final int[] GAME2_REROLL_RESULT = {1, 1, 2, 3, 3};
+    private static final int[] GAME2_REROLL2_RESULT = {5, 3, 2, 2, 3};
 
     private static final int[][] GAME2_OPPONENT_REROLL_RESULTS = {
-        {4, 3, 2, 2, 1},
-        {4, 3, 2, 2, 1}
+        {5, 4, 3},
+        {6, 4, 1}
+    };
+
+    private static final int[][] GAME2_OPPONENT_REROLL_INDICES = {
+        {0, 3, 4},
+        {0, 1, 4}
+    };
+
+    private static final int[][] GAME1_OPPONENT_REROLL_INDICES = {
+        {3, 4},
+        {}
+    };
+
+    private static final int[][] GAME1_OPPONENT_REROLL_RESULTS = {
+        {4, 4},
+        {}
+    };
+
+    private static final int[][] GAME2_OPPONENT_SELECTIONS = {
+        {0, 1, 2, 3},
+        {0, 1, 2},
+        {0, 1, 2}
+    };
+
+    private static final int[][] GAME1_OPPONENT_SELECTIONS = {
+        {0, 1},
+        {0, 1, 3},
+        {0, 1}
     };
 
     private static final int GAME2_PRISMATIC_FACE = 4;
@@ -69,6 +98,7 @@ public class TutorialDiceRoller {
         this.opponentRollIndex = 0;
         this.completedRerolls = new HashSet<>();
         this.opponentRerollCount = 0;
+        this.opponentSelectionCount = 0;
     }
 
     public boolean shouldInterceptPrismaticRoll() {
@@ -85,6 +115,56 @@ public class TutorialDiceRoller {
             return instance;
         }
         return PrismaticDiceInstance.roll(type, isTrueVersion);
+    }
+
+    public List<Integer> planOpponentReroll() {
+        if (controller.getGame() == TutorialController.TutorialGame.GAME_2_ACHERON) {
+            if (opponentRerollCount < GAME2_OPPONENT_REROLL_INDICES.length) {
+                int[] indices = GAME2_OPPONENT_REROLL_INDICES[opponentRerollCount];
+                CosmiconLogger.debug("TutorialDiceRoller: predetermined opponent reroll #%d - indices: %s",
+                    opponentRerollCount + 1, Arrays.toString(indices));
+                return new ArrayList<>(Arrays.stream(indices).boxed().toList());
+            }
+        } else {
+            if (opponentRerollCount < GAME1_OPPONENT_REROLL_INDICES.length) {
+                int[] indices = GAME1_OPPONENT_REROLL_INDICES[opponentRerollCount];
+                CosmiconLogger.debug("TutorialDiceRoller: predetermined Game 1 opponent reroll #%d - indices: %s",
+                    opponentRerollCount + 1, Arrays.toString(indices));
+                return new ArrayList<>(Arrays.stream(indices).boxed().toList());
+            }
+        }
+        return new ArrayList<>();
+    }
+
+    public List<Integer> planOpponentSelection(BattleState state) {
+        int idx = opponentSelectionCount;
+        int[] selections = null;
+        if (controller.getGame() == TutorialController.TutorialGame.GAME_2_ACHERON) {
+            if (idx < GAME2_OPPONENT_SELECTIONS.length) {
+                selections = GAME2_OPPONENT_SELECTIONS[idx];
+            }
+        } else {
+            if (idx < GAME1_OPPONENT_SELECTIONS.length) {
+                selections = GAME1_OPPONENT_SELECTIONS[idx];
+            }
+        }
+        if (selections != null) {
+            opponentSelectionCount++;
+            CosmiconLogger.debug("TutorialDiceRoller: predetermined opponent selection #%d - indices: %s",
+                idx + 1, Arrays.toString(selections));
+            return new ArrayList<>(Arrays.stream(selections).boxed().toList());
+        }
+        int required = state.getRequiredDiceCount(false);
+        List<Integer> fallback = new ArrayList<>();
+        for (int i = 0; i < required; i++) {
+            fallback.add(i);
+        }
+        CosmiconLogger.debug("TutorialDiceRoller: fallback opponent selection - indices: %s", fallback);
+        return fallback;
+    }
+
+    public Object planOpponentPrismatic(BattleState state) {
+        return null;
     }
 
     public boolean shouldInterceptReroll(boolean forPlayer) {
@@ -137,7 +217,11 @@ public class TutorialDiceRoller {
             }
             completedRerolls.add(key);
         } else {
-            rerollGame2Opponent(state);
+            if (controller.getGame() == TutorialController.TutorialGame.GAME_2_ACHERON) {
+                rerollGame2Opponent(state);
+            } else {
+                rerollGame1Opponent(state);
+            }
             opponentRerollCount++;
         }
     }
@@ -174,6 +258,30 @@ public class TutorialDiceRoller {
         state.incrementRerollsUsed(true);
 
         CosmiconLogger.debug("TutorialDiceRoller: Game 1 Turn 3 reroll - indices: %s", rerolledIndices);
+    }
+
+    private void rerollGame1Opponent(BattleState state) {
+        List<Integer> values = state.getDiceValues(false);
+        List<Boolean> selected = state.getDiceSelected(false);
+        List<Integer> rerolledIndices = new ArrayList<>();
+
+        int[] results = GAME1_OPPONENT_REROLL_RESULTS[opponentRerollCount % GAME1_OPPONENT_REROLL_RESULTS.length];
+        int resultIdx = 0;
+        for (int i = 0; i < selected.size(); i++) {
+            if (selected.get(i)) {
+                if (resultIdx < results.length) {
+                    values.set(i, results[resultIdx++]);
+                }
+                rerolledIndices.add(i);
+            }
+        }
+
+        state.setDiceValues(false, values);
+        state.decrementRerolls(false);
+        state.incrementRerollsUsed(false);
+
+        CosmiconLogger.debug("TutorialDiceRoller: Game 1 opponent reroll #%d - indices: %s",
+            opponentRerollCount + 1, rerolledIndices);
     }
 
     private void rollGame2(BattleState state, boolean forPlayer) {
@@ -259,15 +367,19 @@ public class TutorialDiceRoller {
     }
 
     private void setFixedRoll(BattleState state, boolean forPlayer, int[] values) {
-        CharacterCard card = state.getCard(forPlayer);
-        List<DiceType> cardTypes = card.getDicePool();
+        List<DiceType> cardTypes = state.getUpgradedDicePool(forPlayer);
+        if (cardTypes == null) {
+            CharacterCard card = state.getCard(forPlayer);
+            cardTypes = card.getDicePool();
+        }
         List<DiceType> typeList = new ArrayList<>();
         List<Integer> valueList = new ArrayList<>();
         List<Boolean> selectedList = new ArrayList<>();
 
         for (int i = 0; i < cardTypes.size(); i++) {
             typeList.add(cardTypes.get(i));
-            valueList.add(i < values.length ? values[i] : 1);
+            int maxFace = cardTypes.get(i).getMaxFace();
+            valueList.add(i < values.length ? Math.min(values[i], maxFace) : 1);
             selectedList.add(false);
         }
 

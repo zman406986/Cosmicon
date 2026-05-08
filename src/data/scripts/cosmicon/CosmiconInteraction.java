@@ -306,15 +306,15 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         int gamesPlayed = CosmiconStats.getGamesPlayed();
         if (gamesPlayed == 1) {
             textPanel.addPara(Strings.get("tutorial.g1_reward"));
+            int remaining = CosmiconStats.getRemainingTutorialGames();
+            if (remaining > 0) {
+                textPanel.addPara(Strings.format("tutorial.games_remaining", remaining));
+            }
+            options.addOption(Strings.get("menu.back"), "back");
         } else if (gamesPlayed >= 2) {
-            textPanel.addPara(Strings.get("tutorial.g2_reward"));
+            options.addOption(Strings.get("tutorial.g2_unlock_option"), "tutorial_g2_unlock");
         }
 
-        int remaining = CosmiconStats.getRemainingTutorialGames();
-        if (remaining > 0) {
-            textPanel.addPara(Strings.format("tutorial.games_remaining", remaining));
-        }
-        options.addOption(Strings.get("menu.back"), "back");
         setState(State.REWARD_SELECTION);
     }
 
@@ -411,6 +411,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 AddRemoveCommodity.addCreditsGainText(credits, textPanel);
                 finishReward();
             }
+            case "tutorial_g2_unlock" -> finishReward();
             default -> finishReward();
         }
     }

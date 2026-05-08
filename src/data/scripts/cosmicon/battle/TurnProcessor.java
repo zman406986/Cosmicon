@@ -7,6 +7,7 @@ import data.scripts.cosmicon.battle.StatusEffectProcessor.Phase;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.battle.EffectState.ModificationRecord;
 import data.scripts.cosmicon.battle.TurnState.TurnType;
+import data.scripts.cosmicon.tutorial.TutorialDiceRoller;
 import data.scripts.cosmicon.character.PassiveEventSystem;
 import data.scripts.cosmicon.util.PassiveEvaluator;
 import data.scripts.cosmicon.util.PassiveResults.PassiveResult;
@@ -264,7 +265,18 @@ public class TurnProcessor {
         CosmiconLogger.debug("[AI_REROLL_DIAG] opponentDiceValues=%s, opponentDiceTypes=%s", 
             state.getOpponentDiceValues(), state.getOpponentDiceTypes());
         
-        PrismaticDecision prismDecision = aiEngine.planPrismaticUse(state, false);
+        TutorialDiceRoller tutorialDiceRoller = state.getTutorialDiceRoller();
+        
+        PrismaticDecision prismDecision = null;
+        if (tutorialDiceRoller != null) {
+            Object forced = tutorialDiceRoller.planOpponentPrismatic(state);
+            if (forced instanceof PrismaticDecision pd) {
+                prismDecision = pd;
+            }
+        }
+        if (prismDecision == null) {
+            prismDecision = aiEngine.planPrismaticUse(state, false);
+        }
         if (prismDecision != null && prismDecision.shouldUse()) {
             state.addPrismaticDiceToPool(prismDecision.instance(), false);
             if (diceRollManager != null) {
@@ -278,7 +290,13 @@ public class TurnProcessor {
         }
         
         if (aiRerolls > 0) {
-            List<Integer> rerollIndices = aiEngine.planReroll(state, false);
+            List<Integer> rerollIndices = null;
+            if (tutorialDiceRoller != null) {
+                rerollIndices = tutorialDiceRoller.planOpponentReroll();
+            }
+            if (rerollIndices == null) {
+                rerollIndices = aiEngine.planReroll(state, false);
+            }
             CosmiconLogger.debug("[AI_REROLL_DIAG] planReroll returned: %s (size=%d)", rerollIndices, rerollIndices.size());
             aiPlannedIndices = rerollIndices;
             if (!rerollIndices.isEmpty()) {
@@ -352,7 +370,14 @@ public class TurnProcessor {
 
                     int remainingRerolls = state.getRemainingRerolls(false);
                     if (remainingRerolls > 0) {
-                        List<Integer> nextRerollIndices = aiEngine.planReroll(state, false);
+                        TutorialDiceRoller tdr = state.getTutorialDiceRoller();
+                        List<Integer> nextRerollIndices = null;
+                        if (tdr != null) {
+                            nextRerollIndices = tdr.planOpponentReroll();
+                        }
+                        if (nextRerollIndices == null) {
+                            nextRerollIndices = aiEngine.planReroll(state, false);
+                        }
                         if (!nextRerollIndices.isEmpty()) {
                             CosmiconLogger.debug("AI planning additional reroll: %s", nextRerollIndices);
                             aiPlannedIndices = nextRerollIndices;
@@ -371,7 +396,14 @@ public class TurnProcessor {
             }
             
             case SELECTION_PLANNING -> {
-                List<Integer> selectIndices = aiEngine.planSelection(state, false);
+                TutorialDiceRoller tdr = state.getTutorialDiceRoller();
+                List<Integer> selectIndices = null;
+                if (tdr != null) {
+                    selectIndices = tdr.planOpponentSelection(state);
+                }
+                if (selectIndices == null) {
+                    selectIndices = aiEngine.planSelection(state, false);
+                }
                 aiPlannedIndices = selectIndices;
                 
                 if (viz != null) {

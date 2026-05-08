@@ -57,7 +57,7 @@ public class DiceRoller {
 
         List<DiceType> types = state.getUpgradedDicePool(forPlayer);
         if (types == null) {
-            types = card.getDicePool();
+            types = new ArrayList<>(card.getDicePool());
         }
         List<Integer> values = new ArrayList<>();
         List<Boolean> selected = new ArrayList<>();

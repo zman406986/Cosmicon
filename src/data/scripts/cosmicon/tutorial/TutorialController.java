@@ -75,11 +75,14 @@ public class TutorialController {
     private TutorialStep currentStep;
     private final BattleState battleState;
     private boolean complete;
+    private boolean rerollPending;
+    private boolean prismaticUnlocked;
 
     public TutorialController(TutorialGame game, BattleState battleState) {
         this.game = game;
         this.battleState = battleState;
         this.complete = false;
+        this.rerollPending = false;
         this.currentStep = game == TutorialGame.GAME_1_SPARXIE
             ? TutorialStep.G1_T1_ATTACK_ROLL
             : TutorialStep.G2_T1_DEFENSE_ROLL;
@@ -164,7 +167,10 @@ public class TutorialController {
 
             case G2_T3_ATTACK_PRISMATIC -> isPrismatic;
 
-            case G2_T3_ATTACK_SELECT -> isPrismatic || (isPrismaticDiceSelected() && isAmongHighestNonPrismatic(diceIndex, values, types, Math.max(1, battleState.getRequiredDiceCount(true) - 1)));
+            case G2_T3_ATTACK_SELECT -> isPrismatic || isAmongHighestNonPrismatic(diceIndex, values, types,
+                    isPrismaticDiceSelected()
+                            ? Math.max(1, battleState.getRequiredDiceCount(true) - 1)
+                            : battleState.getRequiredDiceCount(true));
 
             case G2_T4_ATTACK_SELECT -> value == 4;
 
@@ -261,6 +267,7 @@ public class TutorialController {
     public boolean isPrismaticAllowed() {
         if (complete) return false;
         if (game != TutorialGame.GAME_2_ACHERON) return false;
+        if (prismaticUnlocked) return true;
 
         boolean isAttackPhase = currentStep == TutorialStep.G2_T2_ATTACK_PRISMATIC
             || currentStep == TutorialStep.G2_T2_ATTACK_SELECT
@@ -278,6 +285,7 @@ public class TutorialController {
             }
         }
 
+        prismaticUnlocked = true;
         return true;
     }
 
@@ -393,6 +401,21 @@ public class TutorialController {
             currentStep = TutorialStep.G2_T3_ATTACK_REROLL2;
         } else if (currentStep == TutorialStep.G2_T3_ATTACK_REROLL2) {
             currentStep = TutorialStep.G2_T3_ATTACK_SELECT;
+        }
+    }
+
+    public void setRerollPending() {
+        this.rerollPending = true;
+    }
+
+    public boolean hasRerollPending() {
+        return rerollPending;
+    }
+
+    public void processPendingReroll() {
+        if (rerollPending) {
+            rerollPending = false;
+            onRerolled();
         }
     }
 

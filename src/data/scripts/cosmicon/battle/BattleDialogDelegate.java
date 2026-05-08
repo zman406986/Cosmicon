@@ -46,10 +46,11 @@ public class BattleDialogDelegate implements com.fs.starfarer.api.campaign.Custo
 
     @Override
     public void init(CustomPanelAPI panel, DialogCallbacks callbacks) {
-        battlePanel.init(panel, callbacks);
         battleController.initBattleWithSelection(playerIsAttacker);
+        battlePanel.init(panel, callbacks);
         battlePanel.wireTutorial(battleController.getTutorialController());
         battlePanel.updateLabelsFromState();
+        battleController.startBattle();
     }
 
     @Override
@@ -63,7 +64,7 @@ public class BattleDialogDelegate implements com.fs.starfarer.api.campaign.Custo
 
     @Override
     public void reportDismissed(int option) {
-        battlePanel.cleanup();
+        battlePanel.dispose();
 
         String winner = battleController.getState().getWinner();
         boolean playerWon = "player".equals(winner);

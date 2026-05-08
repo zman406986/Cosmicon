@@ -77,6 +77,25 @@ public class FlyingIcon {
         this.currentRotation = rotation;
     }
     
+    public void resetTo(float x, float y) {
+        this.currentX = x;
+        this.currentY = y;
+        this.startX = x;
+        this.startY = y;
+        this.pullbackX = x;
+        this.pullbackY = y;
+        this.targetX = x;
+        this.targetY = y;
+        this.flyPhase = FlyPhase.IDLE;
+        this.elapsed = 0f;
+        this.rotationElapsed = 0f;
+        this.currentRotation = 0f;
+        this.targetRotation = 0f;
+        this.originalRotation = 0f;
+        this.autoLaunch = false;
+        this.usePullback = false;
+    }
+    
     public void startRotation(float targetRotation) {
         if (Math.abs(targetRotation - currentRotation) > 0.5f) {
             this.originalRotation = currentRotation;

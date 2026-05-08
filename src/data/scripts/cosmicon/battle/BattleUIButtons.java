@@ -164,8 +164,8 @@ public class BattleUIButtons implements ActionListenerDelegate {
             }
         }, TooltipLocation.LEFT, false);
 
-        playerPrismaticBtnX = BattleRenderingUtils.MARGIN + 10f;
-        playerPrismaticBtnY = BattleRenderingUtils.PANEL_HEIGHT - BattleRenderingUtils.MARGIN - PRISMATIC_BTN_SIZE - 10f;
+        playerPrismaticBtnX = BattleRenderingUtils.MARGIN + 60f;
+        playerPrismaticBtnY = BattleRenderingUtils.PANEL_HEIGHT - 100f;
 
         createWeatherLabel();
 
@@ -359,7 +359,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
                         }
                         battleController.onPlayerReroll();
                         if (tutorialController != null) {
-                            tutorialController.onRerolled();
+                            tutorialController.setRerollPending();
                         }
                     }
                 }
@@ -458,6 +458,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
                     tutorialController.onPrismaticUsed();
                 }
                 closePrismaticPopup();
+                inputHandler.consumeClick();
                 updateButtons(battleState.getCurrentPhase());
             }
 
