@@ -151,6 +151,7 @@ public class CosmiconStats {
         }
         CosmiconPlayerState.saveCharacter(CharacterIds.ACHERON);
         CosmiconPlayerState.savePrismaticDice(REPEATER_ID);
+        CosmiconPlayerState.savePrismaticDiceTrueVersion(false);
     }
 
     public static int calculateCreditReward(int playerLevel) {

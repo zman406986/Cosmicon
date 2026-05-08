@@ -155,7 +155,9 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
                 String primId = prismaticIds.keySet().iterator().next();
                 int uses = prismaticIds.get(primId);
                 playerCard = playerCard.withPrismaticDice(primId, uses, false);
-                CosmiconLogger.info("Tutorial Game 2: Enabled prismatic dice %s x%d", primId, uses);
+                CosmiconPlayerState.savePrismaticDice(primId);
+                CosmiconPlayerState.savePrismaticDiceTrueVersion(false);
+                CosmiconLogger.info("Tutorial Game 2: Enabled prismatic dice %s x%d (basic version)", primId, uses);
             }
         } else {
             CosmiconLogger.info("Tutorial mode: prismatic dice disabled");

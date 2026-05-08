@@ -19,7 +19,7 @@ import data.scripts.cosmicon.util.GLStateUtil;
 
 public class FlyingIcon {
     private static final float PULLBACK_DISTANCE = 40f;
-    private static final float PULLBACK_DURATION = 0.4f;
+    private static final float DEFAULT_PULLBACK_DURATION = 0.4f;
     private static final float LABEL_HEIGHT = 35f;
     private static final float ROTATION_DURATION = 0.25f;
     
@@ -30,6 +30,7 @@ public class FlyingIcon {
     private float targetX, targetY;
     private float currentX, currentY;
     private float flyDuration;
+    private float pullbackDuration = DEFAULT_PULLBACK_DURATION;
     private float elapsed;
     private final float size;
     private FlyPhase flyPhase;
@@ -94,8 +95,9 @@ public class FlyingIcon {
         this.originalRotation = 0f;
         this.autoLaunch = false;
         this.usePullback = false;
+        this.pullbackDuration = DEFAULT_PULLBACK_DURATION;
     }
-    
+
     public void startRotation(float targetRotation) {
         if (Math.abs(targetRotation - currentRotation) > 0.5f) {
             this.originalRotation = currentRotation;
@@ -129,6 +131,7 @@ public class FlyingIcon {
         this.targetX = x;
         this.targetY = y;
         this.flyDuration = duration;
+        this.pullbackDuration = DEFAULT_PULLBACK_DURATION;
         this.elapsed = 0f;
         this.rotationElapsed = 0f;
         this.usePullback = !skipPullback;
@@ -156,6 +159,7 @@ public class FlyingIcon {
         this.targetX = x;
         this.targetY = y;
         this.flyDuration = duration;
+        this.pullbackDuration = DEFAULT_PULLBACK_DURATION;
         this.elapsed = 0f;
         this.rotationElapsed = 0f;
         this.usePullback = false;
@@ -185,6 +189,7 @@ public class FlyingIcon {
         this.targetX = targetX;
         this.targetY = targetY;
         this.flyDuration = launchDuration;
+        this.pullbackDuration = drawbackDuration;
         this.elapsed = 0f;
         this.usePullback = true;
         this.useLinearFlight = useLinear;
@@ -244,7 +249,7 @@ public class FlyingIcon {
     }
     
     private void advancePullback() {
-        if (elapsed >= PULLBACK_DURATION) {
+        if (elapsed >= pullbackDuration) {
             currentX = pullbackX;
             currentY = pullbackY;
             startX = pullbackX;
@@ -259,7 +264,7 @@ public class FlyingIcon {
             return;
         }
         
-        float progress = elapsed / PULLBACK_DURATION;
+        float progress = elapsed / pullbackDuration;
         float eased = EasingUtil.easeInQuad(progress);
         currentX = startX + (pullbackX - startX) * eased;
         currentY = startY + (pullbackY - startY) * eased;

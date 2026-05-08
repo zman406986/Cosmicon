@@ -88,7 +88,11 @@ public class ValueChangeAnimator {
             deltaAlpha = 0f;
             flashIntensity = 0f;
             
-            createLabels();
+            if (labelsCreated) {
+                updateExistingLabels();
+            } else {
+                createLabels();
+            }
         }
     }
 
@@ -119,6 +123,20 @@ public class ValueChangeAnimator {
             .inTL(iconCenterX - totalWidth / 2f, iconCenterY - LABEL_HEIGHT / 2f);
         
         labelsCreated = true;
+    }
+
+    private void updateExistingLabels() {
+        if (!labelsCreated || changeQueue.isEmpty()) return;
+
+        QueuedChange current = changeQueue.get(0);
+        deltaLabel.setText(current.deltaText);
+        deltaLabel.setColor(current.color);
+        cachedDeltaLabelWidth = -1f;
+
+        totalLabel.setText(String.valueOf(currentValue));
+        totalLabel.setColor(isAttack ? ColorHelper.ATTACK_VALUE : ColorHelper.DEFENSE_VALUE);
+        totalLabel.setOpacity(1f);
+        cachedTotalLabelWidth = -1f;
     }
 
     public void advance(float amount) {
@@ -181,6 +199,9 @@ public class ValueChangeAnimator {
             phase = Phase.COMPLETE;
             if (deltaLabel != null) {
                 deltaLabel.setOpacity(0f);
+            }
+            if (totalLabel != null) {
+                totalLabel.setOpacity(0f);
             }
             return;
         }

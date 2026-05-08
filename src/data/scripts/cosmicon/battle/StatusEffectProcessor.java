@@ -68,15 +68,22 @@ public class StatusEffectProcessor {
     }
 
     public void addEffect(StatusEffect effect, int layers, int duration) {
+        int oldLayers = getLayers(effect);
         effects.merge(effect, layers, Integer::sum);
         if (duration < PERMANENT_DURATION) {
             durations.put(effect, duration);
         } else {
             durations.remove(effect);
         }
+        CosmiconLogger.info("[STATUS] +%d %s (now %d layers, duration=%s)",
+            layers, effect.name(), getLayers(effect),
+            duration < PERMANENT_DURATION ? duration + "t" : "permanent");
     }
 
     public void removeEffect(StatusEffect effect) {
+        if (hasEffect(effect)) {
+            CosmiconLogger.info("[STATUS] Removed %s (was %d layers)", effect.name(), getLayers(effect));
+        }
         effects.remove(effect);
         durations.remove(effect);
     }
@@ -87,6 +94,7 @@ public class StatusEffectProcessor {
             removeEffect(effect);
         } else {
             effects.put(effect, current - layers);
+            CosmiconLogger.info("[STATUS] -%d %s (now %d layers)", layers, effect.name(), current - layers);
         }
     }
 
@@ -96,13 +104,13 @@ public class StatusEffectProcessor {
                 int oldLayers = getLayers(effect);
                 effects.remove(effect);
                 durations.remove(effect);
-                CosmiconLogger.debug("Effect cleared: %s (was %d layers)", effect.name(), oldLayers);
+                CosmiconLogger.info("[STATUS] Effect cleared: %s (was %d layers)", effect.name(), oldLayers);
             }
         } else {
             int oldLayers = getLayers(effect);
             effects.put(effect, layers);
             if (oldLayers != layers) {
-                CosmiconLogger.debug("Effect set: %s %d layers (was %d)", effect.name(), layers, oldLayers);
+                CosmiconLogger.info("[STATUS] Effect set: %s %d layers (was %d)", effect.name(), layers, oldLayers);
             }
         }
     }
@@ -121,14 +129,17 @@ public class StatusEffectProcessor {
 
     public void clearTemporaryEffects() {
         if (hasEffect(StatusEffect.THORNS)) {
+            CosmiconLogger.info("[STATUS] Cleared temporary: THORNS (%d layers)", getLayers(StatusEffect.THORNS));
             effects.remove(StatusEffect.THORNS);
             durations.remove(StatusEffect.THORNS);
         }
         if (hasEffect(StatusEffect.LEVEL_UP)) {
+            CosmiconLogger.info("[STATUS] Cleared temporary: LEVEL_UP (%d layers)", getLayers(StatusEffect.LEVEL_UP));
             effects.remove(StatusEffect.LEVEL_UP);
             durations.remove(StatusEffect.LEVEL_UP);
         }
         if (hasEffect(StatusEffect.UNYIELDING)) {
+            CosmiconLogger.info("[STATUS] Cleared temporary: UNYIELDING (%d layers)", getLayers(StatusEffect.UNYIELDING));
             effects.remove(StatusEffect.UNYIELDING);
             durations.remove(StatusEffect.UNYIELDING);
         }
@@ -170,7 +181,7 @@ public class StatusEffectProcessor {
             processedEffects.add(new ProcessedEffect(StatusEffect.LAST_STAND, layers));
             effects.remove(StatusEffect.LAST_STAND);
             durations.remove(StatusEffect.LAST_STAND);
-            CosmiconLogger.debug("LAST_STAND: HP reduced from %d to 1, bonus = %d", 
+            CosmiconLogger.info("[STATUS] LAST_STAND triggered: HP %d -> 1, attack bonus = %d",
                 lastStandHpReduction + 1, lastStandHpReduction);
         }
     }
@@ -181,12 +192,14 @@ public class StatusEffectProcessor {
             if (tacticsLayers > 0) {
                 context.addRerolls(tacticsLayers);
                 processedEffects.add(new ProcessedEffect(StatusEffect.TACTICS, tacticsLayers));
+                CosmiconLogger.info("[STATUS] TACTICS: +%d rerolls", tacticsLayers);
             }
             
             int yaoGuangRerolls = getLayers(StatusEffect.YAO_GUANG_REROLLS);
             if (yaoGuangRerolls > 0) {
                 context.addRerolls(yaoGuangRerolls);
                 processedEffects.add(new ProcessedEffect(StatusEffect.YAO_GUANG_REROLLS, yaoGuangRerolls));
+                CosmiconLogger.info("[STATUS] YAO_GUANG_REROLLS: +%d rerolls", yaoGuangRerolls);
             }
         }
 
@@ -194,12 +207,15 @@ public class StatusEffectProcessor {
         if (deterrenceLayers > 0) {
             context.reduceRerolls(deterrenceLayers);
             processedEffects.add(new ProcessedEffect(StatusEffect.DETERRENCE, deterrenceLayers));
+            CosmiconLogger.info("[STATUS] DETERRENCE: -%d rerolls", deterrenceLayers);
         }
     }
 
     private void processAfterRoll(BattleContext context) {
         if (hasEffect(StatusEffect.DESTINED)) {
-            processedEffects.add(new ProcessedEffect(StatusEffect.DESTINED, getLayers(StatusEffect.DESTINED)));
+            int layers = getLayers(StatusEffect.DESTINED);
+            processedEffects.add(new ProcessedEffect(StatusEffect.DESTINED, layers));
+            CosmiconLogger.info("[STATUS] DESTINED: auto-selecting all dice");
             context.markDestinedDice();
             effects.remove(StatusEffect.DESTINED);
             durations.remove(StatusEffect.DESTINED);
@@ -210,11 +226,14 @@ public class StatusEffectProcessor {
         if (hasEffect(StatusEffect.LEVEL_UP)) {
             int layers = getLayers(StatusEffect.LEVEL_UP);
             processedEffects.add(new ProcessedEffect(StatusEffect.LEVEL_UP, layers));
+            CosmiconLogger.info("[STATUS] LEVEL_UP: upgrading %d selected dice", layers);
             context.applyLevelUp(layers);
         }
 
         if (hasEffect(StatusEffect.AWAKENING)) {
-            processedEffects.add(new ProcessedEffect(StatusEffect.AWAKENING, getLayers(StatusEffect.AWAKENING)));
+            int layers = getLayers(StatusEffect.AWAKENING);
+            processedEffects.add(new ProcessedEffect(StatusEffect.AWAKENING, layers));
+            CosmiconLogger.info("[STATUS] AWAKENING: doubling selected dice values");
             context.applyAwakening();
             effects.remove(StatusEffect.AWAKENING);
             durations.remove(StatusEffect.AWAKENING);
@@ -227,12 +246,14 @@ public class StatusEffectProcessor {
         if (hasEffect(StatusEffect.THORNS)) {
             int thornsDamage = getLayers(StatusEffect.THORNS);
             processedEffects.add(new ProcessedEffect(StatusEffect.THORNS, thornsDamage));
+            CosmiconLogger.info("[STATUS] THORNS: dealing %d damage to attacker", thornsDamage);
             damage += thornsDamage;
         }
 
         if (hasEffect(StatusEffect.INSTANT_DAMAGE)) {
             int instantDamage = getLayers(StatusEffect.INSTANT_DAMAGE);
             processedEffects.add(new ProcessedEffect(StatusEffect.INSTANT_DAMAGE, instantDamage));
+            CosmiconLogger.info("[STATUS] INSTANT_DAMAGE: %d self-damage", instantDamage);
             context.subtractInstantDamageFromHolder(instantDamage);
             effects.remove(StatusEffect.INSTANT_DAMAGE);
             durations.remove(StatusEffect.INSTANT_DAMAGE);
@@ -249,10 +270,9 @@ public class StatusEffectProcessor {
             int poisonDamage = poisonLayers;
             if (hasEffect(StatusEffect.VENOM)) {
                 poisonDamage *= 2;
-                CosmiconLogger.debug("POISON ticked: %d damage (doubled by VENOM)", poisonDamage);
-            } else {
-                CosmiconLogger.debug("POISON ticked: %d damage", poisonDamage);
             }
+            CosmiconLogger.info("[STATUS] POISON: %d damage%s", poisonDamage,
+                hasEffect(StatusEffect.VENOM) ? " (doubled by VENOM)" : "");
             processedEffects.add(new ProcessedEffect(StatusEffect.POISON, poisonLayers));
             damage += poisonDamage;
             setEffect(StatusEffect.POISON, poisonLayers - 1);
@@ -275,6 +295,7 @@ public class StatusEffectProcessor {
             }
         }
         for (StatusEffect effect : expired) {
+            CosmiconLogger.info("[STATUS] %s expired (duration ended)", effect.name());
             effects.remove(effect);
             durations.remove(effect);
         }
@@ -426,7 +447,7 @@ public class StatusEffectProcessor {
                 }
             }
             if (maxIndex >= 0) {
-                CosmiconLogger.debug("HACK: Transformed highest dice %d to 2", maxValue);
+                CosmiconLogger.info("[STATUS] HACK: transformed highest dice %d to 2", maxValue);
                 diceValues.set(maxIndex, 2);
                 return maxIndex;
             }
@@ -445,6 +466,7 @@ public class StatusEffectProcessor {
                 }
             }
             if (minIndex >= 0) {
+                CosmiconLogger.info("[STATUS] ARISE: transformed lowest dice %d to %d", minValue, minMaxFace);
                 diceValues.set(minIndex, minMaxFace);
                 return minIndex;
             }

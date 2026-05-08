@@ -21,7 +21,6 @@ public class DamageResolutionAnimator {
     private static final float IMPACT_FLASH_DURATION = 0.5f;
     private static final float POST_IMPACT_PAUSE_DURATION = 1.0f;
     private static final float COMBO_PAUSE_DURATION = 0.5f;
-    private static final float COMBO_ICON_FLY_DURATION = 0.6f;
     private static final float COMBO_WINNER_DRAWBACK_DURATION = 0.2f;
     private static final float COMBO_WINNER_IMPACT_DURATION = 0.25f;
     private static final float DEFENDER_PULSE_DURATION = 0.4f;
@@ -80,7 +79,6 @@ public class DamageResolutionAnimator {
     private int resultValue;
     private boolean perforation;
     private boolean combo;
-    private boolean comboWillHit;
     private boolean attackWins;
     private boolean isDraw;
     private int counterDamage;
@@ -178,8 +176,6 @@ public class DamageResolutionAnimator {
         } else {
             this.comboDamage = 0;
         }
-
-        this.comboWillHit = combo && comboDamage > 0;
 
         this.counterDamage = defenderEffects.calculateCounterDamage(attackValue, defenseValue);
 
@@ -940,7 +936,6 @@ public class DamageResolutionAnimator {
 
         perforation = false;
         combo = false;
-        comboWillHit = false;
         attackWins = false;
         isDraw = false;
         playerAttacker = false;

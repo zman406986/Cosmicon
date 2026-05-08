@@ -617,6 +617,13 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         secondaryDamageNumbers.add(new SecondaryDamageEntry(fn, isPlayer, impactEffect));
 
+        switch (damageType) {
+            case "COUNTER" -> labels.triggerEffectProcessAnimation(!isPlayer, StatusEffectProcessor.StatusEffect.COUNTER);
+            case "OVERLOAD" -> labels.triggerEffectProcessAnimation(isPlayer, StatusEffectProcessor.StatusEffect.OVERLOAD);
+            case "REFLECT" -> labels.triggerEffectProcessAnimation(!isPlayer, StatusEffectProcessor.StatusEffect.REFLECT);
+            default -> {}
+        }
+
         labels.updateLabelsFromState();
     }
 
@@ -677,11 +684,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         advanceLabelsAndUI(amount);
         advanceAiAndTutorial(amount);
 
-        Phase currentPhase = battleState.getCurrentPhase();
-        if (currentPhase == Phase.RESOLVING || currentPhase == Phase.RESOLVING_MODIFICATION
-                || currentPhase == Phase.WAITING_NEXT_TURN || damageAnimationPending) {
-            labels.updateLabelsFromState();
-        }
+        labels.updateLabelsFromState();
 
         diceRollManager.advance(amount);
 

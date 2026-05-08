@@ -1,7 +1,5 @@
 package data.scripts.cosmicon.battle;
 
-import data.scripts.cosmicon.util.CosmiconLogger;
-
 public class TurnState {
 
     public enum Phase {
@@ -89,24 +87,7 @@ public class TurnState {
     }
 
     public void setCurrentPhase(Phase phase) {
-        Phase oldPhase = this.currentPhase;
         this.currentPhase = phase;
-        CosmiconLogger.debug("Phase change: %s -> %s", oldPhase, phase);
-        if (isMajorPhaseTransition(phase)) {
-            CosmiconLogger.info("Phase: %s -> %s", oldPhase, phase);
-        }
-    }
-
-    private boolean isMajorPhaseTransition(Phase newPhase) {
-        return newPhase == Phase.SELECTING_ATTACK ||
-               newPhase == Phase.DICE_DISPLAY_ATTACK ||
-               newPhase == Phase.SELECTING_DEFENSE ||
-               newPhase == Phase.DICE_DISPLAY_DEFENSE ||
-               newPhase == Phase.RESOLVING_PRE_CLASH ||
-               newPhase == Phase.RESOLVING_MODIFICATION ||
-               newPhase == Phase.RESOLVING ||
-               newPhase == Phase.WAITING_NEXT_TURN ||
-               newPhase == Phase.ENDED;
     }
 
     public boolean isDefenderRolling() {
@@ -226,7 +207,6 @@ public class TurnState {
     }
 
     public void cleanup() {
-        CosmiconLogger.debug("TurnState cleanup");
         turnNumber = 1;
         playerIsAttacker = true;
         currentPhase = Phase.WAITING_NEXT_TURN;

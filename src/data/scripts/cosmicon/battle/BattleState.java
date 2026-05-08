@@ -192,7 +192,6 @@ public class BattleState {
 
         CosmiconLogger.debug("BattleState initialized - Player: %s (HP %d), Opponent: %s (HP %d)",
             playerCard.getName(), hpManager.getPlayerHp(), opponentCard.getName(), hpManager.getOpponentHp());
-        CosmiconLogger.debug("Initial turn: Turn 1, Player is attacker: %s", turnState.isPlayerAttacker());
     }
 
     private void resetBattleState(int playerMaxHp, int opponentMaxHp, boolean playerIsAttacker) {
@@ -287,6 +286,7 @@ public class BattleState {
 
     public void addPrismaticDiceToPool(PrismaticDiceInstance dice, boolean forPlayer) {
         prismaticState.addPrismaticDiceToPool(dice, forPlayer, diceState);
+        prismaticManager.consumePrismaticUse(dice.type, forPlayer);
     }
 
     public PrismaticDiceInstance getPrismaticDiceAt(int index, boolean forPlayer) {

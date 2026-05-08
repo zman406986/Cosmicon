@@ -621,6 +621,13 @@ public class BattleUILabels {
         return statusEffectAnimator;
     }
 
+    public void triggerEffectProcessAnimation(boolean isPlayer, StatusEffectProcessor.StatusEffect effect) {
+        Integer idx = getEffectDisplayIndex(isPlayer, effect);
+        if (idx == null) return;
+        float[] pos = getStatusEffectLabelPosition(isPlayer, idx);
+        statusEffectAnimator.triggerProcessAnimation(pos[0], pos[1], pos[2], pos[3]);
+    }
+
     public void updateLabelsFromState() {
         CharacterCard playerCard = battleState.getPlayerCard();
         CharacterCard opponentCard = battleState.getOpponentCard();

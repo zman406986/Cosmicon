@@ -88,7 +88,6 @@ public class PrismaticManager {
         
         for (PrismaticDiceInstance dice : selectedDice) {
             processor.applyEffect(dice, state, forPlayer);
-            consumePrismaticUse(dice.type, forPlayer);
         }
     }
     

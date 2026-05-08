@@ -92,6 +92,7 @@ public class AIPrismaticSelector {
             int hp = forPlayer ? state.getPlayerHp() : state.getOpponentHp();
             int maxHp = card != null ? card.getMaxHp() : hp;
             int missingHp = maxHp - hp;
+            if (missingHp <= 0) return -3f;
             return missingHp / 2f;
         }
 

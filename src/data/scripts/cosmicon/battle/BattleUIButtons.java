@@ -32,7 +32,6 @@ public class BattleUIButtons implements ActionListenerDelegate {
     private static final String ACTION_DEBUG_WIN = "debug_win";
     private static final float PASSIVE_BTN_WIDTH = 150f;
     private static final float PASSIVE_BTN_HEIGHT = 25f;
-    private static final float PRISMATIC_BTN_SIZE = 40f;
 
     private CustomPanelAPI panel;
     private DialogCallbacks callbacks;

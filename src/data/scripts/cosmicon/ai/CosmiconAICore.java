@@ -28,7 +28,7 @@ public final class CosmiconAICore {
             BattleState state,
             boolean forPlayer) {
 
-        CosmiconLogger.debug("AI Decision: character=%s, role=%s, dice=%s, need=%d, rerolls=%d",
+        CosmiconLogger.info("[AI] Decision request: character=%s, role=%s, dice=%s, need=%d, rerolls=%d",
             characterId, isAttacking ? "ATTACK" : "DEFEND", diceValues, requiredSelectCount, rerollsAvailable);
 
         CharacterAIProfile profile = getProfile(characterId);
@@ -44,7 +44,7 @@ public final class CosmiconAICore {
                 isAttacking, state, forPlayer);
         }
 
-        CosmiconLogger.debug("AI Decision result: %s selected indices %s (sum=%d), reroll indices %s",
+        CosmiconLogger.info("[AI] Decision result: %s selected indices %s (sum=%d), reroll indices %s",
             characterId, selection.selectedIndices, selection.sumValue, rerollIndices);
 
         return new AIDecision(selection, rerollIndices, profile);
@@ -67,7 +67,7 @@ public final class CosmiconAICore {
 
         Set<Integer> result = rerollAI.planReroll(
             diceValues, diceTypes, requiredCount, rerollsAvailable, isAttacking, state, forPlayer);
-        CosmiconLogger.debug("AI reroll recommendation (with prismatic): indices %s, role: %s",
+        CosmiconLogger.info("[AI] Reroll recommendation: indices %s, role: %s",
             result, isAttacking ? "attacker" : "defender");
         return result;
     }

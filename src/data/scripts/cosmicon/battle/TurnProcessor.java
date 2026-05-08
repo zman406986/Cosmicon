@@ -260,16 +260,12 @@ public class TurnProcessor {
     
     private void startAiSelection() {
         int aiRerolls = state.getRemainingRerolls(false);
-        CosmiconLogger.debug("[AI_REROLL_DIAG] startAiSelection: aiRerolls=%d, isPlayerAttacker=%s, phase=%s", 
-            aiRerolls, state.isPlayerAttacker(), state.getCurrentPhase());
-        CosmiconLogger.debug("[AI_REROLL_DIAG] opponentDiceValues=%s, opponentDiceTypes=%s", 
-            state.getOpponentDiceValues(), state.getOpponentDiceTypes());
         
         TutorialDiceRoller tutorialDiceRoller = state.getTutorialDiceRoller();
         
         PrismaticDecision prismDecision = null;
         if (tutorialDiceRoller != null) {
-            Object forced = tutorialDiceRoller.planOpponentPrismatic(state);
+            Object forced = tutorialDiceRoller.planOpponentPrismatic();
             if (forced instanceof PrismaticDecision pd) {
                 prismDecision = pd;
             }
@@ -947,10 +943,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         
         state.incrementTurnNumber();
         state.swapAttackerDefender();
-        
-        CosmiconLogger.debug("Turn transition: Turn %d, Player now %s", 
-            state.getTurnNumber(), state.isPlayerAttacker() ? "attacker" : "defender");
-        
+
         int playerHpLost = state.getPlayerCard().getMaxHp() - state.getPlayerHp();
         int opponentHpLost = state.getOpponentCard().getMaxHp() - state.getOpponentHp();
         boolean attackerIsPlayer = state.isPlayerAttacker();

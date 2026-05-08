@@ -28,7 +28,7 @@ public class AIEngine {
         int rerolls = state.getRemainingRerolls(forPlayer);
         String charId = card.getId();
         
-        CosmiconLogger.debug("AIEngine: executing selection for %s (%s), dice: %s", 
+        CosmiconLogger.info("[AI] Executing selection for %s (%s), dice: %s", 
             charId, isAttacking ? "attack" : "defense", diceValues);
         
         AIDecision decision = CosmiconAICore.makeDecision(
@@ -47,7 +47,7 @@ public class AIEngine {
             state.recordFaceSelection(diceValues.get(idx), forPlayer);
         }
         
-        CosmiconLogger.debug("AIEngine: %s selected indices %s, values: %s, sum: %d", 
+        CosmiconLogger.info("[AI] Selection applied: %s selected indices %s, values: %s, sum: %d", 
             charId, decision.getSelectedIndicesList(), decision.selection.selectedValues, decision.selection.sumValue);
     }
     
@@ -69,7 +69,7 @@ public class AIEngine {
         int rerolls = state.getRemainingRerolls(forPlayer);
         String charId = card.getId();
         
-        CosmiconLogger.debug("AIEngine: planning selection for %s (%s), dice: %s", 
+        CosmiconLogger.info("[AI] Planning selection for %s (%s), dice: %s", 
             charId, isAttacking ? "attack" : "defense", diceValues);
         
         AIDecision decision = CosmiconAICore.makeDecision(
@@ -89,14 +89,7 @@ public class AIEngine {
         int requiredCount = state.getRequiredDiceCount(forPlayer);
         int rerollsAvailable = state.getRemainingRerolls(forPlayer);
         
-        CosmiconLogger.debug("[AI_REROLL_DIAG] AIEngine.planReroll: forPlayer=%s, diceValues=%s, diceTypes=%s", 
-            forPlayer, diceValues, diceTypes);
-        CosmiconLogger.debug("[AI_REROLL_DIAG] requiredCount=%d, rerollsAvailable=%d, isAttacking=%s", 
-            requiredCount, rerollsAvailable, state.isAttacker(forPlayer));
-        
         if (diceValues == null || diceTypes == null || rerollsAvailable <= 0) {
-            CosmiconLogger.debug("[AI_REROLL_DIAG] planReroll returning empty: diceValues=%s, diceTypes=%s, rerollsAvailable=%d", 
-                diceValues, diceTypes, rerollsAvailable);
             return new ArrayList<>();
         }
         
@@ -104,7 +97,7 @@ public class AIEngine {
         CharacterCard card = state.getCard(forPlayer);
         String charId = card != null ? card.getId() : "unknown";
         
-        CosmiconLogger.debug("AIEngine: planning reroll for %s (%s), dice: %s, rerolls left: %d", 
+        CosmiconLogger.info("[AI] Planning reroll for %s (%s), dice: %s, rerolls left: %d", 
             charId, isAttacking ? "attack" : "defense", diceValues, rerollsAvailable);
         
         Set<Integer> rerollIndices = CosmiconAICore.recommendRerolls(
@@ -115,7 +108,14 @@ public class AIEngine {
     }
     
     public PrismaticDecision planPrismaticUse(BattleState state, boolean forPlayer) {
-        return AIPrismaticSelector.selectPrismaticDice(state, forPlayer);
+        PrismaticDecision decision = AIPrismaticSelector.selectPrismaticDice(state, forPlayer);
+        if (decision != null) {
+            CosmiconLogger.info("[AI] Prismatic decision: %s, score=%.1f, use=%s (for %s)",
+                decision.instance != null ? decision.instance.getType() : "none",
+                decision.score, decision.shouldUse,
+                forPlayer ? "player" : "opponent");
+        }
+        return decision;
     }
 
     private boolean shouldPreserveForcedSelections(BattleState state, boolean forPlayer) {

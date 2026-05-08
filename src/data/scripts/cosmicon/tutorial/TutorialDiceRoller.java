@@ -163,7 +163,7 @@ public class TutorialDiceRoller {
         return fallback;
     }
 
-    public Object planOpponentPrismatic(BattleState state) {
+    public Object planOpponentPrismatic() {
         return null;
     }
 
