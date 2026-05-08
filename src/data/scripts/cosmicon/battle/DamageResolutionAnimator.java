@@ -377,13 +377,14 @@ public class DamageResolutionAnimator {
     }
 
     private void triggerIconImpact() {
-        impactEffect.triggerFlash(centerX, centerY, 70f, new Color(255, 255, 200));
+        impactEffect.triggerFlash(centerX, centerY, 100f, new Color(255, 255, 200));
 
         if (!perforation) {
-            impactEffect.triggerParticles(centerX, centerY, 12, new Color(255, 200, 100));
+            impactEffect.triggerParticles(centerX, centerY, 18, new Color(255, 200, 100));
         }
 
         if (attackWins) {
+            atkFlyingIcon.setValue(resultValue);
             shatterEffect.trigger(centerX, centerY,
                 ColorHelper.DEFENSE_VALUE, iconSize);
             splitEffect.trigger(
@@ -408,8 +409,8 @@ public class DamageResolutionAnimator {
     }
 
     private void triggerCounterBurst() {
-        counterBurstEffect.triggerFlash(atkIconCenterX, atkIconCenterY, 40f, ColorHelper.COUNTER_DAMAGE);
-        counterBurstEffect.triggerParticles(atkIconCenterX, atkIconCenterY, 8, ColorHelper.COUNTER_DAMAGE);
+        counterBurstEffect.triggerFlash(atkIconCenterX, atkIconCenterY, 60f, ColorHelper.COUNTER_DAMAGE);
+        counterBurstEffect.triggerParticles(atkIconCenterX, atkIconCenterY, 12, ColorHelper.COUNTER_DAMAGE);
         counterBurstEffect.triggerShockwave(atkIconCenterX, atkIconCenterY);
     }
 
@@ -431,7 +432,6 @@ public class DamageResolutionAnimator {
 
     private void proceedFromImpactWait() {
         if (attackWins) {
-            atkFlyingIcon.setValue(resultValue);
             atkFlyingIcon.drawbackThenLaunchTo(defenderTargetX, defenderTargetY,
                 40f, WINNER_DRAWBACK_DURATION, WINNER_IMPACT_DURATION, true);
             phase = Phase.WINNER_DRAWBACK;
@@ -595,12 +595,13 @@ public class DamageResolutionAnimator {
         boolean defDone = defFlyingIcon == null || defFlyingIcon.isComplete();
 
         if (phaseElapsed >= ICON_CLASH_DURATION || (atkDone && defDone)) {
-            impactEffect.triggerFlash(centerX, centerY, 60f, new Color(255, 255, 200));
+            impactEffect.triggerFlash(centerX, centerY, 90f, new Color(255, 255, 200));
             if (!perforation) {
-                impactEffect.triggerParticles(centerX, centerY, 8, new Color(255, 200, 100));
+                impactEffect.triggerParticles(centerX, centerY, 14, new Color(255, 200, 100));
             }
 
             if (attackWins) {
+                atkFlyingIcon.setValue(comboDamage);
                 shatterEffect.trigger(centerX, centerY,
                     ColorHelper.DEFENSE_VALUE, iconSize);
                 splitEffect.trigger(
@@ -631,7 +632,6 @@ public class DamageResolutionAnimator {
     private void advanceComboSecondImpact() {
         if (phaseElapsed >= ICON_IMPACT_DURATION) {
             if (attackWins) {
-                atkFlyingIcon.setValue(comboDamage);
                 atkFlyingIcon.drawbackThenLaunchTo(defenderTargetX, defenderTargetY,
                     30f, COMBO_WINNER_DRAWBACK_DURATION, COMBO_WINNER_IMPACT_DURATION, true);
                 phase = Phase.COMBO_WINNER_DRAWBACK;

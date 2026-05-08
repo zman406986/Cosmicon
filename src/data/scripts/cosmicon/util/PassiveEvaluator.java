@@ -78,6 +78,7 @@ public class PassiveEvaluator {
         
         if (result.getHealAmount() > 0) {
             state.applyHealTo(forPlayer, result.getHealAmount());
+            state.notifyHeal(forPlayer, result.getHealAmount());
         }
         
         if (result.hasPerforation()) {

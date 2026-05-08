@@ -776,6 +776,10 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     public void notifySecondaryDamage(boolean isPlayer, int damage, String damageType) {
         eventBus.notifySecondaryDamage(isPlayer, damage, damageType);
     }
+
+    public void notifyHeal(boolean isPlayer, int heal) {
+        eventBus.notifyHeal(isPlayer, heal);
+    }
     
     public int getCumulativeAtkDef(boolean forPlayer) {
         return forPlayer ? playerCumulativeAtkDef : opponentCumulativeAtkDef;

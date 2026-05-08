@@ -113,6 +113,12 @@ public class FlyingNumber {
         this.cachedLabelWidth = -1f;
         updateLabelText();
     }
+
+    public void setDisplayText(String text) {
+        this.displayText = text;
+        this.cachedLabelWidth = -1f;
+        updateLabelText();
+    }
     
     public void setColor(Color color) {
         this.color = color;

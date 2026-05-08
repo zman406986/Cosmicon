@@ -346,6 +346,11 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                 startRollFromRestForSide(!battleState.isPlayerAttacker());
             }
 
+            CosmiconLogger.info("[PHASE] ROLLING: isDefRolling=%s playerAttacker=%s startSide=%s",
+                    battleState.isDefenderRolling(),
+                    battleState.isPlayerAttacker(),
+                    (!battleState.isDefenderRolling() ? battleState.isPlayerAttacker() : !battleState.isPlayerAttacker()) ? "player" : "opponent");
+
             if (damageAnimator != null) {
                 damageAnimator.cleanup();
                 damageAnimator = null;
@@ -363,6 +368,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         if (newPhase == Phase.DICE_DISPLAY_ATTACK || newPhase == Phase.DICE_DISPLAY_DEFENSE) {
             diceDisplayTimer = 0f;
             boolean isPlayerDice = (newPhase == Phase.DICE_DISPLAY_ATTACK) == battleState.isPlayerAttacker();
+            CosmiconLogger.info("[PHASE] %s: isPlayerDice=%s playerAttacker=%s",
+                    newPhase, isPlayerDice, battleState.isPlayerAttacker());
             float gridCenterX = isPlayerDice ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_X : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_X;
             float gridCenterY = isPlayerDice ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_Y : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_Y;
             diceRollManager.moveSelectedToRestGrid(isPlayerDice, gridCenterX, gridCenterY);
@@ -608,11 +615,11 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         fn.flyTo(cardCenterX, cardCenterY - 30f - yOffset, SECONDARY_DAMAGE_FLIGHT_DURATION);
 
         ImpactEffect impactEffect = new ImpactEffect();
-        impactEffect.triggerFlash(cardCenterX, cardCenterY, 30f, color);
-        impactEffect.triggerParticles(cardCenterX, cardCenterY, 5, color);
+        impactEffect.triggerFlash(cardCenterX, cardCenterY, 50f, color);
+        impactEffect.triggerParticles(cardCenterX, cardCenterY, 10, color);
         if ("COUNTER".equals(damageType)) {
             impactEffect.triggerShockwave(cardCenterX, cardCenterY);
-            impactEffect.triggerParticles(cardCenterX, cardCenterY, 6, color);
+            impactEffect.triggerParticles(cardCenterX, cardCenterY, 10, color);
         }
 
         secondaryDamageNumbers.add(new SecondaryDamageEntry(fn, isPlayer, impactEffect));
@@ -623,6 +630,45 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             case "REFLECT" -> labels.triggerEffectProcessAnimation(!isPlayer, StatusEffectProcessor.StatusEffect.REFLECT);
             default -> {}
         }
+
+        labels.updateLabelsFromState();
+    }
+
+    @Override
+    public void onHeal(boolean isPlayer, int heal) {
+        if (heal <= 0) return;
+
+        float cardCenterX;
+        float cardCenterY;
+        if (isPlayer) {
+            float cardX = BattleRenderingUtils.getPlayerCardX();
+            float cardY = BattleRenderingUtils.getPlayerCardY();
+            cardCenterX = cardX + BattleRenderingUtils.CARD_WIDTH / 2f;
+            cardCenterY = cardY + BattleRenderingUtils.CARD_HEIGHT / 2f;
+        } else {
+            cardCenterX = BattleRenderingUtils.MARGIN + BattleRenderingUtils.CARD_WIDTH / 2f;
+            cardCenterY = BattleRenderingUtils.MARGIN + BattleRenderingUtils.CARD_HEIGHT / 2f;
+        }
+
+        int sameTargetCount = 0;
+        for (SecondaryDamageEntry entry : secondaryDamageNumbers) {
+            if (entry.isPlayer == isPlayer) sameTargetCount++;
+        }
+        float yOffset = sameTargetCount * 20f;
+
+        Color healColor = ColorHelper.HEAL;
+        FlyingNumber fn = new FlyingNumber();
+        fn.setValue(heal);
+        fn.setDisplayText("+" + heal);
+        fn.setColor(healColor);
+        fn.startFrom(cardCenterX, cardCenterY - yOffset);
+        fn.flyTo(cardCenterX, cardCenterY - 30f - yOffset, SECONDARY_DAMAGE_FLIGHT_DURATION);
+
+        ImpactEffect impactEffect = new ImpactEffect();
+        impactEffect.triggerFlash(cardCenterX, cardCenterY, 50f, healColor);
+        impactEffect.triggerParticles(cardCenterX, cardCenterY, 10, healColor);
+
+        secondaryDamageNumbers.add(new SecondaryDamageEntry(fn, isPlayer, impactEffect));
 
         labels.updateLabelsFromState();
     }

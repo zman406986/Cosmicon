@@ -571,9 +571,13 @@ public class TurnProcessor {
         List<ModificationRecord> orderedModifications = state.getModificationOrder();
         orderedModifications.sort(Comparator.comparingInt(ModificationRecord::sequence));
 
+        CosmiconLogger.info("[MOD] applyPendingModifications: count=%d", orderedModifications.size());
+
         for (ModificationRecord record : orderedModifications) {
             StatusEffect effect = record.effect();
             boolean forPlayer = record.forPlayer();
+            CosmiconLogger.info("[MOD] processing seq=%d effect=%s forPlayer=%s",
+                    record.sequence(), effect, forPlayer ? "player" : "opponent");
             StatusEffectProcessor effects = state.getEffects(forPlayer);
 
             if (effect == StatusEffect.ARISE && effects.hasEffect(StatusEffect.ARISE)) {
@@ -608,11 +612,15 @@ public class TurnProcessor {
             }
 
             if (effect == StatusEffect.HACK && effects.hasEffect(StatusEffect.HACK)) {
-                CosmiconLogger.debug("HACK triggered for %s", forPlayer ? "player" : "opponent");
                 boolean targetIsPlayer = !forPlayer;
                 StatusEffectProcessor.BattleContext targetContext = createBattleContext(targetIsPlayer);
                 List<Integer> preHackValues = new ArrayList<>(state.getDiceValues(targetIsPlayer));
                 int oldTargetSum = state.calculateSelectedSum(targetIsPlayer);
+
+                CosmiconLogger.info("[HACK] TRIGGER: hacker=%s target=%s preValues=%s preSum=%d",
+                        forPlayer ? "player" : "opponent",
+                        targetIsPlayer ? "player" : "opponent",
+                        preHackValues, oldTargetSum);
 
                 effects.processedEffectsFromModification(StatusEffect.HACK);
                 int hackDiceIndex = targetContext.applyHackToSelectedDice();
@@ -628,6 +636,12 @@ public class TurnProcessor {
 
                 List<Integer> postHackValues = state.getDiceValues(targetIsPlayer);
                 notifyRestDiceValueChanges(preHackValues, postHackValues, targetIsPlayer);
+
+                CosmiconLogger.info("[HACK] RESULT: target=%s hackIdx=%d preSum=%d postSum=%d postValues=%s",
+                        targetIsPlayer ? "player" : "opponent",
+                        hackDiceIndex, oldTargetSum,
+                        state.calculateSelectedSum(targetIsPlayer),
+                        postHackValues);
 
                 int newTargetSum = state.calculateSelectedSum(targetIsPlayer);
                 if (newTargetSum != oldTargetSum) {
@@ -760,6 +774,7 @@ private void applyImpactDamage(DamageResolver.DamageResult result) {
 
                 if (result.siphonHeal() > 0) {
                     state.applyHealTo(true, result.siphonHeal());
+                    state.notifyHeal(true, result.siphonHeal());
                 }
                 state.getEffects(true).removeEffect(StatusEffect.SIPHON);
             } else {
@@ -767,6 +782,7 @@ private void applyImpactDamage(DamageResolver.DamageResult result) {
 
                 if (result.siphonHeal() > 0) {
                     state.applyHealTo(false, result.siphonHeal());
+                    state.notifyHeal(false, result.siphonHeal());
                 }
                 state.getEffects(false).removeEffect(StatusEffect.SIPHON);
             }

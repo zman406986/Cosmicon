@@ -20,6 +20,7 @@ public class BattleEventBus {
         void onValueChange(boolean isPlayer, String changeType, int oldValue, int newValue, int delta);
         void onTransitionToDefenderRoll();
         void onSecondaryDamage(boolean isPlayer, int damage, String damageType);
+        void onHeal(boolean isPlayer, int heal);
     }
 
     public record ValueChangeRecord(String changeType, int delta, String displayText, boolean isPlayer)
@@ -139,6 +140,12 @@ public class BattleEventBus {
     public void notifySecondaryDamage(boolean isPlayer, int damage, String damageType) {
         for (BattleEventListener l : listeners) {
             l.onSecondaryDamage(isPlayer, damage, damageType);
+        }
+    }
+
+    public void notifyHeal(boolean isPlayer, int heal) {
+        for (BattleEventListener l : listeners) {
+            l.onHeal(isPlayer, heal);
         }
     }
 

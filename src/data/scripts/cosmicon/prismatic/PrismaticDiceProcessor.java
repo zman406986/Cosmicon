@@ -37,6 +37,7 @@ public class PrismaticDiceProcessor {
         if (effect.isHealHp()) {
             int healAmount = dice.rolledFace;
             state.applyHealTo(forPlayer, healAmount);
+            state.notifyHeal(forPlayer, healAmount);
             CosmiconLogger.debug("Prismatic effect applied: Heal %d HP to %s", 
                 healAmount, forPlayer ? "Player" : "Opponent");
             return;

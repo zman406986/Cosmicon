@@ -202,6 +202,7 @@ public class WeatherController {
                         int v = values.get(i);
                         if (v >= 1 && v <= 12 && ++freq[v] >= 3) {
                             state.applyHealTo(isPlayer, 10);
+                            state.notifyHeal(isPlayer, 10);
                             break;
                         }
                     }
