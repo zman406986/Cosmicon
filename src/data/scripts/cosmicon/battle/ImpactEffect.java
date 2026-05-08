@@ -11,10 +11,10 @@ import data.scripts.cosmicon.util.GLStateUtil;
 import data.scripts.cosmicon.util.UnifiedCoord;
 
 public class ImpactEffect {
-    private static final float FLASH_DURATION = 0.15f;
-    private static final float PARTICLE_LIFETIME = 0.4f;
-    private static final float SHOCKWAVE_DURATION = 0.3f;
-    private static final float SHOCKWAVE_MAX_RADIUS = 80f;
+    private static final float FLASH_DURATION = 0.2f;
+    private static final float PARTICLE_LIFETIME = 0.55f;
+    private static final float SHOCKWAVE_DURATION = 0.4f;
+    private static final float SHOCKWAVE_MAX_RADIUS = 120f;
     
     private boolean flashActive;
     private float flashX;
@@ -54,11 +54,11 @@ public class ImpactEffect {
             p.y = y;
             
             float angle = (float)(Math.random() * 2 * Math.PI);
-            float speed = 50f + (float)(Math.random() * 100f);
+            float speed = 80f + (float)(Math.random() * 160f);
             p.vx = (float)Math.cos(angle) * speed;
             p.vy = (float)Math.sin(angle) * speed;
             
-            p.scale = 2f + (float)(Math.random() * 3f);
+            p.scale = 3f + (float)(Math.random() * 5f);
             p.alpha = 1f;
             p.lifetime = PARTICLE_LIFETIME;
             p.elapsed = 0f;
@@ -76,36 +76,36 @@ public class ImpactEffect {
     }
     
     public void triggerHeavyImpact(float x, float y, Color color) {
-        triggerFlash(x, y, 80f, new Color(255, 255, 220));
+        triggerFlash(x, y, 120f, new Color(255, 255, 220));
         triggerShockwave(x, y);
         
-        for (int i = 0; i < 16; i++) {
+        for (int i = 0; i < 24; i++) {
             Particle p = new Particle();
             p.x = x;
             p.y = y;
             float angle = (float)(Math.random() * 2 * Math.PI);
-            float speed = 80f + (float)(Math.random() * 180f);
+            float speed = 130f + (float)(Math.random() * 250f);
             p.vx = (float)Math.cos(angle) * speed;
             p.vy = (float)Math.sin(angle) * speed;
-            p.scale = 3f + (float)(Math.random() * 5f);
+            p.scale = 5f + (float)(Math.random() * 8f);
             p.alpha = 1f;
-            p.lifetime = 0.4f + (float)(Math.random() * 0.3f);
+            p.lifetime = 0.55f + (float)(Math.random() * 0.35f);
             p.elapsed = 0f;
             p.color = color;
             particles.add(p);
         }
         
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 10; i++) {
             Particle p = new Particle();
             p.x = x;
             p.y = y;
             float angle = (float)(Math.random() * 2 * Math.PI);
-            float speed = 30f + (float)(Math.random() * 60f);
+            float speed = 50f + (float)(Math.random() * 90f);
             p.vx = (float)Math.cos(angle) * speed;
             p.vy = (float)Math.sin(angle) * speed;
-            p.scale = 4f + (float)(Math.random() * 4f);
+            p.scale = 6f + (float)(Math.random() * 6f);
             p.alpha = 1f;
-            p.lifetime = 0.2f + (float)(Math.random() * 0.15f);
+            p.lifetime = 0.3f + (float)(Math.random() * 0.2f);
             p.elapsed = 0f;
             p.color = new Color(255, 255, 255);
             particles.add(p);
@@ -236,7 +236,7 @@ public class ImpactEffect {
         float glX = pos.glX();
         float glY = pos.glY();
         
-        GL11.glLineWidth(2f);
+        GL11.glLineWidth(3f);
         float[] c = ColorHelper.toGLComponents(new Color(255, 255, 255), alpha);
         GL11.glColor4f(c[0], c[1], c[2], c[3]);
         

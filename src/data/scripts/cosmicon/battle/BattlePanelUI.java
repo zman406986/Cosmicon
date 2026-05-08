@@ -1079,7 +1079,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void startRollFromRestForSide(boolean isPlayer) {
-        if (!diceRollManager.hasRestAnimators(isPlayer)) return;
+        if (!diceRollManager.hasRestAnimators(isPlayer)) {
+            CosmiconLogger.info("[DICE-REST] startRollFromRestForSide SKIPPED: no rest for isPlayer=%s", isPlayer);
+            return;
+        }
         List<DiceType> types = isPlayer ? battleState.getPlayerDiceTypes() : battleState.getOpponentDiceTypes();
         List<Integer> values = isPlayer ? battleState.getPlayerDiceValues() : battleState.getOpponentDiceValues();
         float centerX = isPlayer ? diceZoneCenterX : opponentDiceZoneCenterX;
