@@ -64,6 +64,8 @@ public class DiceRoller {
             CosmiconLogger.info("[DICE_ROLL] %s using UPGRADED pool: %s | base=%s",
                 card.getName(), types, card.getDicePool());
         }
+        types = new ArrayList<>(types);
+        types.removeIf(t -> t == DiceType.PRISMATIC);
         List<Integer> values = new ArrayList<>();
         List<Boolean> selected = new ArrayList<>();
         

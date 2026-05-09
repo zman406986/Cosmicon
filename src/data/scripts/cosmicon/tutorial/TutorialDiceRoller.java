@@ -372,6 +372,8 @@ public class TutorialDiceRoller {
             CharacterCard card = state.getCard(forPlayer);
             cardTypes = card.getDicePool();
         }
+        cardTypes = new ArrayList<>(cardTypes);
+        cardTypes.removeIf(t -> t == DiceType.PRISMATIC);
         List<DiceType> typeList = new ArrayList<>();
         List<Integer> valueList = new ArrayList<>();
         List<Boolean> selectedList = new ArrayList<>();

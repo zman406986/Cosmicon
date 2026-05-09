@@ -1234,7 +1234,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
             if (base != null && current != base) {
                 changedIndices.add(i);
             }
-            if (current != previous) {
+            if (current != previous && current != DiceType.PRISMATIC) {
                 newUpgradesThisTurn.add(i);
             }
         }
@@ -1256,7 +1256,9 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
             }
             if (mergedPool.size() < currentTypes.size()) {
                 for (int i = mergedPool.size(); i < currentTypes.size(); i++) {
-                    mergedPool.add(currentTypes.get(i));
+                    if (currentTypes.get(i) != DiceType.PRISMATIC) {
+                        mergedPool.add(currentTypes.get(i));
+                    }
                 }
             }
             CosmiconLogger.info("[UPGRADE_POOL] %s saving merged pool: %s",
