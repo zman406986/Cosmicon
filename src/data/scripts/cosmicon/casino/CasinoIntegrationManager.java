@@ -19,6 +19,7 @@ import data.scripts.cosmicon.state.CosmiconStats;
 import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.PrismaticDisplayHelper;
 
+@SuppressWarnings("unused")
 public class CasinoIntegrationManager {
 
     public static boolean isCasinoLoaded() {

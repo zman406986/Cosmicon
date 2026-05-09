@@ -34,7 +34,6 @@ public final class BattleRenderingUtils {
 
     private static final float INDICATOR_ARROW_WIDTH = 12f;
     private static final float INDICATOR_ARROW_HEIGHT = 16f;
-    private static final float INDICATOR_ARROW_OFFSET = 2f;
     private static final Color COLOR_ARROW_UP = new Color(100, 220, 100);
     private static final Color COLOR_ARROW_DOWN = new Color(220, 80, 80);
 
