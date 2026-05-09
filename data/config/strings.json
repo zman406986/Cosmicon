@@ -10,7 +10,8 @@
         "leave": "Leave",
         "back": "Back",
         "play": "Play",
-        "session_won": "You've won this round! Find another bar encounter to play again."
+        "session_won": "You've won this round! Find another bar encounter to play again.",
+        "trashcan_hunter_welcome": "The Cosmicon players eye you warily. Word of your Trashcan hunting has spread. 'Trashcan Hunter Level {0},' someone whispers."
     },
     "help": {
         "title": "=== How to Play Cosmicon ===",
@@ -20,6 +21,10 @@
         "rule_3": "- Attack Value = sum of selected dice + Strength stacks",
         "rule_4": "- Defense Value = sum of selected dice + Toughness stacks",
         "rule_5": "- Damage = Attack - Defense (when attack > defense)",
+        "casino_title": "=== Interstellar Casino Collab ===",
+        "casino_1": "If the Interstellar Casino mod is also loaded, access the Cosmicon Dice Lounge from the Casino main menu.",
+        "casino_2": "Features: Challenge the Casino Master (boss, 5k stargems) and Make a Scene (Trashcan challenge, 10k stargems).",
+        "casino_3": "Collab features unlock after completing the Cosmicon tutorial at bars.",
         "back": "Back"
     },
     "battle": {
@@ -466,7 +471,8 @@
         "accept": "Accept the challenge",
         "decline": "Politely decline",
         "declined": "You politely decline and return to your drink.",
-        "approach": "Approach the Cosmicon player"
+        "approach": "Approach the Cosmicon player",
+        "trashcan_hunter_prompt": "The Cosmicon regulars immediately recognize you. 'It's the Trashcan Hunter! Level {0}!' One of them eagerly offers you a seat at their table."
     },
     "victory": {
     },
@@ -535,5 +541,18 @@
         "take_credits": "Take credits instead",
         "character_unlocked": "Character unlocked!",
         "prismatic_unlocked": "Prismatic dice unlocked!"
+    },
+    "casino": {
+        "boss_victory": "The Casino Master tips their hat. 'Impressive. Choose your prize.'",
+        "boss_defeat": "The Casino Master chuckles. 'Better luck next month.'",
+        "boss_all_unlocked": "You've already unlocked everything! Here are 3x credits instead.",
+        "boss_reward_char": "Unlock character: {0}",
+        "boss_reward_prismatic": "Unlock prismatic dice: {0}",
+        "boss_reward_credits": "Take 3x Credits ({0} credits)",
+        "trashcan_won": "You... defeated Trashcan? The Casino Master stares in disbelief. 'That... that's not supposed to happen.'",
+        "challenge_result": "You dealt {0} damage. Your best record is {1}.",
+        "challenge_new_record": "New personal best! Trashcan Hunter Level {0}!",
+        "challenge_previous_record": "Your best record remains {0}.",
+        "back_lounge": "Back to Lounge"
     }
 }

@@ -7,6 +7,8 @@ import com.fs.starfarer.api.campaign.InteractionDialogAPI;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import com.fs.starfarer.api.ui.CustomPanelAPI;
 
+import data.scripts.cosmicon.state.CosmiconEventState;
+
 public class BattleDialogDelegate implements com.fs.starfarer.api.campaign.CustomVisualDialogDelegate {
     private static final String COMPLETION_STR = "BattleCompleted";
 
@@ -68,6 +70,11 @@ public class BattleDialogDelegate implements com.fs.starfarer.api.campaign.Custo
 
         String winner = battleController.getState().getWinner();
         boolean playerWon = "player".equals(winner);
+
+        if (CosmiconEventState.isCasinoBattleMode()) {
+            int damageDealt = battleController.getState().getOpponentTotalDamageTaken();
+            CosmiconEventState.setCasinoBattleResultDamage(damageDealt);
+        }
 
         battleController.cleanup();
 

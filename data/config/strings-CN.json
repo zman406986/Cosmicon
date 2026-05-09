@@ -10,7 +10,8 @@
         "leave": "离开",
         "back": "返回",
         "play": "对战",
-        "session_won": "你赢了这一轮！去其他酒吧寻找新的对手吧。"
+        "session_won": "你赢了这一轮！去其他酒吧寻找新的对手吧。",
+        "trashcan_hunter_welcome": "战力党玩家们警惕地看着你。你追猎垃圾桶的名声已经传开了。'垃圾桶猎人 等级{0}，'有人低语道。"
     },
     "help": {
         "title": "=== 游戏说明 ===",
@@ -20,6 +21,10 @@
         "rule_3": "- 攻击值 = 攻击方选定的骰子总和 + 特殊效果",
         "rule_4": "- 防御值 = 防御方选定的骰子总和 + 特殊效果",
         "rule_5": "- 当攻击>防御时，攻击值 - 防御值 = 防守方受的伤害。谁的生命先归零谁输",
+        "casino_title": "=== 星际赌场联动 ===",
+        "casino_1": "如果同时加载了星际赌场mod，可从赌场主菜单进入寰宇骰子酒廊。",
+        "casino_2": "功能：挑战赌场大师（boss战，5000星石）和闹事（垃圾桶挑战，10000星石）。",
+        "casino_3": "在酒吧完成寰宇骰子教程后解锁联动功能。",
         "back": "返回"
     },
     "battle": {
@@ -466,7 +471,8 @@
         "accept": "接受挑战",
         "decline": "婉言谢绝",
         "declined": "你婉言谢绝，继续喝你的酒。",
-        "approach": "走近战力党玩家"
+        "approach": "走近战力党玩家",
+        "trashcan_hunter_prompt": "战力党常客立刻认出了你。'是垃圾桶猎人！等级{0}！'有人热切地给你让了个座。"
     },
     "victory": {
     },
@@ -535,5 +541,18 @@
         "take_credits": "改为领取星币",
         "character_unlocked": "角色已解锁！",
         "prismatic_unlocked": "曜彩骰已解锁！"
+    },
+    "casino": {
+        "boss_victory": "赌场大师脱帽致意。'了不起。选你的奖品吧。'",
+        "boss_defeat": "赌场大师轻笑。'下个月好运。'",
+        "boss_all_unlocked": "你已经解锁了全部内容！替换为3倍星币。",
+        "boss_reward_char": "解锁角色：{0}",
+        "boss_reward_prismatic": "解锁曜彩骰：{0}",
+        "boss_reward_credits": "领取3倍星币（{0}星币）",
+        "trashcan_won": "你……打败了垃圾桶？赌场大师难以置信地盯着你。'这……这不可能。'",
+        "challenge_result": "你造成了{0}点伤害。你的最佳纪录是{1}。",
+        "challenge_new_record": "刷新了个人最佳纪录！垃圾桶猎人 等级{0}！",
+        "challenge_previous_record": "你的最佳纪录依然是{0}。",
+        "back_lounge": "返回酒廊"
     }
 }

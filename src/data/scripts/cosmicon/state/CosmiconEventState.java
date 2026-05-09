@@ -16,10 +16,21 @@ public class CosmiconEventState {
     private static final String KEY_SESSION_WON = "$cos_temp_session_won";
     private static final String KEY_OPPONENT_USES_TRUE = "$cos_temp_opponent_uses_true";
 
+    private static final String KEY_CASINO_BATTLE_MODE = "$cos_casino_battle_mode";
+    private static final String KEY_CASINO_BATTLE_IS_BOSS = "$cos_casino_battle_is_boss";
+    private static final String KEY_CASINO_BATTLE_OPPONENT = "$cos_casino_battle_opponent";
+    private static final String KEY_CASINO_BATTLE_BONUS_HP = "$cos_casino_battle_bonus_hp";
+    private static final String KEY_CASINO_BATTLE_USE_TRUE = "$cos_casino_battle_use_true";
+    private static final String KEY_CASINO_BATTLE_RESULT_DAMAGE = "$cos_casino_battle_result_damage";
+    private static final String KEY_TRASHCAN_HUNTER_LEVEL = "$cos_trashcan_hunter_level";
+
     private static final List<String> ALL_KEYS = List.of(
         KEY_OPPONENT_CHAR, KEY_PLAYER_CHAR, KEY_OPPONENT_PRISMATIC,
         KEY_IS_BAR_EVENT, KEY_IS_TUTORIAL, KEY_REPLAY_TUTORIAL,
-        KEY_OPPONENT_USES_TRUE, KEY_SESSION_WON
+        KEY_OPPONENT_USES_TRUE, KEY_SESSION_WON,
+        KEY_CASINO_BATTLE_MODE, KEY_CASINO_BATTLE_IS_BOSS,
+        KEY_CASINO_BATTLE_OPPONENT, KEY_CASINO_BATTLE_BONUS_HP,
+        KEY_CASINO_BATTLE_USE_TRUE, KEY_CASINO_BATTLE_RESULT_DAMAGE
     );
 
     private static MemoryAPI memory;
@@ -128,5 +139,85 @@ public class CosmiconEventState {
         MemoryAPI mem = getMemory();
         if (!mem.contains(KEY_OPPONENT_USES_TRUE)) return false;
         return mem.getBoolean(KEY_OPPONENT_USES_TRUE);
+    }
+
+    public static void setCasinoBattleMode(boolean enabled) {
+        getMemory().set(KEY_CASINO_BATTLE_MODE, enabled);
+    }
+
+    public static boolean isCasinoBattleMode() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_CASINO_BATTLE_MODE)) return false;
+        return mem.getBoolean(KEY_CASINO_BATTLE_MODE);
+    }
+
+    public static void setCasinoBattleIsBoss(boolean isBoss) {
+        getMemory().set(KEY_CASINO_BATTLE_IS_BOSS, isBoss);
+    }
+
+    public static boolean isCasinoBattleBoss() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_CASINO_BATTLE_IS_BOSS)) return false;
+        return mem.getBoolean(KEY_CASINO_BATTLE_IS_BOSS);
+    }
+
+    public static void setCasinoBattleOpponent(String charId) {
+        getMemory().set(KEY_CASINO_BATTLE_OPPONENT, charId);
+    }
+
+    public static String getCasinoBattleOpponent() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_CASINO_BATTLE_OPPONENT)) return null;
+        return mem.getString(KEY_CASINO_BATTLE_OPPONENT);
+    }
+
+    public static void setCasinoBattleBonusHp(int bonusHp) {
+        getMemory().set(KEY_CASINO_BATTLE_BONUS_HP, bonusHp);
+    }
+
+    public static int getCasinoBattleBonusHp() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_CASINO_BATTLE_BONUS_HP)) return 0;
+        return (int) mem.getFloat(KEY_CASINO_BATTLE_BONUS_HP);
+    }
+
+    public static void setCasinoBattleUseTrue(boolean useTrue) {
+        getMemory().set(KEY_CASINO_BATTLE_USE_TRUE, useTrue);
+    }
+
+    public static boolean getCasinoBattleUseTrue() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_CASINO_BATTLE_USE_TRUE)) return false;
+        return mem.getBoolean(KEY_CASINO_BATTLE_USE_TRUE);
+    }
+
+    public static void setCasinoBattleResultDamage(int damage) {
+        getMemory().set(KEY_CASINO_BATTLE_RESULT_DAMAGE, damage);
+    }
+
+    public static int getCasinoBattleResultDamage() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_CASINO_BATTLE_RESULT_DAMAGE)) return 0;
+        return (int) mem.getFloat(KEY_CASINO_BATTLE_RESULT_DAMAGE);
+    }
+
+    public static void setTrashcanHunterLevel(int level) {
+        getMemory().set(KEY_TRASHCAN_HUNTER_LEVEL, level);
+    }
+
+    public static int getTrashcanHunterLevel() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_TRASHCAN_HUNTER_LEVEL)) return 0;
+        return (int) mem.getFloat(KEY_TRASHCAN_HUNTER_LEVEL);
+    }
+
+    public static void clearCasinoBattleState() {
+        MemoryAPI mem = getMemory();
+        mem.unset(KEY_CASINO_BATTLE_MODE);
+        mem.unset(KEY_CASINO_BATTLE_IS_BOSS);
+        mem.unset(KEY_CASINO_BATTLE_OPPONENT);
+        mem.unset(KEY_CASINO_BATTLE_BONUS_HP);
+        mem.unset(KEY_CASINO_BATTLE_USE_TRUE);
+        mem.unset(KEY_CASINO_BATTLE_RESULT_DAMAGE);
     }
 }

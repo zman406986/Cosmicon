@@ -83,6 +83,7 @@ starsector reference api/
 plan/
 docs/
 .trae/
+.opencode/
 
 # Build outputs (keep CosmiconDice.jar)
 jars/classes/
@@ -96,5 +97,6 @@ graphics/cosmicon/d12_frames/
 # Graphify knowledge graph (auto-generated)
 graphify-out/
 
-# Opencode
-.opencode/
+# Readme
+README.md
+README_CN.md

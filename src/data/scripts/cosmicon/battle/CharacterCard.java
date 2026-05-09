@@ -110,6 +110,10 @@ public class CharacterCard {
         return withPrismaticDice(diceId, uses, useTruePrismatic);
     }
 
+    public CharacterCard withMaxHp(int newMaxHp) {
+        return new CharacterCard(id, name, newMaxHp, atkLevel, defLevel, defaultAtkLevel, defaultDefLevel, dicePool, passiveDescription, prismaticDiceIds, useTruePrismatic);
+    }
+
     public CharacterCard copy() {
         return new CharacterCard(id, name, maxHp, atkLevel, defLevel, defaultAtkLevel, defaultDefLevel, dicePool, passiveDescription, prismaticDiceIds, useTruePrismatic);
     }

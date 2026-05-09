@@ -106,6 +106,18 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
             throw new IllegalStateException("Failed to load character cards");
         }
 
+        if (CosmiconEventState.isCasinoBattleMode()) {
+            String casinoOppId = CosmiconEventState.getCasinoBattleOpponent();
+            if (casinoOppId != null) {
+                opponentCard = CharacterRegistry.getCharacterById(casinoOppId);
+                CosmiconEventState.setOpponentCharacter(casinoOppId);
+            }
+            int bonusHp = CosmiconEventState.getCasinoBattleBonusHp();
+            if (bonusHp > 0) {
+                opponentCard = opponentCard.withMaxHp(opponentCard.getMaxHp() + bonusHp);
+            }
+        }
+
         boolean isTutorial = TutorialController.shouldActivateTutorial();
         TutorialController.TutorialGame tutorialGameType = null;
         if (isTutorial) {
@@ -135,6 +147,10 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
 
             boolean opponentHasPrismatic = !opponentCard.getPrismaticDiceIds().isEmpty();
             boolean opponentUsesTrue = CosmiconEventState.getOpponentUsesTrue();
+
+            if (CosmiconEventState.isCasinoBattleMode() && CosmiconEventState.getCasinoBattleUseTrue()) {
+                opponentUsesTrue = true;
+            }
 
             if (opponentHasPrismatic && CosmiconEventState.hasOpponentPrismatic()) {
                 String oppPrismId = CosmiconEventState.getOpponentPrismatic();

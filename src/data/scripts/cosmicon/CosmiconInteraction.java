@@ -1,5 +1,6 @@
 package data.scripts.cosmicon;
 
+import java.util.List;
 import java.util.Map;
 
 import com.fs.starfarer.api.Global;
@@ -14,6 +15,7 @@ import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleDialogDelegate;
 import data.scripts.cosmicon.battle.BattleRenderingUtils;
 import data.scripts.cosmicon.battle.CoinFlipPanelUI;
+import data.scripts.cosmicon.casino.CasinoIntegrationManager;
 import data.scripts.cosmicon.setup.CharacterSetupDialogDelegate;
 import data.scripts.cosmicon.setup.CharacterSetupPanelUI;
 import data.scripts.cosmicon.state.CosmiconEventState;
@@ -35,6 +37,9 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     private String pendingRewardCharId;
     private String pendingRewardPrismaticId;
 
+    private int pendingCasinoRewardTier = 0;
+    private List<String> pendingCasinoRewardCandidates = null;
+
     private Runnable onLeaveAction = null;
 
     public void setOnLeaveAction(Runnable action) {
@@ -45,7 +50,8 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         MAIN_MENU,
         PLAY,
         HELP,
-        REWARD_SELECTION
+        REWARD_SELECTION,
+        CASINO_BOSS_REWARD
     }
 
     public static void startInteraction(InteractionDialogAPI dialog) {
@@ -82,6 +88,13 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         if (!CosmiconMusicPlugin.isMusicPlaying()) {
             CosmiconMusicPlugin.startMusic();
+        }
+
+        if (CasinoIntegrationManager.isCasinoLoaded()) {
+            int hunterLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
+            if (hunterLevel > 0) {
+                textPanel.addPara(Strings.format("menu.trashcan_hunter_welcome", hunterLevel), Color.CYAN);
+            }
         }
 
         textPanel.addPara(Strings.get("menu.welcome"), Color.CYAN);
@@ -153,6 +166,10 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
             case REWARD_SELECTION:
                 handleRewardSelection(data);
+                break;
+
+            case CASINO_BOSS_REWARD:
+                handleCasinoRewardSelection(data);
                 break;
 
             default:
@@ -250,11 +267,24 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         textPanel.addPara(Strings.get("help.rule_3"));
         textPanel.addPara(Strings.get("help.rule_4"));
         textPanel.addPara(Strings.get("help.rule_5"));
+
+        if (CasinoIntegrationManager.isCasinoLoaded()) {
+            textPanel.addPara(Strings.get("help.casino_title"), Color.CYAN);
+            textPanel.addPara(Strings.get("help.casino_1"));
+            textPanel.addPara(Strings.get("help.casino_2"));
+            textPanel.addPara(Strings.get("help.casino_3"));
+        }
+
         options.addOption(Strings.get("help.back"), "back");
         setState(State.HELP);
     }
 
     private void handleVictory() {
+        if (CosmiconEventState.isCasinoBattleMode()) {
+            handleCasinoVictory();
+            return;
+        }
+
         markSessionWonIfBarEvent();
 
         boolean isReplay = CosmiconEventState.isReplayTutorial();
@@ -287,6 +317,11 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     }
 
     private void handleDefeat() {
+        if (CosmiconEventState.isCasinoBattleMode()) {
+            handleCasinoDefeat();
+            return;
+        }
+
         boolean isReplay = CosmiconEventState.isReplayTutorial();
         if (!isReplay && !CosmiconStats.isInTutorialMode()) {
             CosmiconStats.incrementGamesPlayed();
@@ -420,6 +455,139 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         if (CosmiconEventState.isBarEvent()) {
             CosmiconEventState.setSessionWon(true);
         }
+    }
+
+    private void handleCasinoVictory() {
+        options.clearOptions();
+        int damageDealt = CosmiconEventState.getCasinoBattleResultDamage();
+
+        if (CosmiconEventState.isCasinoBattleBoss()) {
+            textPanel.addPara(Strings.get("casino.boss_victory"), Color.GREEN);
+
+            int tier = CasinoIntegrationManager.getBossRewardTier();
+
+            if (tier == 4) {
+                int credits = CasinoIntegrationManager.getCreditReward() * 3;
+                Global.getSector().getPlayerFleet().getCargo().getCredits().add(credits);
+                AddRemoveCommodity.addCreditsGainText(credits, textPanel);
+                textPanel.addPara(Strings.get("casino.boss_all_unlocked"), Color.GRAY);
+                options.addOption(Strings.get("casino.back_lounge"), "casino_back");
+                setState(State.CASINO_BOSS_REWARD);
+            } else {
+                pendingCasinoRewardTier = tier;
+                pendingCasinoRewardCandidates = CasinoIntegrationManager.getRewardCandidates(tier, 3);
+
+                for (int i = 0; i < pendingCasinoRewardCandidates.size(); i++) {
+                    String id = pendingCasinoRewardCandidates.get(i);
+                    String displayName = CasinoIntegrationManager.getRewardDisplayName(id, tier);
+                    if (tier == 1) {
+                        options.addOption(Strings.format("casino.boss_reward_char", displayName), "casino_reward_" + i);
+                    } else {
+                        options.addOption(Strings.format("casino.boss_reward_prismatic", displayName), "casino_reward_" + i);
+                    }
+                }
+
+                int credits = CasinoIntegrationManager.getCreditReward() * 3;
+                options.addOption(Strings.format("casino.boss_reward_credits", credits), "casino_reward_credits");
+                setState(State.CASINO_BOSS_REWARD);
+            }
+        } else {
+            int hunterLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
+            boolean isNewRecord = damageDealt > hunterLevel;
+            CasinoIntegrationManager.updateTrashcanHunterLevel(damageDealt);
+            int newLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
+
+            textPanel.addPara(Strings.get("casino.trashcan_won"), Color.GREEN);
+
+            int credits = CasinoIntegrationManager.getCreditReward() * 10;
+            Global.getSector().getPlayerFleet().getCargo().getCredits().add(credits);
+            AddRemoveCommodity.addCreditsGainText(credits, textPanel);
+
+            if (isNewRecord) {
+                textPanel.addPara(Strings.format("casino.challenge_new_record", newLevel), Color.CYAN);
+            } else {
+                textPanel.addPara(Strings.format("casino.challenge_previous_record", newLevel), Color.GRAY);
+            }
+
+            options.addOption(Strings.get("casino.back_lounge"), "casino_back");
+            setState(State.CASINO_BOSS_REWARD);
+        }
+    }
+
+    private void handleCasinoDefeat() {
+        options.clearOptions();
+        int damageDealt = CosmiconEventState.getCasinoBattleResultDamage();
+
+        if (CosmiconEventState.isCasinoBattleBoss()) {
+            textPanel.addPara(Strings.get("casino.boss_defeat"), Color.RED);
+            options.addOption(Strings.get("casino.back_lounge"), "casino_back");
+            setState(State.CASINO_BOSS_REWARD);
+        } else {
+            int hunterLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
+            boolean isNewRecord = damageDealt > hunterLevel;
+            CasinoIntegrationManager.updateTrashcanHunterLevel(damageDealt);
+            int newLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
+
+            textPanel.addPara(Strings.get("battle.you_lost"), Color.RED);
+
+            if (isNewRecord) {
+                textPanel.addPara(Strings.format("casino.challenge_new_record", newLevel), Color.CYAN);
+            } else {
+                textPanel.addPara(Strings.format("casino.challenge_result", damageDealt, newLevel), Color.GRAY);
+            }
+
+            options.addOption(Strings.get("casino.back_lounge"), "casino_back");
+            setState(State.CASINO_BOSS_REWARD);
+        }
+    }
+
+    private void handleCasinoRewardSelection(String data) {
+        switch (data) {
+            case "casino_reward_0" -> applyCasinoReward(0);
+            case "casino_reward_1" -> applyCasinoReward(1);
+            case "casino_reward_2" -> applyCasinoReward(2);
+            case "casino_reward_credits" -> {
+                int credits = CasinoIntegrationManager.getCreditReward() * 3;
+                Global.getSector().getPlayerFleet().getCargo().getCredits().add(credits);
+                AddRemoveCommodity.addCreditsGainText(credits, textPanel);
+                options.clearOptions();
+                options.addOption(Strings.get("casino.back_lounge"), "casino_back");
+            }
+            case "casino_back" -> {
+                if (onLeaveAction != null) {
+                    onLeaveAction.run();
+                }
+            }
+            default -> {
+                options.clearOptions();
+                options.addOption(Strings.get("casino.back_lounge"), "casino_back");
+            }
+        }
+    }
+
+    private void applyCasinoReward(int index) {
+        if (pendingCasinoRewardCandidates == null || index >= pendingCasinoRewardCandidates.size()) return;
+
+        String id = pendingCasinoRewardCandidates.get(index);
+        int tier = pendingCasinoRewardTier;
+
+        switch (tier) {
+            case 1 -> CasinoIntegrationManager.unlockCharacterReward(id);
+            case 2, 3 -> CasinoIntegrationManager.unlockPrismaticReward(id);
+        }
+
+        String displayName = CasinoIntegrationManager.getRewardDisplayName(id, tier);
+        if (tier == 1) {
+            textPanel.addPara(Strings.format("reward.character_unlocked"), Color.GREEN);
+        } else {
+            textPanel.addPara(Strings.format("reward.prismatic_unlocked"), Color.GREEN);
+        }
+
+        pendingCasinoRewardCandidates = null;
+        pendingCasinoRewardTier = 0;
+
+        options.clearOptions();
+        options.addOption(Strings.get("casino.back_lounge"), "casino_back");
     }
 
     private void finishReward() {

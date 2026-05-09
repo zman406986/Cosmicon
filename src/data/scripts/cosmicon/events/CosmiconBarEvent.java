@@ -13,6 +13,7 @@ import data.scripts.Strings;
 import data.scripts.cosmicon.CosmiconInteraction;
 import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.CharacterRegistry;
+import data.scripts.cosmicon.casino.CasinoIntegrationManager;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.state.CosmiconEventState;
@@ -44,6 +45,15 @@ public class CosmiconBarEvent extends BaseBarEvent {
 
         boolean isTutorial = CosmiconStats.isInTutorialMode();
         TextPanelAPI textPanel = dialog.getTextPanel();
+
+        if (CasinoIntegrationManager.isCasinoLoaded()) {
+            int hunterLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
+            if (hunterLevel > 0) {
+                textPanel.addPara(Strings.format("bar_event.trashcan_hunter_prompt", hunterLevel));
+                dialog.getOptionPanel().addOption(Strings.get("bar_event.approach"), this);
+                return;
+            }
+        }
 
         if (isTutorial) {
             textPanel.addPara(Strings.get("bar_event.tutorial_prompt"));
