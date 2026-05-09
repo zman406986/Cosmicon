@@ -76,35 +76,25 @@ public class WeatherController {
         
         switch (weather) {
             case ACID_RAIN -> {
-                int playerHpLost = state.getPlayerCard().getMaxHp() - state.getPlayerHp();
-                int opponentHpLost = state.getOpponentCard().getMaxHp() - state.getOpponentHp();
-                if (playerHpLost > opponentHpLost) {
+                int playerHp = state.getPlayerHp();
+                int opponentHp = state.getOpponentHp();
+                if (playerHp < opponentHp) {
                     state.getPlayerEffects().addEffect(StatusEffect.POISON, 1);
-                } else if (opponentHpLost > playerHpLost) {
+                } else if (opponentHp < playerHp) {
                     state.getOpponentEffects().addEffect(StatusEffect.POISON, 1);
                 } else {
-                    int higherHpSide = state.getPlayerHp() >= state.getOpponentHp() ? 0 : 1;
-                    if (higherHpSide == 0) {
-                        state.getPlayerEffects().addEffect(StatusEffect.POISON, 1);
-                    } else {
-                        state.getOpponentEffects().addEffect(StatusEffect.POISON, 1);
-                    }
+                    state.getPlayerEffects().addEffect(StatusEffect.POISON, 1);
                 }
             }
             case HIGH_TEMPERATURE -> {
-                int playerHpLost = state.getPlayerCard().getMaxHp() - state.getPlayerHp();
-                int opponentHpLost = state.getOpponentCard().getMaxHp() - state.getOpponentHp();
-                if (playerHpLost > opponentHpLost) {
+                int playerHp = state.getPlayerHp();
+                int opponentHp = state.getOpponentHp();
+                if (playerHp < opponentHp) {
                     state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, 2);
-                } else if (opponentHpLost > playerHpLost) {
+                } else if (opponentHp < playerHp) {
                     state.getOpponentEffects().addEffect(StatusEffect.STRENGTH, 2);
                 } else {
-                    int lowerHpSide = state.getPlayerHp() <= state.getOpponentHp() ? 0 : 1;
-                    if (lowerHpSide == 0) {
-                        state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, 2);
-                    } else {
-                        state.getOpponentEffects().addEffect(StatusEffect.STRENGTH, 2);
-                    }
+                    state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, 2);
                 }
             }
             default -> {}

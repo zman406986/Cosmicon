@@ -11,7 +11,7 @@
 
 # Jars - keep Casino.jar, ignore others in jars/
 jars/*.jar
-!jars/Casino.jar
+!jars/CosmiconDice.jar
 
 # Maven
 target/

@@ -72,6 +72,7 @@ public class CasinoIntegrationManager {
 
         CosmiconInteraction interaction = new CosmiconInteraction();
         interaction.setOnLeaveAction(onLeave);
+        dialog.setPlugin(interaction);
         interaction.init(dialog);
     }
 
@@ -86,6 +87,7 @@ public class CasinoIntegrationManager {
 
         CosmiconInteraction interaction = new CosmiconInteraction();
         interaction.setOnLeaveAction(onLeave);
+        dialog.setPlugin(interaction);
         interaction.init(dialog);
     }
 

@@ -820,10 +820,8 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     public void clearPendingDefLevelBoost(boolean forPlayer) {
         if (forPlayer) {
             playerPendingDefLevelBoost = 0;
-            playerOriginalDefLevel = 0;
         } else {
             opponentPendingDefLevelBoost = 0;
-            opponentOriginalDefLevel = 0;
         }
     }
 
