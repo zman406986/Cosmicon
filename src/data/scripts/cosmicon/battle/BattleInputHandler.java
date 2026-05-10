@@ -102,6 +102,12 @@ public class BattleInputHandler {
             int currentButton = Mouse.isButtonDown(0) ? 1 : 0;
 
             if (currentButton == 1 && lastMouseButtonState == 0) {
+                if (battlePanelUI != null && battlePanelUI.isGatekeeper999StartMessageActive()) {
+                    battlePanelUI.dismissGatekeeper999StartMessage();
+                    lastMouseButtonState = currentButton;
+                    return;
+                }
+
                 UnifiedCoord mousePos = UnifiedCoord.fromMouse();
 
                 if (!buttons.isPrismaticPopupActive()) {

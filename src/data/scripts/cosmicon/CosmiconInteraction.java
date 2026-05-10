@@ -154,6 +154,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 textPanel.addPara(Strings.format("casino.tournament_status_line",
                     position, tournamentWins, tournamentManager.getBracketData().playerLosses), Color.YELLOW);
                 textPanel.addPara(Strings.format("casino.tournament_next_opponent", opponentName));
+                options.addOption(Strings.get("casino.forfeit_tournament"), "forfeit_tournament");
             }
         }
         options.addOption(Strings.get("menu.help"), "help");
@@ -189,6 +190,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                     }
                     case "character_setup" -> showCharacterSetup();
                     case "view_tournament_standings" -> showTournamentStandingsPanel();
+                    case "forfeit_tournament" -> showForfeitTournamentConfirm();
                     case "help" -> showHelp();
                     case "leave" -> {
                         if (CosmiconEventState.isTournamentActive()) {
@@ -664,7 +666,21 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         CasinoIntegrationManager.updateTrashcanHunterLevel(damageDealt);
         int newLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
 
-        textPanel.addPara(Strings.get("casino.gatekeeper_defeat"), Color.RED);
+        boolean is999Battle = CosmiconEventState.isCasinoBattleMode()
+            && !CosmiconEventState.isCasinoBattleBoss()
+            && !CosmiconEventState.isTournamentActive()
+            && CosmiconEventState.getCasinoBattleBonusHp() == 974;
+        boolean dealt99Plus = damageDealt >= 99;
+
+        if (is999Battle && dealt99Plus) {
+            textPanel.addPara(Strings.get("casino.gatekeeper_moral_victory"), Color.GREEN);
+            if (!CasinoIntegrationManager.isTournamentUnlocked()) {
+                CasinoIntegrationManager.setTournamentUnlocked(true);
+                textPanel.addPara(Strings.get("casino.gatekeeper_unlock_tournament"), Color.CYAN);
+            }
+        } else {
+            textPanel.addPara(Strings.get("casino.gatekeeper_defeat"), Color.RED);
+        }
 
         if (newLevel > oldLevel) {
             textPanel.addPara(Strings.format("casino.gatekeeper_hunter_level_up", newLevel), Color.CYAN);
@@ -846,6 +862,14 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         dialog.showCustomVisualDialog(1000f, 700f, delegate);
     }
 
+    private void showForfeitTournamentConfirm() {
+        options.clearOptions();
+        textPanel.addPara(Strings.get("casino.forfeit_tournament_confirm"), Color.YELLOW);
+        options.addOption(Strings.get("casino.forfeit_tournament_yes"), "forfeit_tournament_confirm");
+        options.addOption(Strings.get("casino.forfeit_tournament_no"), "forfeit_tournament_cancel");
+        setState(State.TOURNAMENT_BRACKET);
+    }
+
     public void showTournamentBracketPanel() {
         showTournamentStandingsPanel();
     }
@@ -865,6 +889,20 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                     dialog.dismiss();
                 }
             }
+            case "forfeit_tournament_confirm" -> {
+                int baseCredits = CasinoIntegrationManager.getCreditReward() * 3;
+                int totalCredits = baseCredits * tournamentWins;
+                Global.getSector().getPlayerFleet().getCargo().getCredits().add(totalCredits);
+                AddRemoveCommodity.addCreditsGainText(totalCredits, textPanel);
+                if (tournamentWins > 0) {
+                    textPanel.addPara(Strings.format("casino.tournament_credits_earned", totalCredits, tournamentWins, baseCredits));
+                }
+                textPanel.addPara(Strings.get("casino.tournament_forfeited"), Color.RED);
+                tournamentPendingRewards = 1;
+                CosmiconEventState.setTournamentPendingRewards(tournamentPendingRewards);
+                showTournamentRewardOptions();
+            }
+            case "forfeit_tournament_cancel" -> showMenu();
         }
     }
 

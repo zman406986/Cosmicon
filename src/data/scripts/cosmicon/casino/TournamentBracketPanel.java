@@ -26,10 +26,10 @@ import data.scripts.cosmicon.util.UnifiedCoord;
 public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements ActionListenerDelegate {
 
     private static final float MATCH_W = 150f;
-    private static final float MATCH_H = 44f;
+    private static final float MATCH_H = 64f;
     private static final float WB_TOP_Y = 60f;
     private static final float STATUS_BAR_H = 30f;
-    private static final int MAX_NAME_LEN = 9;
+    private static final int MAX_NAME_LEN = 12;
 
     private static final Color COLOR_BG = new Color(20, 22, 35, 220);
     private static final Color COLOR_MATCH_BG = new Color(40, 45, 65, 200);
@@ -114,7 +114,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
         }
 
         float usableH = panelH - WB_TOP_Y - STATUS_BAR_H - 50f;
-        rowSpacing = Math.max(56f, usableH / 7f);
+        rowSpacing = Math.max(82f, usableH / 7f);
     }
 
     private float rowSpacingForLb() {

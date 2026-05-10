@@ -62,10 +62,6 @@ public class TournamentManager {
         for (int r = 0; r < LB_ROUNDS; r++) {
             lbMatchups[r] = new int[LB_MATCH_COUNTS[r] * 2];
             lbResults[r] = new int[LB_MATCH_COUNTS[r]];
-            for (int m = 0; m < LB_MATCH_COUNTS[r]; m++) {
-                lbMatchups[r][m] = -1;
-                lbResults[r][m] = -1;
-            }
         }
 
         gfSeries = new int[3];
@@ -103,15 +99,11 @@ public class TournamentManager {
             }
         }
 
-        lbMatchups[0][0] = 1;
-        lbMatchups[0][1] = 3;
-        lbMatchups[0][2] = 5;
-        lbMatchups[0][3] = 7;
-
-        for (int r = 1; r < LB_ROUNDS; r++) {
+        for (int r = 0; r < LB_ROUNDS; r++) {
             for (int m = 0; m < LB_MATCH_COUNTS[r]; m++) {
                 lbMatchups[r][m * 2] = -1;
                 lbMatchups[r][m * 2 + 1] = -1;
+                lbResults[r][m] = -1;
             }
         }
     }
@@ -159,7 +151,12 @@ public class TournamentManager {
         }
 
         for (int r = 0; r < LB_ROUNDS; r++) {
-            if (r == targetRound && targetBracket == BRACKET_LB) break;
+            if (r == targetRound && targetBracket == BRACKET_LB) {
+                currentBracket = BRACKET_LB;
+                currentRound = targetRound;
+                currentMatchIndex = nextMatch[2];
+                break;
+            }
             if (simulateLBRound(r)) return;
             checkAndAdvanceLBRound(r);
         }
@@ -221,7 +218,8 @@ public class TournamentManager {
             }
 
             int winner = simulateMatch(slot0, slot1);
-            advanceWinner(BRACKET_WB, round, m, winner);
+            int loser = (winner == slot0) ? slot1 : slot0;
+            advanceWinner(BRACKET_WB, round, m, winner, loser);
         }
         return false;
     }
@@ -243,7 +241,7 @@ public class TournamentManager {
             }
 
             int winner = simulateMatch(slot0, slot1);
-            advanceWinner(BRACKET_LB, round, m, winner);
+            advanceWinner(BRACKET_LB, round, m, winner, -1);
         }
         return false;
     }
@@ -297,7 +295,8 @@ public class TournamentManager {
                     int slot1 = wbMatchups[r][m * 2 + 1];
                     if (slot0 >= 0 && slot1 >= 0) {
                         int winner = simulateMatch(slot0, slot1);
-                        advanceWinner(BRACKET_WB, r, m, winner);
+                        int loser = (winner == slot0) ? slot1 : slot0;
+                        advanceWinner(BRACKET_WB, r, m, winner, loser);
                     }
                 }
             }
@@ -309,7 +308,7 @@ public class TournamentManager {
                     int slot1 = lbMatchups[r][m * 2 + 1];
                     if (slot0 >= 0 && slot1 >= 0) {
                         int winner = simulateMatch(slot0, slot1);
-                        advanceWinner(BRACKET_LB, r, m, winner);
+                        advanceWinner(BRACKET_LB, r, m, winner, -1);
                     }
                 }
             }
@@ -328,22 +327,21 @@ public class TournamentManager {
         if (currentBracket == BRACKET_WB) {
             if (playerWon) {
                 wbResults[currentRound][currentMatchIndex] = playerSlot;
-                advanceWinner(BRACKET_WB, currentRound, currentMatchIndex, playerSlot);
+                advanceWinner(BRACKET_WB, currentRound, currentMatchIndex, playerSlot, opponentSlot);
                 playerWins++;
             } else {
                 wbResults[currentRound][currentMatchIndex] = opponentSlot;
-                advanceWinner(BRACKET_WB, currentRound, currentMatchIndex, opponentSlot);
+                advanceWinner(BRACKET_WB, currentRound, currentMatchIndex, opponentSlot, playerSlot);
                 playerLosses++;
-                dropToLoserBracket(currentRound, currentMatchIndex, playerSlot);
             }
         } else if (currentBracket == BRACKET_LB) {
             if (playerWon) {
                 lbResults[currentRound][currentMatchIndex] = playerSlot;
-                advanceWinner(BRACKET_LB, currentRound, currentMatchIndex, playerSlot);
+                advanceWinner(BRACKET_LB, currentRound, currentMatchIndex, playerSlot, -1);
                 playerWins++;
             } else {
                 lbResults[currentRound][currentMatchIndex] = opponentSlot;
-                advanceWinner(BRACKET_LB, currentRound, currentMatchIndex, opponentSlot);
+                advanceWinner(BRACKET_LB, currentRound, currentMatchIndex, opponentSlot, -1);
                 playerEliminated = true;
             }
         }
@@ -377,13 +375,17 @@ public class TournamentManager {
         }
     }
 
-    private void advanceWinner(int bracket, int round, int matchIndex, int winnerSlot) {
+    private void advanceWinner(int bracket, int round, int matchIndex, int winnerSlot, int loserSlot) {
         if (bracket == BRACKET_WB) {
             wbResults[round][matchIndex] = winnerSlot;
             if (round < WB_ROUNDS - 1) {
                 int nextMatch = matchIndex / 2;
                 int nextSlotPos = (matchIndex % 2 == 0) ? nextMatch * 2 : nextMatch * 2 + 1;
                 wbMatchups[round + 1][nextSlotPos] = winnerSlot;
+            }
+
+            if (loserSlot >= 0) {
+                dropLoserToBracket(round, matchIndex, loserSlot);
             }
 
             boolean allDone = true;
@@ -428,15 +430,12 @@ public class TournamentManager {
         }
     }
 
-    private void dropToLoserBracket(int wbRound, int wbMatchIndex, int loserSlot) {
-        playerInLoserBracket = true;
+    private void dropLoserToBracket(int wbRound, int wbMatchIndex, int loserSlot) {
+        if (loserSlot == PLAYER_SLOT) {
+            playerInLoserBracket = true;
+        }
         switch (wbRound) {
-            case 0 -> {
-                int lbSlot = (wbMatchIndex % 2 == 0)
-                    ? wbMatchIndex * 2 + 1
-                    : (wbMatchIndex - 1) * 2 + 3;
-                lbMatchups[0][lbSlot] = loserSlot;
-            }
+            case 0 -> lbMatchups[0][wbMatchIndex] = loserSlot;
             case 1 -> lbMatchups[1][wbMatchIndex * 2 + 1] = loserSlot;
             case 2 -> lbMatchups[3][1] = loserSlot;
         }

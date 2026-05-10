@@ -65,11 +65,19 @@ public class CosmiconLoungeProvider implements LoungeProvider {
         boolean tutorialDone = CasinoIntegrationManager.isTutorialComplete();
 
         boolean canAffordGatekeeper = CasinoAPI.canAfford(GATEKEEPER_COST);
-        options.add(new MenuOption("lounge_gatekeeper", getString("gatekeeper"),
-            tutorialDone && canAffordGatekeeper,
-            tutorialDone ? (canAffordGatekeeper ? null : getString("gatekeeper_insufficient")) : getString("tutorial_required")));
-
         boolean tournamentActive = CasinoIntegrationManager.isTournamentActive();
+        String gatekeeperTooltip = null;
+        if (tournamentActive) {
+            gatekeeperTooltip = getString("gatekeeper_tournament_active");
+        } else if (!tutorialDone) {
+            gatekeeperTooltip = getString("tutorial_required");
+        } else if (!canAffordGatekeeper) {
+            gatekeeperTooltip = getString("gatekeeper_insufficient");
+        }
+        options.add(new MenuOption("lounge_gatekeeper", getString("gatekeeper"),
+            tutorialDone && canAffordGatekeeper && !tournamentActive,
+            gatekeeperTooltip));
+
         if (tournamentActive) {
             options.add(new MenuOption("lounge_continue_tournament", getString("continue_tournament"),
                 true, null));

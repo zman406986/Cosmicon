@@ -553,6 +553,8 @@
         "gatekeeper_reward_lose": "你获得了2倍星币奖励（{0}星币）。",
         "gatekeeper_unlock_tournament": "锦标赛已解锁！你现在可以举办锦标赛了。",
         "gatekeeper_999_exit_hint": "你已造成足够伤害，可以退出算赢！现在退出即为胜利，或继续对战以刷新记录。",
+        "gatekeeper_999_start_hint": "你只需要造成99点伤害即可获胜。即使战败，造成99+伤害也算胜利。点击任意处开始。",
+        "gatekeeper_moral_victory": "你造成的伤害足以证明你的实力！老赌神认可了你。",
         "gatekeeper_hunter_level_up": "赌神等级提升至{0}！",
 
         "tournament_title": "举办锦标赛",
@@ -591,7 +593,12 @@
         "boss_reward_prismatic": "解锁曜彩骰：{0}",
         "boss_reward_prismatic_true": "解锁真·{0}",
         "boss_reward_credits": "领取星币（{0}星币）",
-        "back_lounge": "返回酒馆"
+        "back_lounge": "返回酒馆",
+        "forfeit_tournament": "放弃锦标赛",
+        "forfeit_tournament_confirm": "确定要放弃锦标赛吗？你将失去所有进度并结算胜场奖励。",
+        "forfeit_tournament_yes": "是的，放弃锦标赛",
+        "forfeit_tournament_no": "不，继续战斗",
+        "tournament_forfeited": "你已放弃锦标赛。下次好运！"
     },
     "lounge": {
         "btn_enter": "去酒馆上骰",
@@ -600,6 +607,7 @@
         "tutorial_required": "门卫拦住了你。'抱歉，你得先在酒吧学会基本功。完成教学馆后再来吧。'",
         "gatekeeper": "挑战老赌神（5,000星石）",
         "gatekeeper_insufficient": "你的星石不够支付入场费。需要5,000星石。",
+        "gatekeeper_tournament_active": "锦标赛进行中，无法挑战老赌神。",
         "tournament": "举办锦标赛（15,000星石）",
         "continue_tournament": "继续锦标赛",
         "tournament_locked": "击败老赌神以解锁锦标赛。",

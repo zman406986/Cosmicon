@@ -553,6 +553,8 @@
         "gatekeeper_reward_lose": "You earned 2x credits ({0} credits).",
         "gatekeeper_unlock_tournament": "Tournament unlocked! You can now Host a Tournament.",
         "gatekeeper_999_exit_hint": "You've dealt enough damage to claim victory! Exit now to win, or keep playing to set a higher record.",
+        "gatekeeper_999_start_hint": "You only need to deal 99 damage to unlock tournament. Even if you lose, dealing 99+ damage counts as a victory.",
+        "gatekeeper_moral_victory": "You dealt enough damage to prove your worth! The Gatekeeper acknowledges your skill.",
         "gatekeeper_hunter_level_up": "Master Dicer Level increased to {0}!",
 
         "tournament_title": "Host a Tournament",
@@ -591,7 +593,12 @@
         "boss_reward_prismatic": "Unlock prismatic dice: {0}",
         "boss_reward_prismatic_true": "Unlock True {0}",
         "boss_reward_credits": "Take Credits ({0} credits)",
-        "back_lounge": "Back to Lounge"
+        "back_lounge": "Back to Lounge",
+        "forfeit_tournament": "Forfeit Tournament",
+        "forfeit_tournament_confirm": "Are you sure you want to forfeit the tournament? You will lose all progress and receive rewards for current number of wins.",
+        "forfeit_tournament_yes": "Yes, forfeit the tournament",
+        "forfeit_tournament_no": "No, continue fighting",
+        "tournament_forfeited": "You have forfeited the tournament. Better luck next time!"
     },
     "lounge": {
         "btn_enter": "Cosmicon Dice Lounge",
@@ -600,6 +607,7 @@
         "tutorial_required": "The bouncer stops you. 'Sorry, you need to learn the basics at the bar first. Come back after you've completed your Cosmicon training.'",
         "gatekeeper": "Challenge the Gatekeeper (5,000 Stargems)",
         "gatekeeper_insufficient": "You don't have enough Stargems for the entry fee. You need 5,000 Stargems.",
+        "gatekeeper_tournament_active": "Cannot challenge the Gatekeeper while a tournament is in progress.",
         "tournament": "Host a Tournament (15,000 Stargems)",
         "continue_tournament": "Continue Tournament",
         "tournament_locked": "Defeat the Gatekeeper to unlock the tournament.",
