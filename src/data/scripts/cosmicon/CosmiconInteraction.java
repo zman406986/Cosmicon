@@ -660,6 +660,9 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         textPanel.addPara(Strings.format("casino.gatekeeper_reward_win", credits));
 
         CasinoIntegrationManager.setTournamentUnlocked(true);
+        if (damageDealt >= 99) {
+            CosmiconStats.setGatekeeper999Unlocked(true);
+        }
         textPanel.addPara(Strings.get("casino.gatekeeper_unlock_tournament"), Color.CYAN);
 
         options.addOption(Strings.get("casino.back_lounge"), "casino_back");
@@ -675,6 +678,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         if (dealt99Plus) {
             textPanel.addPara(Strings.get("casino.gatekeeper_moral_victory"), Color.GREEN);
+            CosmiconStats.setGatekeeper999Unlocked(true);
             if (!CasinoIntegrationManager.isTournamentUnlocked()) {
                 CasinoIntegrationManager.setTournamentUnlocked(true);
                 textPanel.addPara(Strings.get("casino.gatekeeper_unlock_tournament"), Color.CYAN);
