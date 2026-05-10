@@ -14,11 +14,14 @@ import data.scripts.CosmiconMusicPlugin;
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleDialogDelegate;
 import data.scripts.cosmicon.battle.BattleRenderingUtils;
+import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.CoinFlipPanelUI;
 import data.scripts.cosmicon.casino.CasinoIntegrationManager;
 import data.scripts.cosmicon.casino.TournamentBracketPanel;
 import data.scripts.cosmicon.casino.TournamentManager;
 import data.scripts.cosmicon.battle.CharacterRegistry;
+import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
+import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.setup.CharacterSetupDialogDelegate;
 import data.scripts.cosmicon.setup.CharacterSetupPanelUI;
 import data.scripts.cosmicon.state.CosmiconEventState;
@@ -136,10 +139,10 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         }
 
         options.addOption(Strings.get("menu.character_setup"), "character_setup");
-        if (CosmiconStats.getGamesPlayed() >= 1) {
+        if (CosmiconStats.getGamesPlayed() >= 1 && !CosmiconStats.isInTutorialMode()) {
             options.addOption("Replay Tutorial Game 1", "replay_tutorial_1");
         }
-        if (CosmiconStats.getGamesPlayed() >= 2) {
+        if (CosmiconStats.getGamesPlayed() >= 2 && !CosmiconStats.isInTutorialMode()) {
             options.addOption("Replay Tutorial Game 2", "replay_tutorial_2");
         }
         if (CosmiconEventState.isTournamentActive()) {
@@ -668,13 +671,9 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         CasinoIntegrationManager.updateTrashcanHunterLevel(damageDealt);
         int newLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
 
-        boolean is999Battle = CosmiconEventState.isCasinoBattleMode()
-            && !CosmiconEventState.isCasinoBattleBoss()
-            && !CosmiconEventState.isTournamentActive()
-            && CosmiconEventState.getCasinoBattleBonusHp() == 974;
         boolean dealt99Plus = damageDealt >= 99;
 
-        if (is999Battle && dealt99Plus) {
+        if (dealt99Plus) {
             textPanel.addPara(Strings.get("casino.gatekeeper_moral_victory"), Color.GREEN);
             if (!CasinoIntegrationManager.isTournamentUnlocked()) {
                 CasinoIntegrationManager.setTournamentUnlocked(true);
@@ -1041,6 +1040,15 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             String nextOppId = tournamentManager.getNextOpponentId();
             if (nextOppId != null) {
                 CosmiconEventState.setCasinoBattleOpponent(nextOppId);
+
+                CharacterCard oppCard = CharacterRegistry.getCharacterById(nextOppId);
+                if (oppCard != null && !oppCard.getPrismaticDiceIds().isEmpty()) {
+                    String defaultPrismatic = oppCard.getPrismaticDiceIds().keySet().iterator().next();
+                    CosmiconEventState.setOpponentPrismatic(defaultPrismatic);
+                    PrismaticDiceType diceType = PrismaticDiceRegistry.get(defaultPrismatic);
+                    boolean useTrue = diceType != null && diceType.hasTrueVersion();
+                    CosmiconEventState.setCasinoBattleUseTrue(useTrue);
+                }
             }
         }
         CosmiconEventState.setCasinoBattleBonusHp(0);

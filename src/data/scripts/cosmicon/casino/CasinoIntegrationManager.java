@@ -15,6 +15,7 @@ import data.scripts.cosmicon.battle.CharacterRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.state.CosmiconEventState;
+import data.scripts.cosmicon.state.CosmiconPlayerState;
 import data.scripts.cosmicon.state.CosmiconStats;
 import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.PrismaticDisplayHelper;
@@ -105,8 +106,8 @@ public class CasinoIntegrationManager {
         CosmiconEventState.setReplayTutorialGame(-1);
         CosmiconEventState.setIsTutorialMode(false);
 
-        String playerCharId = CosmiconEventState.getOpponentCharacter();
-        if (playerCharId == null) {
+        String playerCharId = CosmiconPlayerState.loadCharacter();
+        if (playerCharId == null || playerCharId.isEmpty()) {
             playerCharId = CharacterIds.TRASHCAN;
         }
 

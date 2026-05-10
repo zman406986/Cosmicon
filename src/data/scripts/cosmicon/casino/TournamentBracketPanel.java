@@ -99,7 +99,6 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
     private void computeLayout() {
         int numCols = 4;
         float minVisualGap = 80f;
-
         float minColSpacing = MATCH_W + minVisualGap;
         float minContentSpan = (numCols - 1f) * minColSpacing + MATCH_W;
 
@@ -112,12 +111,14 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
             baseX = (panelW - minContentSpan) / 2f;
         }
 
-        float usableH = panelH - WB_TOP_Y - STATUS_BAR_H - 20f;
-        rowSpacing = Math.max(96f, usableH / 7f);
+        float gap = 20f;
+        float fixedOverhead = WB_TOP_Y + MATCH_H + gap + getLbRowSpacing() + MATCH_H + STATUS_BAR_H + 20f;
+        float available = panelH - fixedOverhead;
+        rowSpacing = Math.max(64f, available / 3f);
     }
 
-    private float rowSpacingForLb() {
-        return rowSpacing * 0.55f;
+    private float getLbRowSpacing() {
+        return MATCH_H + 20f;
     }
 
     private void createTitleLabel() {
@@ -136,7 +137,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
         wbHeaderFinal = createHeaderLabel("WB Final", baseX + 2f * colSpacing, 38f);
         gfHeader = createHeaderLabel("Grand Final", baseX + 3f * colSpacing, 38f);
 
-        float lbHeaderY = getLbBaseY() + 3f * rowSpacing + rowSpacing + 16f;
+        float lbHeaderY = getLbBaseY() - 18f;
         lbHeaderR1 = createHeaderLabel("LB R1", baseX, lbHeaderY);
         lbHeaderR2 = createHeaderLabel("LB R2", baseX + colSpacing, lbHeaderY);
         lbHeaderR3 = createHeaderLabel("LB R3", baseX + 2f * colSpacing, lbHeaderY);
@@ -197,20 +198,25 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
     }
 
     private float getLbBaseY() {
-        return 20f + STATUS_BAR_H;
+        return WB_TOP_Y + 3f * rowSpacing + MATCH_H + 20f;
     }
 
-    private float getWbMatchUiY(int matchIndex) {
-        return WB_TOP_Y + matchIndex * rowSpacing;
+    private float getWbMatchUiY(int round, int matchIndex) {
+        float offset = (float) ((1 << round) - 1) * rowSpacing / 2f;
+        return WB_TOP_Y + offset + matchIndex * rowSpacing * (1 << round);
     }
 
     private float getLbMatchUiY(int round, int matchIndex) {
-        float baseY = getLbBaseY();
-        return baseY + round * rowSpacing + matchIndex * rowSpacingForLb();
+        float lbBase = getLbBaseY();
+        float lbSp = getLbRowSpacing();
+        if (round <= 1) {
+            return lbBase + matchIndex * lbSp;
+        }
+        return lbBase + lbSp * 0.5f;
     }
 
     private float getGfUiY() {
-        return getWbMatchUiY(0) + 10f;
+        return getWbMatchUiY(2, 0);
     }
 
     private void updateAllLabels() {
@@ -228,7 +234,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
             for (int m = 0; m < wbCounts[r]; m++) {
                 if (labelIdx >= matchLabels.length) break;
                 float lx = baseX + r * colSpacing;
-                float ly = getWbMatchUiY(m);
+                float ly = getWbMatchUiY(r, m);
                 int slot0 = getSlot(data.wbMatchups, r, m, 0);
                 int slot1 = getSlot(data.wbMatchups, r, m, 1);
                 int winner = getResult(data.wbResults, r, m);
@@ -454,7 +460,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
         for (int r = 0; r < 3; r++) {
             for (int m = 0; m < wbCounts[r]; m++) {
                 float uiX = baseX + r * colSpacing;
-                float uiY = getWbMatchUiY(m);
+                float uiY = getWbMatchUiY(r, m);
                 UnifiedCoord coord = new UnifiedCoord(uiX, uiY);
                 boolean involvesPlayer = isPlayerInMatch(data.wbMatchups, r, m);
                 boolean isCurrent = isCurrentMatch(TournamentManager.BRACKET_WB, r, m);
@@ -512,7 +518,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
     }
 
     private void renderLbDivider(float alpha) {
-        float divY = WB_TOP_Y + 3f * rowSpacing + MATCH_H + 10f;
+        float divY = getLbBaseY() - 10f;
         UnifiedCoord coord = new UnifiedCoord(10f, divY);
         GLStateUtil.resetBlendState();
         Misc.renderQuad(coord.glX(), coord.glY(), panelW - 20f, 2f, COLOR_LB_DIVIDER, alpha);
@@ -532,10 +538,10 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
                 GL11.glLineWidth(1.5f);
                 GL11.glColor4f(0.5f, 0.55f, 0.7f, 0.6f * alpha);
 
-                float y0Ui = getWbMatchUiY(m) + MATCH_H / 2f;
-                float y1Ui = getWbMatchUiY(m + 1) + MATCH_H / 2f;
+                float y0Ui = getWbMatchUiY(r, m) + MATCH_H / 2f;
+                float y1Ui = getWbMatchUiY(r, m + 1) + MATCH_H / 2f;
                 float yMidUi = (y0Ui + y1Ui) / 2f;
-                float targetYUi = getWbMatchUiY(m / 2) + MATCH_H / 2f;
+                float targetYUi = getWbMatchUiY(r + 1, m / 2) + MATCH_H / 2f;
 
                 UnifiedCoord y0Coord = new UnifiedCoord(0f, y0Ui);
                 UnifiedCoord y1Coord = new UnifiedCoord(0f, y1Ui);
@@ -550,7 +556,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
         }
 
         float wbFinalXUi = baseX + 2f * colSpacing + MATCH_W;
-        float wbFinalYUi = getWbMatchUiY(0) + MATCH_H / 2f;
+        float wbFinalYUi = getWbMatchUiY(2, 0) + MATCH_H / 2f;
         float gfXUi = baseX + 3f * colSpacing;
         float gfYUi = getGfUiY() + MATCH_H / 2f;
         UnifiedCoord wbFinalCoord = new UnifiedCoord(wbFinalXUi, wbFinalYUi);
@@ -561,30 +567,51 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
         GL11.glColor4f(0.5f, 0.55f, 0.7f, 0.6f * alpha);
         drawLine(wbFinalCoord.glX(), wbFinalCoord.glY(), gfCoord.glX(), gfCoord.glY());
 
-        int[] lbCounts = {2, 2, 1, 1};
-        for (int r = 0; r < 3; r++) {
-            float x1Ui = baseX + r * colSpacing + MATCH_W;
-            float x2Ui = baseX + (r + 1) * colSpacing;
-            float midXUi = (x1Ui + x2Ui) / 2f;
-            UnifiedCoord x1Coord = new UnifiedCoord(x1Ui, 0f);
-            UnifiedCoord x2Coord = new UnifiedCoord(x2Ui, 0f);
-            UnifiedCoord midXCoord = new UnifiedCoord(midXUi, 0f);
-            for (int m = 0; m < lbCounts[r]; m++) {
-                GLStateUtil.resetBlendState();
-                GL11.glLineWidth(1.5f);
-                GL11.glColor4f(0.5f, 0.55f, 0.7f, 0.6f * alpha);
-
-                float ySrcUi = getLbMatchUiY(r, m) + MATCH_H / 2f;
-                float yDstUi = getLbMatchUiY(r + 1, 0) + MATCH_H / 2f;
-
-                UnifiedCoord srcCoord = new UnifiedCoord(0f, ySrcUi);
-                UnifiedCoord dstCoord = new UnifiedCoord(0f, yDstUi);
-
-                drawLine(x1Coord.glX(), srcCoord.glY(), midXCoord.glX(), srcCoord.glY());
-                drawLine(midXCoord.glX(), srcCoord.glY(), midXCoord.glX(), dstCoord.glY());
-                drawLine(midXCoord.glX(), dstCoord.glY(), x2Coord.glX(), dstCoord.glY());
-            }
+        float lbR1XEnd = baseX + MATCH_W;
+        float lbR2XStart = baseX + colSpacing;
+        for (int m = 0; m < 2; m++) {
+            float yUi = getLbMatchUiY(0, m) + MATCH_H / 2f;
+            GLStateUtil.resetBlendState();
+            GL11.glLineWidth(1.5f);
+            GL11.glColor4f(0.5f, 0.55f, 0.7f, 0.6f * alpha);
+            UnifiedCoord srcCoord = new UnifiedCoord(lbR1XEnd, yUi);
+            UnifiedCoord dstCoord = new UnifiedCoord(lbR2XStart, yUi);
+            drawLine(srcCoord.glX(), srcCoord.glY(), dstCoord.glX(), dstCoord.glY());
         }
+
+        float lbR2XEnd = baseX + colSpacing + MATCH_W;
+        float lbR3XStart = baseX + 2f * colSpacing;
+        float lbR2MidX = (lbR2XEnd + lbR3XStart) / 2f;
+        float lbY0 = getLbMatchUiY(1, 0) + MATCH_H / 2f;
+        float lbY1 = getLbMatchUiY(1, 1) + MATCH_H / 2f;
+        float lbYMid = (lbY0 + lbY1) / 2f;
+        float lbR3Y = getLbMatchUiY(2, 0) + MATCH_H / 2f;
+
+        GLStateUtil.resetBlendState();
+        GL11.glLineWidth(1.5f);
+        GL11.glColor4f(0.5f, 0.55f, 0.7f, 0.6f * alpha);
+        UnifiedCoord lbR2EndCoord = new UnifiedCoord(lbR2XEnd, 0f);
+        UnifiedCoord lbR3StartCoord = new UnifiedCoord(lbR3XStart, 0f);
+        UnifiedCoord lbMidXCoord = new UnifiedCoord(lbR2MidX, 0f);
+        UnifiedCoord lbY0Coord = new UnifiedCoord(0f, lbY0);
+        UnifiedCoord lbY1Coord = new UnifiedCoord(0f, lbY1);
+        UnifiedCoord lbYMidCoord = new UnifiedCoord(0f, lbYMid);
+        UnifiedCoord lbR3YCoord = new UnifiedCoord(0f, lbR3Y);
+
+        drawLine(lbR2EndCoord.glX(), lbY0Coord.glY(), lbMidXCoord.glX(), lbY0Coord.glY());
+        drawLine(lbR2EndCoord.glX(), lbY1Coord.glY(), lbMidXCoord.glX(), lbY1Coord.glY());
+        drawLine(lbMidXCoord.glX(), lbY0Coord.glY(), lbMidXCoord.glX(), lbY1Coord.glY());
+        drawLine(lbMidXCoord.glX(), lbYMidCoord.glY(), lbR3StartCoord.glX(), lbR3YCoord.glY());
+
+        float lbR3XEnd = baseX + 2f * colSpacing + MATCH_W;
+        float lbFinalXStart = baseX + 3f * colSpacing;
+        float lbR3FinalY = getLbMatchUiY(2, 0) + MATCH_H / 2f;
+        GLStateUtil.resetBlendState();
+        GL11.glLineWidth(1.5f);
+        GL11.glColor4f(0.5f, 0.55f, 0.7f, 0.6f * alpha);
+        UnifiedCoord lbR3EndCoord = new UnifiedCoord(lbR3XEnd, lbR3FinalY);
+        UnifiedCoord lbFinalStartCoord = new UnifiedCoord(lbFinalXStart, lbR3FinalY);
+        drawLine(lbR3EndCoord.glX(), lbR3EndCoord.glY(), lbFinalStartCoord.glX(), lbFinalStartCoord.glY());
 
         float lbFinalXUi = baseX + 3f * colSpacing + MATCH_W;
         float lbFinalYUi = getLbMatchUiY(3, 0) + MATCH_H / 2f;
