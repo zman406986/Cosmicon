@@ -298,6 +298,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         float defenderTargetY = state.isPlayerAttacker() ? opponentCardCenterY : playerCardCenterY;
 
         damageAnimator = new DamageResolutionAnimator();
+        damageAnimator.setCallback(createDamageAnimationCallback());
         damageAnimator.startResolution(state, defenderTargetX, defenderTargetY, panel);
         inputHandler.setDamageAnimator(damageAnimator);
     }
@@ -1350,6 +1351,57 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             if (effects.getLayers(effect) > 0) idx++;
         }
         return null;
+    }
+
+    private DamageResolutionAnimator.DamageAnimationCallback createDamageAnimationCallback() {
+        return new DamageResolutionAnimator.DamageAnimationCallback() {
+            @Override
+            public void onClashImpact(boolean perforation, boolean forcefieldBlocks, int counterDamage) {
+                boolean playerIsAttacker = battleState.isPlayerAttacker();
+                StatusEffectProcessor attackerEffects = playerIsAttacker
+                    ? battleState.getPlayerEffects() : battleState.getOpponentEffects();
+                StatusEffectProcessor defenderEffects = playerIsAttacker
+                    ? battleState.getOpponentEffects() : battleState.getPlayerEffects();
+                boolean attackerIsPlayer = playerIsAttacker;
+                boolean defenderIsPlayer = !playerIsAttacker;
+
+                if (attackerEffects.getLayers(StatusEffectProcessor.StatusEffect.STRENGTH) > 0) {
+                    labels.triggerEffectProcessAnimation(attackerIsPlayer, StatusEffectProcessor.StatusEffect.STRENGTH);
+                }
+                if (attackerEffects.getLayers(StatusEffectProcessor.StatusEffect.OVERLOAD) > 0) {
+                    labels.triggerEffectProcessAnimation(attackerIsPlayer, StatusEffectProcessor.StatusEffect.OVERLOAD);
+                }
+                if (defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.TOUGHNESS) > 0) {
+                    labels.triggerEffectProcessAnimation(defenderIsPlayer, StatusEffectProcessor.StatusEffect.TOUGHNESS);
+                }
+                if (counterDamage > 0) {
+                    labels.triggerEffectProcessAnimation(defenderIsPlayer, StatusEffectProcessor.StatusEffect.COUNTER);
+                }
+                if (forcefieldBlocks) {
+                    labels.triggerEffectProcessAnimation(defenderIsPlayer, StatusEffectProcessor.StatusEffect.FORCEFIELD);
+                }
+            }
+
+            @Override
+            public void onPerforationTriggered(boolean isCombo) {
+                boolean attackerIsPlayer = battleState.isPlayerAttacker();
+                labels.triggerEffectProcessAnimation(attackerIsPlayer, StatusEffectProcessor.StatusEffect.PERFORATION);
+            }
+
+            @Override
+            public void onComboAttackStarted() {
+                boolean attackerIsPlayer = battleState.isPlayerAttacker();
+                labels.triggerEffectProcessAnimation(attackerIsPlayer, StatusEffectProcessor.StatusEffect.COMBO);
+            }
+
+            @Override
+            public void onDamageDealt(boolean isCombo, int siphonPercentage) {
+                if (siphonPercentage > 0) {
+                    boolean attackerIsPlayer = battleState.isPlayerAttacker();
+                    labels.triggerEffectProcessAnimation(attackerIsPlayer, StatusEffectProcessor.StatusEffect.SIPHON);
+                }
+            }
+        };
     }
 
     private void renderDiceSelectionHighlights(float alphaMult) {

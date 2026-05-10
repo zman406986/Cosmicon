@@ -14,11 +14,18 @@ import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class BattleController implements BattleEventBus.DamageAnimationCallback {
 
+    private static BattleController currentInstance;
+
     private final BattleState state;
     private final TurnProcessor turnProcessor;
     private TutorialController tutorialController;
 
+    public static BattleController getCurrentInstance() {
+        return currentInstance;
+    }
+
     public BattleController() {
+        currentInstance = this;
         WeatherController weatherController = new WeatherController();
 
         AIEngine aiEngine = new AIEngine();
@@ -292,6 +299,7 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
     }
 
     public void cleanup() {
+        currentInstance = null;
         CosmiconLogger.info("========== BATTLE CLEANUP ==========");
         String winner = state.getWinner();
         if (winner != null) {

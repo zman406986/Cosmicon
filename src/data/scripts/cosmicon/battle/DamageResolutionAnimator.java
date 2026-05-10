@@ -9,6 +9,14 @@ import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.EasingUtil;
 
 public class DamageResolutionAnimator {
+
+    public interface DamageAnimationCallback {
+        void onClashImpact(boolean perforation, boolean forcefieldBlocks, int counterDamage);
+        void onPerforationTriggered(boolean isCombo);
+        void onComboAttackStarted();
+        void onDamageDealt(boolean isCombo, int siphonPercentage);
+    }
+
     private static final float ICON_CLASH_DURATION = 0.3f;
     private static final float ICON_ROTATION_DURATION = 0.3f;
     private static final float ICON_DRAWBACK_DURATION = 0.45f;
@@ -103,6 +111,11 @@ public class DamageResolutionAnimator {
     private float shatterRestoreAlpha;
     private boolean damageImpacted;
 
+    private boolean forcefieldUsed;
+    private int siphonPercentage;
+
+    private DamageAnimationCallback callback;
+
     private CustomPanelAPI panel;
 
     public DamageResolutionAnimator() {
@@ -115,6 +128,10 @@ public class DamageResolutionAnimator {
         shatterEffect = new IconShatterEffect();
         splitEffect = new IconSplitEffect();
         counterBurstEffect = new ImpactEffect();
+    }
+
+    public void setCallback(DamageAnimationCallback callback) {
+        this.callback = callback;
     }
 
     public void startResolution(
@@ -159,9 +176,12 @@ public class DamageResolutionAnimator {
         this.resultValue = Math.max(0, attackValue - defenseValue);
 
         boolean primaryDamageTriggersForcefield = defenderEffects.isForcefieldActive() && resultValue > 0;
+        this.forcefieldUsed = primaryDamageTriggersForcefield;
         if (primaryDamageTriggersForcefield) {
             resultValue = 0;
         }
+
+        this.siphonPercentage = attackerEffects.getLayers(StatusEffectProcessor.StatusEffect.SIPHON);
 
         this.isDraw = (resultValue == 0 && !perforation);
 
@@ -383,6 +403,10 @@ public class DamageResolutionAnimator {
             impactEffect.triggerParticles(centerX, centerY, 18, new Color(255, 200, 100));
         }
 
+        if (callback != null) {
+            callback.onClashImpact(perforation, forcefieldUsed && !perforation, counterDamage);
+        }
+
         if (attackWins) {
             atkFlyingIcon.setValue(resultValue);
             shatterEffect.trigger(centerX, centerY,
@@ -455,6 +479,15 @@ public class DamageResolutionAnimator {
             impactEffect.triggerHeavyImpact(defenderTargetX, defenderTargetY, DAMAGE_RESULT_COLOR);
 
             damageImpacted = true;
+
+            if (callback != null) {
+                if (perforation && originalDefenseValue > 0) {
+                    callback.onPerforationTriggered(false);
+                }
+                if (resultValue > 0 || siphonPercentage > 0) {
+                    callback.onDamageDealt(false, siphonPercentage);
+                }
+            }
 
             startResultFlight();
             startIconRetreat();
@@ -556,6 +589,9 @@ public class DamageResolutionAnimator {
                 }
                 phase = Phase.COMBO_PAUSE;
                 phaseElapsed = 0f;
+                if (callback != null) {
+                    callback.onComboAttackStarted();
+                }
             } else {
                 phase = Phase.COMPLETE;
                 complete = true;
@@ -598,6 +634,10 @@ public class DamageResolutionAnimator {
             impactEffect.triggerFlash(centerX, centerY, 90f, new Color(255, 255, 200));
             if (!perforation) {
                 impactEffect.triggerParticles(centerX, centerY, 14, new Color(255, 200, 100));
+            }
+
+            if (callback != null) {
+                callback.onClashImpact(perforation, forcefieldUsed && !perforation, counterDamage);
             }
 
             if (attackWins) {
@@ -663,6 +703,15 @@ public class DamageResolutionAnimator {
 
         if (phaseElapsed >= COMBO_WINNER_IMPACT_DURATION || atkDone) {
             impactEffect.triggerHeavyImpact(defenderTargetX, defenderTargetY, DAMAGE_RESULT_COLOR);
+
+            if (callback != null) {
+                if (perforation && originalDefenseValue > 0) {
+                    callback.onPerforationTriggered(true);
+                }
+                if (comboDamage > 0 || siphonPercentage > 0) {
+                    callback.onDamageDealt(true, siphonPercentage);
+                }
+            }
 
             comboResultNumber = new FlyingNumber();
             comboResultNumber.setValue(comboDamage);

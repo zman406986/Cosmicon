@@ -29,7 +29,6 @@ public class BattleUIButtons implements ActionListenerDelegate {
     private static final String ACTION_CONTINUE = "continue";
     private static final String ACTION_REROLL = "reroll";
     private static final String ACTION_EXIT = "exit";
-    private static final String ACTION_DEBUG_WIN = "debug_win";
     private static final float PASSIVE_BTN_WIDTH = 150f;
     private static final float PASSIVE_BTN_HEIGHT = 25f;
 
@@ -109,12 +108,6 @@ public class BattleUIButtons implements ActionListenerDelegate {
             BattleRenderingUtils.PANEL_WIDTH - btnWidth - 10f, 10f);
         ButtonAPI exitButton = exitTp.addButton(Strings.get("phase.close"), ACTION_EXIT, btnWidth, btnHeight, 0f);
         exitButton.setQuickMode(true);
-
-        float debugBtnWidth = 90f;
-        TooltipMakerAPI debugTp = UIComponentFactory.createTooltipForButtons(panel, this, debugBtnWidth, btnHeight,
-            BattleRenderingUtils.PANEL_WIDTH - btnWidth - debugBtnWidth - 20f, 10f);
-        ButtonAPI debugWinButton = debugTp.addButton("[Win]", ACTION_DEBUG_WIN, debugBtnWidth, btnHeight, 0f);
-        debugWinButton.setQuickMode(true);
 
         TooltipMakerAPI abilityTp = UIComponentFactory.createTooltipForButtons(panel, this, 
             PASSIVE_BTN_WIDTH, PASSIVE_BTN_HEIGHT, 0f, 0f);
@@ -387,11 +380,6 @@ public class BattleUIButtons implements ActionListenerDelegate {
                 case "close", ACTION_EXIT -> {
                     if (callbacks != null) {
                         callbacks.dismissDialog();
-                    }
-                }
-                case ACTION_DEBUG_WIN -> {
-                    if (battleController != null && battleState.getCurrentPhase() != Phase.ENDED) {
-                        battleController.forcePlayerWin();
                     }
                 }
             }
