@@ -177,9 +177,9 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
     }
 
     private void createExitButton() {
-        float btnW = 100f;
+        float btnW = 135f;
         float btnH = 28f;
-        float btnX = panelW - btnW - 15f;
+        float btnX = panelW - btnW - 25f;
         float btnY = panelH - STATUS_BAR_H - 5f;
 
         TooltipMakerAPI exitTp = UIComponentFactory.createTooltipForButtons(panel, this, btnW, btnH, btnX, btnY);
@@ -442,6 +442,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
                 UnifiedCoord coord = new UnifiedCoord(uiX, uiY);
                 boolean involvesPlayer = isPlayerInMatch(data.wbMatchups, r, m);
                 boolean isCurrent = isCurrentMatch(TournamentManager.BRACKET_WB, r, m);
+                GLStateUtil.resetBlendState();
                 renderMatchBox(coord.glX(), coord.glSpriteY(MATCH_H), involvesPlayer, isCurrent, alpha);
             }
         }
@@ -454,6 +455,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
                 UnifiedCoord coord = new UnifiedCoord(uiX, uiY);
                 boolean involvesPlayer = isPlayerInMatch(data.lbMatchups, r, m);
                 boolean isCurrent = isCurrentMatch(TournamentManager.BRACKET_LB, r, m);
+                GLStateUtil.resetBlendState();
                 renderMatchBox(coord.glX(), coord.glSpriteY(MATCH_H), involvesPlayer, isCurrent, alpha);
             }
         }
@@ -466,8 +468,6 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
     }
 
     private void renderMatchBox(float mx, float my, boolean involvesPlayer, boolean isCurrent, float alpha) {
-        GLStateUtil.resetBlendState();
-
         Color bgColor = involvesPlayer ? COLOR_PLAYER_MATCH : COLOR_MATCH_BG;
         Misc.renderQuad(mx, my, MATCH_W, MATCH_H, bgColor, alpha);
 
@@ -503,10 +503,6 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
     }
 
     private void renderBracketLines(float alpha) {
-        GLStateUtil.resetBlendState();
-        GL11.glLineWidth(1.5f);
-        GL11.glColor4f(0.5f, 0.55f, 0.7f, 0.6f * alpha);
-
         int[] wbCounts = {4, 2, 1};
         for (int r = 0; r < 2; r++) {
             float x1Ui = baseX + r * colSpacing + MATCH_W;
@@ -516,6 +512,10 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
             UnifiedCoord x2Coord = new UnifiedCoord(x2Ui, 0f);
             UnifiedCoord midXCoord = new UnifiedCoord(midXUi, 0f);
             for (int m = 0; m < wbCounts[r]; m += 2) {
+                GLStateUtil.resetBlendState();
+                GL11.glLineWidth(1.5f);
+                GL11.glColor4f(0.5f, 0.55f, 0.7f, 0.6f * alpha);
+
                 float y0Ui = getWbMatchUiY(m) + MATCH_H / 2f;
                 float y1Ui = getWbMatchUiY(m + 1) + MATCH_H / 2f;
                 float yMidUi = (y0Ui + y1Ui) / 2f;
@@ -539,6 +539,10 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
         float gfYUi = getWbMatchUiY(0) - 20f + MATCH_H / 2f;
         UnifiedCoord wbFinalCoord = new UnifiedCoord(wbFinalXUi, wbFinalYUi);
         UnifiedCoord gfCoord = new UnifiedCoord(gfXUi, gfYUi);
+
+        GLStateUtil.resetBlendState();
+        GL11.glLineWidth(1.5f);
+        GL11.glColor4f(0.5f, 0.55f, 0.7f, 0.6f * alpha);
         drawLine(wbFinalCoord.glX(), wbFinalCoord.glY(), gfCoord.glX(), gfCoord.glY());
 
         int[] lbCounts = {2, 2, 1, 1};
@@ -550,6 +554,10 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
             UnifiedCoord x2Coord = new UnifiedCoord(x2Ui, 0f);
             UnifiedCoord midXCoord = new UnifiedCoord(midXUi, 0f);
             for (int m = 0; m < lbCounts[r]; m++) {
+                GLStateUtil.resetBlendState();
+                GL11.glLineWidth(1.5f);
+                GL11.glColor4f(0.5f, 0.55f, 0.7f, 0.6f * alpha);
+
                 float ySrcUi = getLbMatchUiY(r, m) + MATCH_H / 2f;
                 float yDstUi = getLbMatchUiY(r + 1, 0) + MATCH_H / 2f;
 
@@ -565,6 +573,10 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
         float lbFinalXUi = baseX + 3f * colSpacing + MATCH_W;
         float lbFinalYUi = getLbMatchUiY(3, 0) + MATCH_H / 2f;
         UnifiedCoord lbFinalCoord = new UnifiedCoord(lbFinalXUi, lbFinalYUi);
+
+        GLStateUtil.resetBlendState();
+        GL11.glLineWidth(1.5f);
+        GL11.glColor4f(0.5f, 0.55f, 0.7f, 0.6f * alpha);
         drawLine(lbFinalCoord.glX(), lbFinalCoord.glY(), gfCoord.glX(), gfCoord.glY());
 
         GL11.glLineWidth(1f);

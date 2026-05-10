@@ -798,8 +798,12 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         TournamentManager.BracketData bd = mgr.getBracketData();
         String[] displayNames = new String[bd.playerNames.length];
         for (int i = 0; i < bd.playerNames.length; i++) {
-            var card = CharacterRegistry.getCharacterById(bd.playerNames[i]);
-            displayNames[i] = card != null ? card.getName() : bd.playerNames[i];
+            if (i == 0) {
+                displayNames[i] = Global.getSector().getPlayerPerson().getNameString();
+            } else {
+                var card = CharacterRegistry.getCharacterById(bd.playerNames[i]);
+                displayNames[i] = card != null ? card.getName() : bd.playerNames[i];
+            }
         }
 
         TournamentBracketPanel bracketPanel = new TournamentBracketPanel(bd, displayNames);
@@ -868,7 +872,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         options.clearOptions();
 
         boolean champion = tournamentManager != null && tournamentManager.isPlayerChampion();
-        boolean runnerUp = tournamentManager != null && !champion && !tournamentManager.isPlayerEliminated();
+        boolean runnerUp = tournamentManager != null && !champion && tournamentManager.isGrandFinal();
         int baseCredits = CasinoIntegrationManager.getCreditReward() * 3;
         int totalCredits = baseCredits * tournamentWins;
 
