@@ -349,10 +349,14 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         if (tutorialGame1) {
             CosmiconStats.completeTutorialGame1();
+            showTutorialReward();
+            return;
         } else if (tutorialGame2) {
             CosmiconStats.completeTutorialGame2();
             CosmiconEventState.setIsTutorialMode(false);
             CosmiconEventState.setOpponentCharacter(null);
+            showTutorialReward();
+            return;
         }
 
         if (isReplay) {
@@ -395,7 +399,8 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             }
             options.addOption(Strings.get("menu.back"), "back");
         } else if (gamesPlayed >= 2) {
-            options.addOption(Strings.get("tutorial.g2_unlock_option"), "tutorial_g2_unlock");
+            textPanel.addPara(Strings.get("tutorial.g2_reward"));
+            options.addOption(Strings.get("menu.back"), "back");
         }
 
         setState(State.REWARD_SELECTION);
