@@ -5,6 +5,7 @@ import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticEffect;
+import data.scripts.CosmiconConfig;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.util.DiceEvaluator;
 import java.util.*;
@@ -12,7 +13,7 @@ import java.util.stream.Collectors;
 
 public abstract class AttackRerollAI implements CharacterAIProfile {
 
-    protected int rolloutsPerEvaluation = 50;
+    protected int rolloutsPerEvaluation = 200;
     protected int maxExactOutcomeEnumeration = 256;
     private static final Map<DiceType, DieStoppingPolicy> policyCache = new EnumMap<>(DiceType.class);
     private static final Random SIM_RAND = new Random(42);
@@ -33,6 +34,12 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
     }
 
     public AttackRerollAI() {}
+
+    private static void rerollLog(String format, Object... args) {
+        if (CosmiconConfig.REROLL_LOG_ENABLED) {
+            CosmiconLogger.info("[AI_REROLL_LOG] " + String.format(format, args));
+        }
+    }
 
     // ==================== CharacterAIProfile defaults ====================
 
@@ -84,9 +91,12 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         this.subsetCache.clear();
         this.evalCache.clear();
 
-        double currentEV = evaluateFinalPool(pool, 0, effectiveRequired, isAttacking, state, forPlayer);
+        double currentEV = evaluateFinalPool(pool, 0, 0, effectiveRequired, isAttacking, state, forPlayer);
 
         List<Set<Integer>> candidates = generateCandidateActions(pool, rerollsAvailable, effectiveRequired, isAttacking, state, forPlayer);
+
+        rerollLog("%s: pool=%s, rerolls=%d, required=%d, candidates=%d, currentEV=%.1f",
+            getCharacterId(), currentValues, rerollsAvailable, effectiveRequired, candidates.size(), currentEV);
 
         if (candidates.isEmpty()) {
             CosmiconLogger.debug("[AI_REROLL] %s: no candidates generated", getCharacterId());
@@ -139,41 +149,89 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
     private double evaluateStateWithRerolls(SimPool pool, int rerollsLeft, int requiredCount,
                                               boolean isAttacking, BattleState state, boolean forPlayer) {
-        if (rerollsLeft <= 0) {
-            return evaluateFinalPool(pool, 0, requiredCount, isAttacking, state, forPlayer);
-        }
-
-        Set<Integer> toReroll = findPolicyRerollSet(pool, rerollsLeft, isAttacking, state, forPlayer);
-
-        if (toReroll.isEmpty()) {
-            return evaluateFinalPool(pool, 0, requiredCount, isAttacking, state, forPlayer);
-        }
-
-        long product = 1;
-        for (int idx : toReroll) {
-            product *= pool.getPossibleFaces(idx).length;
-            if (product > maxExactOutcomeEnumeration) break;
-        }
-
-        if (product <= maxExactOutcomeEnumeration) {
-            List<Outcome> outcomes = generateOutcomes(pool, toReroll);
-            double totalUtility = 0;
-            for (Outcome outcome : outcomes) {
-                SimPool newPool = pool.createCopy();
-                newPool.applyOutcome(toReroll, outcome);
-                double util = evaluateStateWithRerolls(newPool, rerollsLeft - 1, requiredCount, isAttacking, state, forPlayer);
-                totalUtility += outcome.probability * util;
+        // Optimization 1: Frozen die elimination
+        SplitPool split = splitFrozenDice(pool, isAttacking);
+        int frozenSum = 0;
+        Set<Integer> savedDestined = null;
+        String savedDestinedKey = null;
+        if (split != null) {
+            int frozenCount = pool.size() - split.reduced().size();
+            if (frozenCount >= requiredCount) {
+                rerollLog("frozenCount=%d >= required=%d, evaluating full pool", frozenCount, requiredCount);
+                return evaluateFinalPool(pool, 0, 0, requiredCount, isAttacking, state, forPlayer);
             }
-            return totalUtility;
+            frozenSum = split.frozenSum();
+            int effectiveRequired = requiredCount - frozenCount;
+            rerollLog("frozen=%d (sum=%d), reduced pool=%d, effectiveRequired=%d",
+                frozenCount, frozenSum, split.reduced().size(), effectiveRequired);
+            // Remap destined indices for reduced pool
+            savedDestined = this.currentDestinedIndices;
+            savedDestinedKey = this.currentDestinedKey;
+            this.currentDestinedIndices = remapDestinedIndices(currentDestinedIndices, split);
+            this.currentDestinedKey = this.currentDestinedIndices.toString();
+            pool = split.reduced();
+            requiredCount = effectiveRequired;
         }
 
-        double totalUtility = 0;
-        for (int i = 0; i < rolloutsPerEvaluation; i++) {
-            RolloutResult result = simulateBasePolicy(pool, rerollsLeft, isAttacking, state, forPlayer);
-            double finalUtil = evaluateFinalPool(result.pool, result.rerollsUsed, requiredCount, isAttacking, state, forPlayer);
-            totalUtility += finalUtil;
+        double result;
+        if (rerollsLeft <= 0) {
+            result = evaluateFinalPool(pool, frozenSum, 0, requiredCount, isAttacking, state, forPlayer);
+        } else {
+            Set<Integer> toReroll = findPolicyRerollSet(pool, rerollsLeft, isAttacking, state, forPlayer);
+
+            if (toReroll.isEmpty()) {
+                result = evaluateFinalPool(pool, frozenSum, 0, requiredCount, isAttacking, state, forPlayer);
+            } else {
+                long product = 1;
+                for (int idx : toReroll) {
+                    product *= pool.getPossibleFaces(idx).length;
+                    if (product > maxExactOutcomeEnumeration) break;
+                }
+
+                if (product <= maxExactOutcomeEnumeration) {
+                    rerollLog("exact enumeration: product=%d, rerollSet=%d dice", product, toReroll.size());
+                    List<Outcome> outcomes = generateOutcomes(pool, toReroll);
+                    double totalUtility = 0;
+                    for (Outcome outcome : outcomes) {
+                        SimPool newPool = pool.createCopy();
+                        newPool.applyOutcome(toReroll, outcome);
+                        double util = evaluateStateWithRerolls(newPool, rerollsLeft - 1, requiredCount, isAttacking, state, forPlayer);
+                        totalUtility += outcome.probability * util;
+                    }
+                    result = totalUtility + frozenSum;
+                } else {
+                    // Optimization 3: Adaptive Monte Carlo rollouts (min 20, max rolloutsPerEvaluation, early stop)
+                    int minRollouts = 20;
+                    int maxRollouts = rolloutsPerEvaluation;
+                    double sum = 0, sumSq = 0;
+                    int actualRollouts = 0;
+
+                    for (int i = 0; i < maxRollouts; i++) {
+                        RolloutResult rollout = simulateBasePolicy(pool, rerollsLeft, isAttacking, state, forPlayer);
+                        double finalUtil = evaluateFinalPool(rollout.pool, frozenSum, rollout.rerollsUsed, requiredCount, isAttacking, state, forPlayer);
+                        sum += finalUtil;
+                        sumSq += finalUtil * finalUtil;
+                        actualRollouts = i + 1;
+
+                        if (i >= minRollouts - 1) {
+                            double mean = sum / actualRollouts;
+                            double variance = (sumSq / actualRollouts) - mean * mean;
+                            double stderr = Math.sqrt(Math.max(0, variance) / actualRollouts);
+                            if (stderr < Math.abs(mean) * 0.01) break;
+                        }
+                    }
+                    rerollLog("Monte Carlo: %d/%d rollouts (converged=%b)", actualRollouts, maxRollouts, actualRollouts < maxRollouts);
+                    result = sum / actualRollouts;
+                }
+            }
         }
-        return totalUtility / rolloutsPerEvaluation;
+
+        // Restore destined indices if we split
+        if (savedDestined != null) {
+            this.currentDestinedIndices = savedDestined;
+            this.currentDestinedKey = savedDestinedKey;
+        }
+        return result;
     }
 
     private Set<Integer> findPolicyRerollSet(SimPool pool, int rerollsLeft,
@@ -190,9 +248,9 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         return toReroll;
     }
 
-    private double evaluateFinalPool(SimPool pool, int rerollsUsed, int requiredCount,
+    private double evaluateFinalPool(SimPool pool, int frozenSum, int rerollsUsed, int requiredCount,
                                       boolean isAttacking, BattleState state, boolean forPlayer) {
-        int cacheKey = pool.fingerprint() * 31 + rerollsUsed * 31 + requiredCount;
+        int cacheKey = pool.fingerprint() * 31 + frozenSum * 37 + rerollsUsed * 31 + requiredCount;
         Double cached = evalCache.get(cacheKey);
         if (cached != null) return cached;
 
@@ -200,8 +258,9 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         List<Set<Integer>> choices = enumerateLegalSubsets(pool, requiredCount);
 
         if (choices.isEmpty()) {
-            evalCache.put(cacheKey, 0.0);
-            return 0;
+            double result = frozenSum;
+            evalCache.put(cacheKey, result);
+            return result;
         }
 
         double bestUtil = Double.NEGATIVE_INFINITY;
@@ -216,8 +275,9 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             util -= calculateRerollSelfDamage(rerollsUsed);
             if (util > bestUtil) bestUtil = util;
         }
-        evalCache.put(cacheKey, bestUtil);
-        return bestUtil;
+        double result = bestUtil + frozenSum;
+        evalCache.put(cacheKey, result);
+        return result;
     }
 
     // ==================== Base policy simulation ====================
@@ -260,9 +320,27 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             }
         }
 
-        List<Integer> belowThreshold = new ArrayList<>(thresholdSet);
-        if (!belowThreshold.isEmpty()) {
-            generateCandidateSubsets(belowThreshold, candidates);
+        // Optimization 2: Split below-threshold into guaranteed (value-1) and borderline
+        List<Integer> guaranteed = new ArrayList<>();
+        List<Integer> borderline = new ArrayList<>();
+        for (int i : thresholdSet) {
+            if (pool.getValue(i) == 1) guaranteed.add(i);
+            else borderline.add(i);
+        }
+        rerollLog("below-threshold: %d guaranteed (value-1), %d borderline", guaranteed.size(), borderline.size());
+
+        if (!borderline.isEmpty()) {
+            List<Set<Integer>> borderlineSubs = new ArrayList<>();
+            generateCandidateSubsets(borderline, borderlineSubs);
+            Set<Integer> guaranteedSet = new HashSet<>(guaranteed);
+            for (Set<Integer> sub : borderlineSubs) {
+                Set<Integer> combined = new HashSet<>(guaranteedSet);
+                combined.addAll(sub);
+                candidates.add(combined);
+            }
+        }
+        if (!guaranteed.isEmpty()) {
+            candidates.add(new HashSet<>(guaranteed));
         }
 
         for (int i = 0; i < pool.size(); i++) {
@@ -595,9 +673,57 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             return new SimPool(values.clone(), types, possibleFaces);
         }
 
+        public SimPool subset(int[] indices) {
+            int n = indices.length;
+            int[] newValues = new int[n];
+            DiceType[] newTypes = new DiceType[n];
+            int[][] newFaces = new int[n][];
+            for (int i = 0; i < n; i++) {
+                newValues[i] = values[indices[i]];
+                newTypes[i] = types[indices[i]];
+                newFaces[i] = possibleFaces[indices[i]];
+            }
+            return new SimPool(newValues, newTypes, newFaces);
+        }
+
         public int fingerprint() {
             return java.util.Arrays.hashCode(values);
         }
+    }
+
+    // ==================== Frozen die splitting ====================
+
+    private record SplitPool(SimPool reduced, int frozenSum, int[] indexRemap, Map<Integer, Integer> reverseRemap) {}
+
+    private SplitPool splitFrozenDice(SimPool pool, boolean isAttacking) {
+        List<Integer> keep = new ArrayList<>();
+        int frozenSum = 0;
+        for (int i = 0; i < pool.size(); i++) {
+            if (pool.getValue(i) == pool.getType(i).getMaxFace()
+                && !isSpecialFaceNeverReroll(i, pool.getType(i), isAttacking, null, false)) {
+                frozenSum += pool.getValue(i);
+            } else {
+                keep.add(i);
+            }
+        }
+        if (keep.isEmpty()) return null;
+        int[] remap = keep.stream().mapToInt(Integer::intValue).toArray();
+        Map<Integer, Integer> reverse = new HashMap<>();
+        for (int i = 0; i < remap.length; i++) {
+            reverse.put(remap[i], i);
+        }
+        return new SplitPool(pool.subset(remap), frozenSum, remap, reverse);
+    }
+
+    private Set<Integer> remapDestinedIndices(Set<Integer> original, SplitPool split) {
+        Set<Integer> remapped = new HashSet<>();
+        for (int idx : original) {
+            Integer newIdx = split.reverseRemap().get(idx);
+            if (newIdx != null) {
+                remapped.add(newIdx);
+            }
+        }
+        return remapped;
     }
 
     private SimPool createSimPool(List<Integer> currentValues, List<DiceType> diceTypes,

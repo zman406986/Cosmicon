@@ -24,13 +24,44 @@ public class CosmiconEventState {
     private static final String KEY_CASINO_BATTLE_RESULT_DAMAGE = "$cos_casino_battle_result_damage";
     private static final String KEY_TRASHCAN_HUNTER_LEVEL = "$cos_trashcan_hunter_level";
 
+    private static final String KEY_TOURNAMENT_UNLOCKED = "$cos_tournament_unlocked";
+    private static final String KEY_TOURNAMENT_ROUND = "$cos_tournament_round";
+    private static final String KEY_TOURNAMENT_WINS = "$cos_tournament_wins";
+    private static final String KEY_TOURNAMENT_LOSSES = "$cos_tournament_losses";
+    private static final String KEY_TOURNAMENT_IN_LOSER_BRACKET = "$cos_tournament_in_loser_bracket";
+    private static final String KEY_TOURNAMENT_GRAND_FINAL = "$cos_tournament_grand_final";
+    private static final String KEY_TOURNAMENT_SERIES_SCORE = "$cos_tournament_series_score";
+    private static final String KEY_TOURNAMENT_BRACKET_DATA = "$cos_tournament_bracket_data";
+    private static final String KEY_TOURNAMENT_PENDING_REWARDS = "$cos_tournament_pending_rewards";
+
     private static final List<String> ALL_KEYS = List.of(
         KEY_OPPONENT_CHAR, KEY_PLAYER_CHAR, KEY_OPPONENT_PRISMATIC,
         KEY_IS_BAR_EVENT, KEY_IS_TUTORIAL, KEY_REPLAY_TUTORIAL,
         KEY_OPPONENT_USES_TRUE, KEY_SESSION_WON,
         KEY_CASINO_BATTLE_MODE, KEY_CASINO_BATTLE_IS_BOSS,
         KEY_CASINO_BATTLE_OPPONENT, KEY_CASINO_BATTLE_BONUS_HP,
-        KEY_CASINO_BATTLE_USE_TRUE, KEY_CASINO_BATTLE_RESULT_DAMAGE
+        KEY_CASINO_BATTLE_USE_TRUE, KEY_CASINO_BATTLE_RESULT_DAMAGE,
+        KEY_TOURNAMENT_UNLOCKED, KEY_TOURNAMENT_ROUND,
+        KEY_TOURNAMENT_WINS, KEY_TOURNAMENT_LOSSES,
+        KEY_TOURNAMENT_IN_LOSER_BRACKET, KEY_TOURNAMENT_GRAND_FINAL,
+        KEY_TOURNAMENT_SERIES_SCORE, KEY_TOURNAMENT_BRACKET_DATA,
+        KEY_TOURNAMENT_PENDING_REWARDS
+    );
+
+    private static final List<String> TOURNAMENT_KEYS = List.of(
+        KEY_TOURNAMENT_UNLOCKED, KEY_TOURNAMENT_ROUND,
+        KEY_TOURNAMENT_WINS, KEY_TOURNAMENT_LOSSES,
+        KEY_TOURNAMENT_IN_LOSER_BRACKET, KEY_TOURNAMENT_GRAND_FINAL,
+        KEY_TOURNAMENT_SERIES_SCORE, KEY_TOURNAMENT_BRACKET_DATA,
+        KEY_TOURNAMENT_PENDING_REWARDS
+    );
+
+    private static final List<String> TOURNAMENT_STATE_KEYS = List.of(
+        KEY_TOURNAMENT_ROUND,
+        KEY_TOURNAMENT_WINS, KEY_TOURNAMENT_LOSSES,
+        KEY_TOURNAMENT_IN_LOSER_BRACKET, KEY_TOURNAMENT_GRAND_FINAL,
+        KEY_TOURNAMENT_SERIES_SCORE, KEY_TOURNAMENT_BRACKET_DATA,
+        KEY_TOURNAMENT_PENDING_REWARDS
     );
 
     private static MemoryAPI memory;
@@ -209,6 +240,122 @@ public class CosmiconEventState {
         MemoryAPI mem = getMemory();
         if (!mem.contains(KEY_TRASHCAN_HUNTER_LEVEL)) return 0;
         return (int) mem.getFloat(KEY_TRASHCAN_HUNTER_LEVEL);
+    }
+
+    public static void setTournamentUnlocked(boolean unlocked) {
+        getMemory().set(KEY_TOURNAMENT_UNLOCKED, unlocked);
+    }
+
+    public static boolean isTournamentUnlocked() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_TOURNAMENT_UNLOCKED)) return false;
+        return mem.getBoolean(KEY_TOURNAMENT_UNLOCKED);
+    }
+
+    public static void setTournamentRound(int round) {
+        getMemory().set(KEY_TOURNAMENT_ROUND, round);
+    }
+
+    public static int getTournamentRound() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_TOURNAMENT_ROUND)) return 0;
+        return (int) mem.getFloat(KEY_TOURNAMENT_ROUND);
+    }
+
+    public static void setTournamentWins(int wins) {
+        getMemory().set(KEY_TOURNAMENT_WINS, wins);
+    }
+
+    public static int getTournamentWins() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_TOURNAMENT_WINS)) return 0;
+        return (int) mem.getFloat(KEY_TOURNAMENT_WINS);
+    }
+
+    public static void setTournamentLosses(int losses) {
+        getMemory().set(KEY_TOURNAMENT_LOSSES, losses);
+    }
+
+    public static int getTournamentLosses() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_TOURNAMENT_LOSSES)) return 0;
+        return (int) mem.getFloat(KEY_TOURNAMENT_LOSSES);
+    }
+
+    public static void setTournamentInLoserBracket(boolean inLoserBracket) {
+        getMemory().set(KEY_TOURNAMENT_IN_LOSER_BRACKET, inLoserBracket);
+    }
+
+    public static boolean isTournamentInLoserBracket() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_TOURNAMENT_IN_LOSER_BRACKET)) return false;
+        return mem.getBoolean(KEY_TOURNAMENT_IN_LOSER_BRACKET);
+    }
+
+    public static void setTournamentGrandFinal(boolean grandFinal) {
+        getMemory().set(KEY_TOURNAMENT_GRAND_FINAL, grandFinal);
+    }
+
+    public static boolean isTournamentGrandFinal() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_TOURNAMENT_GRAND_FINAL)) return false;
+        return mem.getBoolean(KEY_TOURNAMENT_GRAND_FINAL);
+    }
+
+    public static void setTournamentSeriesScore(String score) {
+        if (score != null) {
+            getMemory().set(KEY_TOURNAMENT_SERIES_SCORE, score);
+        } else {
+            getMemory().unset(KEY_TOURNAMENT_SERIES_SCORE);
+        }
+    }
+
+    public static String getTournamentSeriesScore() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_TOURNAMENT_SERIES_SCORE)) return null;
+        return mem.getString(KEY_TOURNAMENT_SERIES_SCORE);
+    }
+
+    public static void setTournamentBracketData(String jsonData) {
+        if (jsonData != null) {
+            getMemory().set(KEY_TOURNAMENT_BRACKET_DATA, jsonData);
+        } else {
+            getMemory().unset(KEY_TOURNAMENT_BRACKET_DATA);
+        }
+    }
+
+    public static String getTournamentBracketData() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_TOURNAMENT_BRACKET_DATA)) return null;
+        return mem.getString(KEY_TOURNAMENT_BRACKET_DATA);
+    }
+
+    public static boolean isTournamentActive() {
+        return getTournamentBracketData() != null;
+    }
+
+    public static void setTournamentPendingRewards(int count) {
+        getMemory().set(KEY_TOURNAMENT_PENDING_REWARDS, count);
+    }
+
+    public static int getTournamentPendingRewards() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_TOURNAMENT_PENDING_REWARDS)) return 0;
+        return (int) mem.getFloat(KEY_TOURNAMENT_PENDING_REWARDS);
+    }
+
+    public static void clearTournamentState() {
+        MemoryAPI mem = getMemory();
+        for (String key : TOURNAMENT_STATE_KEYS) {
+            mem.unset(key);
+        }
+    }
+
+    public static void clearTournamentAll() {
+        MemoryAPI mem = getMemory();
+        for (String key : TOURNAMENT_KEYS) {
+            mem.unset(key);
+        }
     }
 
     public static void clearCasinoBattleState() {

@@ -21,12 +21,13 @@ public class CosmiconCasinoReset implements BaseCommand {
         String mode = args.isEmpty() ? "all" : args.trim().toLowerCase();
 
         if (!isValidMode(mode)) {
-            Console.showMessage("Error: invalid mode '" + mode + "'. Valid modes: all, hunter, battle");
+            Console.showMessage("Error: invalid mode '" + mode + "'. Valid modes: all, hunter, battle, tournament");
             return CommandResult.BAD_SYNTAX;
         }
 
         boolean resetHunter = mode.equals("all") || mode.equals("hunter");
         boolean resetBattle = mode.equals("all") || mode.equals("battle");
+        boolean resetTournament = mode.equals("all") || mode.equals("tournament");
 
         if (resetHunter) {
             MemoryAPI mem = Global.getSector().getPlayerMemoryWithoutUpdate();
@@ -41,16 +42,23 @@ public class CosmiconCasinoReset implements BaseCommand {
             Console.showMessage("Reset: Casino battle state");
         }
 
+        if (resetTournament) {
+            CosmiconEventState.clearTournamentAll();
+            Console.showMessage("Reset: Tournament state");
+        }
+
         Console.showMessage("");
         Console.showMessage("Current state:");
         Console.showMessage("  Trashcan Hunter Level: " + CosmiconEventState.getTrashcanHunterLevel());
         Console.showMessage("  Casino Battle Active: " + CosmiconEventState.isCasinoBattleMode());
         Console.showMessage("  Casino Battle Type: " + (CosmiconEventState.isCasinoBattleBoss() ? "BOSS" : "CHALLENGE"));
+        Console.showMessage("  Tournament Unlocked: " + CosmiconEventState.isTournamentUnlocked());
+        Console.showMessage("  Tournament Active: " + CosmiconEventState.isTournamentActive());
 
         return CommandResult.SUCCESS;
     }
 
     private static boolean isValidMode(String mode) {
-        return mode.equals("all") || mode.equals("hunter") || mode.equals("battle");
+        return mode.equals("all") || mode.equals("hunter") || mode.equals("battle") || mode.equals("tournament");
     }
 }

@@ -17,6 +17,7 @@ public class CosmiconConfig {
     public static int DEFAULT_REROLLS = 2;
     public static boolean COSMICON_ENABLED = true;
     public static boolean DEBUG_ENABLED = true;
+    public static boolean REROLL_LOG_ENABLED = false;
 
     public static final float AI_REVEAL_PER_DICE_DELAY = 0.15f;
     public static final float AI_REROLL_PREVIEW_DELAY = 0.5f;
@@ -32,6 +33,7 @@ public class CosmiconConfig {
             DEFAULT_HP = settings.optInt("defaultHP", 20);
             DEFAULT_REROLLS = settings.optInt("defaultRerolls", 2);
             DEBUG_ENABLED = settings.optBoolean("debugEnabled", false);
+            REROLL_LOG_ENABLED = settings.optBoolean("rerollLogEnabled", false);
 
             Global.getLogger(CosmiconConfig.class).info("Cosmicon config loaded: marketSizeMin=" + MARKET_SIZE_MIN);
         } catch (IOException | JSONException e) {

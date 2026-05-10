@@ -16,6 +16,7 @@ import data.scripts.cosmicon.battle.BattleDialogDelegate;
 import data.scripts.cosmicon.battle.BattleRenderingUtils;
 import data.scripts.cosmicon.battle.CoinFlipPanelUI;
 import data.scripts.cosmicon.casino.CasinoIntegrationManager;
+import data.scripts.cosmicon.casino.TournamentManager;
 import data.scripts.cosmicon.setup.CharacterSetupDialogDelegate;
 import data.scripts.cosmicon.setup.CharacterSetupPanelUI;
 import data.scripts.cosmicon.state.CosmiconEventState;
@@ -40,6 +41,10 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     private int pendingCasinoRewardTier = 0;
     private List<String> pendingCasinoRewardCandidates = null;
 
+    private TournamentManager tournamentManager;
+    private int tournamentPendingRewards = 0;
+    private int tournamentWins = 0;
+
     private Runnable onLeaveAction = null;
 
     public void setOnLeaveAction(Runnable action) {
@@ -51,7 +56,11 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         PLAY,
         HELP,
         REWARD_SELECTION,
-        CASINO_BOSS_REWARD
+        CASINO_BOSS_REWARD,
+        GATEKEEPER_REWARD,
+        TOURNAMENT_BRACKET,
+        TOURNAMENT_REWARD,
+        TOURNAMENT_SERIES
     }
 
     public static void startInteraction(InteractionDialogAPI dialog) {
@@ -122,6 +131,25 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         setState(State.MAIN_MENU);
     }
 
+    public void startTournament(String bracketJson, Runnable onLeave) {
+        tournamentManager = TournamentManager.fromJson(bracketJson);
+        tournamentWins = CosmiconEventState.getTournamentWins();
+        this.onLeaveAction = onLeave;
+
+        if (tournamentManager == null) {
+            textPanel.addPara(Strings.get("casino.tournament_error_load"), Color.RED);
+            options.addOption(Strings.get("casino.back_lounge"), "casino_back");
+            setState(State.GATEKEEPER_REWARD);
+            return;
+        }
+
+        if (tournamentManager.isPlayerChampion() || tournamentManager.isPlayerEliminated()) {
+            showTournamentReward();
+        } else {
+            showTournamentBracket();
+        }
+    }
+
     @Override
     public void optionSelected(String optionText, Object optionData) {
         if (optionData == null) return;
@@ -170,6 +198,22 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
             case CASINO_BOSS_REWARD:
                 handleCasinoRewardSelection(data);
+                break;
+
+            case GATEKEEPER_REWARD:
+                handleGatekeeperRewardSelection(data);
+                break;
+
+            case TOURNAMENT_BRACKET:
+                handleTournamentBracketSelection(data);
+                break;
+
+            case TOURNAMENT_REWARD:
+                handleTournamentRewardSelection(data);
+                break;
+
+            case TOURNAMENT_SERIES:
+                handleTournamentBracketSelection(data);
                 break;
 
             default:
@@ -491,26 +535,10 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 options.addOption(Strings.format("casino.boss_reward_credits", credits), "casino_reward_credits");
                 setState(State.CASINO_BOSS_REWARD);
             }
+        } else if (CosmiconEventState.isTournamentActive()) {
+            handleTournamentVictory(damageDealt);
         } else {
-            int hunterLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
-            boolean isNewRecord = damageDealt > hunterLevel;
-            CasinoIntegrationManager.updateTrashcanHunterLevel(damageDealt);
-            int newLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
-
-            textPanel.addPara(Strings.get("casino.trashcan_won"), Color.GREEN);
-
-            int credits = CasinoIntegrationManager.getCreditReward() * 10;
-            Global.getSector().getPlayerFleet().getCargo().getCredits().add(credits);
-            AddRemoveCommodity.addCreditsGainText(credits, textPanel);
-
-            if (isNewRecord) {
-                textPanel.addPara(Strings.format("casino.challenge_new_record", newLevel), Color.CYAN);
-            } else {
-                textPanel.addPara(Strings.format("casino.challenge_previous_record", newLevel), Color.GRAY);
-            }
-
-            options.addOption(Strings.get("casino.back_lounge"), "casino_back");
-            setState(State.CASINO_BOSS_REWARD);
+            handleGatekeeperVictory(damageDealt);
         }
     }
 
@@ -522,22 +550,10 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             textPanel.addPara(Strings.get("casino.boss_defeat"), Color.RED);
             options.addOption(Strings.get("casino.back_lounge"), "casino_back");
             setState(State.CASINO_BOSS_REWARD);
+        } else if (CosmiconEventState.isTournamentActive()) {
+            handleTournamentDefeat(damageDealt);
         } else {
-            int hunterLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
-            boolean isNewRecord = damageDealt > hunterLevel;
-            CasinoIntegrationManager.updateTrashcanHunterLevel(damageDealt);
-            int newLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
-
-            textPanel.addPara(Strings.get("battle.you_lost"), Color.RED);
-
-            if (isNewRecord) {
-                textPanel.addPara(Strings.format("casino.challenge_new_record", newLevel), Color.CYAN);
-            } else {
-                textPanel.addPara(Strings.format("casino.challenge_result", damageDealt, newLevel), Color.GRAY);
-            }
-
-            options.addOption(Strings.get("casino.back_lounge"), "casino_back");
-            setState(State.CASINO_BOSS_REWARD);
+            handleGatekeeperDefeat(damageDealt);
         }
     }
 
@@ -588,6 +604,361 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         options.clearOptions();
         options.addOption(Strings.get("casino.back_lounge"), "casino_back");
+    }
+
+    private void handleGatekeeperVictory(int damageDealt) {
+        int hunterLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
+        CasinoIntegrationManager.updateTrashcanHunterLevel(damageDealt);
+
+        textPanel.addPara(Strings.get("casino.gatekeeper_victory"), Color.GREEN);
+
+        int credits = CasinoIntegrationManager.getCreditReward() * 4;
+        Global.getSector().getPlayerFleet().getCargo().getCredits().add(credits);
+        AddRemoveCommodity.addCreditsGainText(credits, textPanel);
+        textPanel.addPara(Strings.format("casino.gatekeeper_reward_win", credits));
+
+        CasinoIntegrationManager.setTournamentUnlocked(true);
+        textPanel.addPara(Strings.get("casino.gatekeeper_unlock_tournament"), Color.CYAN);
+
+        options.addOption(Strings.get("casino.back_lounge"), "casino_back");
+        setState(State.GATEKEEPER_REWARD);
+    }
+
+    private void handleGatekeeperDefeat(int damageDealt) {
+        int hunterLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
+        CasinoIntegrationManager.updateTrashcanHunterLevel(damageDealt);
+
+        textPanel.addPara(Strings.get("casino.gatekeeper_defeat"), Color.RED);
+
+        int credits = CasinoIntegrationManager.getCreditReward() * 2;
+        Global.getSector().getPlayerFleet().getCargo().getCredits().add(credits);
+        AddRemoveCommodity.addCreditsGainText(credits, textPanel);
+        textPanel.addPara(Strings.format("casino.gatekeeper_reward_lose", credits));
+
+        options.addOption(Strings.get("casino.back_lounge"), "casino_back");
+        setState(State.GATEKEEPER_REWARD);
+    }
+
+    private void handleTournamentVictory(int damageDealt) {
+        if (tournamentManager == null) return;
+
+        tournamentWins++;
+        CosmiconEventState.setTournamentWins(tournamentWins);
+
+        if (tournamentManager.isGrandFinal()) {
+            tournamentManager.recordGrandFinalGame(true);
+            CosmiconEventState.setTournamentSeriesScore(
+                tournamentManager.getBracketData().gfPlayerWins + "-" + tournamentManager.getBracketData().gfOpponentWins);
+
+            if (tournamentManager.isPlayerChampion()) {
+                showTournamentReward();
+            } else {
+                textPanel.addPara(Strings.format("casino.tournament_series_score",
+                    tournamentManager.getBracketData().gfPlayerWins,
+                    tournamentManager.getBracketData().gfOpponentWins), Color.GREEN);
+                showTournamentBracket();
+            }
+        } else {
+            tournamentManager.recordPlayerMatch(true);
+            syncTournamentState();
+
+            if (tournamentManager.isPlayerChampion()) {
+                showTournamentReward();
+            } else {
+                showTournamentBracket();
+            }
+        }
+    }
+
+    private void handleTournamentDefeat(int damageDealt) {
+        if (tournamentManager == null) return;
+
+        if (tournamentManager.isGrandFinal()) {
+            tournamentManager.recordGrandFinalGame(false);
+            CosmiconEventState.setTournamentSeriesScore(
+                tournamentManager.getBracketData().gfPlayerWins + "-" + tournamentManager.getBracketData().gfOpponentWins);
+
+            if (tournamentManager.isPlayerEliminated()) {
+                showTournamentReward();
+            } else {
+                textPanel.addPara(Strings.format("casino.tournament_series_score",
+                    tournamentManager.getBracketData().gfPlayerWins,
+                    tournamentManager.getBracketData().gfOpponentWins), Color.RED);
+                showTournamentBracket();
+            }
+        } else {
+            tournamentManager.recordPlayerMatch(false);
+            syncTournamentState();
+
+            if (tournamentManager.isPlayerEliminated()) {
+                showTournamentReward();
+            } else {
+                showTournamentBracket();
+            }
+        }
+    }
+
+    private void syncTournamentState() {
+        CosmiconEventState.setTournamentBracketData(tournamentManager.toJson());
+        CosmiconEventState.setTournamentWins(tournamentWins);
+        CosmiconEventState.setTournamentLosses(tournamentManager.getBracketData().playerLosses);
+        CosmiconEventState.setTournamentInLoserBracket(tournamentManager.getBracketData().playerInLoserBracket);
+        CosmiconEventState.setTournamentGrandFinal(tournamentManager.isGrandFinal());
+    }
+
+    private void showTournamentBracket() {
+        options.clearOptions();
+
+        String position = tournamentManager.getPlayerBracketPosition();
+        String opponentId = tournamentManager.getNextOpponentId();
+        String opponentName = opponentId != null
+            ? data.scripts.cosmicon.battle.CharacterRegistry.getCharacterById(opponentId).getName()
+            : Strings.get("casino.tournament_tbd");
+
+        textPanel.addPara(Strings.get("casino.tournament_bracket_title"), Color.CYAN);
+        textPanel.addPara(Strings.format("casino.tournament_status_line",
+            position, tournamentWins, tournamentManager.getBracketData().playerLosses));
+
+        if (tournamentManager.isGrandFinal()) {
+            textPanel.addPara(Strings.get("casino.tournament_grand_final"), Color.YELLOW);
+            textPanel.addPara(Strings.format("casino.tournament_series_score",
+                tournamentManager.getBracketData().gfPlayerWins,
+                tournamentManager.getBracketData().gfOpponentWins));
+        }
+
+        if (opponentId != null && !tournamentManager.isPlayerChampion() && !tournamentManager.isPlayerEliminated()) {
+            textPanel.addPara(Strings.format("casino.tournament_next_opponent", opponentName));
+            options.addOption(Strings.get("casino.tournament_next_fight"), "tournament_next_fight");
+        }
+
+        options.addOption(Strings.get("casino.tournament_view_bracket"), "tournament_view_bracket");
+        options.addOption(Strings.get("casino.tournament_back_lounge"), "tournament_back_lounge");
+        setState(State.TOURNAMENT_BRACKET);
+    }
+
+    private void handleTournamentBracketSelection(String data) {
+        switch (data) {
+            case "tournament_next_fight" -> startCasinoBattleWithSelection();
+            case "tournament_view_bracket" -> {
+                if (tournamentManager != null) {
+                    TournamentManager.BracketData bd = tournamentManager.getBracketData();
+                    textPanel.addPara(Strings.get("casino.tournament_bracket_title"), Color.CYAN);
+                    for (int r = 0; r < TournamentManager.BRACKET_GF; r++) {
+                        for (int m = 0; m < bd.wbResults[r].length; m++) {
+                            if (bd.wbResults[r][m] >= 0) {
+                                String w = bd.playerNames[bd.wbResults[r][m]];
+                                textPanel.addPara(Strings.format("casino.tournament_match_wb", r + 1, m + 1, w));
+                            }
+                        }
+                    }
+                    for (int r = 0; r < 4; r++) {
+                        for (int m = 0; m < bd.lbResults[r].length; m++) {
+                            if (bd.lbResults[r][m] >= 0) {
+                                String w = bd.playerNames[bd.lbResults[r][m]];
+                                textPanel.addPara(Strings.format("casino.tournament_match_lb", r + 1, m + 1, w));
+                            }
+                        }
+                    }
+                    if (bd.playerChampion) {
+                        textPanel.addPara(Strings.get("casino.tournament_gf_champion"), Color.YELLOW);
+                    } else if (bd.playerEliminated) {
+                        textPanel.addPara(Strings.get("casino.tournament_gf_eliminated"), Color.RED);
+                    }
+                }
+            }
+            case "tournament_back_lounge" -> {
+                clearTournamentState();
+                if (onLeaveAction != null) {
+                    onLeaveAction.run();
+                }
+            }
+        }
+    }
+
+    private void showTournamentReward() {
+        options.clearOptions();
+
+        boolean champion = tournamentManager != null && tournamentManager.isPlayerChampion();
+        boolean runnerUp = tournamentManager != null && !champion && !tournamentManager.isPlayerEliminated();
+        int baseCredits = CasinoIntegrationManager.getCreditReward() * 3;
+        int totalCredits = baseCredits * tournamentWins;
+
+        if (champion) {
+            textPanel.addPara(Strings.get("casino.tournament_victory"), Color.YELLOW);
+            tournamentPendingRewards = 3;
+        } else if (runnerUp) {
+            textPanel.addPara(Strings.get("casino.tournament_runner_up"), Color.CYAN);
+            tournamentPendingRewards = 2;
+        } else {
+            String position = tournamentManager != null ? tournamentManager.getPlayerBracketPosition() : "Unknown";
+            textPanel.addPara(Strings.format("casino.tournament_eliminated", position), Color.RED);
+            tournamentPendingRewards = 1;
+        }
+
+        Global.getSector().getPlayerFleet().getCargo().getCredits().add(totalCredits);
+        AddRemoveCommodity.addCreditsGainText(totalCredits, textPanel);
+        textPanel.addPara(Strings.format("casino.tournament_credits_earned", totalCredits, tournamentWins, baseCredits));
+
+        CosmiconEventState.setTournamentPendingRewards(tournamentPendingRewards);
+
+        showTournamentRewardOptions();
+    }
+
+    private void showTournamentRewardOptions() {
+        options.clearOptions();
+
+        if (tournamentPendingRewards <= 0) {
+            options.addOption(Strings.get("casino.back_lounge"), "casino_back");
+            setState(State.TOURNAMENT_REWARD);
+            return;
+        }
+
+        textPanel.addPara(Strings.format("casino.tournament_reward_select", tournamentPendingRewards));
+
+        int tier = CasinoIntegrationManager.getBossRewardTier();
+        pendingCasinoRewardTier = tier;
+
+        if (tier == 4) {
+            int credits = CasinoIntegrationManager.getCreditReward() * 3;
+            options.addOption(Strings.format("casino.boss_reward_credits", credits), "tournament_reward_credits");
+        } else {
+            pendingCasinoRewardCandidates = CasinoIntegrationManager.getRewardCandidates(tier, 3);
+            for (int i = 0; i < pendingCasinoRewardCandidates.size(); i++) {
+                String id = pendingCasinoRewardCandidates.get(i);
+                String displayName = CasinoIntegrationManager.getRewardDisplayName(id, tier);
+                if (tier == 1) {
+                    options.addOption(Strings.format("casino.boss_reward_char", displayName), "tournament_reward_" + i);
+                } else {
+                    options.addOption(Strings.format("casino.boss_reward_prismatic", displayName), "tournament_reward_" + i);
+                }
+            }
+            int credits = CasinoIntegrationManager.getCreditReward() * 3;
+            options.addOption(Strings.format("casino.boss_reward_credits", credits), "tournament_reward_credits");
+        }
+
+        setState(State.TOURNAMENT_REWARD);
+    }
+
+    private void handleTournamentRewardSelection(String data) {
+        switch (data) {
+            case "tournament_reward_0" -> applyTournamentReward(0);
+            case "tournament_reward_1" -> applyTournamentReward(1);
+            case "tournament_reward_2" -> applyTournamentReward(2);
+            case "tournament_reward_credits" -> {
+                int credits = CasinoIntegrationManager.getCreditReward() * 3;
+                Global.getSector().getPlayerFleet().getCargo().getCredits().add(credits);
+                AddRemoveCommodity.addCreditsGainText(credits, textPanel);
+                tournamentPendingRewards--;
+                if (tournamentPendingRewards > 0) {
+                    showTournamentRewardOptions();
+                } else {
+                    options.clearOptions();
+                    options.addOption(Strings.get("casino.back_lounge"), "casino_back");
+                }
+            }
+            case "casino_back" -> {
+                clearTournamentState();
+                if (onLeaveAction != null) {
+                    onLeaveAction.run();
+                }
+            }
+            default -> {
+                tournamentPendingRewards--;
+                if (tournamentPendingRewards > 0) {
+                    showTournamentRewardOptions();
+                } else {
+                    options.clearOptions();
+                    options.addOption(Strings.get("casino.back_lounge"), "casino_back");
+                }
+            }
+        }
+    }
+
+    private void applyTournamentReward(int index) {
+        if (pendingCasinoRewardCandidates == null || index >= pendingCasinoRewardCandidates.size()) return;
+
+        String id = pendingCasinoRewardCandidates.get(index);
+        int tier = pendingCasinoRewardTier;
+
+        switch (tier) {
+            case 1 -> CasinoIntegrationManager.unlockCharacterReward(id);
+            case 2, 3 -> CasinoIntegrationManager.unlockPrismaticReward(id);
+        }
+
+        if (tier == 1) {
+            textPanel.addPara(Strings.get("reward.character_unlocked"), Color.GREEN);
+        } else {
+            textPanel.addPara(Strings.get("reward.prismatic_unlocked"), Color.GREEN);
+        }
+
+        tournamentPendingRewards--;
+        pendingCasinoRewardCandidates = null;
+        pendingCasinoRewardTier = 0;
+
+        if (tournamentPendingRewards > 0) {
+            showTournamentRewardOptions();
+        } else {
+            options.clearOptions();
+            options.addOption(Strings.get("casino.back_lounge"), "casino_back");
+        }
+    }
+
+    private void clearTournamentState() {
+        tournamentManager = null;
+        tournamentPendingRewards = 0;
+        tournamentWins = 0;
+        CosmiconEventState.clearTournamentState();
+    }
+
+    private void handleGatekeeperRewardSelection(String data) {
+        if ("casino_back".equals(data)) {
+            if (onLeaveAction != null) {
+                onLeaveAction.run();
+            }
+        }
+    }
+
+    private void startCasinoBattleWithSelection() {
+        Boolean forcedPlayerIsAttacker = null;
+
+        CoinFlipPanelUI coinFlipUI = new CoinFlipPanelUI(forcedPlayerIsAttacker);
+
+        com.fs.starfarer.api.campaign.CustomVisualDialogDelegate coinDelegate =
+            new com.fs.starfarer.api.campaign.CustomVisualDialogDelegate() {
+                @Override
+                public com.fs.starfarer.api.campaign.CustomUIPanelPlugin getCustomPanelPlugin() {
+                    return coinFlipUI;
+                }
+
+                @Override
+                public void init(com.fs.starfarer.api.ui.CustomPanelAPI panel, DialogCallbacks callbacks) {
+                    coinFlipUI.init(panel, callbacks);
+                }
+
+                @Override
+                public float getNoiseAlpha() {
+                    return 0.2f;
+                }
+
+                @Override
+                public void advance(float amount) {
+                }
+
+                @Override
+                public void reportDismissed(int option) {
+                    boolean playerIsAttacker = coinFlipUI.isPlayerAttacker();
+                    coinFlipUI.cleanup();
+                    showBattleDialog(playerIsAttacker);
+                }
+            };
+
+        dialog.showCustomVisualDialog(
+            BattleRenderingUtils.PANEL_WIDTH,
+            BattleRenderingUtils.PANEL_HEIGHT,
+            coinDelegate
+        );
+
+        setState(State.PLAY);
     }
 
     private void finishReward() {

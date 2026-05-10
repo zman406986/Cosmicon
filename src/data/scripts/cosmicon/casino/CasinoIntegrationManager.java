@@ -22,6 +22,9 @@ import data.scripts.cosmicon.util.PrismaticDisplayHelper;
 @SuppressWarnings("unused")
 public class CasinoIntegrationManager {
 
+    private static final int TOURNAMENT_SIZE = 8;
+    private static final int TOURNAMENT_OPPONENT_COUNT = TOURNAMENT_SIZE - 1;
+
     public static boolean isCasinoLoaded() {
         return Global.getSettings().getModManager().isModEnabled("interastral_peace_casino");
     }
@@ -77,7 +80,7 @@ public class CasinoIntegrationManager {
         interaction.init(dialog);
     }
 
-    public static void startChallengeBattle(InteractionDialogAPI dialog, Runnable onLeave) {
+    public static void startGatekeeperBattle(InteractionDialogAPI dialog, Runnable onLeave) {
         CosmiconEventState.clearCasinoBattleState();
         CosmiconEventState.setCasinoBattleMode(true);
         CosmiconEventState.setCasinoBattleIsBoss(false);
@@ -90,6 +93,153 @@ public class CasinoIntegrationManager {
         interaction.setOnLeaveAction(onLeave);
         dialog.setPlugin(interaction);
         interaction.init(dialog);
+    }
+
+    public static void startTournament(InteractionDialogAPI dialog, Runnable onLeave) {
+        CosmiconEventState.clearTournamentState();
+        CosmiconEventState.setTournamentUnlocked(false);
+
+        String playerCharId = CosmiconEventState.getOpponentCharacter();
+        if (playerCharId == null) {
+            playerCharId = CharacterIds.TRASHCAN;
+        }
+
+        List<String> opponentPool = new ArrayList<>();
+        for (CharacterCard card : CharacterRegistry.getAllCards()) {
+            String id = card.getId();
+            if (!id.equals(CharacterIds.TRASHCAN) && !id.equals(playerCharId)) {
+                opponentPool.add(id);
+            }
+        }
+        Collections.shuffle(opponentPool, ThreadLocalRandom.current());
+        List<String> selectedOpponents = opponentPool.subList(0, Math.min(TOURNAMENT_OPPONENT_COUNT, opponentPool.size()));
+
+        TournamentManager tournament = TournamentManager.createNew(selectedOpponents);
+        tournament.simulateUpToPlayerMatch();
+
+        String json = tournament.toJson();
+        CosmiconEventState.setTournamentBracketData(json);
+        CosmiconEventState.setTournamentWins(0);
+        CosmiconEventState.setTournamentLosses(0);
+        CosmiconEventState.setTournamentInLoserBracket(false);
+        CosmiconEventState.setTournamentGrandFinal(false);
+
+        CosmiconEventState.clearCasinoBattleState();
+        CosmiconEventState.setCasinoBattleMode(true);
+        CosmiconEventState.setCasinoBattleIsBoss(false);
+
+        CosmiconInteraction interaction = new CosmiconInteraction();
+        interaction.setOnLeaveAction(onLeave);
+        dialog.setPlugin(interaction);
+        interaction.init(dialog);
+    }
+
+    public static void startTournamentBattle(InteractionDialogAPI dialog, Runnable onLeave) {
+        String bracketJson = CosmiconEventState.getTournamentBracketData();
+        if (bracketJson == null) return;
+
+        TournamentManager tournament = TournamentManager.fromJson(bracketJson);
+        if (tournament == null) return;
+
+        String nextOppId = tournament.getNextOpponentId();
+        if (nextOppId == null) return;
+
+        CosmiconEventState.clearCasinoBattleState();
+        CosmiconEventState.setCasinoBattleMode(true);
+        CosmiconEventState.setCasinoBattleIsBoss(false);
+        CosmiconEventState.setCasinoBattleOpponent(nextOppId);
+        CosmiconEventState.setCasinoBattleBonusHp(0);
+        CosmiconEventState.setCasinoBattleUseTrue(false);
+        CosmiconEventState.setIsBarEvent(false);
+
+        CosmiconInteraction interaction = new CosmiconInteraction();
+        interaction.setOnLeaveAction(onLeave);
+        dialog.setPlugin(interaction);
+        interaction.init(dialog);
+    }
+
+    public static void handleTournamentVictory() {
+        String bracketJson = CosmiconEventState.getTournamentBracketData();
+        if (bracketJson == null) return;
+
+        TournamentManager tournament = TournamentManager.fromJson(bracketJson);
+        if (tournament == null) return;
+
+        tournament.recordPlayerMatch(true);
+        CosmiconEventState.setTournamentBracketData(tournament.toJson());
+
+        int wins = CosmiconEventState.getTournamentWins();
+        CosmiconEventState.setTournamentWins(wins + 1);
+
+        CosmiconEventState.setTournamentGrandFinal(tournament.isGrandFinal());
+        CosmiconEventState.setTournamentInLoserBracket(
+            !tournament.isGrandFinal() && !tournament.isPlayerChampion() && !tournament.isPlayerEliminated()
+        );
+    }
+
+    public static void handleTournamentDefeat() {
+        String bracketJson = CosmiconEventState.getTournamentBracketData();
+        if (bracketJson == null) return;
+
+        TournamentManager tournament = TournamentManager.fromJson(bracketJson);
+        if (tournament == null) return;
+
+        tournament.recordPlayerMatch(false);
+        CosmiconEventState.setTournamentBracketData(tournament.toJson());
+
+        int losses = CosmiconEventState.getTournamentLosses();
+        CosmiconEventState.setTournamentLosses(losses + 1);
+
+        CosmiconEventState.setTournamentGrandFinal(tournament.isGrandFinal());
+        CosmiconEventState.setTournamentInLoserBracket(
+            !tournament.isGrandFinal() && !tournament.isPlayerEliminated()
+        );
+    }
+
+    public static boolean handleGrandFinalGame(boolean playerWon) {
+        String bracketJson = CosmiconEventState.getTournamentBracketData();
+        if (bracketJson == null) return false;
+
+        TournamentManager tournament = TournamentManager.fromJson(bracketJson);
+        if (tournament == null) return false;
+
+        tournament.recordGrandFinalGame(playerWon);
+        CosmiconEventState.setTournamentBracketData(tournament.toJson());
+
+        return tournament.isPlayerChampion() || tournament.isPlayerEliminated();
+    }
+
+    public static int getTournamentRewardSelections() {
+        String bracketJson = CosmiconEventState.getTournamentBracketData();
+        if (bracketJson == null) return 1;
+
+        TournamentManager tournament = TournamentManager.fromJson(bracketJson);
+        if (tournament == null) return 1;
+
+        if (tournament.isPlayerChampion()) return 3;
+
+        TournamentManager.BracketData data = tournament.getBracketData();
+        if (data.currentBracket == TournamentManager.BRACKET_GF) return 2;
+
+        return 1;
+    }
+
+    public static int calculateTournamentCredits(int wins) {
+        return wins * 3 * getCreditReward();
+    }
+
+    public static boolean isTournamentUnlocked() {
+        return CosmiconEventState.isTournamentUnlocked();
+    }
+
+    public static void setTournamentUnlocked(boolean unlocked) {
+        CosmiconEventState.setTournamentUnlocked(unlocked);
+    }
+
+    public static TournamentManager getTournamentManager() {
+        String bracketJson = CosmiconEventState.getTournamentBracketData();
+        if (bracketJson == null) return null;
+        return TournamentManager.fromJson(bracketJson);
     }
 
     public static int getBossRewardTier() {

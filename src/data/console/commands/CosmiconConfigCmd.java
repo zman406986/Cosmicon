@@ -38,6 +38,7 @@ public class CosmiconConfigCmd implements BaseCommand {
         Console.showMessage("  defaultHP: " + CosmiconConfig.DEFAULT_HP);
         Console.showMessage("  defaultRerolls: " + CosmiconConfig.DEFAULT_REROLLS);
         Console.showMessage("  debugEnabled: " + CosmiconConfig.DEBUG_ENABLED);
+        Console.showMessage("  rerollLogEnabled: " + CosmiconConfig.REROLL_LOG_ENABLED);
         Console.showMessage("");
         Console.showMessage("  AI_REVEAL_PER_DICE_DELAY: " + CosmiconConfig.AI_REVEAL_PER_DICE_DELAY);
         Console.showMessage("  AI_REROLL_PREVIEW_DELAY: " + CosmiconConfig.AI_REROLL_PREVIEW_DELAY);
@@ -82,8 +83,12 @@ public class CosmiconConfigCmd implements BaseCommand {
                 CosmiconConfig.DEBUG_ENABLED = Boolean.parseBoolean(value);
                 Console.showMessage("Set debugEnabled = " + CosmiconConfig.DEBUG_ENABLED);
             }
+            case "rerolllogenabled" -> {
+                CosmiconConfig.REROLL_LOG_ENABLED = Boolean.parseBoolean(value);
+                Console.showMessage("Set rerollLogEnabled = " + CosmiconConfig.REROLL_LOG_ENABLED);
+            }
             default -> Console.showMessage("Error: unknown config key '" + key
-                + "'. Valid keys: cosmiconDiceEnabled, marketSizeMin, defaultHP, defaultRerolls, debugEnabled");
+                + "'. Valid keys: cosmiconDiceEnabled, marketSizeMin, defaultHP, defaultRerolls, debugEnabled, rerollLogEnabled");
         }
     }
 }

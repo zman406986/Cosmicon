@@ -1,6 +1,7 @@
 package data.console.commands;
 
 import data.scripts.cosmicon.casino.CasinoIntegrationManager;
+import data.scripts.cosmicon.casino.TournamentManager;
 import data.scripts.cosmicon.state.CosmiconEventState;
 import org.lazywizard.console.BaseCommand;
 import org.lazywizard.console.CommonStrings;
@@ -45,6 +46,29 @@ public class CosmiconCasinoStatus implements BaseCommand {
             Console.showMessage("  Bonus HP: " + casinoBonusHp);
             Console.showMessage("  Use True Prismatic: " + casinoUseTrue);
             Console.showMessage("  Result Damage: " + casinoResultDamage);
+        }
+
+        Console.showMessage("");
+        Console.showMessage("--- Tournament Status ---");
+        boolean tournamentUnlocked = CosmiconEventState.isTournamentUnlocked();
+        boolean tournamentActive = CosmiconEventState.isTournamentActive();
+        Console.showMessage("  Tournament Unlocked: " + (tournamentUnlocked ? "YES" : "no"));
+        Console.showMessage("  Tournament Active: " + (tournamentActive ? "YES" : "no"));
+        if (tournamentActive) {
+            int wins = CosmiconEventState.getTournamentWins();
+            int losses = CosmiconEventState.getTournamentLosses();
+            boolean inLoser = CosmiconEventState.isTournamentInLoserBracket();
+            boolean grandFinal = CosmiconEventState.isTournamentGrandFinal();
+
+            TournamentManager tm = CasinoIntegrationManager.getTournamentManager();
+            String position = tm != null ? tm.getPlayerBracketPosition() : "Unknown";
+            String nextOpponent = tm != null ? tm.getNextOpponentId() : "none";
+
+            Console.showMessage("  Position: " + position);
+            Console.showMessage("  Wins: " + wins + "  Losses: " + losses);
+            Console.showMessage("  Loser Bracket: " + (inLoser ? "YES" : "no"));
+            Console.showMessage("  Grand Final: " + (grandFinal ? "YES" : "no"));
+            Console.showMessage("  Next Opponent: " + (nextOpponent != null ? nextOpponent : "none"));
         }
 
         Console.showMessage("");
