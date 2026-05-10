@@ -25,6 +25,7 @@ import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.state.CosmiconPlayerState;
 import data.scripts.cosmicon.state.CosmiconStats;
 import data.scripts.cosmicon.tutorial.TutorialController;
+import data.scripts.cosmicon.util.PrismaticDisplayHelper;
 
 import java.awt.Color;
 
@@ -61,8 +62,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         CASINO_BOSS_REWARD,
         GATEKEEPER_REWARD,
         TOURNAMENT_BRACKET,
-        TOURNAMENT_REWARD,
-        TOURNAMENT_SERIES
+        TOURNAMENT_REWARD
     }
 
     public static void startInteraction(InteractionDialogAPI dialog) {
@@ -227,7 +227,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 handleGatekeeperRewardSelection(data);
                 break;
 
-            case TOURNAMENT_BRACKET, TOURNAMENT_SERIES:
+            case TOURNAMENT_BRACKET:
                 handleTournamentBracketSelection(data);
                 break;
 
@@ -500,14 +500,16 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             case "unlock_character" -> {
                 if (pendingRewardCharId != null) {
                     CosmiconStats.unlockCharacter(pendingRewardCharId);
-                    textPanel.addPara(Strings.get("reward.character_unlocked"));
+                    String charName = CharacterRegistry.getCharacterById(pendingRewardCharId).getName();
+                    textPanel.addPara(Strings.format("reward.character_unlocked", charName));
                 }
                 finishReward();
             }
             case "unlock_prismatic" -> {
                 if (pendingRewardPrismaticId != null) {
                     CosmiconStats.unlockPrismaticDice(pendingRewardPrismaticId);
-                    textPanel.addPara(Strings.get("reward.prismatic_unlocked"));
+                    String diceName = PrismaticDisplayHelper.getDiceDisplayName(pendingRewardPrismaticId);
+                    textPanel.addPara(Strings.format("reward.prismatic_unlocked", diceName));
                 }
                 finishReward();
             }
@@ -718,7 +720,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 textPanel.addPara(Strings.format("casino.tournament_series_score",
                     tournamentManager.getBracketData().gfPlayerWins,
                     tournamentManager.getBracketData().gfOpponentWins), Color.GREEN);
-                showTournamentBracket();
+                showTournamentBracketPanel();
             }
         } else {
             tournamentManager.recordPlayerMatch(true);
@@ -727,7 +729,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             if (tournamentManager.isPlayerChampion()) {
                 showTournamentReward();
             } else {
-                showTournamentBracket();
+                showTournamentBracketPanel();
             }
         }
     }
@@ -752,7 +754,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 textPanel.addPara(Strings.format("casino.tournament_series_score",
                     tournamentManager.getBracketData().gfPlayerWins,
                     tournamentManager.getBracketData().gfOpponentWins), Color.RED);
-                showTournamentBracket();
+                showTournamentBracketPanel();
             }
         } else {
             tournamentManager.recordPlayerMatch(false);
@@ -761,7 +763,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             if (tournamentManager.isPlayerEliminated()) {
                 showTournamentReward();
             } else {
-                showTournamentBracket();
+                showTournamentBracketPanel();
             }
         }
     }
@@ -774,42 +776,18 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         CosmiconEventState.setTournamentGrandFinal(tournamentManager.isGrandFinal());
     }
 
-    private void showTournamentBracket() {
-        options.clearOptions();
-
-        String position = tournamentManager.getPlayerBracketPosition();
-        String opponentId = tournamentManager.getNextOpponentId();
-        String opponentName = opponentId != null
-            ? data.scripts.cosmicon.battle.CharacterRegistry.getCharacterById(opponentId).getName()
-            : Strings.get("casino.tournament_tbd");
-
-        textPanel.addPara(Strings.get("casino.tournament_bracket_title"), Color.CYAN);
-        textPanel.addPara(Strings.format("casino.tournament_status_line",
-            position, tournamentWins, tournamentManager.getBracketData().playerLosses));
-
-        if (tournamentManager.isGrandFinal()) {
-            textPanel.addPara(Strings.get("casino.tournament_grand_final"), Color.YELLOW);
-            textPanel.addPara(Strings.format("casino.tournament_series_score",
-                tournamentManager.getBracketData().gfPlayerWins,
-                tournamentManager.getBracketData().gfOpponentWins));
-        }
-
-        if (opponentId != null && !tournamentManager.isPlayerChampion() && !tournamentManager.isPlayerEliminated()) {
-            textPanel.addPara(Strings.format("casino.tournament_next_opponent", opponentName));
-            options.addOption(Strings.get("casino.tournament_next_fight"), "tournament_next_fight");
-        }
-
-        options.addOption(Strings.get("casino.tournament_back_lounge"), "tournament_back_lounge");
-        setState(State.TOURNAMENT_BRACKET);
-    }
-
     private void showTournamentStandingsPanel() {
         TournamentManager mgr = tournamentManager;
         if (mgr == null) {
             String json = CosmiconEventState.getTournamentBracketData();
             if (json != null) mgr = TournamentManager.fromJson(json);
         }
-        if (mgr == null) return;
+        if (mgr == null) {
+            textPanel.addPara(Strings.get("casino.tournament_error_load"), Color.RED);
+            CosmiconEventState.clearTournamentState();
+            showMenu();
+            return;
+        }
 
         TournamentManager.BracketData bd = mgr.getBracketData();
         String[] displayNames = new String[bd.playerNames.length];
@@ -898,7 +876,8 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                     textPanel.addPara(Strings.format("casino.tournament_credits_earned", totalCredits, tournamentWins, baseCredits));
                 }
                 textPanel.addPara(Strings.get("casino.tournament_forfeited"), Color.RED);
-                tournamentPendingRewards = 1;
+                boolean inGrandFinal = tournamentManager != null && tournamentManager.isGrandFinal();
+                tournamentPendingRewards = inGrandFinal ? 2 : 1;
                 CosmiconEventState.setTournamentPendingRewards(tournamentPendingRewards);
                 showTournamentRewardOptions();
             }
@@ -1016,10 +995,11 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             case 2, 3 -> CasinoIntegrationManager.unlockPrismaticReward(id);
         }
 
+        String displayName = CasinoIntegrationManager.getRewardDisplayName(id, tier);
         if (tier == 1) {
-            textPanel.addPara(Strings.get("reward.character_unlocked"), Color.GREEN);
+            textPanel.addPara(Strings.format("reward.character_unlocked", displayName), Color.GREEN);
         } else {
-            textPanel.addPara(Strings.get("reward.prismatic_unlocked"), Color.GREEN);
+            textPanel.addPara(Strings.format("reward.prismatic_unlocked", displayName), Color.GREEN);
         }
 
         tournamentPendingRewards--;
@@ -1063,7 +1043,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 CosmiconEventState.setCasinoBattleOpponent(nextOppId);
             }
         }
-        CosmiconEventState.setCasinoBattleBonusHp(15);
+        CosmiconEventState.setCasinoBattleBonusHp(0);
 
         Boolean forcedPlayerIsAttacker = null;
 

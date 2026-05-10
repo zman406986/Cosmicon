@@ -24,7 +24,6 @@ public class CosmiconEventState {
     private static final String KEY_CASINO_BATTLE_RESULT_DAMAGE = "$cos_casino_battle_result_damage";
     private static final String KEY_TRASHCAN_HUNTER_LEVEL = "$cos_trashcan_hunter_level";
 
-    private static final String KEY_TOURNAMENT_UNLOCKED = "$cos_tournament_unlocked";
     private static final String KEY_TOURNAMENT_ROUND = "$cos_tournament_round";
     private static final String KEY_TOURNAMENT_WINS = "$cos_tournament_wins";
     private static final String KEY_TOURNAMENT_LOSSES = "$cos_tournament_losses";
@@ -41,7 +40,7 @@ public class CosmiconEventState {
         KEY_CASINO_BATTLE_MODE, KEY_CASINO_BATTLE_IS_BOSS,
         KEY_CASINO_BATTLE_OPPONENT, KEY_CASINO_BATTLE_BONUS_HP,
         KEY_CASINO_BATTLE_USE_TRUE, KEY_CASINO_BATTLE_RESULT_DAMAGE,
-        KEY_TOURNAMENT_UNLOCKED, KEY_TOURNAMENT_ROUND,
+        KEY_TOURNAMENT_ROUND,
         KEY_TOURNAMENT_WINS, KEY_TOURNAMENT_LOSSES,
         KEY_TOURNAMENT_IN_LOSER_BRACKET, KEY_TOURNAMENT_GRAND_FINAL,
         KEY_TOURNAMENT_SERIES_SCORE, KEY_TOURNAMENT_BRACKET_DATA,
@@ -49,7 +48,7 @@ public class CosmiconEventState {
     );
 
     private static final List<String> TOURNAMENT_KEYS = List.of(
-        KEY_TOURNAMENT_UNLOCKED, KEY_TOURNAMENT_ROUND,
+        KEY_TOURNAMENT_ROUND,
         KEY_TOURNAMENT_WINS, KEY_TOURNAMENT_LOSSES,
         KEY_TOURNAMENT_IN_LOSER_BRACKET, KEY_TOURNAMENT_GRAND_FINAL,
         KEY_TOURNAMENT_SERIES_SCORE, KEY_TOURNAMENT_BRACKET_DATA,
@@ -240,16 +239,6 @@ public class CosmiconEventState {
         MemoryAPI mem = getMemory();
         if (!mem.contains(KEY_TRASHCAN_HUNTER_LEVEL)) return 0;
         return (int) mem.getFloat(KEY_TRASHCAN_HUNTER_LEVEL);
-    }
-
-    public static void setTournamentUnlocked(boolean unlocked) {
-        getMemory().set(KEY_TOURNAMENT_UNLOCKED, unlocked);
-    }
-
-    public static boolean isTournamentUnlocked() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_TOURNAMENT_UNLOCKED)) return false;
-        return mem.getBoolean(KEY_TOURNAMENT_UNLOCKED);
     }
 
     public static void setTournamentRound(int round) {

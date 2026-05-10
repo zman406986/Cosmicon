@@ -2,7 +2,9 @@ package data.console.commands;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
+import data.scripts.cosmicon.casino.CasinoIntegrationManager;
 import data.scripts.cosmicon.state.CosmiconEventState;
+import data.scripts.cosmicon.state.CosmiconStats;
 import org.jetbrains.annotations.NotNull;
 import org.lazywizard.console.BaseCommand;
 import org.lazywizard.console.CommonStrings;
@@ -45,6 +47,7 @@ public class CosmiconCasinoReset implements BaseCommand {
 
         if (resetTournament) {
             CosmiconEventState.clearTournamentAll();
+            CosmiconStats.setTournamentUnlocked(false);
             Console.showMessage("Reset: Tournament state");
         }
 
@@ -53,7 +56,7 @@ public class CosmiconCasinoReset implements BaseCommand {
         Console.showMessage("  Master Dicer Level: " + CosmiconEventState.getTrashcanHunterLevel());
         Console.showMessage("  Casino Battle Active: " + CosmiconEventState.isCasinoBattleMode());
         Console.showMessage("  Casino Battle Type: " + (CosmiconEventState.isCasinoBattleBoss() ? "BOSS" : "CHALLENGE"));
-        Console.showMessage("  Tournament Unlocked: " + CosmiconEventState.isTournamentUnlocked());
+        Console.showMessage("  Tournament Unlocked: " + CasinoIntegrationManager.isTournamentUnlocked());
         Console.showMessage("  Tournament Active: " + CosmiconEventState.isTournamentActive());
 
         return CommandResult.SUCCESS;

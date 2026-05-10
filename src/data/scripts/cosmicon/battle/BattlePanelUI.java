@@ -291,7 +291,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         }
 
         if (battleController != null && battleController.isGatekeeper999Battle()
-                && CosmiconEventState.isTournamentUnlocked()) {
+                && CosmiconStats.isTournamentUnlocked()) {
             gatekeeper999StartMessageActive = true;
             gatekeeper999StartMessagePulseTimer = 0f;
             createGatekeeper999StartMessageLabel();

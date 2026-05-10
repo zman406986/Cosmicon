@@ -7,6 +7,7 @@ import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import com.fs.starfarer.api.combat.EngagementResultAPI;
 import data.scripts.cosmicon.casino.CasinoIntegrationManager;
 import data.scripts.cosmicon.state.CosmiconEventState;
+import data.scripts.cosmicon.state.CosmiconStats;
 import java.util.Map;
 
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,7 @@ public class CosmiconCasinoTournament implements BaseCommand {
         }
 
         CosmiconEventState.clearTournamentState();
-        CosmiconEventState.setTournamentUnlocked(true);
+        CosmiconStats.setTournamentUnlocked(true);
 
         Console.showMessage("Starting 8-player tournament...");
 

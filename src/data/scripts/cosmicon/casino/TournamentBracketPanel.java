@@ -38,7 +38,6 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
     private static final Color COLOR_PLAYER_BORDER = new Color(0, 150, 255, 200);
     private static final Color COLOR_CURRENT_BORDER = Color.YELLOW;
     private static final Color COLOR_WINNER_TEXT = new Color(100, 255, 100);
-    private static final Color COLOR_LOSER_TEXT = new Color(120, 120, 120);
     private static final Color COLOR_SIMULATED = new Color(100, 100, 110);
     private static final Color COLOR_PENDING = new Color(160, 160, 170);
     private static final Color COLOR_LB_DIVIDER = new Color(60, 65, 90, 180);
@@ -113,8 +112,8 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
             baseX = (panelW - minContentSpan) / 2f;
         }
 
-        float usableH = panelH - WB_TOP_Y - STATUS_BAR_H - 50f;
-        rowSpacing = Math.max(82f, usableH / 7f);
+        float usableH = panelH - WB_TOP_Y - STATUS_BAR_H - 20f;
+        rowSpacing = Math.max(96f, usableH / 7f);
     }
 
     private float rowSpacingForLb() {
@@ -210,6 +209,10 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
         return baseY + round * rowSpacing + matchIndex * rowSpacingForLb();
     }
 
+    private float getGfUiY() {
+        return getWbMatchUiY(0) + 10f;
+    }
+
     private void updateAllLabels() {
         if (data == null) {
             titleLabel.setText("Tournament Bracket - No Data");
@@ -257,22 +260,35 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
         }
 
         float gfX = baseX + 3f * colSpacing;
-        float gfY = getWbMatchUiY(0) - 20f;
+        float gfY = getGfUiY();
         if (labelIdx < matchLabels.length) {
             int wbFinalWinner = getResult(data.wbResults, 2, 0);
             int lbFinalWinner = getResult(data.lbResults, 3, 0);
-            boolean gfStarted = data.gfSeries != null && data.gfSeries[0] >= 0;
             boolean involvesPlayer = (wbFinalWinner == 0 || lbFinalWinner == 0);
             boolean isCurrent = data.currentBracket == TournamentManager.BRACKET_GF;
+            boolean participantsKnown = wbFinalWinner >= 0 && lbFinalWinner >= 0;
 
             LabelAPI lbl = matchLabels[labelIdx];
             lbl.getPosition().inTL(gfX + 4f, gfY + 2f);
             lbl.setOpacity(1f);
 
-            if (gfStarted) {
-                String score = data.gfPlayerWins + " - " + data.gfOpponentWins;
-                lbl.setText("GF: " + score);
-                lbl.setColor(data.playerChampion ? COLOR_WINNER_TEXT : COLOR_LOSER_TEXT);
+            if (involvesPlayer && participantsKnown) {
+                String playerName = getDisplayName(0);
+                String opponentName = wbFinalWinner == 0
+                    ? getDisplayName(lbFinalWinner)
+                    : getDisplayName(wbFinalWinner);
+                String score = data.gfPlayerWins + " : " + data.gfOpponentWins;
+                lbl.setText(truncate(playerName) + " vs " + truncate(opponentName) + "\n" + score);
+
+                if (data.playerChampion) {
+                    lbl.setColor(COLOR_WINNER_TEXT);
+                } else if (data.playerEliminated) {
+                    lbl.setColor(new Color(255, 100, 100));
+                } else if (isCurrent) {
+                    lbl.setColor(Color.YELLOW);
+                } else {
+                    lbl.setColor(ColorHelper.PLAYER_NAME);
+                }
             } else {
                 String n0 = getDisplayName(wbFinalWinner);
                 String n1 = getDisplayName(lbFinalWinner);
@@ -478,7 +494,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
 
     private void renderGfBox(float alpha) {
         float gfX = baseX + 3f * colSpacing;
-        float gfY = getWbMatchUiY(0) - 20f;
+        float gfY = getGfUiY();
         UnifiedCoord coord = new UnifiedCoord(gfX, gfY);
 
         int wbFinalWinner = getResult(data.wbResults, 2, 0);
@@ -536,7 +552,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
         float wbFinalXUi = baseX + 2f * colSpacing + MATCH_W;
         float wbFinalYUi = getWbMatchUiY(0) + MATCH_H / 2f;
         float gfXUi = baseX + 3f * colSpacing;
-        float gfYUi = getWbMatchUiY(0) - 20f + MATCH_H / 2f;
+        float gfYUi = getGfUiY() + MATCH_H / 2f;
         UnifiedCoord wbFinalCoord = new UnifiedCoord(wbFinalXUi, wbFinalYUi);
         UnifiedCoord gfCoord = new UnifiedCoord(gfXUi, gfYUi);
 

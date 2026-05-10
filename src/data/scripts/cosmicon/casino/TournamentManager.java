@@ -194,7 +194,9 @@ public class TournamentManager {
             }
         }
 
-        if (currentBracket == BRACKET_GF || playerInLoserBracket && lbResults[3][0] == PLAYER_SLOT) {
+        if (currentBracket == BRACKET_GF
+            || (playerInLoserBracket && lbResults[3][0] == PLAYER_SLOT)
+            || (!playerInLoserBracket && wbResults[WB_ROUNDS - 1][0] == PLAYER_SLOT)) {
             return new Integer[]{BRACKET_GF, 0, 0};
         }
 
@@ -324,6 +326,9 @@ public class TournamentManager {
         int playerSlot = PLAYER_SLOT;
         int opponentSlot = getNextOpponentSlot();
 
+        int completedBracket = currentBracket;
+        int completedRound = currentRound;
+
         if (currentBracket == BRACKET_WB) {
             if (playerWon) {
                 wbResults[currentRound][currentMatchIndex] = playerSlot;
@@ -346,7 +351,37 @@ public class TournamentManager {
             }
         }
 
+        simulateRemainingInRound(completedBracket, completedRound);
         simulateUpToPlayerMatch();
+    }
+
+    private void simulateRemainingInRound(int bracket, int round) {
+        if (bracket == BRACKET_WB) {
+            for (int m = 0; m < WB_MATCH_COUNTS[round]; m++) {
+                if (wbResults[round][m] >= 0) continue;
+
+                int slot0 = wbMatchups[round][m * 2];
+                int slot1 = wbMatchups[round][m * 2 + 1];
+
+                if (slot0 < 0 || slot1 < 0) continue;
+
+                int winner = simulateMatch(slot0, slot1);
+                int loser = (winner == slot0) ? slot1 : slot0;
+                advanceWinner(BRACKET_WB, round, m, winner, loser);
+            }
+        } else if (bracket == BRACKET_LB) {
+            for (int m = 0; m < LB_MATCH_COUNTS[round]; m++) {
+                if (lbResults[round][m] >= 0) continue;
+
+                int slot0 = lbMatchups[round][m * 2];
+                int slot1 = lbMatchups[round][m * 2 + 1];
+
+                if (slot0 < 0 || slot1 < 0) continue;
+
+                int winner = simulateMatch(slot0, slot1);
+                advanceWinner(BRACKET_LB, round, m, winner, -1);
+            }
+        }
     }
 
     public void recordGrandFinalGame(boolean playerWon) {

@@ -16,6 +16,7 @@ public class CosmiconStats {
     private static final String KEY_UNLOCKED_PRISMATIC_TRUE = "$cos_unlocked_prismatic_true";
     private static final String KEY_PRISMATIC_FEATURE_UNLOCKED = "$cos_prismatic_feature_unlocked";
     private static final String KEY_HAS_GALLERY_CHARACTERS = "$cos_has_gallery_characters";
+    private static final String KEY_TOURNAMENT_UNLOCKED = "$cos_tournament_unlocked";
 
     private static final int TUTORIAL_GAMES = 2;
     private static final String REPEATER_ID = "repeater";
@@ -151,6 +152,16 @@ public class CosmiconStats {
         CosmiconPlayerState.saveCharacter(CharacterIds.ACHERON);
         CosmiconPlayerState.savePrismaticDice(REPEATER_ID);
         CosmiconPlayerState.savePrismaticDiceTrueVersion(false);
+    }
+
+    public static boolean isTournamentUnlocked() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_TOURNAMENT_UNLOCKED)) return false;
+        return mem.getBoolean(KEY_TOURNAMENT_UNLOCKED);
+    }
+
+    public static void setTournamentUnlocked(boolean unlocked) {
+        getMemory().set(KEY_TOURNAMENT_UNLOCKED, unlocked);
     }
 
     public static int calculateCreditReward(int playerLevel) {

@@ -51,7 +51,7 @@ public class CosmiconCasinoStatus implements BaseCommand {
 
         Console.showMessage("");
         Console.showMessage("--- Tournament Status ---");
-        boolean tournamentUnlocked = CosmiconEventState.isTournamentUnlocked();
+        boolean tournamentUnlocked = CasinoIntegrationManager.isTournamentUnlocked();
         boolean tournamentActive = CosmiconEventState.isTournamentActive();
         Console.showMessage("  Tournament Unlocked: " + (tournamentUnlocked ? "YES" : "no"));
         Console.showMessage("  Tournament Active: " + (tournamentActive ? "YES" : "no"));
