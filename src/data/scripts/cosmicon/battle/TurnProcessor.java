@@ -948,10 +948,10 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         processEndOfTurnPassives(false);
         
         if (weatherController.shouldApplyFineSnowEffect(state, true)) {
-            state.getPlayerEffects().addEffect(StatusEffectProcessor.StatusEffect.TOUGHNESS, 3);
+            state.getPlayerEffects().addEffect(StatusEffectProcessor.StatusEffect.TOUGHNESS, 3, 1);
         }
         if (weatherController.shouldApplyFineSnowEffect(state, false)) {
-            state.getOpponentEffects().addEffect(StatusEffectProcessor.StatusEffect.TOUGHNESS, 3);
+            state.getOpponentEffects().addEffect(StatusEffectProcessor.StatusEffect.TOUGHNESS, 3, 1);
         }
         
         PassiveEventSystem.onEndOfDefenseTurn(state, true);
@@ -975,6 +975,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         state.clearWeatherMods();
         if (newWeather != null) {
             if (newWeather != oldWeather) {
+                weatherController.clearWeatherStatusEffects(state, oldWeather);
                 state.notifyWeatherChange(newWeather);
                 weatherController.applyWeatherAppearanceEffects(state);
             }

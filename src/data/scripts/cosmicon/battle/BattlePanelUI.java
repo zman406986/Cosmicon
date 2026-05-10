@@ -590,9 +590,12 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     public void onSecondaryDamage(boolean isPlayer, int damage, String damageType) {
         if (damage <= 0) return;
 
+        boolean displayOnSource = "INSTANT_DAMAGE".equals(damageType);
+        boolean displayIsPlayer = displayOnSource ? !isPlayer : isPlayer;
+
         float cardCenterX;
         float cardCenterY;
-        if (isPlayer) {
+        if (displayIsPlayer) {
             float cardX = BattleRenderingUtils.getPlayerCardX();
             float cardY = BattleRenderingUtils.getPlayerCardY();
             cardCenterX = cardX + BattleRenderingUtils.CARD_WIDTH / 2f;
@@ -604,7 +607,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         int sameTargetCount = 0;
         for (SecondaryDamageEntry entry : secondaryDamageNumbers) {
-            if (entry.isPlayer == isPlayer) sameTargetCount++;
+            if (entry.isPlayer == displayIsPlayer) sameTargetCount++;
         }
         float yOffset = sameTargetCount * 20f;
 
@@ -623,7 +626,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             impactEffect.triggerParticles(cardCenterX, cardCenterY, 10, color);
         }
 
-        secondaryDamageNumbers.add(new SecondaryDamageEntry(fn, isPlayer, impactEffect));
+        secondaryDamageNumbers.add(new SecondaryDamageEntry(fn, displayIsPlayer, impactEffect));
 
         switch (damageType) {
             case "COUNTER" -> labels.triggerEffectProcessAnimation(!isPlayer, StatusEffectProcessor.StatusEffect.COUNTER);

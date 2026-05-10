@@ -239,6 +239,21 @@ public class WeatherController {
         }
     }
 
+    public void clearWeatherStatusEffects(BattleState state, WeatherType oldWeather) {
+        if (oldWeather == null) return;
+        switch (oldWeather) {
+            case SUNNY, THE_DECISIVE_MOMENT -> {
+                state.getPlayerEffects().removeLayers(StatusEffect.STRENGTH, 5);
+                state.getOpponentEffects().removeLayers(StatusEffect.STRENGTH, 5);
+            }
+            case HIGH_TEMPERATURE -> {
+                state.getPlayerEffects().removeLayers(StatusEffect.STRENGTH, 2);
+                state.getOpponentEffects().removeLayers(StatusEffect.STRENGTH, 2);
+            }
+            default -> {}
+        }
+    }
+
     public void applyDefenderSelectionPhase(BattleState state, boolean isPlayer) {
         WeatherType weather = getCurrentWeather();
         if (weather == null) return;

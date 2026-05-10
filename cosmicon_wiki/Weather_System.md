@@ -34,7 +34,7 @@ Weather affects both players and changes at start of turn 2/4/6/8. Effects are p
 | Sunny               | 晴       | Attack    | 8    | Both sides: 5 Strength (until weather ends)                                 | 双方获得5层力量，持续到本次天气结束                |
 | Rainbow             | 彩虹      | Attack    | 6    | Attack ≤10: gain Perforation                                                | 攻击方选定骰子时，若攻击值≤10，获得洞穿             |
 | Dry Thunderstorm    | 晴雷      | Reversal  | 8    | Attacker selects dice: deal 3 Instant Damage                                | 攻击方选定骰子时，直接造成3点瞬伤                 |
-| Drought             | 干旱      | Reversal  | 6    | Defender's DEF Level = +3 ATK per level for attacker                        | 根据对方防御等级，每一级攻击方附加3点攻击值            |
+| Drought             | 干旱      | Reversal  | 6    | Attacker gains +3 ATK per level of defender's DEF Level                     | 攻击方根据对方防御等级，每级获得+3攻击值              |
 | Scorching Sun       | 烈日      | Safeguard | 4    | Siphon 50% HP of damage dealt                                               | 双方攻击时，虹吸造成伤害50%的生命值               |
 | The Decisive Moment | 决胜时刻    | Attack    | ?    | Both sides: 5 Strength                                                      | 双方获得5层力量                          |
 | Acid Rain           | 雨       | Safeguard | 4    | Start of turn: player with more HP gets 1 Poison                            | 每回合开始时：场上生命值更多的一方，会被附加1层中毒        |

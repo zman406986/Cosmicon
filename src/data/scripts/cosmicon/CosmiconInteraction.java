@@ -16,7 +16,9 @@ import data.scripts.cosmicon.battle.BattleDialogDelegate;
 import data.scripts.cosmicon.battle.BattleRenderingUtils;
 import data.scripts.cosmicon.battle.CoinFlipPanelUI;
 import data.scripts.cosmicon.casino.CasinoIntegrationManager;
+import data.scripts.cosmicon.casino.TournamentBracketPanel;
 import data.scripts.cosmicon.casino.TournamentManager;
+import data.scripts.cosmicon.battle.CharacterRegistry;
 import data.scripts.cosmicon.setup.CharacterSetupDialogDelegate;
 import data.scripts.cosmicon.setup.CharacterSetupPanelUI;
 import data.scripts.cosmicon.state.CosmiconEventState;
@@ -92,7 +94,15 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             this.memoryMap.put(MemKeys.LOCAL, target.getMemoryWithoutUpdate());
             this.memoryMap.put(MemKeys.ENTITY, target.getMemoryWithoutUpdate());
         }
-        
+
+        if (CosmiconEventState.isTournamentActive()) {
+            String bracketJson = CosmiconEventState.getTournamentBracketData();
+            if (bracketJson != null) {
+                tournamentManager = TournamentManager.fromJson(bracketJson);
+                tournamentWins = CosmiconEventState.getTournamentWins();
+            }
+        }
+
         showMenu();
     }
 
@@ -131,6 +141,9 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         }
         if (CosmiconStats.getGamesPlayed() >= 2) {
             options.addOption("Replay Tutorial Game 2", "replay_tutorial_2");
+        }
+        if (CosmiconEventState.isTournamentActive()) {
+            options.addOption(Strings.get("menu.view_tournament_standings"), "view_tournament_standings");
         }
         options.addOption(Strings.get("menu.help"), "help");
         options.addOption(Strings.get("menu.leave"), "leave");
@@ -176,6 +189,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                         startBattleWithSelection();
                     }
                     case "character_setup" -> showCharacterSetup();
+                    case "view_tournament_standings" -> showTournamentStandingsPanel();
                     case "help" -> showHelp();
                     case "leave" -> {
                         CosmiconEventState.clearAll();
@@ -757,6 +771,53 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         setState(State.TOURNAMENT_BRACKET);
     }
 
+    private void showTournamentStandingsPanel() {
+        TournamentManager mgr = tournamentManager;
+        if (mgr == null) {
+            String json = CosmiconEventState.getTournamentBracketData();
+            if (json != null) mgr = TournamentManager.fromJson(json);
+        }
+        if (mgr == null) return;
+
+        TournamentManager.BracketData bd = mgr.getBracketData();
+        String[] displayNames = new String[bd.playerNames.length];
+        for (int i = 0; i < bd.playerNames.length; i++) {
+            var card = CharacterRegistry.getCharacterById(bd.playerNames[i]);
+            displayNames[i] = card != null ? card.getName() : bd.playerNames[i];
+        }
+
+        TournamentBracketPanel bracketPanel = new TournamentBracketPanel(bd, displayNames);
+
+        CustomVisualDialogDelegate delegate = new CustomVisualDialogDelegate() {
+            @Override
+            public CustomUIPanelPlugin getCustomPanelPlugin() {
+                return bracketPanel;
+            }
+
+            @Override
+            public void init(com.fs.starfarer.api.ui.CustomPanelAPI panel, DialogCallbacks callbacks) {
+                bracketPanel.init(panel);
+            }
+
+            @Override
+            public float getNoiseAlpha() {
+                return 0.2f;
+            }
+
+            @Override
+            public void advance(float amount) {
+            }
+
+            @Override
+            public void reportDismissed(int option) {
+                bracketPanel.cleanup();
+                showMenu();
+            }
+        };
+
+        dialog.showCustomVisualDialog(1000f, 700f, delegate);
+    }
+
     private void handleTournamentBracketSelection(String data) {
         switch (data) {
             case "tournament_next_fight" -> startCasinoBattleWithSelection();
@@ -791,6 +852,13 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 clearTournamentState();
                 if (onLeaveAction != null) {
                     onLeaveAction.run();
+                }
+            }
+            case "casino_back" -> {
+                if (onLeaveAction != null) {
+                    onLeaveAction.run();
+                } else {
+                    dialog.dismiss();
                 }
             }
         }
