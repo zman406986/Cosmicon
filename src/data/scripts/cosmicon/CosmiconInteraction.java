@@ -81,7 +81,11 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         this.dialog = dialog;
         this.textPanel = dialog.getTextPanel();
         this.options = dialog.getOptionPanel();
-        
+
+        if (onLeaveAction == null) {
+            onLeaveAction = dialog::dismiss;
+        }
+
         SectorEntityToken target = dialog.getInteractionTarget();
         if (target != null) {
             this.memoryMap = new java.util.HashMap<>();
@@ -111,7 +115,6 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         if (CosmiconStats.isInTutorialMode()) {
             textPanel.addPara(Strings.format("tutorial.games_remaining",
                 CosmiconStats.getRemainingTutorialGames()));
-            options.addOption("[Debug] Skip Tutorial", "debug_skip_tutorial");
         }
 
         boolean sessionWon = CosmiconEventState.isBarEvent() && CosmiconEventState.isSessionWon();
@@ -123,8 +126,12 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         }
 
         options.addOption(Strings.get("menu.character_setup"), "character_setup");
-        options.addOption("Replay Tutorial Game 1", "replay_tutorial_1");
-        options.addOption("Replay Tutorial Game 2", "replay_tutorial_2");
+        if (CosmiconStats.getGamesPlayed() >= 1) {
+            options.addOption("Replay Tutorial Game 1", "replay_tutorial_1");
+        }
+        if (CosmiconStats.getGamesPlayed() >= 2) {
+            options.addOption("Replay Tutorial Game 2", "replay_tutorial_2");
+        }
         options.addOption(Strings.get("menu.help"), "help");
         options.addOption(Strings.get("menu.leave"), "leave");
 
@@ -179,10 +186,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                             dialog.dismiss();
                         }
                     }
-                    case "debug_skip_tutorial" -> {
-                        CosmiconStats.forceCompleteTutorial();
-                        showMenu();
-                    }
+
                 }
                 break;
 
@@ -640,13 +644,19 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     }
 
     private void handleTournamentVictory(int damageDealt) {
-        if (tournamentManager == null) return;
+        if (tournamentManager == null) {
+            textPanel.addPara(Strings.get("casino.tournament_error_load"), Color.RED);
+            options.addOption(Strings.get("casino.back_lounge"), "casino_back");
+            setState(State.TOURNAMENT_BRACKET);
+            return;
+        }
 
         tournamentWins++;
         CosmiconEventState.setTournamentWins(tournamentWins);
 
         if (tournamentManager.isGrandFinal()) {
             tournamentManager.recordGrandFinalGame(true);
+            syncTournamentState();
             CosmiconEventState.setTournamentSeriesScore(
                 tournamentManager.getBracketData().gfPlayerWins + "-" + tournamentManager.getBracketData().gfOpponentWins);
 
@@ -671,10 +681,16 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     }
 
     private void handleTournamentDefeat(int damageDealt) {
-        if (tournamentManager == null) return;
+        if (tournamentManager == null) {
+            textPanel.addPara(Strings.get("casino.tournament_error_load"), Color.RED);
+            options.addOption(Strings.get("casino.back_lounge"), "casino_back");
+            setState(State.TOURNAMENT_BRACKET);
+            return;
+        }
 
         if (tournamentManager.isGrandFinal()) {
             tournamentManager.recordGrandFinalGame(false);
+            syncTournamentState();
             CosmiconEventState.setTournamentSeriesScore(
                 tournamentManager.getBracketData().gfPlayerWins + "-" + tournamentManager.getBracketData().gfOpponentWins);
 
@@ -915,10 +931,20 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             if (onLeaveAction != null) {
                 onLeaveAction.run();
             }
+        } else {
+            options.clearOptions();
+            options.addOption(Strings.get("casino.back_lounge"), "casino_back");
         }
     }
 
     private void startCasinoBattleWithSelection() {
+        if (tournamentManager != null) {
+            String nextOppId = tournamentManager.getNextOpponentId();
+            if (nextOppId != null) {
+                CosmiconEventState.setCasinoBattleOpponent(nextOppId);
+            }
+        }
+
         Boolean forcedPlayerIsAttacker = null;
 
         CoinFlipPanelUI coinFlipUI = new CoinFlipPanelUI(forcedPlayerIsAttacker);

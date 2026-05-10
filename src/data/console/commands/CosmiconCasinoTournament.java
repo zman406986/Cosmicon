@@ -40,7 +40,7 @@ public class CosmiconCasinoTournament implements BaseCommand {
         @Override
         public void init(InteractionDialogAPI dialog) {
             this.dialog = dialog;
-            CasinoIntegrationManager.startTournament(dialog, null);
+            CasinoIntegrationManager.startTournament(dialog, dialog::dismiss);
         }
 
         @Override public void optionSelected(String optionText, Object optionData) {}

@@ -23,6 +23,17 @@ public class CosmiconModPlugin extends BaseModPlugin {
             Global.getLogger(this.getClass()).error("Failed to load Cosmicon Dice", e);
             throw e;
         }
+
+        try {
+            Global.getSettings().getScriptClassLoader()
+                .loadClass("data.scripts.casino.interaction.CasinoLoungeRegistry");
+            data.scripts.casino.interaction.CasinoLoungeRegistry.registerProvider(
+                new data.scripts.cosmicon.casino.CosmiconLoungeProvider()
+            );
+            Global.getLogger(this.getClass()).info("Cosmicon: Registered Casino lounge provider");
+        } catch (Exception e) {
+            Global.getLogger(this.getClass()).info("Cosmicon: Casino not detected, running standalone");
+        }
     }
 
     @Override

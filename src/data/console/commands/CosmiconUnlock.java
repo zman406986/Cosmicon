@@ -4,6 +4,7 @@ import com.fs.starfarer.api.Global;
 import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.CharacterRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
+import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.state.CosmiconStats;
 import data.scripts.cosmicon.util.PrismaticDisplayHelper;
 import java.util.List;
@@ -27,21 +28,25 @@ public class CosmiconUnlock implements BaseCommand {
         }
 
         String[] parts = args.split(" ");
-        if (parts.length < 2 && !"all".equalsIgnoreCase(parts[0])) {
-            return CommandResult.BAD_SYNTAX;
-        }
-
-        String category = parts[0].toLowerCase();
-        String id = parts.length >= 2 ? parts[1].toLowerCase() : "all";
 
         if ("all".equalsIgnoreCase(parts[0])) {
             unlockAll();
             return CommandResult.SUCCESS;
         }
 
+        String category = parts[0].toLowerCase();
+
         switch (category) {
-            case "char" -> unlockChar(id);
-            case "prismatic" -> unlockPrismatic(id);
+            case "char" -> {
+                if (parts.length < 2) {
+                    return CommandResult.BAD_SYNTAX;
+                }
+                unlockChar(parts[1].toLowerCase());
+            }
+            case "prismatic" -> {
+                String id = parts.length >= 2 ? parts[1].toLowerCase() : null;
+                unlockPrismatic(id);
+            }
             default -> {
                 Console.showMessage("Error: first argument must be 'char', 'prismatic', or 'all'.");
                 return CommandResult.BAD_SYNTAX;
@@ -85,6 +90,23 @@ public class CosmiconUnlock implements BaseCommand {
     }
 
     private void unlockPrismatic(String id) {
+        if (id == null) {
+            int count = 0;
+            for (PrismaticDiceType type : PrismaticDiceRegistry.getAll().values()) {
+                if (!type.hasTrueVersion()) {
+                    String diceId = type.getId();
+                    if (!CosmiconStats.isPrismaticDiceUnlocked(diceId)) {
+                        CosmiconStats.unlockPrismaticDice(diceId);
+                        count++;
+                    }
+                }
+            }
+            Global.getSector().getPlayerMemoryWithoutUpdate().set(KEY_PRISMATIC_FEATURE, true);
+            Console.showMessage("Unlocked " + count + " prismatic dice (non-true only).");
+            Console.showMessage("Use 'cosmicon_unlock prismatic all' to unlock ALL prismatic dice.");
+            return;
+        }
+
         if ("all".equals(id)) {
             int count = 0;
             for (String diceId : PrismaticDiceRegistry.getAll().keySet()) {
@@ -94,7 +116,7 @@ public class CosmiconUnlock implements BaseCommand {
                 }
             }
             Global.getSector().getPlayerMemoryWithoutUpdate().set(KEY_PRISMATIC_FEATURE, true);
-            Console.showMessage("Unlocked " + count + " prismatic dice.");
+            Console.showMessage("Unlocked " + count + " prismatic dice (all).");
             return;
         }
 

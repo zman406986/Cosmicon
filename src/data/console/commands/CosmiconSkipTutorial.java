@@ -14,12 +14,10 @@ public class CosmiconSkipTutorial implements BaseCommand {
             return CommandResult.WRONG_CONTEXT;
         }
 
-        CosmiconStats.forceCompleteTutorial();
+        CosmiconStats.skipTutorial();
 
-        Console.showMessage("Tutorial skipped! All characters and prismatic dice unlocked.");
-        Console.showMessage("Games played: " + CosmiconStats.getGamesPlayed());
-        Console.showMessage("Characters unlocked: " + CosmiconStats.getUnlockedCharacters().size());
-        Console.showMessage("Prismatic dice unlocked: " + CosmiconStats.getUnlockedPrismaticDice().size());
+        Console.showMessage("Tutorial skipped! Games played: " + CosmiconStats.getGamesPlayed());
+        Console.showMessage("Use 'cosmicon_unlock' commands to unlock characters or dice.");
 
         return CommandResult.SUCCESS;
     }

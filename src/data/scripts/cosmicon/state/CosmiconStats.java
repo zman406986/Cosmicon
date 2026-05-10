@@ -2,9 +2,6 @@ package data.scripts.cosmicon.state;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
-import data.scripts.cosmicon.battle.CharacterCard;
-import data.scripts.cosmicon.battle.CharacterRegistry;
-import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.util.CharacterIds;
 
 import java.util.HashSet;
@@ -64,29 +61,18 @@ public class CosmiconStats {
         return Math.max(0, TUTORIAL_GAMES - getGamesPlayed());
     }
 
-    public static void forceCompleteTutorial() {
+    public static void skipTutorial() {
         MemoryAPI mem = getMemory();
         mem.set(KEY_GAMES_PLAYED, TUTORIAL_GAMES);
-        setPrismaticFeatureUnlocked();
-        unlockAllPrismaticDice();
-        unlockAllCharacters();
+        if (isPrismaticFeatureUnlocked()) {
+            setPrismaticFeatureUnlocked();
+        }
     }
 
-    private static void unlockAllCharacters() {
-        MemoryAPI mem = getMemory();
-        Set<String> unlockedChars = getUnlockedCharacters();
-        for (CharacterCard card : CharacterRegistry.getAllCards()) {
-            String cardId = card.getId();
-            unlockedChars.add(cardId);
-        }
-        mem.set(KEY_UNLOCKED_CHARACTERS, unlockedChars);
-        mem.set(KEY_HAS_GALLERY_CHARACTERS, true);
-    }
-
-    private static void unlockAllPrismaticDice() {
-        for (String diceId : PrismaticDiceRegistry.getAll().keySet()) {
-            unlockPrismaticDice(diceId);
-        }
+    public static void forceCompleteTutorial() {
+        skipTutorial();
+        completeTutorialGame1();
+        completeTutorialGame2();
     }
 
     public static boolean isPrismaticFeatureUnlocked() {
