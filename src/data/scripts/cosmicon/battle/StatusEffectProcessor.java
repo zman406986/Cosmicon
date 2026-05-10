@@ -121,28 +121,6 @@ public class StatusEffectProcessor {
         return activeEffects;
     }
 
-    public int getLayersFromSource(StatusEffect effect, String source) {
-        for (StatusEffectInstance inst : activeEffects) {
-            if (inst.effect() == effect && inst.source().equals(source)) {
-                return inst.layers();
-            }
-        }
-        return 0;
-    }
-
-    public boolean hasEffectFromSource(StatusEffect effect, String source) {
-        return getLayersFromSource(effect, source) > 0;
-    }
-
-    public int getDurationFromSource(StatusEffect effect, String source) {
-        for (StatusEffectInstance inst : activeEffects) {
-            if (inst.effect() == effect && inst.source().equals(source)) {
-                return inst.remainingTurns();
-            }
-        }
-        return -1;
-    }
-
     public void removeEffect(StatusEffect effect) {
         int totalLayers = getLayers(effect);
         if (totalLayers > 0) {
@@ -458,7 +436,7 @@ public class StatusEffectProcessor {
             this.diceValues = new ArrayList<>(values);
             this.diceIsPrismatic = new ArrayList<>();
             for (DiceType type : types) {
-                this.diceIsPrismatic.add(type == DiceType.PRISMATIC);
+                this.diceIsPrismatic.add(type == DiceType.PRISMATIC || type == DiceType.YELLOW_D12);
             }
             this.diceSelected = new ArrayList<>(java.util.Collections.nCopies(values.size(), false));
         }

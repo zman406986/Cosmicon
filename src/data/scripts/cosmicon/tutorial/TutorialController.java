@@ -168,7 +168,7 @@ public class TutorialController {
 
             case G2_T3_ATTACK_PRISMATIC -> isPrismatic;
 
-            case G2_T3_ATTACK_SELECT -> isPrismatic || isAmongHighestNonPrismatic(diceIndex, values, types,
+            case G2_T3_ATTACK_SELECT -> isAmongHighestNonPrismatic(diceIndex, values, types,
                     isPrismaticDiceSelected()
                             ? Math.max(1, battleState.getRequiredDiceCount(true) - 1)
                             : battleState.getRequiredDiceCount(true));

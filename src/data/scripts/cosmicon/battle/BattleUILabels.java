@@ -290,13 +290,13 @@ public class BattleUILabels {
         for (int i = 0; i < MAX_STATUS_EFFECTS; i++) {
             float yOffset = i * STATUS_LABEL_SPACING;
             LabelAPI playerLabel = UIComponentFactory.createLabelSmall(panel, "",
-                Color.WHITE, Alignment.LMID, BattleRenderingUtils.STATUS_BOX_WIDTH - 20f, 28f,
+                Color.WHITE, Alignment.LMID, BattleRenderingUtils.STATUS_BOX_WIDTH - 2f * BattleRenderingUtils.STATUS_BOX_PADDING, 28f,
                 playerBoxX + BattleRenderingUtils.STATUS_BOX_PADDING, playerCardY + BattleRenderingUtils.STATUS_BOX_PADDING + yOffset);
             playerLabel.setOpacity(0f);
             playerStatusLabels.add(playerLabel);
 
             LabelAPI opponentLabel = UIComponentFactory.createLabelSmall(panel, "",
-                Color.WHITE, Alignment.LMID, BattleRenderingUtils.STATUS_BOX_WIDTH - 20f, 28f,
+                Color.WHITE, Alignment.LMID, BattleRenderingUtils.STATUS_BOX_WIDTH - 2f * BattleRenderingUtils.STATUS_BOX_PADDING, 28f,
                 opponentBoxX + BattleRenderingUtils.STATUS_BOX_PADDING, opponentCardY + BattleRenderingUtils.STATUS_BOX_PADDING + yOffset);
             opponentLabel.setOpacity(0f);
             opponentStatusLabels.add(opponentLabel);
@@ -557,60 +557,19 @@ public class BattleUILabels {
 
     private String formatInstanceText(StatusEffectProcessor.StatusEffectInstance inst, boolean isPlayer) {
         String effectName = Strings.get("status." + inst.effect().name().toLowerCase());
-        String sourceLabel = formatSourceLabel(inst.source());
 
-        String mainText;
         if (inst.effect() == StatusEffectProcessor.StatusEffect.SIPHON) {
-            mainText = inst.durationType() == StatusEffectProcessor.DurationType.TURN_BASED && inst.remainingTurns() > 0
+            return inst.durationType() == StatusEffectProcessor.DurationType.TURN_BASED && inst.remainingTurns() > 0
                 ? String.format("%s (%d%%, %dt)", effectName, inst.layers(), inst.remainingTurns())
                 : String.format("%s (%d%%)", effectName, inst.layers());
         } else if (inst.effect() == StatusEffectProcessor.StatusEffect.CYRENE_TALLY) {
             int cumulative = battleState.getCumulativeAtkDef(isPlayer);
-            mainText = String.format("%s (%d/24)", effectName, cumulative);
+            return String.format("%s (%d/24)", effectName, cumulative);
         } else {
-            mainText = inst.durationType() == StatusEffectProcessor.DurationType.TURN_BASED && inst.remainingTurns() > 0
+            return inst.durationType() == StatusEffectProcessor.DurationType.TURN_BASED && inst.remainingTurns() > 0
                 ? String.format("%s (%d, %dt)", effectName, inst.layers(), inst.remainingTurns())
                 : String.format("%s (%d)", effectName, inst.layers());
         }
-
-        if (sourceLabel != null) {
-            return mainText + "\n" + sourceLabel;
-        }
-        return mainText;
-    }
-
-    private String formatSourceLabel(String source) {
-        if (source == null) return null;
-
-        if (source.equals("effect_system") || source.equals("pending_strength")) {
-            return null;
-        }
-
-        String raw = source;
-        if (raw.startsWith("weather.")) {
-            raw = raw.substring("weather.".length());
-        } else if (raw.startsWith("passive.")) {
-            raw = raw.substring("passive.".length());
-        } else if (raw.startsWith("prismatic.")) {
-            raw = raw.substring("prismatic.".length());
-        }
-
-        raw = raw.replace('_', ' ');
-
-        StringBuilder sb = new StringBuilder();
-        boolean capitalizeNext = true;
-        for (char c : raw.toCharArray()) {
-            if (c == ' ') {
-                sb.append(' ');
-                capitalizeNext = true;
-            } else if (capitalizeNext) {
-                sb.append(Character.toUpperCase(c));
-                capitalizeNext = false;
-            } else {
-                sb.append(c);
-            }
-        }
-        return sb.toString();
     }
 
     private float[] getPlayerStatusLabelPosition(int displayIndex) {
@@ -619,7 +578,7 @@ public class BattleUILabels {
         float playerBoxX = playerCardX - BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
         float x = playerBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
         float y = playerCardY + BattleRenderingUtils.STATUS_BOX_PADDING + displayIndex * STATUS_LABEL_SPACING;
-        float w = BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
+        float w = BattleRenderingUtils.STATUS_BOX_WIDTH - 2f * BattleRenderingUtils.STATUS_BOX_PADDING;
         float h = 28f;
         return new float[]{x, y, w, h};
     }
@@ -630,7 +589,7 @@ public class BattleUILabels {
         float opponentBoxX = opponentCardX + BattleRenderingUtils.CARD_WIDTH + 20f;
         float x = opponentBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
         float y = opponentCardY + BattleRenderingUtils.STATUS_BOX_PADDING + displayIndex * STATUS_LABEL_SPACING;
-        float w = BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
+        float w = BattleRenderingUtils.STATUS_BOX_WIDTH - 2f * BattleRenderingUtils.STATUS_BOX_PADDING;
         float h = 28f;
         return new float[]{x, y, w, h};
     }
@@ -643,11 +602,6 @@ public class BattleUILabels {
             }
         }
         return null;
-    }
-
-    public Integer getEffectInstanceDisplayIndex(boolean isPlayer, StatusEffectProcessor.StatusEffect effect, String source) {
-        Map<EffectInstanceKey, Integer> map = isPlayer ? playerEffectDisplayIndex : opponentEffectDisplayIndex;
-        return map.get(new EffectInstanceKey(effect, source));
     }
 
     public float[] getStatusEffectLabelPosition(boolean isPlayer, int displayIndex) {

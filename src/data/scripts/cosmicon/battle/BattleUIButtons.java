@@ -279,7 +279,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
         weatherDescBoxH = descBoxHeight;
 
         TooltipMakerAPI weatherTp = panel.createUIElement(boxWidth, descBoxHeight, false);
-        panel.addUIElement(weatherTp).inTL(weatherX, descBoxY + descBoxPadding);
+        panel.addUIElement(weatherTp).inTL(weatherX, descBoxY + descBoxPadding + 2f);
 
         weatherDescLabel = weatherTp.addPara("", java.awt.Color.GRAY, 0f);
         weatherDescLabel.setAlignment(com.fs.starfarer.api.ui.Alignment.MID);
