@@ -1,7 +1,5 @@
 package data.console.commands;
 
-import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import data.scripts.cosmicon.casino.CasinoIntegrationManager;
 import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.state.CosmiconStats;
@@ -11,8 +9,6 @@ import org.lazywizard.console.CommonStrings;
 import org.lazywizard.console.Console;
 
 public class CosmiconCasinoReset implements BaseCommand {
-
-    private static final String KEY_HUNTER_LEVEL = "$cos_trashcan_hunter_level";
 
     @Override
     public CommandResult runCommand(@NotNull String args, CommandContext context) {
@@ -33,10 +29,7 @@ public class CosmiconCasinoReset implements BaseCommand {
         boolean resetTournament = mode.equals("all") || mode.equals("tournament");
 
         if (resetHunter) {
-            MemoryAPI mem = Global.getSector().getPlayerMemoryWithoutUpdate();
-            if (mem.contains(KEY_HUNTER_LEVEL)) {
-                mem.unset(KEY_HUNTER_LEVEL);
-            }
+            CosmiconEventState.setTrashcanHunterLevel(0);
             Console.showMessage("Reset: Master Dicer Level");
         }
 

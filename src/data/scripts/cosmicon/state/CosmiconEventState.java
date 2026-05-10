@@ -8,7 +8,6 @@ import java.util.List;
 public class CosmiconEventState {
 
     private static final String KEY_OPPONENT_CHAR = "$cos_temp_opponent_char";
-    private static final String KEY_PLAYER_CHAR = "$cos_temp_player_char";
     private static final String KEY_OPPONENT_PRISMATIC = "$cos_temp_opponent_prismatic";
     private static final String KEY_IS_BAR_EVENT = "$cos_temp_is_bar_event";
     private static final String KEY_IS_TUTORIAL = "$cos_temp_is_tutorial";
@@ -34,7 +33,7 @@ public class CosmiconEventState {
     private static final String KEY_TOURNAMENT_PENDING_REWARDS = "$cos_tournament_pending_rewards";
 
     private static final List<String> ALL_KEYS = List.of(
-        KEY_OPPONENT_CHAR, KEY_PLAYER_CHAR, KEY_OPPONENT_PRISMATIC,
+        KEY_OPPONENT_CHAR, KEY_OPPONENT_PRISMATIC,
         KEY_IS_BAR_EVENT, KEY_IS_TUTORIAL, KEY_REPLAY_TUTORIAL,
         KEY_OPPONENT_USES_TRUE, KEY_SESSION_WON,
         KEY_CASINO_BATTLE_MODE, KEY_CASINO_BATTLE_IS_BOSS,
@@ -48,14 +47,6 @@ public class CosmiconEventState {
     );
 
     private static final List<String> TOURNAMENT_KEYS = List.of(
-        KEY_TOURNAMENT_ROUND,
-        KEY_TOURNAMENT_WINS, KEY_TOURNAMENT_LOSSES,
-        KEY_TOURNAMENT_IN_LOSER_BRACKET, KEY_TOURNAMENT_GRAND_FINAL,
-        KEY_TOURNAMENT_SERIES_SCORE, KEY_TOURNAMENT_BRACKET_DATA,
-        KEY_TOURNAMENT_PENDING_REWARDS
-    );
-
-    private static final List<String> TOURNAMENT_STATE_KEYS = List.of(
         KEY_TOURNAMENT_ROUND,
         KEY_TOURNAMENT_WINS, KEY_TOURNAMENT_LOSSES,
         KEY_TOURNAMENT_IN_LOSER_BRACKET, KEY_TOURNAMENT_GRAND_FINAL,
@@ -84,10 +75,6 @@ public class CosmiconEventState {
         MemoryAPI mem = getMemory();
         if (!mem.contains(KEY_OPPONENT_CHAR)) return null;
         return mem.getString(KEY_OPPONENT_CHAR);
-    }
-
-    public static void setPlayerCharacter(String charId) {
-        getMemory().set(KEY_PLAYER_CHAR, charId);
     }
 
     public static void setOpponentPrismatic(String diceId) {
@@ -126,7 +113,6 @@ public class CosmiconEventState {
 
     public static void clearBattleState() {
         MemoryAPI mem = getMemory();
-        mem.unset(KEY_PLAYER_CHAR);
         mem.unset(KEY_REPLAY_TUTORIAL);
     }
 
@@ -335,7 +321,7 @@ public class CosmiconEventState {
 
     public static void clearTournamentState() {
         MemoryAPI mem = getMemory();
-        for (String key : TOURNAMENT_STATE_KEYS) {
+        for (String key : TOURNAMENT_KEYS) {
             mem.unset(key);
         }
     }

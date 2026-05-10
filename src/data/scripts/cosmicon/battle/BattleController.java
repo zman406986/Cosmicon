@@ -138,7 +138,6 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
             String tutorialPlayerId = tutorialGameType == TutorialController.TutorialGame.GAME_1_SPARXIE
                 ? "sparxie" : "acheron";
             playerCard = CharacterRegistry.getCharacterById(tutorialPlayerId);
-            CosmiconEventState.setPlayerCharacter(tutorialPlayerId);
             CosmiconLogger.info("Tutorial game: forced player character = %s", playerCard.getName());
         }
 

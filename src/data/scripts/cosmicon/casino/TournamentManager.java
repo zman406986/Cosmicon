@@ -133,17 +133,12 @@ public class TournamentManager {
         int targetBracket = nextMatch[0];
         int targetRound = nextMatch[1];
 
-        if (targetBracket == BRACKET_GF && gfSeries[0] < 0) {
-            if (lbResults[3][0] >= 0) {
-                gfOpponentSlot = lbResults[3][0];
-                currentBracket = BRACKET_GF;
-                currentRound = 0;
-                currentMatchIndex = 0;
-            }
-            return;
+        int maxWbRound = WB_ROUNDS - 1;
+        if (targetBracket == BRACKET_LB) {
+            maxWbRound = targetRound;
         }
 
-        for (int r = 0; r < WB_ROUNDS; r++) {
+        for (int r = 0; r <= maxWbRound && r < WB_ROUNDS; r++) {
             if (simulateWBRound(r)) return;
             if (r < WB_ROUNDS - 1) {
                 checkAndAdvanceWBRound(r);
@@ -161,12 +156,21 @@ public class TournamentManager {
             checkAndAdvanceLBRound(r);
         }
 
-        if (targetBracket == BRACKET_GF) {
-            if (gfSeries[0] < 0 && lbResults[3][0] >= 0) {
-                gfOpponentSlot = lbResults[3][0];
-                currentBracket = BRACKET_GF;
-                currentRound = 0;
-                currentMatchIndex = 0;
+        if (targetBracket == BRACKET_GF && gfSeries[0] < 0) {
+            if (playerInLoserBracket) {
+                if (wbResults[2][0] >= 0) {
+                    gfOpponentSlot = wbResults[2][0];
+                    currentBracket = BRACKET_GF;
+                    currentRound = 0;
+                    currentMatchIndex = 0;
+                }
+            } else {
+                if (lbResults[3][0] >= 0) {
+                    gfOpponentSlot = lbResults[3][0];
+                    currentBracket = BRACKET_GF;
+                    currentRound = 0;
+                    currentMatchIndex = 0;
+                }
             }
         }
     }

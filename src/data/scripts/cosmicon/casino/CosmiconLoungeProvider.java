@@ -8,6 +8,7 @@ import com.fs.starfarer.api.campaign.InteractionDialogAPI;
 
 import data.scripts.Strings;
 import data.scripts.casino.CasinoAPI;
+import data.scripts.casino.interaction.CasinoInteraction;
 import data.scripts.casino.interaction.LoungeProvider;
 
 public class CosmiconLoungeProvider implements LoungeProvider {
@@ -47,6 +48,10 @@ public class CosmiconLoungeProvider implements LoungeProvider {
 
     @Override
     public void showLounge(InteractionDialogAPI dialog) {
+        if (dialog.getPlugin() instanceof CasinoInteraction casino) {
+            casino.setState(CasinoInteraction.State.COSMICON_LOUNGE);
+        }
+
         dialog.getTextPanel().addPara(getString("welcome"), Color.CYAN);
 
         int hunterLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
@@ -113,7 +118,7 @@ public class CosmiconLoungeProvider implements LoungeProvider {
     }
 
     private void handleGatekeeper(InteractionDialogAPI dialog, Runnable onReturnToLounge) {
-        if (!CasinoAPI.canAfford(GATEKEEPER_COST)) {
+        if (!CasinoAPI.canAfford(GATEKEEPER_COST) || !CasinoIntegrationManager.isTutorialComplete()) {
             dialog.getOptionPanel().clearOptions();
             dialog.getTextPanel().addPara(getString("gatekeeper_insufficient"), Color.RED);
             dialog.getOptionPanel().addOption(getString("back"), "lounge_back");
@@ -125,7 +130,7 @@ public class CosmiconLoungeProvider implements LoungeProvider {
     }
 
     private void handleTournament(InteractionDialogAPI dialog, Runnable onReturnToLounge) {
-        if (!CasinoAPI.canAfford(TOURNAMENT_COST)) {
+        if (!CasinoAPI.canAfford(TOURNAMENT_COST) || !CasinoIntegrationManager.isTutorialComplete()) {
             dialog.getOptionPanel().clearOptions();
             dialog.getTextPanel().addPara(getString("tournament_insufficient"), Color.RED);
             dialog.getOptionPanel().addOption(getString("back"), "lounge_back");
