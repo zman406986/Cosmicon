@@ -12,7 +12,7 @@
         "back": "返回",
         "play": "对战",
         "session_won": "你赢了这一轮！去其他酒吧寻找新的对手吧。",
-        "trashcan_hunter_welcome": "战力党玩家们警惕地看着你。你追猎垃圾桶的名声已经传开了。'垃圾桶猎人 等级{0}，'有人低语道。"
+        "trashcan_hunter_welcome": "战力党玩家们警惕地看着你。你骰子大师的名声已经传开了。'骰子大师 等级{0}，'有人低语道。"
     },
     "help": {
         "title": "=== 游戏说明 ===",
@@ -473,7 +473,7 @@
         "decline": "婉言谢绝",
         "declined": "你婉言谢绝，继续喝你的酒。",
         "approach": "走近战力党玩家",
-        "trashcan_hunter_prompt": "战力党常客立刻认出了你。'是垃圾桶猎人！等级{0}！'有人热切地给你让了个座。"
+        "trashcan_hunter_prompt": "战力党常客立刻认出了你。'是骰子大师！等级{0}！'有人热切地给你让了个座。"
     },
     "victory": {
     },
@@ -541,7 +541,8 @@
         "unlock_prismatic": "解锁 {0}",
         "take_credits": "改为领取星币",
         "character_unlocked": "角色已解锁：{0}！",
-        "prismatic_unlocked": "曜彩骰已解锁：{0}！"
+        "prismatic_unlocked": "曜彩骰已解锁：{0}！",
+        "prismatic_true_unlocked": "真版本已解锁：{0}！"
     },
     "casino": {
         "gatekeeper_challenge": "挑战赌神",
@@ -551,7 +552,8 @@
         "gatekeeper_reward_win": "你获得了4倍星币奖励（{0}星币）。",
         "gatekeeper_reward_lose": "你获得了2倍星币奖励（{0}星币）。",
         "gatekeeper_unlock_tournament": "锦标赛已解锁！你现在可以举办锦标赛了。",
-        "gatekeeper_hunter_level_up": "垃圾桶猎人等级提升至{0}！",
+        "gatekeeper_999_exit_hint": "你已造成足够伤害，可以退出算赢！现在退出即为胜利，或继续对战以刷新记录。",
+        "gatekeeper_hunter_level_up": "骰子大师等级提升至{0}！",
 
         "tournament_title": "举办锦标赛",
         "tournament_cost": "15,000星石",
@@ -587,17 +589,19 @@
         "tournament_bye": "轮空",
         "boss_reward_char": "解锁角色：{0}",
         "boss_reward_prismatic": "解锁曜彩骰：{0}",
+        "boss_reward_prismatic_true": "解锁真·{0}",
         "boss_reward_credits": "领取星币（{0}星币）",
         "back_lounge": "返回酒廊"
     },
     "lounge": {
         "btn_enter": "去酒馆上骰",
         "welcome": "欢迎来到[世界尽头]酒馆。空气中弥漫着欢愉的气息。",
-        "trashcan_hunter_greeting": "酒馆前台恭敬地点头。'欢迎回来，垃圾桶猎人 等级{0}。'",
+        "trashcan_hunter_greeting": "酒馆前台恭敬地点头。'欢迎回来，骰子大师 等级{0}。'",
         "tutorial_required": "门卫拦住了你。'抱歉，你得先在酒吧学会基本功。完成教学馆后再来吧。'",
         "gatekeeper": "挑战赌神（5,000星石）",
         "gatekeeper_insufficient": "你的星石不够支付入场费。需要5,000星石。",
         "tournament": "举办锦标赛（15,000星石）",
+        "continue_tournament": "继续锦标赛",
         "tournament_locked": "击败赌神以解锁锦标赛。",
         "tournament_insufficient": "你需要15,000星石才能举办锦标赛。",
         "back": "返回赌场",

@@ -282,8 +282,8 @@ public class WeatherController {
                     }
                 }
                 if (hasMatch) {
-                    state.modifyWeatherDefMod(isPlayer, 1);
-                    CosmiconLogger.debug("%s: DEF level +1 for defender (%s)", weather, isPlayer ? "Player" : "Opponent");
+                    state.setPendingDefLevelBoost(attackerIsPlayer, 1);
+                    CosmiconLogger.debug("%s: DEF level +1 next turn for attacker (%s)", weather, attackerIsPlayer ? "Player" : "Opponent");
                 }
             }
             default -> {}

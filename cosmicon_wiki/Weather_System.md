@@ -15,7 +15,7 @@ Weather affects both players and changes at start of turn 2/4/6/8. Effects are p
 
 | Name                | Chinese | Type      | Turn | Description (EN)                                                            | Description (CN)                  |
 |---------------------|---------|-----------|------|-----------------------------------------------------------------------------|-----------------------------------|
-| Frost               | 霜       | Safeguard | 2    | If attacker's dice have matching numbers, defender's DEF Level +1 next turn | 若攻击方选择的骰子中包含相同点数，则下回合其防御等级 +1     |
+| Frost               | 霜       | Safeguard | 2    | If attacker's dice have matching numbers, attacker's DEF Level +1 next turn | 若攻击方选择的骰子中包含相同点数，则下回合其防御等级 +1     |
 | Cyclonic Swarm      | 飓风      | Attack    | 2    | Both sides gain Combo when attacking                                        | 双方攻击时均获得连击                        |
 | Blizzard            | 暴雪      | Safeguard | 4    | DEF ≤8: gain Forcefield this turn                                           | 防御方选定骰子时，若防御值≤8点，则其在本回合获得力场       |
 | Frog Rain           | 青蛙雨     | Help      | 2    | Neither side rolls minimum dice value                                       | 双方所有骰子均不会掷出最小值                    |

@@ -69,17 +69,23 @@ public class CosmiconLoungeProvider implements LoungeProvider {
             tutorialDone && canAffordGatekeeper,
             tutorialDone ? (canAffordGatekeeper ? null : getString("gatekeeper_insufficient")) : getString("tutorial_required")));
 
-        boolean tournamentUnlocked = CasinoIntegrationManager.isTournamentUnlocked();
-        boolean canAffordTournament = CasinoAPI.canAfford(TOURNAMENT_COST);
-        String tournamentTooltip = null;
-        if (!tournamentUnlocked) {
-            tournamentTooltip = getString("tournament_locked");
-        } else if (!canAffordTournament) {
-            tournamentTooltip = getString("tournament_insufficient");
+        boolean tournamentActive = CasinoIntegrationManager.isTournamentActive();
+        if (tournamentActive) {
+            options.add(new MenuOption("lounge_continue_tournament", getString("continue_tournament"),
+                true, null));
+        } else {
+            boolean tournamentUnlocked = CasinoIntegrationManager.isTournamentUnlocked();
+            boolean canAffordTournament = CasinoAPI.canAfford(TOURNAMENT_COST);
+            String tournamentTooltip = null;
+            if (!tournamentUnlocked) {
+                tournamentTooltip = getString("tournament_locked");
+            } else if (!canAffordTournament) {
+                tournamentTooltip = getString("tournament_insufficient");
+            }
+            options.add(new MenuOption("lounge_tournament", getString("tournament"),
+                tutorialDone && tournamentUnlocked && canAffordTournament,
+                tournamentTooltip));
         }
-        options.add(new MenuOption("lounge_tournament", getString("tournament"),
-            tutorialDone && tournamentUnlocked && canAffordTournament,
-            tournamentTooltip));
 
         options.add(new MenuOption("lounge_back", getString("back"), true, null));
 
@@ -92,6 +98,7 @@ public class CosmiconLoungeProvider implements LoungeProvider {
         switch (option) {
             case "lounge_gatekeeper" -> handleGatekeeper(dialog, onReturnToLounge);
             case "lounge_tournament" -> handleTournament(dialog, onReturnToLounge);
+            case "lounge_continue_tournament" -> handleContinueTournament(dialog, onReturnToLounge);
             case "lounge_back" -> onReturnToCasino.run();
             default -> onReturnToLounge.run();
         }
@@ -119,5 +126,9 @@ public class CosmiconLoungeProvider implements LoungeProvider {
 
         CasinoAPI.deduct(TOURNAMENT_COST);
         CasinoIntegrationManager.startTournament(dialog, onReturnToLounge);
+    }
+
+    private void handleContinueTournament(InteractionDialogAPI dialog, Runnable onReturnToLounge) {
+        CasinoIntegrationManager.continueTournament(dialog, onReturnToLounge);
     }
 }

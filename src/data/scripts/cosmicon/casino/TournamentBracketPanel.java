@@ -1,14 +1,15 @@
 package data.scripts.cosmicon.casino;
 
 import java.awt.Color;
-import java.util.List;
 
 import org.lwjgl.opengl.GL11;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.BaseCustomUIPanelPlugin;
-import com.fs.starfarer.api.input.InputEventAPI;
+import com.fs.starfarer.api.ui.TooltipMakerAPI;
+import com.fs.starfarer.api.ui.TooltipMakerAPI.ActionListenerDelegate;
 import com.fs.starfarer.api.ui.Alignment;
+import com.fs.starfarer.api.ui.ButtonAPI;
 import com.fs.starfarer.api.ui.CustomPanelAPI;
 import com.fs.starfarer.api.ui.Fonts;
 import com.fs.starfarer.api.ui.LabelAPI;
@@ -16,18 +17,19 @@ import com.fs.starfarer.api.ui.PositionAPI;
 import com.fs.starfarer.api.ui.UIComponentAPI;
 import com.fs.starfarer.api.util.Misc;
 
+import data.scripts.Strings;
 import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.GLStateUtil;
+import data.scripts.cosmicon.util.UIComponentFactory;
 import data.scripts.cosmicon.util.UnifiedCoord;
 
-public class TournamentBracketPanel extends BaseCustomUIPanelPlugin {
+public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements ActionListenerDelegate {
 
-    private static final float MATCH_W = 120f;
-    private static final float MATCH_H = 40f;
-    private static final float COL_SPACING = 140f;
-    private static final float ROW_SPACING = 50f;
+    private static final float MATCH_W = 150f;
+    private static final float MATCH_H = 44f;
     private static final float WB_TOP_Y = 60f;
     private static final float STATUS_BAR_H = 30f;
+    private static final int MAX_NAME_LEN = 9;
 
     private static final Color COLOR_BG = new Color(20, 22, 35, 220);
     private static final Color COLOR_MATCH_BG = new Color(40, 45, 65, 200);
@@ -49,6 +51,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin {
     private CustomPanelAPI panel;
     private TournamentManager.BracketData data;
     private String[] displayNames;
+    private Runnable onDismiss;
 
     private LabelAPI titleLabel;
     private LabelAPI[] matchLabels;
@@ -65,9 +68,17 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin {
     private float panelW;
     private float panelH;
 
+    private float baseX;
+    private float colSpacing;
+    private float rowSpacing;
+
     public TournamentBracketPanel(TournamentManager.BracketData bracketData, String[] playerDisplayNames) {
         this.data = bracketData;
         this.displayNames = playerDisplayNames;
+    }
+
+    public void setOnDismiss(Runnable onDismiss) {
+        this.onDismiss = onDismiss;
     }
 
     public void init(CustomPanelAPI panel) {
@@ -76,11 +87,38 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin {
         this.panelW = pos.getWidth();
         this.panelH = pos.getHeight();
 
+        computeLayout();
+
         createTitleLabel();
         createColumnHeaders();
         createMatchLabels();
         createStatusLabel();
+        createExitButton();
         updateAllLabels();
+    }
+
+    private void computeLayout() {
+        int numCols = 4;
+        float minVisualGap = 80f;
+
+        float minColSpacing = MATCH_W + minVisualGap;
+        float minContentSpan = (numCols - 1f) * minColSpacing + MATCH_W;
+
+        if (minContentSpan <= panelW) {
+            float extraSpace = panelW - minContentSpan;
+            baseX = extraSpace / 2f;
+            colSpacing = minColSpacing;
+        } else {
+            colSpacing = minColSpacing;
+            baseX = (panelW - minContentSpan) / 2f;
+        }
+
+        float usableH = panelH - WB_TOP_Y - STATUS_BAR_H - 50f;
+        rowSpacing = Math.max(56f, usableH / 7f);
+    }
+
+    private float rowSpacingForLb() {
+        return rowSpacing * 0.55f;
     }
 
     private void createTitleLabel() {
@@ -94,17 +132,16 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin {
     }
 
     private void createColumnHeaders() {
-        float baseX = 30f;
         wbHeaderR1 = createHeaderLabel("WB R1", baseX, 38f);
-        wbHeaderR2 = createHeaderLabel("WB R2", baseX + COL_SPACING, 38f);
-        wbHeaderFinal = createHeaderLabel("WB Final", baseX + 2f * COL_SPACING, 38f);
-        gfHeader = createHeaderLabel("Grand Final", baseX + 3f * COL_SPACING, 38f);
+        wbHeaderR2 = createHeaderLabel("WB R2", baseX + colSpacing, 38f);
+        wbHeaderFinal = createHeaderLabel("WB Final", baseX + 2f * colSpacing, 38f);
+        gfHeader = createHeaderLabel("Grand Final", baseX + 3f * colSpacing, 38f);
 
-        float lbHeaderY = getLbBaseY() + 3f * ROW_SPACING + ROW_SPACING + 8f;
+        float lbHeaderY = getLbBaseY() + 3f * rowSpacing + rowSpacing + 16f;
         lbHeaderR1 = createHeaderLabel("LB R1", baseX, lbHeaderY);
-        lbHeaderR2 = createHeaderLabel("LB R2", baseX + COL_SPACING, lbHeaderY);
-        lbHeaderR3 = createHeaderLabel("LB R3", baseX + 2f * COL_SPACING, lbHeaderY);
-        lbHeaderFinal = createHeaderLabel("LB Final", baseX + 3f * COL_SPACING, lbHeaderY);
+        lbHeaderR2 = createHeaderLabel("LB R2", baseX + colSpacing, lbHeaderY);
+        lbHeaderR3 = createHeaderLabel("LB R3", baseX + 2f * colSpacing, lbHeaderY);
+        lbHeaderFinal = createHeaderLabel("LB Final", baseX + 3f * colSpacing, lbHeaderY);
     }
 
     private LabelAPI createHeaderLabel(String text, float x, float y) {
@@ -124,7 +161,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin {
             matchLabels[i].setColor(COLOR_PENDING);
             matchLabels[i].setAlignment(Alignment.MID);
             panel.addComponent((UIComponentAPI) matchLabels[i])
-                .setSize(MATCH_W, 16f)
+                .setSize(MATCH_W - 8f, MATCH_H - 4f)
                 .inTL(-1000f, -1000f);
             matchLabels[i].setOpacity(0f);
         }
@@ -139,17 +176,38 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin {
             .inTL(10f, panelH - STATUS_BAR_H - 5f);
     }
 
+    private void createExitButton() {
+        float btnW = 100f;
+        float btnH = 28f;
+        float btnX = panelW - btnW - 15f;
+        float btnY = panelH - STATUS_BAR_H - 5f;
+
+        TooltipMakerAPI exitTp = UIComponentFactory.createTooltipForButtons(panel, this, btnW, btnH, btnX, btnY);
+        ButtonAPI exitButton = exitTp.addButton(Strings.get("casino.tournament_back_lounge"), "exit", btnW, btnH, 0f);
+        exitButton.setQuickMode(true);
+    }
+
+    @Override
+    public void actionPerformed(Object input, Object source) {
+        if (source instanceof ButtonAPI btn) {
+            String action = (String) btn.getCustomData();
+            if ("exit".equals(action) && onDismiss != null) {
+                onDismiss.run();
+            }
+        }
+    }
+
     private float getLbBaseY() {
         return 20f + STATUS_BAR_H;
     }
 
     private float getWbMatchUiY(int matchIndex) {
-        return WB_TOP_Y + matchIndex * ROW_SPACING;
+        return WB_TOP_Y + matchIndex * rowSpacing;
     }
 
     private float getLbMatchUiY(int round, int matchIndex) {
         float baseY = getLbBaseY();
-        return baseY + round * ROW_SPACING + matchIndex * (ROW_SPACING / 2f);
+        return baseY + round * rowSpacing + matchIndex * rowSpacingForLb();
     }
 
     private void updateAllLabels() {
@@ -162,12 +220,11 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin {
         int labelIdx = 0;
 
         int[] wbCounts = {4, 2, 1};
-        float baseX = 30f;
 
         for (int r = 0; r < 3; r++) {
             for (int m = 0; m < wbCounts[r]; m++) {
                 if (labelIdx >= matchLabels.length) break;
-                float lx = baseX + r * COL_SPACING;
+                float lx = baseX + r * colSpacing;
                 float ly = getWbMatchUiY(m);
                 int slot0 = getSlot(data.wbMatchups, r, m, 0);
                 int slot1 = getSlot(data.wbMatchups, r, m, 1);
@@ -185,7 +242,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin {
         for (int r = 0; r < 4; r++) {
             for (int m = 0; m < lbCounts[r]; m++) {
                 if (labelIdx >= matchLabels.length) break;
-                float lx = baseX + r * COL_SPACING;
+                float lx = baseX + r * colSpacing;
                 float ly = getLbMatchUiY(r, m);
                 int slot0 = getSlot(data.lbMatchups, r, m, 0);
                 int slot1 = getSlot(data.lbMatchups, r, m, 1);
@@ -199,7 +256,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin {
             }
         }
 
-        float gfX = baseX + 3f * COL_SPACING;
+        float gfX = baseX + 3f * colSpacing;
         float gfY = getWbMatchUiY(0) - 20f;
         if (labelIdx < matchLabels.length) {
             int wbFinalWinner = getResult(data.wbResults, 2, 0);
@@ -209,7 +266,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin {
             boolean isCurrent = data.currentBracket == TournamentManager.BRACKET_GF;
 
             LabelAPI lbl = matchLabels[labelIdx];
-            lbl.getPosition().inTL(gfX, gfY + MATCH_H / 2f - 8f);
+            lbl.getPosition().inTL(gfX + 4f, gfY + 2f);
             lbl.setOpacity(1f);
 
             if (gfStarted) {
@@ -219,8 +276,14 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin {
             } else {
                 String n0 = getDisplayName(wbFinalWinner);
                 String n1 = getDisplayName(lbFinalWinner);
-                lbl.setText(truncate(n0, 8) + " vs " + truncate(n1, 8));
-                lbl.setColor(isCurrent ? Color.YELLOW : COLOR_PENDING);
+                lbl.setText(truncate(n0) + " vs " + truncate(n1));
+                if (isCurrent) {
+                    lbl.setColor(Color.YELLOW);
+                } else if (involvesPlayer) {
+                    lbl.setColor(ColorHelper.PLAYER_NAME);
+                } else {
+                    lbl.setColor(COLOR_PENDING);
+                }
             }
             labelIdx++;
         }
@@ -236,13 +299,13 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin {
                                      boolean involvesPlayer, boolean isCurrent, boolean completed) {
         if (idx >= matchLabels.length) return;
         LabelAPI lbl = matchLabels[idx];
-        lbl.getPosition().inTL(x, y + MATCH_H / 2f - 8f);
+        lbl.getPosition().inTL(x + 4f, y + 2f);
         lbl.setOpacity(1f);
 
         if (completed) {
             String winnerName = getDisplayName(winner);
             String loserName = getDisplayName(winner == slot0 ? slot1 : slot0);
-            lbl.setText(truncate(winnerName, 10) + " vs " + truncate(loserName, 10));
+            lbl.setText(truncate(winnerName) + " vs " + truncate(loserName));
             if (involvesPlayer) {
                 lbl.setColor(winner == 0 ? COLOR_WINNER_TEXT : new Color(255, 100, 100));
             } else {
@@ -251,7 +314,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin {
         } else if (slot0 >= 0 && slot1 >= 0) {
             String name0 = getDisplayName(slot0);
             String name1 = getDisplayName(slot1);
-            lbl.setText(truncate(name0, 10) + " vs " + truncate(name1, 10));
+            lbl.setText(truncate(name0) + " vs " + truncate(name1));
             if (isCurrent) {
                 lbl.setColor(Color.YELLOW);
             } else if (involvesPlayer) {
@@ -333,9 +396,9 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin {
         return "P" + (slot + 1);
     }
 
-    private String truncate(String text, int maxLen) {
+    private String truncate(String text) {
         if (text == null) return "";
-        return text.length() <= maxLen ? text : text.substring(0, maxLen - 1) + ".";
+        return text.length() <= MAX_NAME_LEN ? text : text.substring(0, MAX_NAME_LEN - 1) + ".";
     }
 
     @Override
@@ -345,23 +408,22 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin {
         PositionAPI pos = panel.getPosition();
         float x = pos.getX();
         float y = pos.getY();
-        float w = pos.getWidth();
         float h = pos.getHeight();
 
         UnifiedCoord.PanelContext existingCtx = UnifiedCoord.getCurrentOrNull();
         boolean needsContext = existingCtx == null;
         if (needsContext) {
-            UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(x, y, w, h));
+            UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(x, y, panelW, h));
         }
 
         try {
             GLStateUtil.resetBlendState();
-            Misc.renderQuad(x, y, w, h, COLOR_BG, alphaMult);
+            Misc.renderQuad(x, y, panelW, h, COLOR_BG, alphaMult);
 
-            renderAllMatchBoxes(x, y, w, h, alphaMult);
-            renderLbDivider(x, y, w, h, alphaMult);
-            renderGfBox(x, y, w, h, alphaMult);
-            renderBracketLines(x, y, w, h, alphaMult);
+            renderAllMatchBoxes(alphaMult);
+            renderLbDivider(alphaMult);
+            renderGfBox(alphaMult);
+            renderBracketLines(alphaMult);
 
             GLStateUtil.resetColor();
         } finally {
@@ -371,40 +433,39 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin {
         }
     }
 
-    private void renderAllMatchBoxes(float px, float py, float pw, float ph, float alpha) {
-        float baseX = px + 30f;
-
+    private void renderAllMatchBoxes(float alpha) {
         int[] wbCounts = {4, 2, 1};
         for (int r = 0; r < 3; r++) {
             for (int m = 0; m < wbCounts[r]; m++) {
-                float mx = baseX + r * COL_SPACING;
-                float my = py + ph - WB_TOP_Y - m * ROW_SPACING - MATCH_H;
-                int slot0 = getSlot(data.wbMatchups, r, m, 0);
-                int slot1 = getSlot(data.wbMatchups, r, m, 1);
-                int winner = getResult(data.wbResults, r, m);
-                boolean involvesPlayer = (slot0 == 0 || slot1 == 0);
+                float uiX = baseX + r * colSpacing;
+                float uiY = getWbMatchUiY(m);
+                UnifiedCoord coord = new UnifiedCoord(uiX, uiY);
+                boolean involvesPlayer = isPlayerInMatch(data.wbMatchups, r, m);
                 boolean isCurrent = isCurrentMatch(TournamentManager.BRACKET_WB, r, m);
-                renderMatchBox(mx, my, slot0, slot1, winner, involvesPlayer, isCurrent, alpha);
+                renderMatchBox(coord.glX(), coord.glSpriteY(MATCH_H), involvesPlayer, isCurrent, alpha);
             }
         }
 
         int[] lbCounts = {2, 2, 1, 1};
         for (int r = 0; r < 4; r++) {
             for (int m = 0; m < lbCounts[r]; m++) {
-                float mx = baseX + r * COL_SPACING;
-                float my = py + ph - getLbMatchUiY(r, m) - MATCH_H;
-                int slot0 = getSlot(data.lbMatchups, r, m, 0);
-                int slot1 = getSlot(data.lbMatchups, r, m, 1);
-                int winner = getResult(data.lbResults, r, m);
-                boolean involvesPlayer = (slot0 == 0 || slot1 == 0);
+                float uiX = baseX + r * colSpacing;
+                float uiY = getLbMatchUiY(r, m);
+                UnifiedCoord coord = new UnifiedCoord(uiX, uiY);
+                boolean involvesPlayer = isPlayerInMatch(data.lbMatchups, r, m);
                 boolean isCurrent = isCurrentMatch(TournamentManager.BRACKET_LB, r, m);
-                renderMatchBox(mx, my, slot0, slot1, winner, involvesPlayer, isCurrent, alpha);
+                renderMatchBox(coord.glX(), coord.glSpriteY(MATCH_H), involvesPlayer, isCurrent, alpha);
             }
         }
     }
 
-    private void renderMatchBox(float mx, float my, int slot0, int slot1, int winner,
-                                boolean involvesPlayer, boolean isCurrent, float alpha) {
+    private boolean isPlayerInMatch(int[][] matchups, int round, int match) {
+        int slot0 = getSlot(matchups, round, match, 0);
+        int slot1 = getSlot(matchups, round, match, 1);
+        return slot0 == 0 || slot1 == 0;
+    }
+
+    private void renderMatchBox(float mx, float my, boolean involvesPlayer, boolean isCurrent, float alpha) {
         GLStateUtil.resetBlendState();
 
         Color bgColor = involvesPlayer ? COLOR_PLAYER_MATCH : COLOR_MATCH_BG;
@@ -412,85 +473,99 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin {
 
         Color borderColor = isCurrent ? COLOR_CURRENT_BORDER
             : (involvesPlayer ? COLOR_PLAYER_BORDER : COLOR_MATCH_BORDER);
-        renderRectBorder(mx, my, MATCH_W, MATCH_H, borderColor, alpha);
+        renderRectBorder(mx, my, borderColor, alpha);
     }
 
-    private void renderGfBox(float px, float py, float pw, float ph, float alpha) {
-        float baseX = px + 30f;
-        float gfX = baseX + 3f * COL_SPACING;
-        float gfY = py + ph - WB_TOP_Y - 20f - MATCH_H;
+    private void renderGfBox(float alpha) {
+        float gfX = baseX + 3f * colSpacing;
+        float gfY = getWbMatchUiY(0) - 20f;
+        UnifiedCoord coord = new UnifiedCoord(gfX, gfY);
 
         int wbFinalWinner = getResult(data.wbResults, 2, 0);
         int lbFinalWinner = getResult(data.lbResults, 3, 0);
-        boolean involvesPlayer = (wbFinalWinner == 0 || lbFinalWinner == 0);
+        boolean involvesPlayer = wbFinalWinner == 0 || lbFinalWinner == 0;
         boolean isCurrent = data.currentBracket == TournamentManager.BRACKET_GF;
 
         GLStateUtil.resetBlendState();
         Color bgColor = involvesPlayer ? COLOR_PLAYER_MATCH : COLOR_MATCH_BG;
-        Misc.renderQuad(gfX, gfY, MATCH_W, MATCH_H, bgColor, alpha);
+        Misc.renderQuad(coord.glX(), coord.glSpriteY(MATCH_H), MATCH_W, MATCH_H, bgColor, alpha);
 
         Color borderColor = isCurrent ? COLOR_CURRENT_BORDER
             : (involvesPlayer ? COLOR_PLAYER_BORDER : COLOR_MATCH_BORDER);
-        renderRectBorder(gfX, gfY, MATCH_W, MATCH_H, borderColor, alpha);
+        renderRectBorder(coord.glX(), coord.glSpriteY(MATCH_H), borderColor, alpha);
     }
 
-    private void renderLbDivider(float px, float py, float pw, float ph, float alpha) {
-        float divY = py + ph - WB_TOP_Y - 3f * ROW_SPACING - MATCH_H - 10f;
+    private void renderLbDivider(float alpha) {
+        float divY = WB_TOP_Y + 3f * rowSpacing + MATCH_H + 10f;
+        UnifiedCoord coord = new UnifiedCoord(10f, divY);
         GLStateUtil.resetBlendState();
-        Misc.renderQuad(px + 10f, divY, pw - 20f, 2f, COLOR_LB_DIVIDER, alpha);
+        Misc.renderQuad(coord.glX(), coord.glY(), panelW - 20f, 2f, COLOR_LB_DIVIDER, alpha);
     }
 
-    private void renderBracketLines(float px, float py, float pw, float ph, float alpha) {
+    private void renderBracketLines(float alpha) {
         GLStateUtil.resetBlendState();
         GL11.glLineWidth(1.5f);
         GL11.glColor4f(0.5f, 0.55f, 0.7f, 0.6f * alpha);
 
-        float baseX = px + 30f;
-        float topY = py + ph;
-
         int[] wbCounts = {4, 2, 1};
         for (int r = 0; r < 2; r++) {
-            float x1 = baseX + r * COL_SPACING + MATCH_W;
-            float x2 = baseX + (r + 1) * COL_SPACING;
-            float midX = (x1 + x2) / 2f;
+            float x1Ui = baseX + r * colSpacing + MATCH_W;
+            float x2Ui = baseX + (r + 1) * colSpacing;
+            float midXUi = (x1Ui + x2Ui) / 2f;
+            UnifiedCoord x1Coord = new UnifiedCoord(x1Ui, 0f);
+            UnifiedCoord x2Coord = new UnifiedCoord(x2Ui, 0f);
+            UnifiedCoord midXCoord = new UnifiedCoord(midXUi, 0f);
             for (int m = 0; m < wbCounts[r]; m += 2) {
-                float y0 = topY - WB_TOP_Y - m * ROW_SPACING - MATCH_H / 2f;
-                float y1 = topY - WB_TOP_Y - (m + 1) * ROW_SPACING - MATCH_H / 2f;
-                float yMid = (y0 + y1) / 2f;
-                float targetY = topY - WB_TOP_Y - (m / 2) * ROW_SPACING - MATCH_H / 2f;
+                float y0Ui = getWbMatchUiY(m) + MATCH_H / 2f;
+                float y1Ui = getWbMatchUiY(m + 1) + MATCH_H / 2f;
+                float yMidUi = (y0Ui + y1Ui) / 2f;
+                float targetYUi = getWbMatchUiY(m / 2) + MATCH_H / 2f;
 
-                drawLine(x1, y0, midX, y0);
-                drawLine(x1, y1, midX, y1);
-                drawLine(midX, y0, midX, y1);
-                drawLine(midX, yMid, x2, targetY);
+                UnifiedCoord y0Coord = new UnifiedCoord(0f, y0Ui);
+                UnifiedCoord y1Coord = new UnifiedCoord(0f, y1Ui);
+                UnifiedCoord yMidCoord = new UnifiedCoord(0f, yMidUi);
+                UnifiedCoord targetCoord = new UnifiedCoord(0f, targetYUi);
+
+                drawLine(x1Coord.glX(), y0Coord.glY(), midXCoord.glX(), y0Coord.glY());
+                drawLine(x1Coord.glX(), y1Coord.glY(), midXCoord.glX(), y1Coord.glY());
+                drawLine(midXCoord.glX(), y0Coord.glY(), midXCoord.glX(), y1Coord.glY());
+                drawLine(midXCoord.glX(), yMidCoord.glY(), x2Coord.glX(), targetCoord.glY());
             }
         }
 
-        float wbFinalX = baseX + 2f * COL_SPACING + MATCH_W;
-        float wbFinalY = topY - WB_TOP_Y - MATCH_H / 2f;
-        float gfX = baseX + 3f * COL_SPACING;
-        float gfY = topY - WB_TOP_Y - 20f - MATCH_H / 2f;
-        drawLine(wbFinalX, wbFinalY, gfX, gfY);
+        float wbFinalXUi = baseX + 2f * colSpacing + MATCH_W;
+        float wbFinalYUi = getWbMatchUiY(0) + MATCH_H / 2f;
+        float gfXUi = baseX + 3f * colSpacing;
+        float gfYUi = getWbMatchUiY(0) - 20f + MATCH_H / 2f;
+        UnifiedCoord wbFinalCoord = new UnifiedCoord(wbFinalXUi, wbFinalYUi);
+        UnifiedCoord gfCoord = new UnifiedCoord(gfXUi, gfYUi);
+        drawLine(wbFinalCoord.glX(), wbFinalCoord.glY(), gfCoord.glX(), gfCoord.glY());
 
         int[] lbCounts = {2, 2, 1, 1};
         for (int r = 0; r < 3; r++) {
-            float x1 = baseX + r * COL_SPACING + MATCH_W;
-            float x2 = baseX + (r + 1) * COL_SPACING;
-            float midX = (x1 + x2) / 2f;
+            float x1Ui = baseX + r * colSpacing + MATCH_W;
+            float x2Ui = baseX + (r + 1) * colSpacing;
+            float midXUi = (x1Ui + x2Ui) / 2f;
+            UnifiedCoord x1Coord = new UnifiedCoord(x1Ui, 0f);
+            UnifiedCoord x2Coord = new UnifiedCoord(x2Ui, 0f);
+            UnifiedCoord midXCoord = new UnifiedCoord(midXUi, 0f);
             for (int m = 0; m < lbCounts[r]; m++) {
-                float ySrc = topY - getLbMatchUiY(r, m) - MATCH_H / 2f;
-                int dstMatch = Math.min(m / 2, lbCounts[r + 1] - 1);
-                float yDst = topY - getLbMatchUiY(r + 1, dstMatch) - MATCH_H / 2f;
+                float ySrcUi = getLbMatchUiY(r, m) + MATCH_H / 2f;
+                float yDstUi = getLbMatchUiY(r + 1, 0) + MATCH_H / 2f;
 
-                drawLine(x1, ySrc, midX, ySrc);
-                drawLine(midX, ySrc, midX, yDst);
-                drawLine(midX, yDst, x2, yDst);
+                UnifiedCoord srcCoord = new UnifiedCoord(0f, ySrcUi);
+                UnifiedCoord dstCoord = new UnifiedCoord(0f, yDstUi);
+
+                drawLine(x1Coord.glX(), srcCoord.glY(), midXCoord.glX(), srcCoord.glY());
+                drawLine(midXCoord.glX(), srcCoord.glY(), midXCoord.glX(), dstCoord.glY());
+                drawLine(midXCoord.glX(), dstCoord.glY(), x2Coord.glX(), dstCoord.glY());
             }
         }
 
-        float lbFinalX = baseX + 3f * COL_SPACING + MATCH_W;
-        float lbFinalY = topY - getLbMatchUiY(3, 0) - MATCH_H / 2f;
-        drawLine(lbFinalX, lbFinalY, gfX, gfY);
+        float lbFinalXUi = baseX + 3f * colSpacing + MATCH_W;
+        float lbFinalYUi = getLbMatchUiY(3, 0) + MATCH_H / 2f;
+        UnifiedCoord lbFinalCoord = new UnifiedCoord(lbFinalXUi, lbFinalYUi);
+        drawLine(lbFinalCoord.glX(), lbFinalCoord.glY(), gfCoord.glX(), gfCoord.glY());
 
         GL11.glLineWidth(1f);
         GLStateUtil.resetColor();
@@ -503,36 +578,19 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin {
         GL11.glEnd();
     }
 
-    private void renderRectBorder(float rx, float ry, float rw, float rh, Color color, float alpha) {
+    private void renderRectBorder(float rx, float ry, Color color, float alpha) {
         GLStateUtil.resetBlendState();
         GL11.glLineWidth(1.5f);
         GL11.glColor4f(color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f,
             (color.getAlpha() / 255f) * alpha);
         GL11.glBegin(GL11.GL_LINE_LOOP);
         GL11.glVertex2f(rx, ry);
-        GL11.glVertex2f(rx + rw, ry);
-        GL11.glVertex2f(rx + rw, ry + rh);
-        GL11.glVertex2f(rx, ry + rh);
+        GL11.glVertex2f(rx + MATCH_W, ry);
+        GL11.glVertex2f(rx + MATCH_W, ry + MATCH_H);
+        GL11.glVertex2f(rx, ry + MATCH_H);
         GL11.glEnd();
         GL11.glLineWidth(1f);
         GLStateUtil.resetColor();
-    }
-
-    @Override
-    public void render(float alphaMult) {
-    }
-
-    @Override
-    public void advance(float amount) {
-    }
-
-    @Override
-    public void processInput(List<InputEventAPI> events) {
-    }
-
-    public void refreshData(TournamentManager.BracketData newData) {
-        this.data = newData;
-        updateAllLabels();
     }
 
     public void cleanup() {

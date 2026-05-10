@@ -28,6 +28,7 @@ import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.UnifiedCoord;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.util.GLStateUtil;
+import data.scripts.cosmicon.util.UIComponentFactory;
 
 public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEventListener {
 
@@ -107,6 +108,11 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
     private float displayedPlayerHp;
     private float displayedOpponentHp;
+
+    private boolean gatekeeper999HintShown = false;
+    private boolean gatekeeper999HintActive = false;
+    private float gatekeeper999HintPulseTimer = 0f;
+    private LabelAPI gatekeeper999HintLabel = null;
 
     public BattlePanelUI() {
         List<float[]> diceHitboxes = new ArrayList<>();
@@ -202,6 +208,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             tutorialRenderer.cleanup();
             tutorialRenderer = null;
         }
+        removeGatekeeper999HintLabel();
         if (damageAnimator != null) {
             damageAnimator.cleanup();
             damageAnimator = null;
@@ -307,6 +314,11 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     public void onPhaseChange(Phase newPhase) {
         if (tutorialController != null) {
             tutorialController.onPhaseChange(newPhase);
+        }
+
+        if (gatekeeper999HintActive && newPhase == Phase.WAITING_NEXT_TURN) {
+            gatekeeper999HintActive = false;
+            removeGatekeeper999HintLabel();
         }
 
         if (newPhase == Phase.ROLLING) {
@@ -440,6 +452,13 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     @Override
     public void onDamageResolved(int damage, int playerHp, int opponentHp) {
         labels.updateLabelsFromState();
+        if (!gatekeeper999HintShown && battleController != null
+                && battleController.isGatekeeper999EarlyExit()) {
+            gatekeeper999HintShown = true;
+            gatekeeper999HintActive = true;
+            gatekeeper999HintPulseTimer = 0f;
+            createGatekeeper999HintLabel();
+        }
     }
 
     @Override
@@ -754,6 +773,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     private void advanceCommonState(float amount) {
         advanceDisplayedHp(amount);
         advanceSecondaryDamageNumbers(amount);
+        if (gatekeeper999HintActive) {
+            gatekeeper999HintPulseTimer += amount * 3f;
+        }
     }
 
     private void advanceLabelsAndUI(float amount) {
@@ -1200,10 +1222,74 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                 tutorialRenderer.render(alphaMult);
             }
 
+            if (gatekeeper999HintActive) {
+                renderGatekeeper999Hint(alphaMult);
+            }
+
             GLStateUtil.resetColor();
         } finally {
             UnifiedCoord.clearCurrent();
         }
+    }
+
+    private void createGatekeeper999HintLabel() {
+        if (panel == null) return;
+        float boxW = 440f;
+        float boxH = 80f;
+        float boxUiX = (BattleRenderingUtils.PANEL_WIDTH - boxW) / 2f;
+        float boxUiY = 35f;
+        float labelX = boxUiX + 10f;
+        float labelY = boxUiY + 5f;
+        gatekeeper999HintLabel = UIComponentFactory.createLabel(
+            panel, Strings.get("casino.gatekeeper_999_exit_hint"), Fonts.INSIGNIA_LARGE,
+            new Color(255, 255, 220, 255), Alignment.MID,
+            boxW - 20f, boxH, labelX, labelY
+        );
+    }
+
+    private void removeGatekeeper999HintLabel() {
+        if (gatekeeper999HintLabel != null && panel != null) {
+            panel.removeComponent((UIComponentAPI) gatekeeper999HintLabel);
+            gatekeeper999HintLabel = null;
+        }
+    }
+
+    private void renderGatekeeper999Hint(float alphaMult) {
+        GLStateUtil.resetBlendState();
+
+        float boxW = 440f;
+        float boxH = 80f;
+        float boxUiX = (BattleRenderingUtils.PANEL_WIDTH - boxW) / 2f;
+        float boxUiY = 35f;
+
+        UnifiedCoord boxPos = new UnifiedCoord(boxUiX, boxUiY);
+        float glX = boxPos.glX();
+        float glY = boxPos.glSpriteY(boxH);
+
+        float bgAlpha = 0.75f * alphaMult;
+        GL11.glColor4f(0.05f, 0.05f, 0.15f, bgAlpha);
+        GL11.glBegin(GL11.GL_QUADS);
+        GL11.glVertex2f(glX, glY);
+        GL11.glVertex2f(glX + boxW, glY);
+        GL11.glVertex2f(glX + boxW, glY + boxH);
+        GL11.glVertex2f(glX, glY + boxH);
+        GL11.glEnd();
+
+        float borderAlpha = 0.9f * alphaMult;
+        float pulse = 0.5f + 0.5f * (float) Math.sin(gatekeeper999HintPulseTimer);
+        float r = 0.8f + 0.2f * pulse;
+        float g = 0.7f + 0.1f * pulse;
+        float b = 0.2f;
+        GL11.glColor4f(r, g, b, borderAlpha);
+        GL11.glLineWidth(2f);
+        GL11.glBegin(GL11.GL_LINE_LOOP);
+        GL11.glVertex2f(glX, glY);
+        GL11.glVertex2f(glX + boxW, glY);
+        GL11.glVertex2f(glX + boxW, glY + boxH);
+        GL11.glVertex2f(glX, glY + boxH);
+        GL11.glEnd();
+
+        GLStateUtil.resetColor();
     }
 
     private void renderCard(boolean isPlayer, float alphaMult) {

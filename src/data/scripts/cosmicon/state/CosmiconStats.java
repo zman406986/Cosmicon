@@ -13,6 +13,7 @@ public class CosmiconStats {
     private static final String KEY_GAMES_WON = "$cos_games_won";
     private static final String KEY_UNLOCKED_CHARACTERS = "$cos_unlocked_characters";
     private static final String KEY_UNLOCKED_PRISMATIC = "$cos_unlocked_prismatic";
+    private static final String KEY_UNLOCKED_PRISMATIC_TRUE = "$cos_unlocked_prismatic_true";
     private static final String KEY_PRISMATIC_FEATURE_UNLOCKED = "$cos_prismatic_feature_unlocked";
     private static final String KEY_HAS_GALLERY_CHARACTERS = "$cos_has_gallery_characters";
 
@@ -122,6 +123,18 @@ public class CosmiconStats {
 
     public static void unlockPrismaticDice(String diceId) {
         getUnlockedPrismaticDice().add(diceId);
+    }
+
+    public static Set<String> getUnlockedPrismaticTrueDice() {
+        return getStringSet(KEY_UNLOCKED_PRISMATIC_TRUE);
+    }
+
+    public static boolean isPrismaticTrueUnlocked(String diceId) {
+        return getUnlockedPrismaticTrueDice().contains(diceId);
+    }
+
+    public static void unlockPrismaticTrue(String diceId) {
+        getUnlockedPrismaticTrueDice().add(diceId);
     }
 
     public static void completeTutorialGame1() {

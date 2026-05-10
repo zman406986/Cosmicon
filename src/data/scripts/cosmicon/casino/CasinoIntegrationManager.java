@@ -38,9 +38,11 @@ public class CasinoIntegrationManager {
     }
 
     public static void updateTrashcanHunterLevel(int damageDealt) {
+        int maxHp = CosmiconEventState.isTournamentUnlocked() ? 999 : 99;
+        int capped = Math.min(damageDealt, maxHp);
         int current = getTrashcanHunterLevel();
-        if (damageDealt > current) {
-            CosmiconEventState.setTrashcanHunterLevel(damageDealt);
+        if (capped > current) {
+            CosmiconEventState.setTrashcanHunterLevel(capped);
         }
     }
 
@@ -78,14 +80,18 @@ public class CasinoIntegrationManager {
         interaction.setOnLeaveAction(onLeave);
         dialog.setPlugin(interaction);
         interaction.init(dialog);
+        interaction.showTournamentBracketPanel();
     }
 
     public static void startGatekeeperBattle(InteractionDialogAPI dialog, Runnable onLeave) {
         CosmiconEventState.clearCasinoBattleState();
+        CosmiconEventState.setReplayTutorialGame(-1);
+        CosmiconEventState.setIsTutorialMode(false);
         CosmiconEventState.setCasinoBattleMode(true);
         CosmiconEventState.setCasinoBattleIsBoss(false);
         CosmiconEventState.setCasinoBattleOpponent(CharacterIds.TRASHCAN);
-        CosmiconEventState.setCasinoBattleBonusHp(74);
+        int bonusHp = CosmiconEventState.isTournamentUnlocked() ? 974 : 74;
+        CosmiconEventState.setCasinoBattleBonusHp(bonusHp);
         CosmiconEventState.setCasinoBattleUseTrue(false);
         CosmiconEventState.setIsBarEvent(false);
 
@@ -97,7 +103,8 @@ public class CasinoIntegrationManager {
 
     public static void startTournament(InteractionDialogAPI dialog, Runnable onLeave) {
         CosmiconEventState.clearTournamentState();
-        CosmiconEventState.setTournamentUnlocked(false);
+        CosmiconEventState.setReplayTutorialGame(-1);
+        CosmiconEventState.setIsTutorialMode(false);
 
         String playerCharId = CosmiconEventState.getOpponentCharacter();
         if (playerCharId == null) {
@@ -132,6 +139,24 @@ public class CasinoIntegrationManager {
         interaction.setOnLeaveAction(onLeave);
         dialog.setPlugin(interaction);
         interaction.init(dialog);
+        interaction.showTournamentBracketPanel();
+    }
+
+    public static void continueTournament(InteractionDialogAPI dialog, Runnable onLeave) {
+        String bracketJson = CosmiconEventState.getTournamentBracketData();
+        if (bracketJson == null) return;
+
+        TournamentManager tournament = TournamentManager.fromJson(bracketJson);
+        if (tournament == null) return;
+
+        CosmiconEventState.clearCasinoBattleState();
+        CosmiconEventState.setCasinoBattleMode(true);
+        CosmiconEventState.setCasinoBattleIsBoss(false);
+
+        CosmiconInteraction interaction = new CosmiconInteraction();
+        interaction.setOnLeaveAction(onLeave);
+        dialog.setPlugin(interaction);
+        interaction.init(dialog);
     }
 
     public static void startTournamentBattle(InteractionDialogAPI dialog, Runnable onLeave) {
@@ -145,6 +170,8 @@ public class CasinoIntegrationManager {
         if (nextOppId == null) return;
 
         CosmiconEventState.clearCasinoBattleState();
+        CosmiconEventState.setReplayTutorialGame(-1);
+        CosmiconEventState.setIsTutorialMode(false);
         CosmiconEventState.setCasinoBattleMode(true);
         CosmiconEventState.setCasinoBattleIsBoss(false);
         CosmiconEventState.setCasinoBattleOpponent(nextOppId);
@@ -236,6 +263,10 @@ public class CasinoIntegrationManager {
         CosmiconEventState.setTournamentUnlocked(unlocked);
     }
 
+    public static boolean isTournamentActive() {
+        return CosmiconEventState.isTournamentActive();
+    }
+
     public static TournamentManager getTournamentManager() {
         String bracketJson = CosmiconEventState.getTournamentBracketData();
         if (bracketJson == null) return null;
@@ -246,21 +277,25 @@ public class CasinoIntegrationManager {
         List<String> lockedChars = getLockedCharacterIds();
         if (!lockedChars.isEmpty()) return 1;
 
+        List<String> lockedTrueVersion = getLockedPrismaticTrueVersion();
+        if (!lockedTrueVersion.isEmpty()) return 2;
+
         List<String> lockedTrueVersionPrismatic = getLockedPrismaticWithTrueVersion();
-        if (!lockedTrueVersionPrismatic.isEmpty()) return 2;
+        if (!lockedTrueVersionPrismatic.isEmpty()) return 3;
 
         List<String> lockedOtherPrismatic = getLockedPrismaticWithoutTrueVersion();
-        if (!lockedOtherPrismatic.isEmpty()) return 3;
+        if (!lockedOtherPrismatic.isEmpty()) return 4;
 
-        return 4;
+        return 5;
     }
 
     public static List<String> getRewardCandidates(int tier, int count) {
         List<String> pool;
         switch (tier) {
             case 1 -> pool = getLockedCharacterIds();
-            case 2 -> pool = getLockedPrismaticWithTrueVersion();
-            case 3 -> pool = getLockedPrismaticWithoutTrueVersion();
+            case 2 -> pool = getLockedPrismaticTrueVersion();
+            case 3 -> pool = getLockedPrismaticWithTrueVersion();
+            case 4 -> pool = getLockedPrismaticWithoutTrueVersion();
             default -> { return Collections.emptyList(); }
         }
         return pickRandom(pool, count);
@@ -272,7 +307,7 @@ public class CasinoIntegrationManager {
                 CharacterCard card = CharacterRegistry.getCharacterById(id);
                 return card != null ? card.getName() : id;
             }
-            case 2, 3 -> {
+            case 2, 3, 4 -> {
                 return PrismaticDisplayHelper.getDiceDisplayName(id);
             }
             default -> { return ""; }
@@ -285,6 +320,10 @@ public class CasinoIntegrationManager {
 
     public static void unlockPrismaticReward(String diceId) {
         CosmiconStats.unlockPrismaticDice(diceId);
+    }
+
+    public static void unlockPrismaticTrueReward(String diceId) {
+        CosmiconStats.unlockPrismaticTrue(diceId);
     }
 
     public static List<String> getLockedCharacterIds() {
@@ -314,6 +353,18 @@ public class CasinoIntegrationManager {
         List<String> locked = new ArrayList<>();
         for (PrismaticDiceType type : PrismaticDiceRegistry.getAll().values()) {
             if (!type.hasTrueVersion() && !unlocked.contains(type.getId())) {
+                locked.add(type.getId());
+            }
+        }
+        return locked;
+    }
+
+    public static List<String> getLockedPrismaticTrueVersion() {
+        Set<String> unlocked = CosmiconStats.getUnlockedPrismaticDice();
+        Set<String> trueUnlocked = CosmiconStats.getUnlockedPrismaticTrueDice();
+        List<String> locked = new ArrayList<>();
+        for (PrismaticDiceType type : PrismaticDiceRegistry.getAll().values()) {
+            if (type.hasTrueVersion() && unlocked.contains(type.getId()) && !trueUnlocked.contains(type.getId())) {
                 locked.add(type.getId());
             }
         }

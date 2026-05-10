@@ -7,7 +7,9 @@ import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.state.CosmiconStats;
 import data.scripts.cosmicon.util.PrismaticDisplayHelper;
-import java.util.List;
+import java.util.Map;
+
+import org.jetbrains.annotations.NotNull;
 import org.lazywizard.console.BaseCommand;
 import org.lazywizard.console.CommonStrings;
 import org.lazywizard.console.Console;
@@ -17,7 +19,7 @@ public class CosmiconUnlock implements BaseCommand {
     private static final String KEY_PRISMATIC_FEATURE = "$cos_prismatic_feature_unlocked";
 
     @Override
-    public CommandResult runCommand(String args, CommandContext context) {
+    public CommandResult runCommand(@NotNull String args, CommandContext context) {
         if (!context.isInCampaign()) {
             Console.showMessage(CommonStrings.ERROR_CAMPAIGN_ONLY);
             return CommandResult.WRONG_CONTEXT;
@@ -44,8 +46,13 @@ public class CosmiconUnlock implements BaseCommand {
                 unlockChar(parts[1].toLowerCase());
             }
             case "prismatic" -> {
-                String id = parts.length >= 2 ? parts[1].toLowerCase() : null;
-                unlockPrismatic(id);
+                if (parts.length >= 2 && "true".equalsIgnoreCase(parts[1])) {
+                    String trueId = parts.length >= 3 ? parts[2].toLowerCase() : null;
+                    unlockPrismaticTrue(trueId);
+                } else {
+                    String id = parts.length >= 2 ? parts[1].toLowerCase() : null;
+                    unlockPrismatic(id);
+                }
             }
             default -> {
                 Console.showMessage("Error: first argument must be 'char', 'prismatic', or 'all'.");
@@ -109,14 +116,20 @@ public class CosmiconUnlock implements BaseCommand {
 
         if ("all".equals(id)) {
             int count = 0;
-            for (String diceId : PrismaticDiceRegistry.getAll().keySet()) {
+            int trueCount = 0;
+            for (Map.Entry<String, PrismaticDiceType> entry : PrismaticDiceRegistry.getAll().entrySet()) {
+                String diceId = entry.getKey();
                 if (!CosmiconStats.isPrismaticDiceUnlocked(diceId)) {
                     CosmiconStats.unlockPrismaticDice(diceId);
                     count++;
                 }
+                if (entry.getValue().hasTrueVersion() && !CosmiconStats.isPrismaticTrueUnlocked(diceId)) {
+                    CosmiconStats.unlockPrismaticTrue(diceId);
+                    trueCount++;
+                }
             }
             Global.getSector().getPlayerMemoryWithoutUpdate().set(KEY_PRISMATIC_FEATURE, true);
-            Console.showMessage("Unlocked " + count + " prismatic dice (all).");
+            Console.showMessage("Unlocked " + count + " prismatic dice and " + trueCount + " true versions (all).");
             return;
         }
 
@@ -142,6 +155,49 @@ public class CosmiconUnlock implements BaseCommand {
         Console.showMessage("Unlocked prismatic dice: " + name + " (" + id + ")");
     }
 
+    private void unlockPrismaticTrue(String id) {
+        if (id == null) {
+            int count = 0;
+            for (PrismaticDiceType type : PrismaticDiceRegistry.getAll().values()) {
+                if (type.hasTrueVersion() && CosmiconStats.isPrismaticDiceUnlocked(type.getId())
+                    && !CosmiconStats.isPrismaticTrueUnlocked(type.getId())) {
+                    CosmiconStats.unlockPrismaticTrue(type.getId());
+                    count++;
+                }
+            }
+            Console.showMessage("Unlocked " + count + " true versions (for already-unlocked dice).");
+            return;
+        }
+
+        if (!PrismaticDiceRegistry.has(id)) {
+            Console.showMessage("Error: unknown prismatic dice '" + id + "'.");
+            return;
+        }
+
+        PrismaticDiceType type = PrismaticDiceRegistry.get(id);
+        if (!type.hasTrueVersion()) {
+            String name = PrismaticDisplayHelper.getDiceDisplayName(id);
+            Console.showMessage("'" + name + "' does not have a true version.");
+            return;
+        }
+
+        if (!CosmiconStats.isPrismaticDiceUnlocked(id)) {
+            String name = PrismaticDisplayHelper.getDiceDisplayName(id);
+            Console.showMessage("Unlock the default version of '" + name + "' first.");
+            return;
+        }
+
+        if (CosmiconStats.isPrismaticTrueUnlocked(id)) {
+            String name = PrismaticDisplayHelper.getDiceDisplayName(id);
+            Console.showMessage("True version of '" + name + "' is already unlocked.");
+            return;
+        }
+
+        CosmiconStats.unlockPrismaticTrue(id);
+        String name = PrismaticDisplayHelper.getDiceDisplayName(id);
+        Console.showMessage("Unlocked true version: " + name + " (" + id + ")");
+    }
+
     private void unlockAll() {
         int charCount = 0;
         for (CharacterCard card : CharacterRegistry.getAllCards()) {
@@ -152,10 +208,16 @@ public class CosmiconUnlock implements BaseCommand {
         }
 
         int diceCount = 0;
-        for (String diceId : PrismaticDiceRegistry.getAll().keySet()) {
+        int trueCount = 0;
+        for (Map.Entry<String, PrismaticDiceType> entry : PrismaticDiceRegistry.getAll().entrySet()) {
+            String diceId = entry.getKey();
             if (!CosmiconStats.isPrismaticDiceUnlocked(diceId)) {
                 CosmiconStats.unlockPrismaticDice(diceId);
                 diceCount++;
+            }
+            if (entry.getValue().hasTrueVersion() && !CosmiconStats.isPrismaticTrueUnlocked(diceId)) {
+                CosmiconStats.unlockPrismaticTrue(diceId);
+                trueCount++;
             }
         }
 
@@ -165,6 +227,6 @@ public class CosmiconUnlock implements BaseCommand {
             CosmiconStats.forceCompleteTutorial();
         }
 
-        Console.showMessage("Unlocked " + charCount + " characters and " + diceCount + " prismatic dice.");
+        Console.showMessage("Unlocked " + charCount + " characters, " + diceCount + " prismatic dice, and " + trueCount + " true versions.");
     }
 }

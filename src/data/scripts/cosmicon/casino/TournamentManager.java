@@ -124,10 +124,10 @@ public class TournamentManager {
         return ThreadLocalRandom.current().nextBoolean() ? slot1 : slot2;
     }
 
-    public boolean simulateUpToPlayerMatch() {
+    public void simulateUpToPlayerMatch() {
         if (playerEliminated || playerChampion) {
             finishTournament();
-            return false;
+            return;
         }
 
         Integer[] nextMatch = findNextPlayerMatch();
@@ -135,12 +135,11 @@ public class TournamentManager {
             if (!playerEliminated && !playerChampion) {
                 finishTournament();
             }
-            return false;
+            return;
         }
 
         int targetBracket = nextMatch[0];
         int targetRound = nextMatch[1];
-        int targetMatchIndex = nextMatch[2];
 
         if (targetBracket == BRACKET_GF && gfSeries[0] < 0) {
             if (lbResults[3][0] >= 0) {
@@ -149,11 +148,11 @@ public class TournamentManager {
                 currentRound = 0;
                 currentMatchIndex = 0;
             }
-            return true;
+            return;
         }
 
         for (int r = 0; r < WB_ROUNDS; r++) {
-            if (simulateWBRound(r)) return true;
+            if (simulateWBRound(r)) return;
             if (r < WB_ROUNDS - 1) {
                 checkAndAdvanceWBRound(r);
             }
@@ -161,7 +160,7 @@ public class TournamentManager {
 
         for (int r = 0; r < LB_ROUNDS; r++) {
             if (r == targetRound && targetBracket == BRACKET_LB) break;
-            if (simulateLBRound(r)) return true;
+            if (simulateLBRound(r)) return;
             checkAndAdvanceLBRound(r);
         }
 
@@ -173,8 +172,6 @@ public class TournamentManager {
                 currentMatchIndex = 0;
             }
         }
-
-        return true;
     }
 
     private Integer[] findNextPlayerMatch() {
@@ -286,7 +283,7 @@ public class TournamentManager {
             } else if (round == 1) {
                 lbMatchups[2][0] = lbResults[1][0];
                 lbMatchups[2][1] = lbResults[1][1];
-            } else if (round == 2) {
+            } else {
                 lbMatchups[3][0] = lbResults[2][0];
             }
         }
@@ -424,7 +421,7 @@ public class TournamentManager {
                 } else if (round == 1) {
                     lbMatchups[2][0] = lbResults[1][0];
                     lbMatchups[2][1] = lbResults[1][1];
-                } else if (round == 2) {
+                } else {
                     lbMatchups[3][0] = lbResults[2][0];
                 }
             }
@@ -432,6 +429,7 @@ public class TournamentManager {
     }
 
     private void dropToLoserBracket(int wbRound, int wbMatchIndex, int loserSlot) {
+        playerInLoserBracket = true;
         switch (wbRound) {
             case 0 -> {
                 int lbSlot = (wbMatchIndex % 2 == 0)
@@ -439,14 +437,8 @@ public class TournamentManager {
                     : (wbMatchIndex - 1) * 2 + 3;
                 lbMatchups[0][lbSlot] = loserSlot;
             }
-            case 1 -> {
-                int lbMatch = wbMatchIndex;
-                lbMatchups[1][lbMatch * 2 + 1] = loserSlot;
-            }
-            case 2 -> {
-                lbMatchups[3][1] = loserSlot;
-                playerInLoserBracket = true;
-            }
+            case 1 -> lbMatchups[1][wbMatchIndex * 2 + 1] = loserSlot;
+            case 2 -> lbMatchups[3][1] = loserSlot;
         }
     }
 
@@ -461,6 +453,10 @@ public class TournamentManager {
 
         if (currentBracket == BRACKET_GF) {
             return gfOpponentSlot;
+        }
+
+        if (currentBracket < 0 || currentRound < 0 || currentMatchIndex < 0) {
+            return -1;
         }
 
         int[][] matchups = (currentBracket == BRACKET_WB) ? wbMatchups : lbMatchups;

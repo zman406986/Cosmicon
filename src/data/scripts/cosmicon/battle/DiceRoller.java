@@ -2,9 +2,12 @@ package data.scripts.cosmicon.battle;
 
 import data.scripts.cosmicon.character.PassiveEventSystem;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
+import data.scripts.cosmicon.prismatic.PrismaticDiceType;
+import data.scripts.cosmicon.prismatic.PrismaticEffect;
 import data.scripts.cosmicon.tutorial.TutorialDiceRoller;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.util.CosmiconRandom;
+import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -142,6 +145,7 @@ public class DiceRoller {
                         Random random = CosmiconRandom.getRandom();
                         PrismaticDiceInstance newInstance = PrismaticDiceInstance.roll(
                             existingInstance.type, existingInstance.isTrueVersion, random);
+                        setMustSelectForDestined(newInstance, existingInstance.type);
                         values.set(i, newInstance.rolledFace);
                         state.updatePrismaticDiceAt(i, newInstance, forPlayer);
                     }
@@ -190,5 +194,14 @@ public class DiceRoller {
         }
         sb.append(" | New total: ").append(total);
         CosmiconLogger.debug(sb.toString());
+    }
+
+    private static void setMustSelectForDestined(PrismaticDiceInstance instance, PrismaticDiceType type) {
+        PrismaticEffect effect = type.getEffect();
+        boolean grantsDestined = effect.isGrantStatus() && 
+                                 effect.getGrantedEffect() == StatusEffect.DESTINED;
+        if (grantsDestined && instance.isSpecialFace) {
+            instance.setMustSelect(true);
+        }
     }
 }

@@ -100,7 +100,6 @@ public class TutorialController {
 
     public static boolean shouldActivateTutorial() {
         return CosmiconEventState.isTutorialMode()
-            || CosmiconStats.isInTutorialMode()
             || CosmiconEventState.isReplayTutorial();
     }
 

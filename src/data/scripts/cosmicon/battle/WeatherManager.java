@@ -81,6 +81,20 @@ public class WeatherManager {
     public void setWeatherDisabled(boolean disabled) {
         this.weatherDisabled = disabled;
     }
+
+    public void excludeWeather(WeatherType excluded) {
+        for (int i = 0; i < weatherSchedule.size(); i++) {
+            if (weatherSchedule.get(i) == excluded) {
+                int turn = WEATHER_TURN_SCHEDULE.get(i);
+                List<WeatherType> candidates = getWeathersForTurn(turn);
+                candidates.remove(excluded);
+                if (!candidates.isEmpty()) {
+                    Collections.shuffle(candidates, ThreadLocalRandom.current());
+                    weatherSchedule.set(i, candidates.get(0));
+                }
+            }
+        }
+    }
     
     private void initializeWeatherSchedule() {
         if (isStoryBattle && storyBattleId != null) {

@@ -113,7 +113,9 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
             throw new IllegalStateException("Failed to load character cards");
         }
 
-        if (CosmiconEventState.isCasinoBattleMode()) {
+        boolean isReplayTutorial = replayGame >= 0;
+        boolean isTutorialMode = CosmiconStats.isInTutorialMode();
+        if (CosmiconEventState.isCasinoBattleMode() && !isReplayTutorial && !isTutorialMode) {
             String casinoOppId = CosmiconEventState.getCasinoBattleOpponent();
             if (casinoOppId != null) {
                 opponentCard = CharacterRegistry.getCharacterById(casinoOppId);
@@ -125,7 +127,11 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
             }
         }
 
-        boolean isTutorial = TutorialController.shouldActivateTutorial();
+        if (isGatekeeper999Battle()) {
+            state.getWeatherController().getWeatherManager().excludeWeather(WeatherType.TEMPORAL_STORM);
+        }
+
+        boolean isTutorial = isTutorialMode || isReplayTutorial;
         TutorialController.TutorialGame tutorialGameType = null;
         if (isTutorial) {
             tutorialGameType = TutorialController.determineTutorialGame();
@@ -140,13 +146,22 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
             String savedPrismaticId = CosmiconPlayerState.loadPrismaticDice();
             String defaultPrismaticId = CosmiconPlayerState.getDefaultPrismaticForCharacter(playerCard.getId());
             boolean useTrueVersion = CosmiconPlayerState.loadPrismaticDiceTrueVersion();
+            if (useTrueVersion && savedPrismaticId != null && !CosmiconStats.isPrismaticTrueUnlocked(savedPrismaticId)) {
+                useTrueVersion = false;
+            }
             boolean playerHasPrismatic = !playerCard.getPrismaticDiceIds().isEmpty();
+            boolean playerHasCustomPrismatic = savedPrismaticId != null && !savedPrismaticId.isEmpty();
+            boolean repeaterUnlocked = CosmiconStats.isPrismaticDiceUnlocked("repeater");
 
-            if (playerHasPrismatic && savedPrismaticId != null && !savedPrismaticId.isEmpty()
+            if (playerHasPrismatic && playerHasCustomPrismatic
                 && !savedPrismaticId.equals(defaultPrismaticId)) {
                 int uses = playerCard.getPrismaticDiceIds().getOrDefault(savedPrismaticId, 2);
                 playerCard = playerCard.withPrismaticDice(savedPrismaticId, uses, useTrueVersion);
                 CosmiconLogger.info("Applied custom prismatic dice: %s (true: %b)", savedPrismaticId, useTrueVersion);
+            } else if (playerHasPrismatic && repeaterUnlocked && !playerHasCustomPrismatic) {
+                int uses = playerCard.getPrismaticDiceIds().getOrDefault("repeater", 2);
+                playerCard = playerCard.withPrismaticDice("repeater", uses, false);
+                CosmiconLogger.info("Applied default repeater prismatic dice (non-true)");
             } else if (playerHasPrismatic && defaultPrismaticId != null) {
                 int uses = playerCard.getPrismaticDiceIds().getOrDefault(defaultPrismaticId, 2);
                 playerCard = playerCard.withPrismaticDice(defaultPrismaticId, uses, useTrueVersion);
@@ -296,6 +311,17 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
         state.setWinner("player");
         state.notifyPhaseChange(TurnState.Phase.ENDED);
         state.notifyBattleEnd("player");
+    }
+
+    public boolean isGatekeeper999Battle() {
+        return CosmiconEventState.isCasinoBattleMode()
+            && !CosmiconEventState.isCasinoBattleBoss()
+            && !CosmiconEventState.isTournamentActive()
+            && CosmiconEventState.getCasinoBattleBonusHp() == 974;
+    }
+
+    public boolean isGatekeeper999EarlyExit() {
+        return isGatekeeper999Battle() && state.getOpponentTotalDamageTaken() >= 99;
     }
 
     public void cleanup() {

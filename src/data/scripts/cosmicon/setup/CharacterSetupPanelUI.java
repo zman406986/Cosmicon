@@ -703,35 +703,42 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         float toggleX = DICE_LIST_X + 8f;
         float toggleY = entryY + DICE_ENTRY_HEIGHT - 18f;
 
+        String diceId = filteredDiceList.get(entryIndex).getId();
+        boolean trueUnlocked = CosmiconStats.isPrismaticTrueUnlocked(diceId);
+
         boolean useTrue = entryIndex == selectedDiceEntryIndex && selectedUseTrueVersion;
 
         // "D" radio
         UnifiedCoord dCenter = new UnifiedCoord(toggleX + radioSize / 2f, toggleY + radioSize / 2f);
         Color dColor = (!useTrue && entryIndex == selectedDiceEntryIndex) ? COLOR_RADIO_SELECTED : COLOR_RADIO_UNSELECTED;
-        drawRadioCircle(dCenter.glX(), dCenter.glY(), radioSize, dColor, alphaMult, !useTrue && entryIndex == selectedDiceEntryIndex);
+        boolean dFilled = !trueUnlocked || (!useTrue && entryIndex == selectedDiceEntryIndex);
+        drawRadioCircle(dCenter.glX(), dCenter.glY(), radioSize, dColor, alphaMult, dFilled);
 
         versionClickRegions.add(new VersionClickRegion(toggleX, toggleY, radioSize + 14f, radioSize, entryIndex, false));
 
-        // "T" radio
-        float tX = toggleX + radioSize + 18f;
-        UnifiedCoord tCenter = new UnifiedCoord(tX + radioSize / 2f, toggleY + radioSize / 2f);
-        Color tColor = (useTrue && entryIndex == selectedDiceEntryIndex) ? COLOR_RADIO_SELECTED : COLOR_RADIO_UNSELECTED;
-        drawRadioCircle(tCenter.glX(), tCenter.glY(), radioSize, tColor, alphaMult, useTrue && entryIndex == selectedDiceEntryIndex);
+        if (trueUnlocked) {
+            // "T" radio
+            float tX = toggleX + radioSize + 18f;
+            UnifiedCoord tCenter = new UnifiedCoord(tX + radioSize / 2f, toggleY + radioSize / 2f);
+            Color tColor = (useTrue && entryIndex == selectedDiceEntryIndex) ? COLOR_RADIO_SELECTED : COLOR_RADIO_UNSELECTED;
+            drawRadioCircle(tCenter.glX(), tCenter.glY(), radioSize, tColor, alphaMult, useTrue && entryIndex == selectedDiceEntryIndex);
 
-        versionClickRegions.add(new VersionClickRegion(tX, toggleY, radioSize + 14f, radioSize, entryIndex, true));
+            versionClickRegions.add(new VersionClickRegion(tX, toggleY, radioSize + 14f, radioSize, entryIndex, true));
+        }
 
         // D/T labels - drawn as small colored quads with text approximation
-        // Use GL to draw "D" and "T" indicators
         float[] labelC = ColorHelper.toGLComponents(COLOR_VERSION_LABEL, alphaMult);
         GL11.glColor4f(labelC[0], labelC[1], labelC[2], labelC[3]);
 
-        // Small indicator squares as text placeholders
         float indicatorSize = 8f;
         UnifiedCoord dInd = new UnifiedCoord(toggleX + radioSize + 2f, toggleY + 2f);
         Misc.renderQuad(dInd.glX(), dInd.glSpriteY(indicatorSize), indicatorSize, indicatorSize, COLOR_VERSION_LABEL, alphaMult);
 
-        UnifiedCoord tInd = new UnifiedCoord(tX + radioSize + 2f, toggleY + 2f);
-        Misc.renderQuad(tInd.glX(), tInd.glSpriteY(indicatorSize), indicatorSize, indicatorSize, COLOR_VERSION_LABEL, alphaMult);
+        if (trueUnlocked) {
+            float tX = toggleX + radioSize + 18f;
+            UnifiedCoord tInd = new UnifiedCoord(tX + radioSize + 2f, toggleY + 2f);
+            Misc.renderQuad(tInd.glX(), tInd.glSpriteY(indicatorSize), indicatorSize, indicatorSize, COLOR_VERSION_LABEL, alphaMult);
+        }
 
         GLStateUtil.resetColor();
     }
@@ -974,6 +981,11 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         List<PrismaticDiceType> diceList = getFilteredDiceList();
         if (entryIndex < 0 || entryIndex >= diceList.size()) return;
+
+        if (useTrue) {
+            String diceId = diceList.get(entryIndex).getId();
+            if (!CosmiconStats.isPrismaticTrueUnlocked(diceId)) return;
+        }
 
         selectedDiceEntryIndex = entryIndex;
         selectedUseTrueVersion = useTrue;

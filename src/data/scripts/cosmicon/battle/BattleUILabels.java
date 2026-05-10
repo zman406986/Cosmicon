@@ -487,9 +487,15 @@ public class BattleUILabels {
         long stateHash = 0;
         for (StatusEffectProcessor.StatusEffectInstance inst : playerEffects.getActiveEffects()) {
             stateHash = 31 * stateHash + inst.effect().hashCode() + inst.source().hashCode() + inst.layers();
+            if (inst.effect() == StatusEffectProcessor.StatusEffect.CYRENE_TALLY) {
+                stateHash = 31 * stateHash + battleState.getCumulativeAtkDef(true);
+            }
         }
         for (StatusEffectProcessor.StatusEffectInstance inst : opponentEffects.getActiveEffects()) {
             stateHash = 31 * stateHash + inst.effect().hashCode() + inst.source().hashCode() + inst.layers();
+            if (inst.effect() == StatusEffectProcessor.StatusEffect.CYRENE_TALLY) {
+                stateHash = 31 * stateHash + battleState.getCumulativeAtkDef(false);
+            }
         }
         if (stateHash == lastStatusEffectStateHash) return;
 

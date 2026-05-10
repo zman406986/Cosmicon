@@ -12,7 +12,7 @@
         "back": "Back",
         "play": "Play",
         "session_won": "You've won this round! Find another bar encounter to play again.",
-        "trashcan_hunter_welcome": "The Cosmicon players eye you warily. Word of your Trashcan hunting has spread. 'Trashcan Hunter Level {0},' someone whispers."
+        "trashcan_hunter_welcome": "The Cosmicon players eye you warily. Word of your mastery has spread. 'Master Dicer Level {0},' someone whispers."
     },
     "help": {
         "title": "=== How to Play Cosmicon ===",
@@ -473,7 +473,7 @@
         "decline": "Politely decline",
         "declined": "You politely decline and return to your drink.",
         "approach": "Approach the Cosmicon player",
-        "trashcan_hunter_prompt": "The Cosmicon regulars immediately recognize you. 'It's the Trashcan Hunter! Level {0}!' One of them eagerly offers you a seat at their table."
+        "trashcan_hunter_prompt": "The Cosmicon regulars immediately recognize you. 'It's the Master Dicer! Level {0}!' One of them eagerly offers you a seat at their table."
     },
     "victory": {
     },
@@ -541,7 +541,8 @@
         "unlock_prismatic": "Unlock {0}",
         "take_credits": "Take credits instead",
         "character_unlocked": "Character unlocked: {0}!",
-        "prismatic_unlocked": "Prismatic dice unlocked: {0}!"
+        "prismatic_unlocked": "Prismatic dice unlocked: {0}!",
+        "prismatic_true_unlocked": "True version unlocked: {0}!"
     },
     "casino": {
         "gatekeeper_challenge": "Challenge the Gatekeeper",
@@ -551,7 +552,8 @@
         "gatekeeper_reward_win": "You earned 4x credits ({0} credits).",
         "gatekeeper_reward_lose": "You earned 2x credits ({0} credits).",
         "gatekeeper_unlock_tournament": "Tournament unlocked! You can now Host a Tournament.",
-        "gatekeeper_hunter_level_up": "Trashcan Hunter Level increased to {0}!",
+        "gatekeeper_999_exit_hint": "You've dealt enough damage to claim victory! Exit now to win, or keep playing to set a higher record.",
+        "gatekeeper_hunter_level_up": "Master Dicer Level increased to {0}!",
 
         "tournament_title": "Host a Tournament",
         "tournament_cost": "15,000 Stargems",
@@ -587,17 +589,19 @@
         "tournament_bye": "BYE",
         "boss_reward_char": "Unlock character: {0}",
         "boss_reward_prismatic": "Unlock prismatic dice: {0}",
+        "boss_reward_prismatic_true": "Unlock True {0}",
         "boss_reward_credits": "Take Credits ({0} credits)",
         "back_lounge": "Back to Lounge"
     },
     "lounge": {
         "btn_enter": "Cosmicon Dice Lounge",
         "welcome": "Welcome to the Cosmicon Dice Lounge. The air crackles with competitive energy.",
-        "trashcan_hunter_greeting": "The lounge attendants nod respectfully. 'Welcome back, Trashcan Hunter Level {0}.'",
+        "trashcan_hunter_greeting": "The lounge attendants nod respectfully. 'Welcome back, Master Dicer Level {0}.'",
         "tutorial_required": "The bouncer stops you. 'Sorry, you need to learn the basics at the bar first. Come back after you've completed your Cosmicon training.'",
         "gatekeeper": "Challenge the Gatekeeper (5,000 Stargems)",
         "gatekeeper_insufficient": "You don't have enough Stargems for the entry fee. You need 5,000 Stargems.",
         "tournament": "Host a Tournament (15,000 Stargems)",
+        "continue_tournament": "Continue Tournament",
         "tournament_locked": "Defeat the Gatekeeper to unlock the tournament.",
         "tournament_insufficient": "You need 15,000 Stargems to host a tournament.",
         "back": "Back to Casino",

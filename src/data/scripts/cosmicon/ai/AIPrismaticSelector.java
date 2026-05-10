@@ -41,10 +41,20 @@ public class AIPrismaticSelector {
 
         if (bestType != null) {
             PrismaticDiceInstance instance = PrismaticDiceInstance.roll(bestType, useTrueVersion);
+            setMustSelectForDestined(instance, bestType);
             return new PrismaticDecision(instance, bestScore, bestScore >= USE_THRESHOLD);
         }
 
         return null;
+    }
+
+    private static void setMustSelectForDestined(PrismaticDiceInstance instance, PrismaticDiceType type) {
+        PrismaticEffect effect = type.getEffect();
+        boolean grantsDestined = effect.isGrantStatus() && 
+                                 effect.getGrantedEffect() == StatusEffect.DESTINED;
+        if (grantsDestined && instance.isSpecialFace) {
+            instance.setMustSelect(true);
+        }
     }
 
     private static float evaluatePrismaticValue(PrismaticDiceType type, BattleState state,
