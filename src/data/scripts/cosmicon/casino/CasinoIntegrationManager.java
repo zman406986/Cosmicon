@@ -39,7 +39,7 @@ public class CasinoIntegrationManager {
     }
 
     public static void updateTrashcanHunterLevel(int damageDealt) {
-        int maxHp = CosmiconStats.isTournamentUnlocked() ? 999 : 99;
+        int maxHp = CosmiconStats.isGatekeeper999Unlocked() ? 999 : 99;
         int capped = Math.min(damageDealt, maxHp);
         int current = getTrashcanHunterLevel();
         if (capped > current) {
@@ -90,7 +90,7 @@ public class CasinoIntegrationManager {
         CosmiconEventState.setCasinoBattleMode(true);
         CosmiconEventState.setCasinoBattleIsBoss(false);
         CosmiconEventState.setCasinoBattleOpponent(CharacterIds.TRASHCAN);
-        int bonusHp = CosmiconStats.isTournamentUnlocked() ? 974 : 74;
+        int bonusHp = CosmiconStats.isGatekeeper999Unlocked() ? 974 : 74;
         CosmiconEventState.setCasinoBattleBonusHp(bonusHp);
         CosmiconEventState.setCasinoBattleUseTrue(false);
         CosmiconEventState.setIsBarEvent(false);

@@ -15,8 +15,8 @@ public class CosmiconStats {
     private static final String KEY_UNLOCKED_PRISMATIC = "$cos_unlocked_prismatic";
     private static final String KEY_UNLOCKED_PRISMATIC_TRUE = "$cos_unlocked_prismatic_true";
     private static final String KEY_PRISMATIC_FEATURE_UNLOCKED = "$cos_prismatic_feature_unlocked";
-    private static final String KEY_HAS_GALLERY_CHARACTERS = "$cos_has_gallery_characters";
     private static final String KEY_TOURNAMENT_UNLOCKED = "$cos_tournament_unlocked";
+    private static final String KEY_GATEKEEPER_999_UNLOCKED = "$cos_gatekeeper_999_unlocked";
 
     private static final int TUTORIAL_GAMES = 2;
     private static final String REPEATER_ID = "repeater";
@@ -162,6 +162,16 @@ public class CosmiconStats {
 
     public static void setTournamentUnlocked(boolean unlocked) {
         getMemory().set(KEY_TOURNAMENT_UNLOCKED, unlocked);
+    }
+
+    public static boolean isGatekeeper999Unlocked() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_GATEKEEPER_999_UNLOCKED)) return false;
+        return mem.getBoolean(KEY_GATEKEEPER_999_UNLOCKED);
+    }
+
+    public static void setGatekeeper999Unlocked(boolean unlocked) {
+        getMemory().set(KEY_GATEKEEPER_999_UNLOCKED, unlocked);
     }
 
     public static int calculateCreditReward(int playerLevel) {

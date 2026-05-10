@@ -21,7 +21,6 @@ import data.scripts.CosmiconConfig;
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleEventBus.BattleEventListener;
 import data.scripts.cosmicon.battle.TurnState.Phase;
-import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.state.CosmiconStats;
 import data.scripts.cosmicon.tutorial.TutorialController;
 import data.scripts.cosmicon.tutorial.TutorialUIRenderer;
@@ -290,8 +289,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             displayedOpponentHp = battleState.getOpponentHp();
         }
 
-        if (battleController != null && battleController.isGatekeeper999Battle()
-                && CosmiconStats.isTournamentUnlocked()) {
+        if (battleController != null && battleController.isGatekeeper999Battle()) {
             gatekeeper999StartMessageActive = true;
             gatekeeper999StartMessagePulseTimer = 0f;
             createGatekeeper999StartMessageLabel();
