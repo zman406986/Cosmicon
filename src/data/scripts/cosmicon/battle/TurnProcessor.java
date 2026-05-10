@@ -3,6 +3,7 @@ package data.scripts.cosmicon.battle;
 import data.scripts.CosmiconConfig;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.ai.AIPrismaticSelector.PrismaticDecision;
+import data.scripts.cosmicon.battle.StatusEffectProcessor.DurationType;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.Phase;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.battle.EffectState.ModificationRecord;
@@ -156,9 +157,6 @@ public class TurnProcessor {
         
         state.getPlayerEffects().processPhase(Phase.BEFORE_ROLL, playerTurnType, playerContext);
         state.getOpponentEffects().processPhase(Phase.BEFORE_ROLL, opponentTurnType, opponentContext);
-        
-        state.getPlayerEffects().removeEffect(StatusEffectProcessor.StatusEffect.YAO_GUANG_REROLLS);
-        state.getOpponentEffects().removeEffect(StatusEffectProcessor.StatusEffect.YAO_GUANG_REROLLS);
         
         int playerRerollBonus = playerContext.getRerollCount();
         int opponentRerollBonus = opponentContext.getRerollCount();
@@ -593,7 +591,7 @@ public class TurnProcessor {
                         diceRollManager.setRestDiceEffect(ariseDiceIndex, StatusEffect.ARISE, forPlayer);
                     }
                 }
-                effects.removeLayers(StatusEffect.ARISE, 1);
+                effects.removeFromSource(StatusEffect.ARISE, "effect_system");
                 state.setDiceValues(forPlayer, context.getDiceValues());
 
                 List<Integer> postValues = state.getDiceValues(forPlayer);
@@ -651,7 +649,7 @@ public class TurnProcessor {
                     state.notifyValueChange(targetIsPlayer, "HACK", oldTargetSum, newTargetSum, delta);
                 }
 
-                effects.removeLayers(StatusEffect.HACK, 1);
+                effects.removeFromSource(StatusEffect.HACK, "effect_system");
             }
         }
 
@@ -948,10 +946,10 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         processEndOfTurnPassives(false);
         
         if (weatherController.shouldApplyFineSnowEffect(state, true)) {
-            state.getPlayerEffects().addEffect(StatusEffectProcessor.StatusEffect.TOUGHNESS, 3, 1);
+            state.getPlayerEffects().addEffect(StatusEffectProcessor.StatusEffect.TOUGHNESS, "weather.fine_snow", 3, DurationType.TURN_BASED, 1);
         }
         if (weatherController.shouldApplyFineSnowEffect(state, false)) {
-            state.getOpponentEffects().addEffect(StatusEffectProcessor.StatusEffect.TOUGHNESS, 3, 1);
+            state.getOpponentEffects().addEffect(StatusEffectProcessor.StatusEffect.TOUGHNESS, "weather.fine_snow", 3, DurationType.TURN_BASED, 1);
         }
         
         PassiveEventSystem.onEndOfDefenseTurn(state, true);
@@ -1156,7 +1154,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         PassiveResult result = PassiveEvaluator.evaluateForCharacter(
             characterId, selectedValues, isAttacking, currentHp, maxHp, currentToughness, currentStrengthLayers);
         
-        PassiveEvaluator.applyPassiveEffects(result, state, forPlayer);
+        PassiveEvaluator.applyPassiveEffects(result, state, forPlayer, characterId);
 
         CosmiconLogger.info("[PASSIVE] %s (isAttacking=%s) | allValues=%s | selectedFlags=%s | selectedValues=%s | hp=%d/%d",
             characterId, isAttacking,
@@ -1183,7 +1181,9 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
     private void applyPendingStrength(boolean forPlayer) {
         int pending = state.consumePendingStrength(forPlayer);
         if (pending > 0) {
-            state.getEffects(forPlayer).setEffect(StatusEffectProcessor.StatusEffect.STRENGTH, pending);
+            StatusEffectProcessor effects = state.getEffects(forPlayer);
+            effects.removeFromSource(StatusEffectProcessor.StatusEffect.STRENGTH, "passive.hyacine");
+            effects.addEffect(StatusEffectProcessor.StatusEffect.STRENGTH, "passive.hyacine", pending, DurationType.PERMANENT);
         }
     }
     

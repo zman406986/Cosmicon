@@ -2,7 +2,7 @@ package data.scripts.cosmicon.battle;
 
 import java.awt.Color;
 import java.util.ArrayList;
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -65,12 +65,15 @@ public class BattleUILabels {
 
     private List<LabelAPI> playerStatusLabels;
     private List<LabelAPI> opponentStatusLabels;
-    static final int MAX_STATUS_EFFECTS = 12;
+    static final int MAX_STATUS_EFFECTS = 8;
+    private static final float STATUS_LABEL_SPACING = 30f;
 
-    private Map<StatusEffectProcessor.StatusEffect, Integer> previousPlayerLayers;
-    private Map<StatusEffectProcessor.StatusEffect, Integer> previousOpponentLayers;
-    private Map<StatusEffectProcessor.StatusEffect, Integer> playerEffectDisplayIndex;
-    private Map<StatusEffectProcessor.StatusEffect, Integer> opponentEffectDisplayIndex;
+    private record EffectInstanceKey(StatusEffectProcessor.StatusEffect effect, String source) {}
+
+    private Map<EffectInstanceKey, Integer> previousPlayerInstanceLayers;
+    private Map<EffectInstanceKey, Integer> previousOpponentInstanceLayers;
+    private Map<EffectInstanceKey, Integer> playerEffectDisplayIndex;
+    private Map<EffectInstanceKey, Integer> opponentEffectDisplayIndex;
     private StatusEffectAnimator statusEffectAnimator;
 
     private long lastStatusEffectStateHash = -1;
@@ -107,10 +110,10 @@ public class BattleUILabels {
         
         createLabels();
         createValueAnimators();
-        previousPlayerLayers = new EnumMap<>(StatusEffectProcessor.StatusEffect.class);
-        previousOpponentLayers = new EnumMap<>(StatusEffectProcessor.StatusEffect.class);
-        playerEffectDisplayIndex = new EnumMap<>(StatusEffectProcessor.StatusEffect.class);
-        opponentEffectDisplayIndex = new EnumMap<>(StatusEffectProcessor.StatusEffect.class);
+        previousPlayerInstanceLayers = new HashMap<>();
+        previousOpponentInstanceLayers = new HashMap<>();
+        playerEffectDisplayIndex = new HashMap<>();
+        opponentEffectDisplayIndex = new HashMap<>();
         statusEffectAnimator = new StatusEffectAnimator();
     }
 
@@ -285,15 +288,15 @@ public class BattleUILabels {
         float opponentBoxX = opponentCardX + BattleRenderingUtils.CARD_WIDTH + 20f;
 
         for (int i = 0; i < MAX_STATUS_EFFECTS; i++) {
-            float yOffset = i * 20f;
+            float yOffset = i * STATUS_LABEL_SPACING;
             LabelAPI playerLabel = UIComponentFactory.createLabelSmall(panel, "",
-                Color.WHITE, Alignment.LMID, BattleRenderingUtils.STATUS_BOX_WIDTH - 20f, 18f,
+                Color.WHITE, Alignment.LMID, BattleRenderingUtils.STATUS_BOX_WIDTH - 20f, 28f,
                 playerBoxX + BattleRenderingUtils.STATUS_BOX_PADDING, playerCardY + BattleRenderingUtils.STATUS_BOX_PADDING + yOffset);
             playerLabel.setOpacity(0f);
             playerStatusLabels.add(playerLabel);
 
             LabelAPI opponentLabel = UIComponentFactory.createLabelSmall(panel, "",
-                Color.WHITE, Alignment.LMID, BattleRenderingUtils.STATUS_BOX_WIDTH - 20f, 18f,
+                Color.WHITE, Alignment.LMID, BattleRenderingUtils.STATUS_BOX_WIDTH - 20f, 28f,
                 opponentBoxX + BattleRenderingUtils.STATUS_BOX_PADDING, opponentCardY + BattleRenderingUtils.STATUS_BOX_PADDING + yOffset);
             opponentLabel.setOpacity(0f);
             opponentStatusLabels.add(opponentLabel);
@@ -482,11 +485,11 @@ public class BattleUILabels {
         StatusEffectProcessor opponentEffects = battleState.getOpponentEffects();
 
         long stateHash = 0;
-        for (StatusEffectProcessor.StatusEffect effect : StatusEffectProcessor.StatusEffect.values()) {
-            stateHash = 31 * stateHash + playerEffects.getLayers(effect);
-            stateHash = 31 * stateHash + playerEffects.getDuration(effect);
-            stateHash = 31 * stateHash + opponentEffects.getLayers(effect);
-            stateHash = 31 * stateHash + opponentEffects.getDuration(effect);
+        for (StatusEffectProcessor.StatusEffectInstance inst : playerEffects.getActiveEffects()) {
+            stateHash = 31 * stateHash + inst.effect().hashCode() + inst.source().hashCode() + inst.layers();
+        }
+        for (StatusEffectProcessor.StatusEffectInstance inst : opponentEffects.getActiveEffects()) {
+            stateHash = 31 * stateHash + inst.effect().hashCode() + inst.source().hashCode() + inst.layers();
         }
         if (stateHash == lastStatusEffectStateHash) return;
 
@@ -494,96 +497,120 @@ public class BattleUILabels {
         opponentEffectDisplayIndex.clear();
 
         int playerIdx = 0;
-        for (StatusEffectProcessor.StatusEffect effect : StatusEffectProcessor.StatusEffect.values()) {
+        for (StatusEffectProcessor.StatusEffectInstance inst : playerEffects.getActiveEffects()) {
             if (playerIdx >= playerStatusLabels.size()) break;
-            int layers = playerEffects.getLayers(effect);
-            if (layers > 0) {
-                playerEffectDisplayIndex.put(effect, playerIdx);
+            EffectInstanceKey key = new EffectInstanceKey(inst.effect(), inst.source());
+            playerEffectDisplayIndex.put(key, playerIdx);
 
-                int previousLayers = previousPlayerLayers.getOrDefault(effect, 0);
-                if (layers > previousLayers) {
-
-                    float[] pos = getPlayerStatusLabelPosition(playerIdx);
-                    statusEffectAnimator.triggerAddAnimation(pos[0], pos[1], pos[2], pos[3]);
-                }
-
-                LabelAPI label = playerStatusLabels.get(playerIdx);
-                int duration = playerEffects.getDuration(effect);
-                String effectName = Strings.get("status." + effect.name().toLowerCase());
-                String text;
-                if (effect == StatusEffectProcessor.StatusEffect.SIPHON) {
-                    text = duration < StatusEffectProcessor.PERMANENT_DURATION
-                        ? String.format("%s (%d%%, %d turns)", effectName, layers, duration)
-                        : String.format("%s (%d%%)", effectName, layers);
-                } else if (effect == StatusEffectProcessor.StatusEffect.CYRENE_TALLY) {
-                    int cumulative = battleState.getCumulativeAtkDef(true);
-                    text = String.format("%s (%d/24)", effectName, cumulative);
-                } else {
-                    text = duration < StatusEffectProcessor.PERMANENT_DURATION
-                        ? String.format("%s (%d, %d turns)", effectName, layers, duration)
-                        : String.format("%s (%d)", effectName, layers);
-                }
-                label.setText(text);
-                label.setOpacity(1f);
-                playerIdx++;
+            int previousLayers = previousPlayerInstanceLayers.getOrDefault(key, 0);
+            if (inst.layers() > previousLayers) {
+                float[] pos = getPlayerStatusLabelPosition(playerIdx);
+                statusEffectAnimator.triggerAddAnimation(pos[0], pos[1], pos[2], pos[3]);
             }
-            previousPlayerLayers.put(effect, layers);
+
+            LabelAPI label = playerStatusLabels.get(playerIdx);
+            String text = formatInstanceText(inst, true);
+            label.setText(text);
+            label.setOpacity(1f);
+            playerIdx++;
         }
         for (int i = playerIdx; i < playerStatusLabels.size(); i++) {
             playerStatusLabels.get(i).setOpacity(0f);
         }
-        for (StatusEffectProcessor.StatusEffect effect : StatusEffectProcessor.StatusEffect.values()) {
-            if (!playerEffectDisplayIndex.containsKey(effect)) {
-                previousPlayerLayers.remove(effect);
-            }
+
+        previousPlayerInstanceLayers.clear();
+        for (StatusEffectProcessor.StatusEffectInstance inst : playerEffects.getActiveEffects()) {
+            EffectInstanceKey key = new EffectInstanceKey(inst.effect(), inst.source());
+            previousPlayerInstanceLayers.put(key, inst.layers());
         }
 
         int opponentIdx = 0;
-        for (StatusEffectProcessor.StatusEffect effect : StatusEffectProcessor.StatusEffect.values()) {
+        for (StatusEffectProcessor.StatusEffectInstance inst : opponentEffects.getActiveEffects()) {
             if (opponentIdx >= opponentStatusLabels.size()) break;
-            int layers = opponentEffects.getLayers(effect);
-            if (layers > 0) {
-                opponentEffectDisplayIndex.put(effect, opponentIdx);
+            EffectInstanceKey key = new EffectInstanceKey(inst.effect(), inst.source());
+            opponentEffectDisplayIndex.put(key, opponentIdx);
 
-                int previousLayers = previousOpponentLayers.getOrDefault(effect, 0);
-                if (layers > previousLayers) {
-
-                    float[] pos = getOpponentStatusLabelPosition(opponentIdx);
-                    statusEffectAnimator.triggerAddAnimation(pos[0], pos[1], pos[2], pos[3]);
-                }
-
-                LabelAPI label = opponentStatusLabels.get(opponentIdx);
-                int duration = opponentEffects.getDuration(effect);
-                String effectName = Strings.get("status." + effect.name().toLowerCase());
-                String text;
-                if (effect == StatusEffectProcessor.StatusEffect.SIPHON) {
-                    text = duration < StatusEffectProcessor.PERMANENT_DURATION
-                        ? String.format("%s (%d%%, %d turns)", effectName, layers, duration)
-                        : String.format("%s (%d%%)", effectName, layers);
-                } else if (effect == StatusEffectProcessor.StatusEffect.CYRENE_TALLY) {
-                    int cumulative = battleState.getCumulativeAtkDef(false);
-                    text = String.format("%s (%d/24)", effectName, cumulative);
-                } else {
-                    text = duration < StatusEffectProcessor.PERMANENT_DURATION
-                        ? String.format("%s (%d, %d turns)", effectName, layers, duration)
-                        : String.format("%s (%d)", effectName, layers);
-                }
-                label.setText(text);
-                label.setOpacity(1f);
-                opponentIdx++;
+            int previousLayers = previousOpponentInstanceLayers.getOrDefault(key, 0);
+            if (inst.layers() > previousLayers) {
+                float[] pos = getOpponentStatusLabelPosition(opponentIdx);
+                statusEffectAnimator.triggerAddAnimation(pos[0], pos[1], pos[2], pos[3]);
             }
-            previousOpponentLayers.put(effect, layers);
+
+            LabelAPI label = opponentStatusLabels.get(opponentIdx);
+            String text = formatInstanceText(inst, false);
+            label.setText(text);
+            label.setOpacity(1f);
+            opponentIdx++;
         }
         for (int i = opponentIdx; i < opponentStatusLabels.size(); i++) {
             opponentStatusLabels.get(i).setOpacity(0f);
         }
-        for (StatusEffectProcessor.StatusEffect effect : StatusEffectProcessor.StatusEffect.values()) {
-            if (!opponentEffectDisplayIndex.containsKey(effect)) {
-                previousOpponentLayers.remove(effect);
-            }
+
+        previousOpponentInstanceLayers.clear();
+        for (StatusEffectProcessor.StatusEffectInstance inst : opponentEffects.getActiveEffects()) {
+            EffectInstanceKey key = new EffectInstanceKey(inst.effect(), inst.source());
+            previousOpponentInstanceLayers.put(key, inst.layers());
         }
 
         lastStatusEffectStateHash = stateHash;
+    }
+
+    private String formatInstanceText(StatusEffectProcessor.StatusEffectInstance inst, boolean isPlayer) {
+        String effectName = Strings.get("status." + inst.effect().name().toLowerCase());
+        String sourceLabel = formatSourceLabel(inst.source());
+
+        String mainText;
+        if (inst.effect() == StatusEffectProcessor.StatusEffect.SIPHON) {
+            mainText = inst.durationType() == StatusEffectProcessor.DurationType.TURN_BASED && inst.remainingTurns() > 0
+                ? String.format("%s (%d%%, %dt)", effectName, inst.layers(), inst.remainingTurns())
+                : String.format("%s (%d%%)", effectName, inst.layers());
+        } else if (inst.effect() == StatusEffectProcessor.StatusEffect.CYRENE_TALLY) {
+            int cumulative = battleState.getCumulativeAtkDef(isPlayer);
+            mainText = String.format("%s (%d/24)", effectName, cumulative);
+        } else {
+            mainText = inst.durationType() == StatusEffectProcessor.DurationType.TURN_BASED && inst.remainingTurns() > 0
+                ? String.format("%s (%d, %dt)", effectName, inst.layers(), inst.remainingTurns())
+                : String.format("%s (%d)", effectName, inst.layers());
+        }
+
+        if (sourceLabel != null) {
+            return mainText + "\n" + sourceLabel;
+        }
+        return mainText;
+    }
+
+    private String formatSourceLabel(String source) {
+        if (source == null) return null;
+
+        if (source.equals("effect_system") || source.equals("pending_strength")) {
+            return null;
+        }
+
+        String raw = source;
+        if (raw.startsWith("weather.")) {
+            raw = raw.substring("weather.".length());
+        } else if (raw.startsWith("passive.")) {
+            raw = raw.substring("passive.".length());
+        } else if (raw.startsWith("prismatic.")) {
+            raw = raw.substring("prismatic.".length());
+        }
+
+        raw = raw.replace('_', ' ');
+
+        StringBuilder sb = new StringBuilder();
+        boolean capitalizeNext = true;
+        for (char c : raw.toCharArray()) {
+            if (c == ' ') {
+                sb.append(' ');
+                capitalizeNext = true;
+            } else if (capitalizeNext) {
+                sb.append(Character.toUpperCase(c));
+                capitalizeNext = false;
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 
     private float[] getPlayerStatusLabelPosition(int displayIndex) {
@@ -591,9 +618,9 @@ public class BattleUILabels {
         float playerCardY = BattleRenderingUtils.getPlayerCardY();
         float playerBoxX = playerCardX - BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
         float x = playerBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
-        float y = playerCardY + BattleRenderingUtils.STATUS_BOX_PADDING + displayIndex * 20f;
+        float y = playerCardY + BattleRenderingUtils.STATUS_BOX_PADDING + displayIndex * STATUS_LABEL_SPACING;
         float w = BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
-        float h = 18f;
+        float h = 28f;
         return new float[]{x, y, w, h};
     }
 
@@ -602,15 +629,25 @@ public class BattleUILabels {
         float opponentCardY = BattleRenderingUtils.getOpponentCardY();
         float opponentBoxX = opponentCardX + BattleRenderingUtils.CARD_WIDTH + 20f;
         float x = opponentBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
-        float y = opponentCardY + BattleRenderingUtils.STATUS_BOX_PADDING + displayIndex * 20f;
+        float y = opponentCardY + BattleRenderingUtils.STATUS_BOX_PADDING + displayIndex * STATUS_LABEL_SPACING;
         float w = BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
-        float h = 18f;
+        float h = 28f;
         return new float[]{x, y, w, h};
     }
 
     public Integer getEffectDisplayIndex(boolean isPlayer, StatusEffectProcessor.StatusEffect effect) {
-        Map<StatusEffectProcessor.StatusEffect, Integer> map = isPlayer ? playerEffectDisplayIndex : opponentEffectDisplayIndex;
-        return map.get(effect);
+        Map<EffectInstanceKey, Integer> map = isPlayer ? playerEffectDisplayIndex : opponentEffectDisplayIndex;
+        for (Map.Entry<EffectInstanceKey, Integer> entry : map.entrySet()) {
+            if (entry.getKey().effect() == effect) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    public Integer getEffectInstanceDisplayIndex(boolean isPlayer, StatusEffectProcessor.StatusEffect effect, String source) {
+        Map<EffectInstanceKey, Integer> map = isPlayer ? playerEffectDisplayIndex : opponentEffectDisplayIndex;
+        return map.get(new EffectInstanceKey(effect, source));
     }
 
     public float[] getStatusEffectLabelPosition(boolean isPlayer, int displayIndex) {

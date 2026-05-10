@@ -2,6 +2,7 @@ package data.scripts.cosmicon.battle;
 
 import java.util.List;
 
+import data.scripts.cosmicon.battle.StatusEffectProcessor.DurationType;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
@@ -38,16 +39,16 @@ public class WeatherController {
         
         switch (weather) {
             case SUNNY, THE_DECISIVE_MOMENT -> {
-                state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, 5);
-                state.getOpponentEffects().addEffect(StatusEffect.STRENGTH, 5);
+                state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, weather.name(), 5, DurationType.PERMANENT);
+                state.getOpponentEffects().addEffect(StatusEffect.STRENGTH, weather.name(), 5, DurationType.PERMANENT);
             }
             case TOXIC_FOG -> {
-                state.getPlayerEffects().addEffect(StatusEffect.POISON, 2);
-                state.getOpponentEffects().addEffect(StatusEffect.POISON, 2);
+                state.getPlayerEffects().addEffect(StatusEffect.POISON, weather.name(), 2, DurationType.PERMANENT);
+                state.getOpponentEffects().addEffect(StatusEffect.POISON, weather.name(), 2, DurationType.PERMANENT);
             }
             case VENOCLLOUD -> {
-                state.getPlayerEffects().addEffect(StatusEffect.VENOM, 1);
-                state.getOpponentEffects().addEffect(StatusEffect.VENOM, 1);
+                state.getPlayerEffects().addEffect(StatusEffect.VENOM, weather.name(), 1, DurationType.PERMANENT);
+                state.getOpponentEffects().addEffect(StatusEffect.VENOM, weather.name(), 1, DurationType.PERMANENT);
             }
             case STORM -> {
                 state.modifyWeatherAtkMod(true, 1);
@@ -79,22 +80,22 @@ public class WeatherController {
                 int playerHp = state.getPlayerHp();
                 int opponentHp = state.getOpponentHp();
                 if (playerHp < opponentHp) {
-                    state.getPlayerEffects().addEffect(StatusEffect.POISON, 1);
+                    state.getPlayerEffects().addEffect(StatusEffect.POISON, weather.name(), 1, DurationType.PERMANENT);
                 } else if (opponentHp < playerHp) {
-                    state.getOpponentEffects().addEffect(StatusEffect.POISON, 1);
+                    state.getOpponentEffects().addEffect(StatusEffect.POISON, weather.name(), 1, DurationType.PERMANENT);
                 } else {
-                    state.getPlayerEffects().addEffect(StatusEffect.POISON, 1);
+                    state.getPlayerEffects().addEffect(StatusEffect.POISON, weather.name(), 1, DurationType.PERMANENT);
                 }
             }
             case HIGH_TEMPERATURE -> {
                 int playerHp = state.getPlayerHp();
                 int opponentHp = state.getOpponentHp();
                 if (playerHp < opponentHp) {
-                    state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, 2);
+                    state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, weather.name(), 2, DurationType.PERMANENT);
                 } else if (opponentHp < playerHp) {
-                    state.getOpponentEffects().addEffect(StatusEffect.STRENGTH, 2);
+                    state.getOpponentEffects().addEffect(StatusEffect.STRENGTH, weather.name(), 2, DurationType.PERMANENT);
                 } else {
-                    state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, 2);
+                    state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, weather.name(), 2, DurationType.PERMANENT);
                 }
             }
             default -> {}
@@ -142,13 +143,13 @@ public class WeatherController {
                 if (isAttacker) {
                     boolean allOdd = checkAllOddValues(values, selected);
                     if (allOdd) {
-                        state.getEffects(isPlayer).addEffect(StatusEffect.STRENGTH, 3);
+                        state.getEffects(isPlayer).addEffect(StatusEffect.STRENGTH, weather.name(), 3, DurationType.USAGE_BASED);
                     }
                 }
             }
             case RAINBOW -> {
                 if (isAttacker && sum <= 10) {
-                    state.getEffects(isPlayer).addEffect(StatusEffect.PERFORATION, 1);
+                    state.getEffects(isPlayer).addEffect(StatusEffect.PERFORATION, weather.name(), 1, DurationType.USAGE_BASED);
                 }
             }
             case LUNISOLAR_LUMINANCE -> {
@@ -181,7 +182,7 @@ public class WeatherController {
                     int attackerHp = isPlayer ? state.getPlayerHp() : state.getOpponentHp();
                     int defenderHp = isPlayer ? state.getOpponentHp() : state.getPlayerHp();
                     if (attackerHp < defenderHp) {
-                        state.getEffects(isPlayer).addEffect(StatusEffect.COMBO, 1);
+                        state.getEffects(isPlayer).addEffect(StatusEffect.COMBO, weather.name(), 1, DurationType.USAGE_BASED);
                     }
                 }
             }
@@ -219,7 +220,7 @@ public class WeatherController {
             CharacterCard card = state.getCard(isPlayer);
             if (card != null && hp < card.getMaxHp())
             {
-                state.getEffects(isPlayer).addEffect(StatusEffect.COUNTER, 1);
+                state.getEffects(isPlayer).addEffect(StatusEffect.COUNTER, weather.name(), 1, DurationType.USAGE_BASED);
                 state.modifyWeatherDefMod(isPlayer, 2);
                 CosmiconLogger.debug("%s: COUNTER + DEF+2 for defender (%s) [pre-selection]", weather, isPlayer ? "Player" : "Opponent");
             }
@@ -243,12 +244,12 @@ public class WeatherController {
         if (oldWeather == null) return;
         switch (oldWeather) {
             case SUNNY, THE_DECISIVE_MOMENT -> {
-                state.getPlayerEffects().removeLayers(StatusEffect.STRENGTH, 5);
-                state.getOpponentEffects().removeLayers(StatusEffect.STRENGTH, 5);
+                state.getPlayerEffects().removeLayersFromSource(StatusEffect.STRENGTH, oldWeather.name(), 5);
+                state.getOpponentEffects().removeLayersFromSource(StatusEffect.STRENGTH, oldWeather.name(), 5);
             }
             case HIGH_TEMPERATURE -> {
-                state.getPlayerEffects().removeLayers(StatusEffect.STRENGTH, 2);
-                state.getOpponentEffects().removeLayers(StatusEffect.STRENGTH, 2);
+                state.getPlayerEffects().removeLayersFromSource(StatusEffect.STRENGTH, oldWeather.name(), 2);
+                state.getOpponentEffects().removeLayersFromSource(StatusEffect.STRENGTH, oldWeather.name(), 2);
             }
             default -> {}
         }
@@ -261,7 +262,7 @@ public class WeatherController {
         switch (weather) {
             case BLIZZARD -> {
                 if (state.getDefenseValue() <= 8) {
-                    state.getEffects(isPlayer).addEffect(StatusEffect.FORCEFIELD, 1);
+                    state.getEffects(isPlayer).addEffect(StatusEffect.FORCEFIELD, weather.name(), 1, DurationType.USAGE_BASED);
                     CosmiconLogger.debug("%s: FORCEFIELD granted to defender (%s)", weather, isPlayer ? "Player" : "Opponent");
                 }
             }
@@ -297,7 +298,7 @@ public class WeatherController {
             case DRY_THUNDERSTORM -> state.addInstantDamage(!state.isPlayerAttacker(), 3);
             case CYCLONIC_SWARM -> {
                 boolean attackerIsPlayer = state.isPlayerAttacker();
-                state.getEffects(attackerIsPlayer).addEffect(StatusEffect.COMBO, 1);
+                state.getEffects(attackerIsPlayer).addEffect(StatusEffect.COMBO, weather.name(), 1, DurationType.USAGE_BASED);
             }
             case TEMPORAL_STORM -> {
                 boolean attackerIsPlayer = state.isPlayerAttacker();
@@ -318,7 +319,7 @@ public class WeatherController {
     public void applyRerollThornsEffect(BattleState state, boolean isPlayer) {
         WeatherType weather = getCurrentWeather();
         if (weather == WeatherType.PARHELION) {
-            state.getEffects(isPlayer).addEffect(StatusEffect.THORNS, 2);
+            state.getEffects(isPlayer).addEffect(StatusEffect.THORNS, weather.name(), 2, DurationType.TURN_BASED);
         }
     }
     

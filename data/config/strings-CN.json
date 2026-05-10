@@ -540,8 +540,8 @@
         "unlock_character": "解锁 {0}",
         "unlock_prismatic": "解锁 {0}",
         "take_credits": "改为领取星币",
-        "character_unlocked": "角色已解锁！",
-        "prismatic_unlocked": "曜彩骰已解锁！"
+        "character_unlocked": "角色已解锁：{0}！",
+        "prismatic_unlocked": "曜彩骰已解锁：{0}！"
     },
     "casino": {
         "gatekeeper_challenge": "挑战赌神",
@@ -551,6 +551,7 @@
         "gatekeeper_reward_win": "你获得了4倍星币奖励（{0}星币）。",
         "gatekeeper_reward_lose": "你获得了2倍星币奖励（{0}星币）。",
         "gatekeeper_unlock_tournament": "锦标赛已解锁！你现在可以举办锦标赛了。",
+        "gatekeeper_hunter_level_up": "垃圾桶猎人等级提升至{0}！",
 
         "tournament_title": "举办锦标赛",
         "tournament_cost": "15,000星石",

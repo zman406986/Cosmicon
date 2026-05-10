@@ -2,6 +2,7 @@ package data.scripts.cosmicon.util;
 
 import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.CharacterCard;
+import data.scripts.cosmicon.battle.StatusEffectProcessor.DurationType;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
@@ -207,7 +208,7 @@ public class CharacterPassives {
         if (characterId == null) return;
         
         if (YAO_GUANG.equals(characterId)) {
-            state.getEffects(forPlayer).addEffect(StatusEffect.YAO_GUANG_REROLLS, YAO_GUANG_EXTRA_REROLLS);
+            state.getEffects(forPlayer).addEffect(StatusEffect.YAO_GUANG_REROLLS, characterId, YAO_GUANG_EXTRA_REROLLS, DurationType.USAGE_BASED);
         }
     }
 
@@ -217,7 +218,7 @@ public class CharacterPassives {
         if (YAO_GUANG.equals(characterId)) {
             int rerollsUsed = state.getRerollsUsedThisTurn(forPlayer);
             if (rerollsUsed > YAO_GUANG_FREE_REROLL_THRESHOLD) {
-                state.getEffects(forPlayer).addEffect(StatusEffect.THORNS, YAO_GUANG_THORNS_PER_EXTRA_REROLL);
+                state.getEffects(forPlayer).addEffect(StatusEffect.THORNS, characterId, YAO_GUANG_THORNS_PER_EXTRA_REROLL, DurationType.USAGE_BASED);
             }
         }
     }
@@ -261,7 +262,7 @@ public class CharacterPassives {
                 state.setOriginalDefLevel(forPlayer, originalDefLevel);
                 card.setDefLevel(originalDefLevel + pendingBoost);
             }
-            state.getEffects(forPlayer).addEffect(StatusEffect.COUNTER, 1);
+            state.getEffects(forPlayer).addEffect(StatusEffect.COUNTER, characterId, 1, DurationType.USAGE_BASED);
             state.clearPendingDefLevelBoost(forPlayer);
         }
     }
@@ -289,7 +290,12 @@ public class CharacterPassives {
             var opponentEffects = state.getEffects(opponentIsPlayer);
             int currentPoison = opponentEffects.getLayers(StatusEffect.POISON);
             if (currentPoison > 0) {
-                opponentEffects.setEffect(StatusEffect.POISON, currentPoison - 1);
+                for (var inst : opponentEffects.getActiveEffects()) {
+                    if (inst.effect() == StatusEffect.POISON) {
+                        opponentEffects.removeLayersFromSource(StatusEffect.POISON, inst.source(), 1);
+                        break;
+                    }
+                }
             }
         }
     }

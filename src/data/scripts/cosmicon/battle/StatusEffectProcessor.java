@@ -3,9 +3,7 @@ package data.scripts.cosmicon.battle;
 import data.scripts.cosmicon.battle.TurnState.TurnType;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 
 public class StatusEffectProcessor {
 
@@ -47,101 +45,148 @@ public class StatusEffectProcessor {
         END_OF_TURN
     }
 
-    private final Map<StatusEffect, Integer> effects;
-    private final Map<StatusEffect, Integer> durations;
+    public enum DurationType {
+        TURN_BASED,
+        USAGE_BASED,
+        PERMANENT
+    }
+
+    public record StatusEffectInstance(
+        StatusEffect effect,
+        String source,
+        int layers,
+        DurationType durationType,
+        int remainingTurns
+    ) {}
+
+    private final List<StatusEffectInstance> activeEffects = new ArrayList<>();
     private int lastStandHpReduction;
 
     private final List<ProcessedEffect> processedEffects = new ArrayList<>();
 
-    public static final int PERMANENT_DURATION = Integer.MAX_VALUE;
-
     public record ProcessedEffect(StatusEffect effect, int layers) {}
 
     public StatusEffectProcessor() {
-        this.effects = new EnumMap<>(StatusEffect.class);
-        this.durations = new EnumMap<>(StatusEffect.class);
         this.lastStandHpReduction = 0;
     }
 
-    public void addEffect(StatusEffect effect, int layers) {
-        addEffect(effect, layers, PERMANENT_DURATION);
+    public void addEffect(StatusEffect effect, String source, int layers, DurationType durationType) {
+        addEffect(effect, source, layers, durationType, durationType == DurationType.TURN_BASED ? 1 : -1);
     }
 
-    public void addEffect(StatusEffect effect, int layers, int duration) {
-        int oldLayers = getLayers(effect);
-        effects.merge(effect, layers, Integer::sum);
-        if (duration < PERMANENT_DURATION) {
-            durations.put(effect, duration);
-        } else {
-            durations.remove(effect);
-        }
-        CosmiconLogger.info("[STATUS] +%d %s (was %d, now %d layers, duration=%s)",
-            layers, effect.name(), oldLayers, getLayers(effect),
-            duration < PERMANENT_DURATION ? duration + "t" : "permanent");
-    }
-
-    public void removeEffect(StatusEffect effect) {
-        if (hasEffect(effect)) {
-            CosmiconLogger.info("[STATUS] Removed %s (was %d layers)", effect.name(), getLayers(effect));
-        }
-        effects.remove(effect);
-        durations.remove(effect);
-    }
-
-    public void removeLayers(StatusEffect effect, int layers) {
-        int current = getLayers(effect);
-        if (current <= layers) {
-            removeEffect(effect);
-        } else {
-            effects.put(effect, current - layers);
-            CosmiconLogger.info("[STATUS] -%d %s (now %d layers)", layers, effect.name(), current - layers);
-        }
-    }
-
-    public void setEffect(StatusEffect effect, int layers) {
-        if (layers <= 0) {
-            if (hasEffect(effect)) {
-                int oldLayers = getLayers(effect);
-                effects.remove(effect);
-                durations.remove(effect);
-                CosmiconLogger.info("[STATUS] Effect cleared: %s (was %d layers)", effect.name(), oldLayers);
+    public void addEffect(StatusEffect effect, String source, int layers, DurationType durationType, int turns) {
+        int existingIndex = -1;
+        for (int i = 0; i < activeEffects.size(); i++) {
+            StatusEffectInstance inst = activeEffects.get(i);
+            if (inst.effect() == effect && inst.source().equals(source)) {
+                existingIndex = i;
+                break;
             }
-        } else {
-            int oldLayers = getLayers(effect);
-            effects.put(effect, layers);
-            if (oldLayers != layers) {
-                CosmiconLogger.info("[STATUS] Effect set: %s %d layers (was %d)", effect.name(), layers, oldLayers);
+        }
+
+        if (existingIndex >= 0) {
+            StatusEffectInstance old = activeEffects.get(existingIndex);
+            int mergedLayers = old.layers() + layers;
+            int newTurns = old.remainingTurns();
+            if (durationType == DurationType.TURN_BASED && old.durationType() == DurationType.TURN_BASED) {
+                newTurns = Math.min(old.remainingTurns(), turns);
             }
+            activeEffects.set(existingIndex, new StatusEffectInstance(effect, source, mergedLayers, durationType, newTurns));
+            CosmiconLogger.info("[STATUS] +%d %s from %s (was %d, now %d layers, duration=%s)",
+                layers, effect.name(), source, old.layers(), mergedLayers,
+                durationType == DurationType.TURN_BASED ? turns + "t" : durationType.name());
+        } else {
+            activeEffects.add(new StatusEffectInstance(effect, source, layers, durationType, turns));
+            CosmiconLogger.info("[STATUS] +%d %s from %s (new instance, duration=%s)",
+                layers, effect.name(), source,
+                durationType == DurationType.TURN_BASED ? turns + "t" : durationType.name());
         }
     }
 
     public int getLayers(StatusEffect effect) {
-        return effects.getOrDefault(effect, 0);
+        int total = 0;
+        for (StatusEffectInstance inst : activeEffects) {
+            if (inst.effect() == effect) {
+                total += inst.layers();
+            }
+        }
+        return total;
     }
 
     public boolean hasEffect(StatusEffect effect) {
         return getLayers(effect) > 0;
     }
 
-    public int getDuration(StatusEffect effect) {
-        return durations.getOrDefault(effect, PERMANENT_DURATION);
+    public List<StatusEffectInstance> getActiveEffects() {
+        return activeEffects;
     }
 
-    public void clearTemporaryEffects() {
-        if (hasEffect(StatusEffect.THORNS)) {
-            CosmiconLogger.info("[STATUS] Cleared temporary: THORNS (%d layers)", getLayers(StatusEffect.THORNS));
-            effects.remove(StatusEffect.THORNS);
-            durations.remove(StatusEffect.THORNS);
+    public int getLayersFromSource(StatusEffect effect, String source) {
+        for (StatusEffectInstance inst : activeEffects) {
+            if (inst.effect() == effect && inst.source().equals(source)) {
+                return inst.layers();
+            }
         }
-        if (hasEffect(StatusEffect.LEVEL_UP)) {
-            CosmiconLogger.info("[STATUS] Cleared temporary: LEVEL_UP (%d layers)", getLayers(StatusEffect.LEVEL_UP));
-            effects.remove(StatusEffect.LEVEL_UP);
-            durations.remove(StatusEffect.LEVEL_UP);
+        return 0;
+    }
+
+    public boolean hasEffectFromSource(StatusEffect effect, String source) {
+        return getLayersFromSource(effect, source) > 0;
+    }
+
+    public int getDurationFromSource(StatusEffect effect, String source) {
+        for (StatusEffectInstance inst : activeEffects) {
+            if (inst.effect() == effect && inst.source().equals(source)) {
+                return inst.remainingTurns();
+            }
         }
-        if (hasEffect(StatusEffect.UNYIELDING)) {
-            CosmiconLogger.info("[STATUS] Cleared temporary: UNYIELDING (%d layers)", getLayers(StatusEffect.UNYIELDING));
-            effects.remove(StatusEffect.UNYIELDING);
-            durations.remove(StatusEffect.UNYIELDING);
+        return -1;
+    }
+
+    public void removeEffect(StatusEffect effect) {
+        int totalLayers = getLayers(effect);
+        if (totalLayers > 0) {
+            CosmiconLogger.info("[STATUS] Removed all %s (was %d layers)", effect.name(), totalLayers);
+        }
+        activeEffects.removeIf(inst -> inst.effect() == effect);
+    }
+
+    public void removeFromSource(StatusEffect effect, String source) {
+        boolean removed = activeEffects.removeIf(inst -> inst.effect() == effect && inst.source().equals(source));
+        if (removed) {
+            CosmiconLogger.info("[STATUS] Removed %s from source %s", effect.name(), source);
+        }
+    }
+
+    public void removeLayersFromSource(StatusEffect effect, String source, int layers) {
+        for (int i = 0; i < activeEffects.size(); i++) {
+            StatusEffectInstance inst = activeEffects.get(i);
+            if (inst.effect() == effect && inst.source().equals(source)) {
+                if (inst.layers() <= layers) {
+                    activeEffects.remove(i);
+                    CosmiconLogger.info("[STATUS] Removed %s from %s (all layers consumed)", effect.name(), source);
+                } else {
+                    activeEffects.set(i, new StatusEffectInstance(effect, source, inst.layers() - layers, inst.durationType(), inst.remainingTurns()));
+                    CosmiconLogger.info("[STATUS] -%d %s from %s (now %d layers)", layers, effect.name(), source, inst.layers() - layers);
+                }
+                return;
+            }
+        }
+    }
+
+    public void setEffectFromSource(StatusEffect effect, String source, int layers) {
+        for (int i = 0; i < activeEffects.size(); i++) {
+            StatusEffectInstance inst = activeEffects.get(i);
+            if (inst.effect() == effect && inst.source().equals(source)) {
+                if (layers <= 0) {
+                    activeEffects.remove(i);
+                    CosmiconLogger.info("[STATUS] Effect cleared: %s from %s (was %d layers)", effect.name(), source, inst.layers());
+                } else {
+                    activeEffects.set(i, new StatusEffectInstance(effect, source, layers, inst.durationType(), inst.remainingTurns()));
+                    CosmiconLogger.info("[STATUS] Effect set: %s from %s %d layers (was %d)", effect.name(), source, layers, inst.layers());
+                }
+                return;
+            }
         }
     }
 
@@ -155,6 +200,10 @@ public class StatusEffectProcessor {
         if (hasEffect(effect)) {
             processedEffects.add(new ProcessedEffect(effect, getLayers(effect)));
         }
+    }
+
+    public void clearTemporaryEffects() {
+        removeEffect(StatusEffect.LEVEL_UP);
     }
 
     public int processPhase(Phase phase, TurnType turnType, BattleContext context) {
@@ -179,8 +228,7 @@ public class StatusEffectProcessor {
             lastStandHpReduction = context.getCurrentHp() - 1;
             context.setCurrentHp(1);
             processedEffects.add(new ProcessedEffect(StatusEffect.LAST_STAND, layers));
-            effects.remove(StatusEffect.LAST_STAND);
-            durations.remove(StatusEffect.LAST_STAND);
+            removeEffect(StatusEffect.LAST_STAND);
             CosmiconLogger.info("[STATUS] LAST_STAND triggered: HP %d -> 1, attack bonus = %d",
                 lastStandHpReduction + 1, lastStandHpReduction);
         }
@@ -194,7 +242,7 @@ public class StatusEffectProcessor {
                 processedEffects.add(new ProcessedEffect(StatusEffect.TACTICS, tacticsLayers));
                 CosmiconLogger.info("[STATUS] TACTICS: +%d rerolls", tacticsLayers);
             }
-            
+
             int yaoGuangRerolls = getLayers(StatusEffect.YAO_GUANG_REROLLS);
             if (yaoGuangRerolls > 0) {
                 context.addRerolls(yaoGuangRerolls);
@@ -217,8 +265,7 @@ public class StatusEffectProcessor {
             processedEffects.add(new ProcessedEffect(StatusEffect.DESTINED, layers));
             CosmiconLogger.info("[STATUS] DESTINED: auto-selecting all dice");
             context.markDestinedDice();
-            effects.remove(StatusEffect.DESTINED);
-            durations.remove(StatusEffect.DESTINED);
+            removeEffect(StatusEffect.DESTINED);
         }
     }
 
@@ -239,8 +286,7 @@ public class StatusEffectProcessor {
             processedEffects.add(new ProcessedEffect(StatusEffect.AWAKENING, layers));
             CosmiconLogger.info("[STATUS] AWAKENING: doubling selected dice values");
             context.applyAwakening();
-            effects.remove(StatusEffect.AWAKENING);
-            durations.remove(StatusEffect.AWAKENING);
+            removeEffect(StatusEffect.AWAKENING);
         }
     }
 
@@ -255,12 +301,15 @@ public class StatusEffectProcessor {
         }
 
         if (hasEffect(StatusEffect.INSTANT_DAMAGE)) {
-            int instantDamage = getLayers(StatusEffect.INSTANT_DAMAGE);
-            processedEffects.add(new ProcessedEffect(StatusEffect.INSTANT_DAMAGE, instantDamage));
-            CosmiconLogger.info("[STATUS] INSTANT_DAMAGE: %d self-damage", instantDamage);
-            context.subtractInstantDamageFromHolder(instantDamage);
-            effects.remove(StatusEffect.INSTANT_DAMAGE);
-            durations.remove(StatusEffect.INSTANT_DAMAGE);
+            for (StatusEffectInstance inst : activeEffects) {
+                if (inst.effect() == StatusEffect.INSTANT_DAMAGE) {
+                    processedEffects.add(new ProcessedEffect(StatusEffect.INSTANT_DAMAGE, inst.layers()));
+                    CosmiconLogger.info("[STATUS] INSTANT_DAMAGE: %d self-damage from %s", inst.layers(), inst.source());
+                    context.subtractInstantDamageFromHolder(inst.layers());
+                    removeFromSource(StatusEffect.INSTANT_DAMAGE, inst.source());
+                    break;
+                }
+            }
         }
 
         return damage;
@@ -279,7 +328,13 @@ public class StatusEffectProcessor {
                 hasEffect(StatusEffect.VENOM) ? " (doubled by VENOM)" : "");
             processedEffects.add(new ProcessedEffect(StatusEffect.POISON, poisonLayers));
             damage += poisonDamage;
-            setEffect(StatusEffect.POISON, poisonLayers - 1);
+
+            for (StatusEffectInstance inst : activeEffects) {
+                if (inst.effect() == StatusEffect.POISON) {
+                    removeLayersFromSource(StatusEffect.POISON, inst.source(), 1);
+                    break;
+                }
+            }
         }
 
         decrementDurations();
@@ -288,20 +343,27 @@ public class StatusEffectProcessor {
     }
 
     private void decrementDurations() {
-        List<StatusEffect> expired = new ArrayList<>();
-        for (Map.Entry<StatusEffect, Integer> entry : durations.entrySet()) {
-            StatusEffect effect = entry.getKey();
-            int remaining = entry.getValue() - 1;
-            if (remaining <= 0) {
-                expired.add(effect);
+        List<StatusEffectInstance> expired = new ArrayList<>();
+        List<StatusEffectInstance> surviving = new ArrayList<>();
+
+        for (StatusEffectInstance inst : activeEffects) {
+            if (inst.durationType() == DurationType.TURN_BASED) {
+                int remaining = inst.remainingTurns() - 1;
+                if (remaining <= 0) {
+                    expired.add(inst);
+                } else {
+                    surviving.add(new StatusEffectInstance(inst.effect(), inst.source(), inst.layers(), inst.durationType(), remaining));
+                }
             } else {
-                durations.put(effect, remaining);
+                surviving.add(inst);
             }
         }
-        for (StatusEffect effect : expired) {
-            CosmiconLogger.info("[STATUS] %s expired (duration ended)", effect.name());
-            effects.remove(effect);
-            durations.remove(effect);
+
+        activeEffects.clear();
+        activeEffects.addAll(surviving);
+
+        for (StatusEffectInstance inst : expired) {
+            CosmiconLogger.info("[STATUS] %s from %s expired (duration ended)", inst.effect().name(), inst.source());
         }
     }
 
@@ -309,10 +371,10 @@ public class StatusEffectProcessor {
         int bonus = 0;
 
         if (turnType == TurnType.ATTACK) {
-            bonus += getLayers(StatusEffect.STRENGTH);
-
-            if (hasEffect(StatusEffect.OVERLOAD)) {
-                bonus += getLayers(StatusEffect.OVERLOAD);
+            for (StatusEffectInstance inst : activeEffects) {
+                if (inst.effect() == StatusEffect.STRENGTH || inst.effect() == StatusEffect.OVERLOAD) {
+                    bonus += inst.layers();
+                }
             }
 
             if (lastStandHpReduction > 0) {

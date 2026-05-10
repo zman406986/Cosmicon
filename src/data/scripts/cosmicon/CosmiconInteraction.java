@@ -151,25 +151,6 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         setState(State.MAIN_MENU);
     }
 
-    public void startTournament(String bracketJson, Runnable onLeave) {
-        tournamentManager = TournamentManager.fromJson(bracketJson);
-        tournamentWins = CosmiconEventState.getTournamentWins();
-        this.onLeaveAction = onLeave;
-
-        if (tournamentManager == null) {
-            textPanel.addPara(Strings.get("casino.tournament_error_load"), Color.RED);
-            options.addOption(Strings.get("casino.back_lounge"), "casino_back");
-            setState(State.GATEKEEPER_REWARD);
-            return;
-        }
-
-        if (tournamentManager.isPlayerChampion() || tournamentManager.isPlayerEliminated()) {
-            showTournamentReward();
-        } else {
-            showTournamentBracket();
-        }
-    }
-
     @Override
     public void optionSelected(String optionText, Object optionData) {
         if (optionData == null) return;
@@ -222,16 +203,12 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 handleGatekeeperRewardSelection(data);
                 break;
 
-            case TOURNAMENT_BRACKET:
+            case TOURNAMENT_BRACKET, TOURNAMENT_SERIES:
                 handleTournamentBracketSelection(data);
                 break;
 
             case TOURNAMENT_REWARD:
                 handleTournamentRewardSelection(data);
-                break;
-
-            case TOURNAMENT_SERIES:
-                handleTournamentBracketSelection(data);
                 break;
 
             default:
@@ -513,7 +490,6 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 AddRemoveCommodity.addCreditsGainText(credits, textPanel);
                 finishReward();
             }
-            case "tutorial_g2_unlock" -> finishReward();
             default -> finishReward();
         }
     }
@@ -559,7 +535,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 setState(State.CASINO_BOSS_REWARD);
             }
         } else if (CosmiconEventState.isTournamentActive()) {
-            handleTournamentVictory(damageDealt);
+            handleTournamentVictory();
         } else {
             handleGatekeeperVictory(damageDealt);
         }
@@ -574,7 +550,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             options.addOption(Strings.get("casino.back_lounge"), "casino_back");
             setState(State.CASINO_BOSS_REWARD);
         } else if (CosmiconEventState.isTournamentActive()) {
-            handleTournamentDefeat(damageDealt);
+            handleTournamentDefeat();
         } else {
             handleGatekeeperDefeat(damageDealt);
         }
@@ -617,9 +593,9 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         String displayName = CasinoIntegrationManager.getRewardDisplayName(id, tier);
         if (tier == 1) {
-            textPanel.addPara(Strings.format("reward.character_unlocked"), Color.GREEN);
+            textPanel.addPara(Strings.format("reward.character_unlocked", displayName), Color.GREEN);
         } else {
-            textPanel.addPara(Strings.format("reward.prismatic_unlocked"), Color.GREEN);
+            textPanel.addPara(Strings.format("reward.prismatic_unlocked", displayName), Color.GREEN);
         }
 
         pendingCasinoRewardCandidates = null;
@@ -630,10 +606,15 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     }
 
     private void handleGatekeeperVictory(int damageDealt) {
-        int hunterLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
+        int oldLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
         CasinoIntegrationManager.updateTrashcanHunterLevel(damageDealt);
+        int newLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
 
         textPanel.addPara(Strings.get("casino.gatekeeper_victory"), Color.GREEN);
+
+        if (newLevel > oldLevel) {
+            textPanel.addPara(Strings.format("casino.gatekeeper_hunter_level_up", newLevel), Color.CYAN);
+        }
 
         int credits = CasinoIntegrationManager.getCreditReward() * 4;
         Global.getSector().getPlayerFleet().getCargo().getCredits().add(credits);
@@ -648,10 +629,15 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     }
 
     private void handleGatekeeperDefeat(int damageDealt) {
-        int hunterLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
+        int oldLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
         CasinoIntegrationManager.updateTrashcanHunterLevel(damageDealt);
+        int newLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
 
         textPanel.addPara(Strings.get("casino.gatekeeper_defeat"), Color.RED);
+
+        if (newLevel > oldLevel) {
+            textPanel.addPara(Strings.format("casino.gatekeeper_hunter_level_up", newLevel), Color.CYAN);
+        }
 
         int credits = CasinoIntegrationManager.getCreditReward() * 2;
         Global.getSector().getPlayerFleet().getCargo().getCredits().add(credits);
@@ -662,7 +648,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         setState(State.GATEKEEPER_REWARD);
     }
 
-    private void handleTournamentVictory(int damageDealt) {
+    private void handleTournamentVictory() {
         if (tournamentManager == null) {
             textPanel.addPara(Strings.get("casino.tournament_error_load"), Color.RED);
             options.addOption(Strings.get("casino.back_lounge"), "casino_back");
@@ -699,7 +685,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         }
     }
 
-    private void handleTournamentDefeat(int damageDealt) {
+    private void handleTournamentDefeat() {
         if (tournamentManager == null) {
             textPanel.addPara(Strings.get("casino.tournament_error_load"), Color.RED);
             options.addOption(Strings.get("casino.back_lounge"), "casino_back");

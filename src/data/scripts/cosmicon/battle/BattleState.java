@@ -9,6 +9,7 @@ import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticManager;
 import data.scripts.cosmicon.tutorial.TutorialDiceRoller;
+import data.scripts.cosmicon.battle.StatusEffectProcessor.DurationType;
 import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.CosmiconLogger;
 
@@ -182,10 +183,10 @@ public class BattleState {
         opponentCyreneThresholdMet = false;
 
         if (CharacterIds.CYRENE.equals(playerCard.getId())) {
-            effectState.getPlayerEffects().addEffect(StatusEffectProcessor.StatusEffect.CYRENE_TALLY, 1);
+            effectState.getPlayerEffects().addEffect(StatusEffectProcessor.StatusEffect.CYRENE_TALLY, CharacterIds.CYRENE, 1, DurationType.PERMANENT);
         }
         if (CharacterIds.CYRENE.equals(opponentCard.getId())) {
-            effectState.getOpponentEffects().addEffect(StatusEffectProcessor.StatusEffect.CYRENE_TALLY, 1);
+            effectState.getOpponentEffects().addEffect(StatusEffectProcessor.StatusEffect.CYRENE_TALLY, CharacterIds.CYRENE, 1, DurationType.PERMANENT);
         }
 
         prismaticManager.initializeFromCards(playerCard, opponentCard);

@@ -8,6 +8,8 @@ import com.fs.starfarer.api.combat.EngagementResultAPI;
 import data.scripts.cosmicon.casino.CasinoIntegrationManager;
 import data.scripts.cosmicon.state.CosmiconEventState;
 import java.util.Map;
+
+import org.jetbrains.annotations.NotNull;
 import org.lazywizard.console.BaseCommand;
 import org.lazywizard.console.CommonStrings;
 import org.lazywizard.console.Console;
@@ -15,7 +17,7 @@ import org.lazywizard.console.Console;
 public class CosmiconCasinoTournament implements BaseCommand {
 
     @Override
-    public CommandResult runCommand(String args, CommandContext context) {
+    public CommandResult runCommand(@NotNull String args, CommandContext context) {
         if (!context.isInCampaign()) {
             Console.showMessage(CommonStrings.ERROR_CAMPAIGN_ONLY);
             return CommandResult.WRONG_CONTEXT;
@@ -35,11 +37,9 @@ public class CosmiconCasinoTournament implements BaseCommand {
     }
 
     private static class TournamentDialogDelegate implements InteractionDialogPlugin {
-        private InteractionDialogAPI dialog;
 
         @Override
         public void init(InteractionDialogAPI dialog) {
-            this.dialog = dialog;
             CasinoIntegrationManager.startTournament(dialog, dialog::dismiss);
         }
 

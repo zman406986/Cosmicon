@@ -591,7 +591,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         if (damage <= 0) return;
 
         boolean displayOnSource = "INSTANT_DAMAGE".equals(damageType);
-        boolean displayIsPlayer = displayOnSource ? !isPlayer : isPlayer;
+        boolean displayIsPlayer = displayOnSource != isPlayer;
 
         float cardCenterX;
         float cardCenterY;
@@ -1349,9 +1349,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     private Integer computeDisplayIndex(boolean isPlayer, StatusEffectProcessor.StatusEffect targetEffect) {
         StatusEffectProcessor effects = isPlayer ? battleState.getPlayerEffects() : battleState.getOpponentEffects();
         int idx = 0;
-        for (StatusEffectProcessor.StatusEffect effect : StatusEffectProcessor.StatusEffect.values()) {
-            if (effect == targetEffect) return idx;
-            if (effects.getLayers(effect) > 0) idx++;
+        for (StatusEffectProcessor.StatusEffectInstance inst : effects.getActiveEffects()) {
+            if (inst.effect() == targetEffect) return idx;
+            idx++;
         }
         return null;
     }
@@ -1365,14 +1365,13 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                     ? battleState.getPlayerEffects() : battleState.getOpponentEffects();
                 StatusEffectProcessor defenderEffects = playerIsAttacker
                     ? battleState.getOpponentEffects() : battleState.getPlayerEffects();
-                boolean attackerIsPlayer = playerIsAttacker;
                 boolean defenderIsPlayer = !playerIsAttacker;
 
                 if (attackerEffects.getLayers(StatusEffectProcessor.StatusEffect.STRENGTH) > 0) {
-                    labels.triggerEffectProcessAnimation(attackerIsPlayer, StatusEffectProcessor.StatusEffect.STRENGTH);
+                    labels.triggerEffectProcessAnimation(playerIsAttacker, StatusEffectProcessor.StatusEffect.STRENGTH);
                 }
                 if (attackerEffects.getLayers(StatusEffectProcessor.StatusEffect.OVERLOAD) > 0) {
-                    labels.triggerEffectProcessAnimation(attackerIsPlayer, StatusEffectProcessor.StatusEffect.OVERLOAD);
+                    labels.triggerEffectProcessAnimation(playerIsAttacker, StatusEffectProcessor.StatusEffect.OVERLOAD);
                 }
                 if (defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.TOUGHNESS) > 0) {
                     labels.triggerEffectProcessAnimation(defenderIsPlayer, StatusEffectProcessor.StatusEffect.TOUGHNESS);

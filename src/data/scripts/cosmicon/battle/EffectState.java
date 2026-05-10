@@ -3,6 +3,7 @@ package data.scripts.cosmicon.battle;
 import java.util.ArrayList;
 import java.util.List;
 
+import data.scripts.cosmicon.battle.StatusEffectProcessor.DurationType;
 import data.scripts.cosmicon.util.CosmiconLogger;
 
 public class EffectState {
@@ -38,7 +39,7 @@ public class EffectState {
     }
 
     public void applyEffect(StatusEffectProcessor.StatusEffect effect, int layers, boolean toPlayer) {
-        getEffects(toPlayer).addEffect(effect, layers);
+        getEffects(toPlayer).addEffect(effect, "effect_system", layers, DurationType.PERMANENT);
         if (effect == StatusEffectProcessor.StatusEffect.HACK || effect == StatusEffectProcessor.StatusEffect.ARISE) {
             modificationOrder.add(new ModificationRecord(effect, toPlayer, modificationSequenceCounter++));
         }
@@ -69,8 +70,12 @@ public class EffectState {
     }
 
     public void clearTemporaryEffects() {
-        playerEffects.clearTemporaryEffects();
-        opponentEffects.clearTemporaryEffects();
+        playerEffects.removeEffect(StatusEffectProcessor.StatusEffect.THORNS);
+        playerEffects.removeEffect(StatusEffectProcessor.StatusEffect.LEVEL_UP);
+        playerEffects.removeEffect(StatusEffectProcessor.StatusEffect.UNYIELDING);
+        opponentEffects.removeEffect(StatusEffectProcessor.StatusEffect.THORNS);
+        opponentEffects.removeEffect(StatusEffectProcessor.StatusEffect.LEVEL_UP);
+        opponentEffects.removeEffect(StatusEffectProcessor.StatusEffect.UNYIELDING);
     }
 
     public void cleanup() {

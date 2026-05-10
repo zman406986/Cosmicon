@@ -540,8 +540,8 @@
         "unlock_character": "Unlock {0}",
         "unlock_prismatic": "Unlock {0}",
         "take_credits": "Take credits instead",
-        "character_unlocked": "Character unlocked!",
-        "prismatic_unlocked": "Prismatic dice unlocked!"
+        "character_unlocked": "Character unlocked: {0}!",
+        "prismatic_unlocked": "Prismatic dice unlocked: {0}!"
     },
     "casino": {
         "gatekeeper_challenge": "Challenge the Gatekeeper",
@@ -551,6 +551,7 @@
         "gatekeeper_reward_win": "You earned 4x credits ({0} credits).",
         "gatekeeper_reward_lose": "You earned 2x credits ({0} credits).",
         "gatekeeper_unlock_tournament": "Tournament unlocked! You can now Host a Tournament.",
+        "gatekeeper_hunter_level_up": "Trashcan Hunter Level increased to {0}!",
 
         "tournament_title": "Host a Tournament",
         "tournament_cost": "15,000 Stargems",
