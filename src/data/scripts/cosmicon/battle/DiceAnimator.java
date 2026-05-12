@@ -212,7 +212,7 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.useDirectionalAnimation = true;
         this.phase = Phase.SCATTER_PICKUP;
         this.scale = 1f;
-        this.stationaryFrameIndex = 0;
+        this.stationaryFrameIndex = AnimationConstants.FRAME_COUNT - 1;
         if (type == DiceType.PRISMATIC) {
             this.stationaryResultIndex = (int)(Math.random() * 6);
         } else if (type != null) {
@@ -226,7 +226,7 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.type = type;
         this.finalValue = result;
         resetCommonFields();
-        this.stationaryFrameIndex = 0;
+        this.stationaryFrameIndex = AnimationConstants.FRAME_COUNT - 1;
         if (type == DiceType.PRISMATIC) {
             this.stationaryResultIndex = (int)(Math.random() * 6);
         } else {
@@ -287,7 +287,7 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         this.phase = Phase.DROP;
         this.scale = INITIAL_SCALE;
         this.useDirectionalAnimation = true;
-        this.stationaryFrameIndex = 0;
+        this.stationaryFrameIndex = AnimationConstants.FRAME_COUNT - 1;
         if (type == DiceType.PRISMATIC) {
             this.stationaryResultIndex = (int)(Math.random() * 6);
         } else {
@@ -539,7 +539,7 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
     }
     
     private void advanceCenteringDrop() {
-        currentFrame = 0;
+        currentFrame = AnimationConstants.FRAME_COUNT - 1;
         float progress = phaseElapsed / CENTERING_DROP_DURATION;
         progress = Math.min(1f, progress);
         float eased = EasingUtil.easeInQuad(progress);
@@ -571,10 +571,10 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
             float revealProgress = (elapsed - ROLL_DURATION - SETTLE_DURATION) / REVEAL_DURATION;
             scale = 1f + SCALE_BOUNCE * (float)Math.sin(revealProgress * Math.PI);
         } else if (elapsed < TOTAL_DURATION) {
-            currentFrame = 0;
+            currentFrame = AnimationConstants.FRAME_COUNT - 1;
             scale = 1f;
         } else {
-            currentFrame = 0;
+            currentFrame = AnimationConstants.FRAME_COUNT - 1;
             scale = 1f;
             complete = true;
         }
@@ -712,7 +712,7 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         resetCommonFields();
         this.elapsed = 0f;
         this.scale = source.getScale();
-        this.stationaryFrameIndex = 0;
+        this.stationaryFrameIndex = AnimationConstants.FRAME_COUNT - 1;
         this.stationaryResultIndex = value;
         this.useDirectionalAnimation = true;
     }
@@ -737,7 +737,7 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         this.phase = Phase.SCATTER_PICKUP;
         this.scale = 1f;
         this.useDirectionalAnimation = true;
-        this.stationaryFrameIndex = 0;
+        this.stationaryFrameIndex = AnimationConstants.FRAME_COUNT - 1;
         this.stationaryResultIndex = finalValue;
         this.rollPickupStartScale = 1f;
     }
@@ -831,7 +831,7 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         y = targetCenterY;
 
         elapsed = TOTAL_DURATION;
-        currentFrame = 0;
+        currentFrame = AnimationConstants.FRAME_COUNT - 1;
         scale = 1f;
         posXOffset = 0f;
         posYOffset = 0f;
@@ -844,7 +844,7 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         travelDistance = 0f;
         travelProgress = 0f;
         useDirectionalAnimation = false;
-        stationaryFrameIndex = 0;
+        stationaryFrameIndex = AnimationConstants.FRAME_COUNT - 1;
         stationaryResultIndex = 0;
         rollPickupStartScale = 0f;
         centeringStartX = 0f;

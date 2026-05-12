@@ -2,6 +2,7 @@ package data.scripts.cosmicon.events;
 
 import java.util.Map;
 
+import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.InteractionDialogAPI;
 import com.fs.starfarer.api.campaign.econ.MarketAPI;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
@@ -33,15 +34,40 @@ public class CosmiconBarEvent extends BaseBarEvent {
 
     @Override
     public boolean shouldShowAtMarket(MarketAPI market) {
-        if (!super.shouldShowAtMarket(market)) return false;
-        if (market == null) return false;
-        if (market.getSize() < CosmiconConfig.MARKET_SIZE_MIN) return false;
+        if (!super.shouldShowAtMarket(market)) {
+            if (CosmiconConfig.DEBUG_ENABLED) {
+                Global.getLogger(this.getClass()).info("Cosmicon shouldShowAtMarket REJECTED by super: " +
+                        (market != null ? market.getName() + " (size " + market.getSize() + ")" : "null"));
+            }
+            return false;
+        }
+        if (market == null) {
+            if (CosmiconConfig.DEBUG_ENABLED) {
+                Global.getLogger(this.getClass()).info("Cosmicon shouldShowAtMarket REJECTED: market is null");
+            }
+            return false;
+        }
+        if (market.getSize() < CosmiconConfig.MARKET_SIZE_MIN) {
+            if (CosmiconConfig.DEBUG_ENABLED) {
+                Global.getLogger(this.getClass()).info("Cosmicon shouldShowAtMarket REJECTED: " +
+                        market.getName() + " size " + market.getSize() + " < min " + CosmiconConfig.MARKET_SIZE_MIN);
+            }
+            return false;
+        }
+        if (CosmiconConfig.DEBUG_ENABLED) {
+            Global.getLogger(this.getClass()).info("Cosmicon shouldShowAtMarket ACCEPTED: " +
+                    market.getName() + " (size " + market.getSize() + ")");
+        }
         return true;
     }
 
     @Override
     public void addPromptAndOption(InteractionDialogAPI dialog, Map<String, MemoryAPI> memoryMap) {
         super.addPromptAndOption(dialog, memoryMap);
+
+        if (CosmiconConfig.DEBUG_ENABLED) {
+            Global.getLogger(this.getClass()).info("Cosmicon addPromptAndOption called - event appearing at bar");
+        }
 
         boolean isTutorial = CosmiconStats.isInTutorialMode();
         TextPanelAPI textPanel = dialog.getTextPanel();

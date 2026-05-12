@@ -12,7 +12,7 @@ public class CosmiconConfig {
     public static final String MOD_ID = "cosmicon_dice";
     private static final String CONFIG_PATH = "data/config/settings.json";
 
-    public static int MARKET_SIZE_MIN = 3;
+    public static int MARKET_SIZE_MIN = 1;
     public static int DEFAULT_HP = 20;
     public static int DEFAULT_REROLLS = 2;
     public static boolean COSMICON_ENABLED = true;
@@ -29,10 +29,10 @@ public class CosmiconConfig {
             JSONObject settings = Global.getSettings().loadJSON(CONFIG_PATH, MOD_ID);
 
             COSMICON_ENABLED = settings.optBoolean("cosmiconDiceEnabled", true);
-            MARKET_SIZE_MIN = settings.optInt("marketSizeMin", 3);
+            MARKET_SIZE_MIN = settings.optInt("marketSizeMin", 1);
             DEFAULT_HP = settings.optInt("defaultHP", 20);
             DEFAULT_REROLLS = settings.optInt("defaultRerolls", 2);
-            DEBUG_ENABLED = settings.optBoolean("debugEnabled", false);
+            DEBUG_ENABLED = settings.optBoolean("debugEnabled", true);
             REROLL_LOG_ENABLED = settings.optBoolean("rerollLogEnabled", false);
 
             Global.getLogger(CosmiconConfig.class).info("Cosmicon config loaded: marketSizeMin=" + MARKET_SIZE_MIN);
