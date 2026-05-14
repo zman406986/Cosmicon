@@ -1,7 +1,6 @@
 package data.console.commands;
 
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import data.scripts.cosmicon.CosmiconInteraction;
 import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.CharacterRegistry;
@@ -9,6 +8,8 @@ import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.state.CosmiconStats;
 import java.util.List;
+
+import org.jetbrains.annotations.NotNull;
 import org.lazywizard.console.BaseCommand;
 import org.lazywizard.console.CommonStrings;
 import org.lazywizard.console.Console;
@@ -16,7 +17,7 @@ import org.lazywizard.console.Console;
 public class CosmiconStart implements BaseCommand {
 
     @Override
-    public CommandResult runCommand(String args, CommandContext context) {
+    public CommandResult runCommand(@NotNull String args, CommandContext context) {
         if (!context.isInCampaign()) {
             Console.showMessage(CommonStrings.ERROR_CAMPAIGN_ONLY);
             return CommandResult.WRONG_CONTEXT;
@@ -66,7 +67,7 @@ public class CosmiconStart implements BaseCommand {
         } else {
             CosmiconEventState.setIsTutorialMode(CosmiconStats.isInTutorialMode());
 
-            if (opponentId == null || opponentId.isEmpty() || "random".equalsIgnoreCase(opponentId)) {
+            if (opponentId == null || "random".equalsIgnoreCase(opponentId)) {
                 CharacterCard randomOpponent = CharacterRegistry.getRandomOpponent();
                 if (randomOpponent == null) {
                     Console.showMessage("Error: No opponents available.");
@@ -87,7 +88,7 @@ public class CosmiconStart implements BaseCommand {
 
             CosmiconEventState.setOpponentCharacter(opponentId);
 
-            if (prismaticDiceId != null && !prismaticDiceId.isEmpty()) {
+            if (prismaticDiceId != null) {
                 if (!PrismaticDiceRegistry.has(prismaticDiceId)) {
                     Console.showMessage("Error: Unknown prismatic dice '" + prismaticDiceId + "'. Valid IDs:");
                     for (String id : PrismaticDiceRegistry.getAll().keySet()) {
@@ -107,8 +108,6 @@ public class CosmiconStart implements BaseCommand {
             }
             Console.showMessage(msg + "...");
         }
-
-        CosmiconEventState.setIsBarEvent(false);
 
         Console.showDialogOnClose(
             new CosmiconInteraction(),

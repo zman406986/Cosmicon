@@ -9,10 +9,8 @@ public class CosmiconEventState {
 
     private static final String KEY_OPPONENT_CHAR = "$cos_temp_opponent_char";
     private static final String KEY_OPPONENT_PRISMATIC = "$cos_temp_opponent_prismatic";
-    private static final String KEY_IS_BAR_EVENT = "$cos_temp_is_bar_event";
     private static final String KEY_IS_TUTORIAL = "$cos_temp_is_tutorial";
     private static final String KEY_REPLAY_TUTORIAL = "$cos_replay_tutorial_game";
-    private static final String KEY_SESSION_WON = "$cos_temp_session_won";
     private static final String KEY_OPPONENT_USES_TRUE = "$cos_temp_opponent_uses_true";
 
     private static final String KEY_CASINO_BATTLE_MODE = "$cos_casino_battle_mode";
@@ -33,8 +31,8 @@ public class CosmiconEventState {
 
     private static final List<String> ALL_KEYS = List.of(
         KEY_OPPONENT_CHAR, KEY_OPPONENT_PRISMATIC,
-        KEY_IS_BAR_EVENT, KEY_IS_TUTORIAL, KEY_REPLAY_TUTORIAL,
-        KEY_OPPONENT_USES_TRUE, KEY_SESSION_WON,
+        KEY_IS_TUTORIAL, KEY_REPLAY_TUTORIAL,
+        KEY_OPPONENT_USES_TRUE,
         KEY_CASINO_BATTLE_MODE, KEY_CASINO_BATTLE_IS_BOSS,
         KEY_CASINO_BATTLE_OPPONENT, KEY_CASINO_BATTLE_BONUS_HP,
         KEY_CASINO_BATTLE_USE_TRUE, KEY_CASINO_BATTLE_RESULT_DAMAGE,
@@ -88,16 +86,6 @@ public class CosmiconEventState {
         return getMemory().contains(KEY_OPPONENT_PRISMATIC);
     }
 
-    public static void setIsBarEvent(boolean isBarEvent) {
-        getMemory().set(KEY_IS_BAR_EVENT, isBarEvent);
-    }
-
-    public static boolean isBarEvent() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_IS_BAR_EVENT)) return false;
-        return mem.getBoolean(KEY_IS_BAR_EVENT);
-    }
-
     public static void setIsTutorialMode(boolean isTutorial) {
         getMemory().set(KEY_IS_TUTORIAL, isTutorial);
     }
@@ -132,16 +120,6 @@ public class CosmiconEventState {
 
     public static boolean isReplayTutorial() {
         return getReplayTutorialGame() >= 0;
-    }
-
-    public static void setSessionWon(boolean won) {
-        getMemory().set(KEY_SESSION_WON, won);
-    }
-
-    public static boolean isSessionWon() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_SESSION_WON)) return false;
-        return mem.getBoolean(KEY_SESSION_WON);
     }
 
     public static void setOpponentUsesTrue(boolean usesTrue) {

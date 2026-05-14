@@ -75,7 +75,6 @@ public class CasinoIntegrationManager {
         CosmiconEventState.setCasinoBattleOpponent(oppId);
         CosmiconEventState.setCasinoBattleBonusHp(15);
         CosmiconEventState.setCasinoBattleUseTrue(useTrue);
-        CosmiconEventState.setIsBarEvent(false);
 
         CosmiconInteraction interaction = new CosmiconInteraction();
         interaction.setOnLeaveAction(onLeave);
@@ -93,7 +92,6 @@ public class CasinoIntegrationManager {
         int bonusHp = CosmiconStats.isGatekeeper999Unlocked() ? 974 : 74;
         CosmiconEventState.setCasinoBattleBonusHp(bonusHp);
         CosmiconEventState.setCasinoBattleUseTrue(false);
-        CosmiconEventState.setIsBarEvent(false);
 
         CosmiconInteraction interaction = new CosmiconInteraction();
         interaction.setOnLeaveAction(onLeave);

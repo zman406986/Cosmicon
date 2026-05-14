@@ -91,24 +91,13 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
                 opponentCard = CharacterRegistry.getRandomOpponent();
             }
             CosmiconEventState.setOpponentCharacter(Objects.requireNonNull(opponentCard).getId());
-        } else if (CosmiconEventState.isBarEvent()) {
-            String oppCharId = CosmiconEventState.getOpponentCharacter();
-            if (oppCharId != null) {
-                opponentCard = CharacterRegistry.getCharacterById(oppCharId);
-            } else {
-                opponentCard = CharacterRegistry.getRandomOpponent();
-                if (opponentCard != null) {
-                    CosmiconEventState.setOpponentCharacter(opponentCard.getId());
-                    configureOpponentPrismaticDefaults(opponentCard);
-                }
-            }
         } else {
             opponentCard = CharacterRegistry.getRandomOpponent();
             CosmiconEventState.setOpponentCharacter(Objects.requireNonNull(opponentCard).getId());
             configureOpponentPrismaticDefaults(opponentCard);
         }
 
-        if (playerCard == null || opponentCard == null) {
+        if (playerCard == null) {
             CosmiconLogger.error("Failed to load character cards for battle");
             throw new IllegalStateException("Failed to load character cards");
         }

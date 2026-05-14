@@ -367,11 +367,11 @@ public final class BattleRenderingUtils {
         if (atkIcon != null) {
             int defaultAtk = card.getDefaultAtkLevel();
             if (effectiveAtk > defaultAtk) {
-                float arrowX = x + ATK_LEFT_MARGIN + ATK_DEF_ICON_SIZE - 1f;
+                float arrowX = x + ATK_LEFT_MARGIN + ATK_DEF_ICON_SIZE - 7f;
                 float arrowY = y + ATK_DEF_BOTTOM_MARGIN + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
                 renderIndicatorArrow(arrowX, arrowY, true, alphaMult);
             } else if (effectiveAtk < defaultAtk) {
-                float arrowX = x + ATK_LEFT_MARGIN + ATK_DEF_ICON_SIZE - 1f;
+                float arrowX = x + ATK_LEFT_MARGIN + ATK_DEF_ICON_SIZE - 7f;
                 float arrowY = y + ATK_DEF_BOTTOM_MARGIN + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
                 renderIndicatorArrow(arrowX, arrowY, false, alphaMult);
             }
@@ -380,11 +380,11 @@ public final class BattleRenderingUtils {
         if (defIcon != null) {
             int defaultDef = card.getDefaultDefLevel();
             if (effectiveDef > defaultDef) {
-                float arrowX = x + CARD_WIDTH - DEF_RIGHT_MARGIN - 1f;
+                float arrowX = x + CARD_WIDTH - DEF_RIGHT_MARGIN - 7f;
                 float arrowY = y + ATK_DEF_BOTTOM_MARGIN + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
                 renderIndicatorArrow(arrowX, arrowY, true, alphaMult);
             } else if (effectiveDef < defaultDef) {
-                float arrowX = x + CARD_WIDTH - DEF_RIGHT_MARGIN - 1f;
+                float arrowX = x + CARD_WIDTH - DEF_RIGHT_MARGIN - 7f;
                 float arrowY = y + ATK_DEF_BOTTOM_MARGIN + (ATK_DEF_ICON_SIZE - INDICATOR_ARROW_HEIGHT) / 2f;
                 renderIndicatorArrow(arrowX, arrowY, false, alphaMult);
             }

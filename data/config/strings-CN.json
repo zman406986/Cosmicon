@@ -11,7 +11,6 @@
         "leave": "离开",
         "back": "返回",
         "play": "对战",
-        "session_won": "你赢了这一轮！去其他酒吧寻找新的对手吧。",
         "trashcan_hunter_welcome": "战力党玩家们警惕地看着你。你赌神的名声已经传开了。'是赌神等级{0}，'有人低语道。"
     },
     "help": {
@@ -466,14 +465,12 @@
         "decision_passive": "(+{0} 被动)",
         "decision_reroll": ", 重投: {0} 个骰子"
     },
-    "bar_event": {
-        "tutorial_prompt": "一个桌游玩家摆弄着手里的骰子，对上了你的目光。[新手吗？要不要来一局战力党？]",
-        "standard_prompt": "酒吧里一个战力党玩家向你招手。[来一局？]",
-        "accept": "接受挑战",
-        "decline": "婉言谢绝",
-        "declined": "你婉言谢绝，继续喝你的酒。",
-        "approach": "走近战力党玩家",
-        "trashcan_hunter_prompt": "战力党常客立刻认出了你。'是赌神 等级{0}！'有人热切地给你让了个座。"
+    "npc": {
+        "greeting_tutorial": "一个骰子爱好者注意到了你的目光。[新手吗？我可以教你玩战力党。]",
+        "greeting_standard": "通讯终端旁的战力党玩家向你招手。[来一局？]",
+        "greeting_hunter": "战力党常客立刻认出了你。[赌神 等级{0}！再来一局？]",
+        "play_option": "玩一局战力党",
+        "leave_option": "下次再说"
     },
     "victory": {
     },
@@ -481,7 +478,7 @@
         "no_prismatic_allowed": "教程模式：本局禁用曜彩骰。",
         "games_remaining": "教程模式 - 剩余 {0} 局",
         "g1_reward": "你解锁了角色[火花]！继续下一局教程游戏来解锁更多。",
-        "g2_reward": "你解锁了[黄泉]和[复读]曜彩骰！现在可以在酒吧进行随机对战了。",
+        "g2_reward": "你解锁了[黄泉]和[复读]曜彩骰！现在可以通过通讯终端进行随机对战了。",
         "g2_unlock_option": "解锁角色[黄泉]和曜彩骰[复读]",
         "g1_t1_attack_roll": "你是攻击方！点击任意位置投骰子。",
         "g1_t1_attack_select": "选点数最大的几个骰子，伤害更高。你的攻击等级是4，所以要选4颗。",

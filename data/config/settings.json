@@ -3,6 +3,10 @@
     "marketSizeMin": 3,
     "defaultHP": 20,
     "defaultRerolls": 2,
+    "npcSpawnChance": 0.5,
+    "npcSpawnIntervalDays": 7,
+    "npcMinLifetimeDays": 30,
+    "npcMaxLifetimeDays": 60,
     "graphics": {
         "cosmicon_dice": {
             "d4": "graphics/cosmicon/Dice/Dice_D4.png",
@@ -656,6 +660,22 @@
             "portrait_the_herta": "graphics/cosmicon/Cards/Characters/The_Herta.png",
             "portrait_yao_guang": "graphics/cosmicon/Cards/Characters/Yao_Guang.png",
             "portrait_trashcan": "graphics/cosmicon/Cards/Characters/Trashcan.png"
+        },
+        "cosmicon_npc_portraits": {
+            "npc_acheron": "graphics/cosmicon/portraits/Acheron.png",
+            "npc_aventurine": "graphics/cosmicon/portraits/Aventurine.png",
+            "npc_castorice": "graphics/cosmicon/portraits/Castorice.png",
+            "npc_cyrene": "graphics/cosmicon/portraits/Cyrene.png",
+            "npc_dan_heng": "graphics/cosmicon/portraits/Dan Heng.png",
+            "npc_firefly": "graphics/cosmicon/portraits/Firefly.png",
+            "npc_hyacine": "graphics/cosmicon/portraits/Hyacine.png",
+            "npc_kafka": "graphics/cosmicon/portraits/Kafka.png",
+            "npc_march_7th": "graphics/cosmicon/portraits/March 7th.png",
+            "npc_phainon": "graphics/cosmicon/portraits/Phainon.png",
+            "npc_robin": "graphics/cosmicon/portraits/Robin.png",
+            "npc_sparxie": "graphics/cosmicon/portraits/Sparxie.png",
+            "npc_the_herta": "graphics/cosmicon/portraits/The Herta.png",
+            "npc_yao_guang": "graphics/cosmicon/portraits/Yao Guang.png"
         }
     }
 }

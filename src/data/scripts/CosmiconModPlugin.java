@@ -3,10 +3,10 @@ package data.scripts;
 import com.fs.starfarer.api.BaseModPlugin;
 import com.fs.starfarer.api.Global;
 
-import com.fs.starfarer.api.impl.campaign.intel.bar.events.BarEventManager;
 import data.scripts.cosmicon.battle.CharacterRegistry;
 import data.scripts.cosmicon.battle.CosmiconSprites;
-import data.scripts.cosmicon.events.CosmiconBarEventCreator;
+import data.scripts.cosmicon.npc.CosmiconCampaignListener;
+import data.scripts.cosmicon.npc.CosmiconNPCManager;
 import data.scripts.cosmicon.state.CosmiconStats;
 
 public class CosmiconModPlugin extends BaseModPlugin {
@@ -41,10 +41,14 @@ public class CosmiconModPlugin extends BaseModPlugin {
         Global.getLogger(this.getClass()).info("Cosmicon Dice: Game Loaded");
         CosmiconStats.initialize();
 
-        BarEventManager barManager = BarEventManager.getInstance();
-        if (!barManager.hasEventCreator(CosmiconBarEventCreator.class)) {
-            barManager.addEventCreator(new CosmiconBarEventCreator());
-            Global.getLogger(this.getClass()).info("Cosmicon bar event creator registered");
-        }
+        Global.getSector().removeScriptsOfClass(CosmiconNPCManager.class);
+        Global.getSector().removeTransientScriptsOfClass(CosmiconNPCManager.class);
+
+        CosmiconNPCManager.cleanupAllNPCs();
+
+        Global.getSector().getListenerManager().addListener(
+            new CosmiconCampaignListener(), true);
+
+        Global.getLogger(this.getClass()).info("Cosmicon NPC listener registered");
     }
 }

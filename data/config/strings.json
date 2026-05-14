@@ -11,7 +11,6 @@
         "leave": "Leave",
         "back": "Back",
         "play": "Play",
-        "session_won": "You've won this round! Find another bar encounter to play again.",
         "trashcan_hunter_welcome": "The Cosmicon players eye you warily. Word of your mastery has spread. 'Master Dicer Level {0},' someone whispers."
     },
     "help": {
@@ -466,14 +465,12 @@
         "decision_passive": " (+{0} passive)",
         "decision_reroll": ", Reroll: {0} dice"
     },
-    "bar_event": {
-        "tutorial_prompt": "A cloaked figure approaches you in the bar, dice clicking in their palms. 'Care for a game, rookie? I'll go easy on you.'",
-        "standard_prompt": "A Cosmicon player at the bar waves you over. 'Fancy a match? Winner takes their pick of the spoils...'",
-        "accept": "Accept the challenge",
-        "decline": "Politely decline",
-        "declined": "You politely decline and return to your drink.",
-        "approach": "Approach the Cosmicon player",
-        "trashcan_hunter_prompt": "The Cosmicon regulars immediately recognize you. 'It's the Master Dicer! Level {0}!' One of them eagerly offers you a seat at their table."
+    "npc": {
+        "greeting_tutorial": "A dice enthusiast notices you looking their way. 'New to Cosmicon? I can show you the ropes.'",
+        "greeting_standard": "A Cosmicon player at the comm terminal waves you over. 'Fancy a match?'",
+        "greeting_hunter": "The Cosmicon regular recognizes you immediately. 'Master Dicer, Level {0}! Care for another game?'",
+        "play_option": "Play a round of Cosmicon",
+        "leave_option": "Maybe another time"
     },
     "victory": {
     },
@@ -481,7 +478,7 @@
         "no_prismatic_allowed": "Tutorial mode: Prismatic dice are disabled for this game.",
         "games_remaining": "Tutorial mode - {0} games remaining",
         "g1_reward": "You unlocked the character [Sparxie]! Play the next tutorial game to unlock more.",
-        "g2_reward": "You unlocked [Acheron] and the [Repeater] prismatic dice! You can now play random encounters at bars.",
+        "g2_reward": "You unlocked [Acheron] and the [Repeater] prismatic dice! You can now play random encounters via comm directories.",
         "g2_unlock_option": "Unlock character [Acheron] and prismatic dice [Repeater]",
         "g1_t1_attack_roll": "You are the attacker! Roll the dice by clicking anywhere.",
         "g1_t1_attack_select": "Select your highest dice to deal more damage. Your attack level is 4, so you can select the 4 highest numbers.",

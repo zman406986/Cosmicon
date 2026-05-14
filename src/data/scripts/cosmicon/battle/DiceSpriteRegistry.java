@@ -8,7 +8,6 @@ import com.fs.starfarer.api.graphics.SpriteAPI;
 
 public class DiceSpriteRegistry {
     private static final int FRAME_COUNT = AnimationConstants.FRAME_COUNT;
-    private static final String[] PRISMATIC_FACE_LETTERS = {"A", "B", "C", "D", "E", "F"};
 
     private static final Map<String, SpriteAPI[]> cache = new HashMap<>();
     private static boolean loaded = false;

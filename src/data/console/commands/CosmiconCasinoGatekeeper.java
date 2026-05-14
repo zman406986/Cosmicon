@@ -4,6 +4,7 @@ import com.fs.starfarer.api.Global;
 import data.scripts.cosmicon.CosmiconInteraction;
 import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.util.CharacterIds;
+import org.jetbrains.annotations.NotNull;
 import org.lazywizard.console.BaseCommand;
 import org.lazywizard.console.CommonStrings;
 import org.lazywizard.console.Console;
@@ -11,7 +12,7 @@ import org.lazywizard.console.Console;
 public class CosmiconCasinoGatekeeper implements BaseCommand {
 
     @Override
-    public CommandResult runCommand(String args, CommandContext context) {
+    public CommandResult runCommand(@NotNull String args, CommandContext context) {
         if (!context.isInCampaign()) {
             Console.showMessage(CommonStrings.ERROR_CAMPAIGN_ONLY);
             return CommandResult.WRONG_CONTEXT;
@@ -35,7 +36,6 @@ public class CosmiconCasinoGatekeeper implements BaseCommand {
         CosmiconEventState.setCasinoBattleOpponent(CharacterIds.TRASHCAN);
         CosmiconEventState.setCasinoBattleBonusHp(bonusHp);
         CosmiconEventState.setCasinoBattleUseTrue(false);
-        CosmiconEventState.setIsBarEvent(false);
         CosmiconEventState.setIsTutorialMode(false);
 
         Console.showMessage("Starting gatekeeper battle vs Trashcan (+" + bonusHp + " HP)...");
