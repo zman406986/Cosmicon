@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.fs.starfarer.api.campaign.InteractionDialogAPI;
+import com.fs.starfarer.api.campaign.InteractionDialogPlugin;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
+import com.fs.starfarer.api.combat.EngagementResultAPI;
 import com.fs.starfarer.api.util.Misc;
 
 import data.scripts.CosmiconMusicPlugin;
@@ -16,7 +18,10 @@ import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.state.CosmiconStats;
 
-public class CosmiconNPCDialogPlugin extends BaseCommandPlugin {
+@SuppressWarnings("unused")
+public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements InteractionDialogPlugin {
+
+    private CosmiconInteraction interaction;
 
     @Override
     public boolean execute(String ruleId, InteractionDialogAPI dialog,
@@ -45,16 +50,59 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin {
             }
         }
 
-        CosmiconInteraction interaction = new CosmiconInteraction();
+        dialog.setPlugin(this);
+
+        interaction = new CosmiconInteraction();
         interaction.setOnLeaveAction(() -> {
             CosmiconEventState.clearAll();
             CosmiconMusicPlugin.stopMusic();
             dialog.dismiss();
         });
-        dialog.setPlugin(interaction);
         interaction.init(dialog);
 
         return true;
+    }
+
+    @Override
+    public void init(InteractionDialogAPI dialog) {
+    }
+
+    @Override
+    public void optionSelected(String optionText, Object optionData) {
+        if (interaction != null) {
+            interaction.optionSelected(optionText, optionData);
+        }
+    }
+
+    @Override
+    public void optionMousedOver(String optionText, Object optionData) {
+        if (interaction != null) {
+            interaction.optionMousedOver(optionText, optionData);
+        }
+    }
+
+    @Override
+    public void advance(float amount) {
+        if (interaction != null) {
+            interaction.advance(amount);
+        }
+    }
+
+    @Override
+    public void backFromEngagement(EngagementResultAPI battleResult) {
+        if (interaction != null) {
+            interaction.backFromEngagement(battleResult);
+        }
+    }
+
+    @Override
+    public Object getContext() {
+        return null;
+    }
+
+    @Override
+    public Map<String, MemoryAPI> getMemoryMap() {
+        return null;
     }
 
     private void assignRandomOpponent() {

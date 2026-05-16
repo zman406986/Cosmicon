@@ -130,7 +130,13 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 CosmiconStats.getRemainingTutorialGames()));
         }
 
-        options.addOption(Strings.get("menu.start_game"), "start_game");
+        boolean sessionWon = CosmiconEventState.isBarEvent() && CosmiconEventState.isSessionWon();
+        boolean isTutorial = CosmiconStats.isInTutorialMode();
+        if (sessionWon && !isTutorial) {
+            textPanel.addPara(Strings.get("menu.session_won"));
+        } else {
+            options.addOption(Strings.get("menu.start_game"), "start_game");
+        }
 
         options.addOption(Strings.get("menu.character_setup"), "character_setup");
         if (CosmiconStats.getGamesPlayed() >= 1 && !CosmiconStats.isInTutorialMode()) {
@@ -350,6 +356,8 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             handleCasinoVictory();
             return;
         }
+
+        markSessionWonIfBarEvent();
 
         CosmiconStats.incrementGamesPlayed();
         CosmiconStats.incrementGamesWon();
@@ -1083,6 +1091,12 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         );
 
         setState(State.PLAY);
+    }
+
+    private void markSessionWonIfBarEvent() {
+        if (CosmiconEventState.isBarEvent()) {
+            CosmiconEventState.setSessionWon(true);
+        }
     }
 
     private void finishReward() {

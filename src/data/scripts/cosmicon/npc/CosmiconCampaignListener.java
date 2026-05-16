@@ -3,6 +3,7 @@ package data.scripts.cosmicon.npc;
 import com.fs.starfarer.api.campaign.BaseCampaignEventListener;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.econ.MarketAPI;
+import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import com.fs.starfarer.api.characters.ImportantPeopleAPI;
 import com.fs.starfarer.api.characters.PersonAPI;
 import com.fs.starfarer.api.impl.campaign.ids.Factions;
@@ -16,6 +17,7 @@ import java.util.LinkedHashMap;
 public class CosmiconCampaignListener extends BaseCampaignEventListener {
 
     private static final String NPC_TAG = "cosmicon_npc";
+    private static final String SPAWN_TIME_KEY = "$cos_npc_spawn_time";
 
     private static final String[] FIRST_NAMES = {
         "Dice", "Roller", "Gambler", "Shaper", "Strategist",
@@ -24,20 +26,20 @@ public class CosmiconCampaignListener extends BaseCampaignEventListener {
 
     private static final LinkedHashMap<String, String> CHARACTER_PORTRAITS = new LinkedHashMap<>();
     static {
-        CHARACTER_PORTRAITS.put("acheron", "graphics/cosmicon/portraits/Acheron");
-        CHARACTER_PORTRAITS.put("aventurine", "graphics/cosmicon/portraits/Aventurine");
-        CHARACTER_PORTRAITS.put("castorice", "graphics/cosmicon/portraits/Castorice");
-        CHARACTER_PORTRAITS.put("cyrene", "graphics/cosmicon/portraits/Cyrene");
-        CHARACTER_PORTRAITS.put("dan_heng", "graphics/cosmicon/portraits/Dan Heng");
-        CHARACTER_PORTRAITS.put("firefly", "graphics/cosmicon/portraits/Firefly");
-        CHARACTER_PORTRAITS.put("hyacine", "graphics/cosmicon/portraits/Hyacine");
-        CHARACTER_PORTRAITS.put("kafka", "graphics/cosmicon/portraits/Kafka");
-        CHARACTER_PORTRAITS.put("march_7th", "graphics/cosmicon/portraits/March 7th");
-        CHARACTER_PORTRAITS.put("phainon", "graphics/cosmicon/portraits/Phainon");
-        CHARACTER_PORTRAITS.put("robin", "graphics/cosmicon/portraits/Robin");
-        CHARACTER_PORTRAITS.put("sparxie", "graphics/cosmicon/portraits/Sparxie");
-        CHARACTER_PORTRAITS.put("the_herta", "graphics/cosmicon/portraits/The Herta");
-        CHARACTER_PORTRAITS.put("yao_guang", "graphics/cosmicon/portraits/Yao Guang");
+        CHARACTER_PORTRAITS.put("acheron", "graphics/cosmicon/portraits/Acheron.png");
+        CHARACTER_PORTRAITS.put("aventurine", "graphics/cosmicon/portraits/Aventurine.png");
+        CHARACTER_PORTRAITS.put("castorice", "graphics/cosmicon/portraits/Castorice.png");
+        CHARACTER_PORTRAITS.put("cyrene", "graphics/cosmicon/portraits/Cyrene.png");
+        CHARACTER_PORTRAITS.put("dan_heng", "graphics/cosmicon/portraits/Dan Heng.png");
+        CHARACTER_PORTRAITS.put("firefly", "graphics/cosmicon/portraits/Firefly.png");
+        CHARACTER_PORTRAITS.put("hyacine", "graphics/cosmicon/portraits/Hyacine.png");
+        CHARACTER_PORTRAITS.put("kafka", "graphics/cosmicon/portraits/Kafka.png");
+        CHARACTER_PORTRAITS.put("march_7th", "graphics/cosmicon/portraits/March 7th.png");
+        CHARACTER_PORTRAITS.put("phainon", "graphics/cosmicon/portraits/Phainon.png");
+        CHARACTER_PORTRAITS.put("robin", "graphics/cosmicon/portraits/Robin.png");
+        CHARACTER_PORTRAITS.put("sparxie", "graphics/cosmicon/portraits/Sparxie.png");
+        CHARACTER_PORTRAITS.put("the_herta", "graphics/cosmicon/portraits/The Herta.png");
+        CHARACTER_PORTRAITS.put("yao_guang", "graphics/cosmicon/portraits/Yao Guang.png");
     }
 
     public CosmiconCampaignListener() {
@@ -55,15 +57,37 @@ public class CosmiconCampaignListener extends BaseCampaignEventListener {
             }
         }
 
-        if (CosmiconRandom.nextFloat() >= CosmiconConfig.NPC_SPAWN_CHANCE) return;
+        MemoryAPI marketMem = market.getMemory();
+        if (marketMem.contains(SPAWN_TIME_KEY)) {
+            long lastTimestamp = marketMem.getLong(SPAWN_TIME_KEY);
+            if (Global.getSector().getClock().getElapsedDaysSince(lastTimestamp) < CosmiconConfig.NPC_SPAWN_INTERVAL_DAYS) {
+                return;
+            }
+        }
+
+        if (CosmiconRandom.nextFloat() >= CosmiconConfig.NPC_SPAWN_CHANCE) {
+            marketMem.set(SPAWN_TIME_KEY, Global.getSector().getClock().getTimestamp());
+            return;
+        }
 
         spawnTempNPC(market);
+        marketMem.set(SPAWN_TIME_KEY, Global.getSector().getClock().getTimestamp());
     }
 
     @Override
     public void reportPlayerClosedMarket(MarketAPI market) {
         if (market == null) return;
+        boolean hadNpc = false;
+        for (PersonAPI person : market.getPeopleCopy()) {
+            if (person.hasTag(NPC_TAG)) {
+                hadNpc = true;
+                break;
+            }
+        }
         removeTempNPCs(market);
+        if (hadNpc) {
+            market.getMemory().set(SPAWN_TIME_KEY, Global.getSector().getClock().getTimestamp());
+        }
     }
 
     private void spawnTempNPC(MarketAPI market) {

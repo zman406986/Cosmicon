@@ -91,6 +91,17 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
                 opponentCard = CharacterRegistry.getRandomOpponent();
             }
             CosmiconEventState.setOpponentCharacter(Objects.requireNonNull(opponentCard).getId());
+        } else if (CosmiconEventState.isBarEvent()) {
+            String oppCharId = CosmiconEventState.getOpponentCharacter();
+            if (oppCharId != null) {
+                opponentCard = CharacterRegistry.getCharacterById(oppCharId);
+            } else {
+                opponentCard = CharacterRegistry.getRandomOpponent();
+                if (opponentCard != null) {
+                    CosmiconEventState.setOpponentCharacter(opponentCard.getId());
+                    configureOpponentPrismaticDefaults(opponentCard);
+                }
+            }
         } else {
             opponentCard = CharacterRegistry.getRandomOpponent();
             CosmiconEventState.setOpponentCharacter(Objects.requireNonNull(opponentCard).getId());
@@ -108,10 +119,13 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
             String casinoOppId = CosmiconEventState.getCasinoBattleOpponent();
             if (casinoOppId != null) {
                 opponentCard = CharacterRegistry.getCharacterById(casinoOppId);
-                CosmiconEventState.setOpponentCharacter(casinoOppId);
+                if (opponentCard == null) {
+                    opponentCard = CharacterRegistry.getRandomOpponent();
+                }
+                CosmiconEventState.setOpponentCharacter(opponentCard.getId());
             }
             int bonusHp = CosmiconEventState.getCasinoBattleBonusHp();
-            if (bonusHp > 0) {
+            if (bonusHp > 0 && opponentCard != null) {
                 opponentCard = opponentCard.withMaxHp(opponentCard.getMaxHp() + bonusHp);
             }
         }
@@ -127,6 +141,10 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
             String tutorialPlayerId = tutorialGameType == TutorialController.TutorialGame.GAME_1_SPARXIE
                 ? "sparxie" : "acheron";
             playerCard = CharacterRegistry.getCharacterById(tutorialPlayerId);
+            if (playerCard == null) {
+                CosmiconLogger.error("Tutorial character '%s' not found in registry", tutorialPlayerId);
+                throw new IllegalStateException("Tutorial character not found: " + tutorialPlayerId);
+            }
             CosmiconLogger.info("Tutorial game: forced player character = %s", playerCard.getName());
         }
 

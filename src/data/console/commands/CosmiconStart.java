@@ -109,6 +109,8 @@ public class CosmiconStart implements BaseCommand {
             Console.showMessage(msg + "...");
         }
 
+        CosmiconEventState.setIsBarEvent(false);
+
         Console.showDialogOnClose(
             new CosmiconInteraction(),
             Global.getSector().getPlayerFleet()

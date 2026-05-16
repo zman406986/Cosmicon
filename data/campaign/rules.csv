@@ -1,3 +1,3 @@
 id,trigger,conditions,script,text,options
-cosmicon_npc_greeting,PopulateOptions,$person.hasTag(cosmicon_npc),Cosmicon_AddNPCOption,,
+cosmicon_npc_greeting,PopulateOptions,$isPerson $tag:cosmicon_npc,Cosmicon_AddNPCOption,,
 cosmicon_npc_play,DialogOptionSelected,$option == cosmicon_npc_play,CosmiconNPCDialogPlugin,,
