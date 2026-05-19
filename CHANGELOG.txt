@@ -1,2 +1,7 @@
+Version 0.2.0
+- Changed entry point from bars to comms (Custom NPCs generated for playing against)
+- Fixed removal safety (0.1.0 if removed bricks save, update to 0.2.0 then it can be removed)
+- Added a language switching script to toggle between CN and EN
+
 Version 0.1.0
-- Initial development version for Cosmicon Dice mod.
+- Initial release.

@@ -3,7 +3,7 @@
     "name": "Cosmicon Dice",
     "author": "Emanon6",
     "utility": "true",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "A turn-based dice battle card game cloning Honkai:StarRail's minigame of the same name.",
     "gameVersion": "0.98a-RC8",
     "jars": [
