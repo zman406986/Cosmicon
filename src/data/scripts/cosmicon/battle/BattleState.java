@@ -44,8 +44,8 @@ public class BattleState {
     private int playerPendingStrength;
     private int opponentPendingStrength;
 
-    private boolean phainonUnyieldingAvailable;
-    private boolean opponentPhainonUnyieldingAvailable;
+    private boolean phainonUnyieldingConsumed;
+    private boolean opponentPhainonUnyieldingConsumed;
 
     final BattleEventBus eventBus = new BattleEventBus();
     final RerollState rerollState = new RerollState();
@@ -162,8 +162,8 @@ public class BattleState {
         this.opponentPendingDefLevelBoost = 0;
         this.playerOriginalDefLevel = 0;
         this.opponentOriginalDefLevel = 0;
-        this.phainonUnyieldingAvailable = true;
-        this.opponentPhainonUnyieldingAvailable = true;
+        this.phainonUnyieldingConsumed = false;
+        this.opponentPhainonUnyieldingConsumed = false;
     }
 
     
@@ -474,10 +474,6 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
 
     private void consumeUnyieldingCheck(boolean isPlayer) {
-        StatusEffectProcessor effects = getEffects(isPlayer);
-        if (!effects.hasEffect(StatusEffectProcessor.StatusEffect.UNYIELDING)) {
-            return;
-        }
         CharacterCard card = isPlayer ? playerCard : opponentCard;
         if (card != null && CharacterIds.PHAINON.equals(card.getId())) {
             consumePhainonUnyielding(isPlayer);
@@ -860,14 +856,14 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
 
     public boolean isPhainonUnyieldingAvailable(boolean forPlayer) {
-        return forPlayer ? !phainonUnyieldingAvailable : !opponentPhainonUnyieldingAvailable;
+        return forPlayer ? !phainonUnyieldingConsumed : !opponentPhainonUnyieldingConsumed;
     }
 
     public void consumePhainonUnyielding(boolean forPlayer) {
         if (forPlayer) {
-            phainonUnyieldingAvailable = false;
+            phainonUnyieldingConsumed = true;
         } else {
-            opponentPhainonUnyieldingAvailable = false;
+            opponentPhainonUnyieldingConsumed = true;
         }
     }
 
@@ -932,8 +928,8 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         opponentPendingDefLevelBoost = 0;
         playerOriginalDefLevel = 0;
         opponentOriginalDefLevel = 0;
-        phainonUnyieldingAvailable = true;
-        opponentPhainonUnyieldingAvailable = true;
+        phainonUnyieldingConsumed = false;
+        opponentPhainonUnyieldingConsumed = false;
         aiSelectionVisualizer.reset();
         
         turnState.cleanup();

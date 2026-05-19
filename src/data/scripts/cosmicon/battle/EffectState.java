@@ -39,7 +39,9 @@ public class EffectState {
     }
 
     public void applyEffect(StatusEffectProcessor.StatusEffect effect, int layers, boolean toPlayer) {
-        getEffects(toPlayer).addEffect(effect, "effect_system", layers, DurationType.PERMANENT);
+        DurationType duration = effect == StatusEffectProcessor.StatusEffect.UNYIELDING
+            ? DurationType.TURN_BASED : DurationType.PERMANENT;
+        getEffects(toPlayer).addEffect(effect, "effect_system", layers, duration);
         if (effect == StatusEffectProcessor.StatusEffect.HACK || effect == StatusEffectProcessor.StatusEffect.ARISE) {
             modificationOrder.add(new ModificationRecord(effect, toPlayer, modificationSequenceCounter++));
         }

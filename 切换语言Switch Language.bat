@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 echo ============================================
-echo   Switch Language / ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½
+echo   Switch Language / ÇÐ»»ÓïÑÔ
 echo   Cosmicon Dice
 echo ============================================
 echo/
@@ -71,25 +71,25 @@ if not defined CURRENT (
 
 if "%CURRENT%"=="EN" (
     set "CURRENT_NAME=English"
-    set "TARGET_NAME=Chinese / ï¿½ï¿½ï¿½ï¿½"
+    set "TARGET_NAME=Chinese / ÖÐÎÄ"
 ) else (
-    set "CURRENT_NAME=Chinese / ï¿½ï¿½ï¿½ï¿½"
+    set "CURRENT_NAME=Chinese / ÖÐÎÄ"
     set "TARGET_NAME=English"
 )
 
-echo Current language / ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½: %CURRENT_NAME%
+echo Current language / µ±Ç°ÓïÑÔ: %CURRENT_NAME%
 echo/
-echo Switch to / ï¿½Ð»ï¿½Îª: %TARGET_NAME%?
+echo Switch to / ÇÐ»»Îª: %TARGET_NAME%?
 echo/
 set /p CONFIRM= [Y/N]:
 if /i "!CONFIRM!" neq "Y" (
-    echo Cancelled / ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½
+    echo Cancelled / ÒÑÈ¡Ïû¡£
     pause
     exit /b
 )
 
 echo/
-echo Switching... / ï¿½Ð»ï¿½ï¿½ï¿½...
+echo Switching... / ÇÐ»»ÖÐ...
 echo/
 
 REM --- Three-step atomic swap ---
@@ -124,9 +124,9 @@ echo   [OK]
 
 echo/
 echo ============================================
-echo  Done! / ï¿½ï¿½É£ï¿½
+echo  Done! / Íê³É£¡
 echo  Language switched from %CURRENT_NAME% to %TARGET_NAME%
-echo  ï¿½Ñ´ï¿½ %CURRENT_NAME% ï¿½Ð»ï¿½Îª %TARGET_NAME%
+echo  ÒÑ´Ó %CURRENT_NAME% ÇÐ»»Îª %TARGET_NAME%
 echo ============================================
 echo/
 pause

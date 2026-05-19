@@ -939,8 +939,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
             return;
         }
         
-        state.getPlayerEffects().clearTemporaryEffects();
-        state.getOpponentEffects().clearTemporaryEffects();
+        state.clearTemporaryEffects();
         
         processEndOfTurnPassives(true);
         processEndOfTurnPassives(false);
