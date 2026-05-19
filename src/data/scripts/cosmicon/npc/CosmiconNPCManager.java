@@ -12,6 +12,8 @@ public class CosmiconNPCManager {
 
     static final String PERSISTENT_DATA_KEY = "cosmicon_npc_registry";
     static final String NPC_TAG = "cosmicon_npc";
+    private static final String SPAWN_TIME_KEY = "$cos_npc_spawn_time";
+    private static final String STORED_CHAR_KEY = "$cos_npc_stored_char";
 
     private CosmiconNPCManager() {}
 
@@ -30,6 +32,8 @@ public class CosmiconNPCManager {
             if (market != null) {
                 market.getCommDirectory().removePerson(person);
                 market.removePerson(person);
+                market.getMemory().unset(SPAWN_TIME_KEY);
+                market.getMemory().unset(STORED_CHAR_KEY);
             }
             ip.removePerson(person);
         }

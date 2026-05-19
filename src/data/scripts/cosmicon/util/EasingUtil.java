@@ -20,8 +20,4 @@ public class EasingUtil {
     public static float easeOutCubic(float t) {
         return 1f - (1f - t) * (1f - t) * (1f - t);
     }
-    
-    public static float easeInCubic(float t) {
-        return t * t * t;
-    }
 }

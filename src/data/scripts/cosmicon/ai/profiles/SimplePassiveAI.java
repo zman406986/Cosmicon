@@ -1,7 +1,6 @@
 package data.scripts.cosmicon.ai.profiles;
 
 import data.scripts.cosmicon.ai.AttackRerollAI;
-import data.scripts.cosmicon.ai.CharacterAIProfile.PassiveEvaluation;
 import data.scripts.cosmicon.battle.DiceType;
 import java.util.List;
 

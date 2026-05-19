@@ -89,7 +89,7 @@ public class CosmiconStart implements BaseCommand {
             CosmiconEventState.setOpponentCharacter(opponentId);
 
             if (prismaticDiceId != null) {
-                if (!PrismaticDiceRegistry.has(prismaticDiceId)) {
+                if (PrismaticDiceRegistry.isNotRegistered(prismaticDiceId)) {
                     Console.showMessage("Error: Unknown prismatic dice '" + prismaticDiceId + "'. Valid IDs:");
                     for (String id : PrismaticDiceRegistry.getAll().keySet()) {
                         Console.showMessage("  " + id);

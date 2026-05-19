@@ -1,6 +1,7 @@
 package data.console.commands;
 
 import data.scripts.CosmiconConfig;
+import org.jetbrains.annotations.NotNull;
 import org.lazywizard.console.BaseCommand;
 import org.lazywizard.console.CommonStrings;
 import org.lazywizard.console.Console;
@@ -8,7 +9,7 @@ import org.lazywizard.console.Console;
 public class CosmiconConfigCmd implements BaseCommand {
 
     @Override
-    public CommandResult runCommand(String args, CommandContext context) {
+    public CommandResult runCommand(@NotNull String args, CommandContext context) {
         if (!context.isInCampaign()) {
             Console.showMessage(CommonStrings.ERROR_CAMPAIGN_ONLY);
             return CommandResult.WRONG_CONTEXT;

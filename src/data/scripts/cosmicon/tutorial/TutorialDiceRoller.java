@@ -163,6 +163,9 @@ public class TutorialDiceRoller {
         return fallback;
     }
 
+    // Returning null delegates to aiEngine.planPrismaticUse(). This is correct
+    // because neither tutorial opponent has prismatic dice: Game 1 opponent
+    // (Trashcan) has none, Game 2 opponent (Robin) cannot equip them.
     public Object planOpponentPrismatic() {
         return null;
     }
@@ -175,6 +178,11 @@ public class TutorialDiceRoller {
         return shouldInterceptOpponentReroll();
     }
 
+    // Always intercept: ensures all opponent rerolls use predetermined results.
+    // In practice this is safe because planOpponentReroll() returns an empty list
+    // once predetermined data is exhausted, preventing the reroll from triggering
+    // at all (TurnProcessor skips empty lists). The modulo cycling in
+    // rerollGame1Opponent/rerollGame2Opponent acts as a safety net for edge cases.
     private boolean shouldInterceptOpponentReroll() {
         return true;
     }

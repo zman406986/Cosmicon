@@ -3,8 +3,10 @@ package com.fs.starfarer.api.impl.campaign.rulecmd;
 import java.util.List;
 import java.util.Map;
 
+import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.InteractionDialogAPI;
 import com.fs.starfarer.api.campaign.InteractionDialogPlugin;
+import com.fs.starfarer.api.campaign.econ.MarketAPI;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import com.fs.starfarer.api.combat.EngagementResultAPI;
 import com.fs.starfarer.api.util.Misc;
@@ -29,8 +31,13 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements Intera
         if (dialog == null) return false;
 
         boolean isTutorial = CosmiconStats.isInTutorialMode();
+        String npcMarketId = null;
 
         if (isTutorial) {
+            MemoryAPI personMem = memoryMap.get("person");
+            if (personMem != null && personMem.contains("$cos_npc_char")) {
+                CosmiconEventState.setOriginalNpcCharId(personMem.getString("$cos_npc_char"));
+            }
             int gamesPlayed = CosmiconStats.getGamesPlayed();
             String opponentId = gamesPlayed == 0 ? "trashcan" : "robin";
             CosmiconEventState.setOpponentCharacter(opponentId);
@@ -40,10 +47,14 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements Intera
             if (personMem != null && personMem.contains("$cos_npc_char")) {
                 String characterId = personMem.getString("$cos_npc_char");
                 CosmiconEventState.setOpponentCharacter(characterId);
+                CosmiconEventState.setOriginalNpcCharId(characterId);
 
                 CharacterCard opponentCard = CharacterRegistry.getCharacterById(characterId);
                 if (opponentCard != null) {
                     configureOpponentPrismaticDefaults(opponentCard);
+                }
+                if (personMem.contains("$cos_npc_market_id")) {
+                    npcMarketId = personMem.getString("$cos_npc_market_id");
                 }
             } else {
                 assignRandomOpponent();
@@ -52,8 +63,15 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements Intera
 
         dialog.setPlugin(this);
 
+        final String capturedMarketId = npcMarketId;
         interaction = new CosmiconInteraction();
         interaction.setOnLeaveAction(() -> {
+            if (capturedMarketId != null && CosmiconEventState.isSessionWon()) {
+                MarketAPI mkt = Global.getSector().getEconomy().getMarket(capturedMarketId);
+                if (mkt != null) {
+                    mkt.getMemory().unset("$cos_npc_stored_char");
+                }
+            }
             CosmiconEventState.clearAll();
             CosmiconMusicPlugin.stopMusic();
             dialog.dismiss();

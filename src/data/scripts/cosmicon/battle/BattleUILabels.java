@@ -564,15 +564,16 @@ public class BattleUILabels {
     private String formatInstanceText(StatusEffectProcessor.StatusEffectInstance inst, boolean isPlayer) {
         String effectName = Strings.get("status." + inst.effect().name().toLowerCase());
 
+        boolean hasTurnCounter = inst.durationType() == StatusEffectProcessor.DurationType.TURN_BASED && inst.remainingTurns() > 0;
         if (inst.effect() == StatusEffectProcessor.StatusEffect.SIPHON) {
-            return inst.durationType() == StatusEffectProcessor.DurationType.TURN_BASED && inst.remainingTurns() > 0
+            return hasTurnCounter
                 ? String.format("%s (%d%%, %dt)", effectName, inst.layers(), inst.remainingTurns())
                 : String.format("%s (%d%%)", effectName, inst.layers());
         } else if (inst.effect() == StatusEffectProcessor.StatusEffect.CYRENE_TALLY) {
             int cumulative = battleState.getCumulativeAtkDef(isPlayer);
             return String.format("%s (%d/24)", effectName, cumulative);
         } else {
-            return inst.durationType() == StatusEffectProcessor.DurationType.TURN_BASED && inst.remainingTurns() > 0
+            return hasTurnCounter
                 ? String.format("%s (%d, %dt)", effectName, inst.layers(), inst.remainingTurns())
                 : String.format("%s (%d)", effectName, inst.layers());
         }

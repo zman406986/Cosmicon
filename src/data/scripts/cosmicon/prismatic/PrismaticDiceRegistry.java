@@ -52,8 +52,8 @@ public final class PrismaticDiceRegistry {
         return REGISTRY.get(diceId);
     }
     
-    public static boolean has(String diceId) {
-        return REGISTRY.containsKey(diceId);
+    public static boolean isNotRegistered(String diceId) {
+        return !REGISTRY.containsKey(diceId);
     }
     
     public static Map<String, PrismaticDiceType> getAll() {

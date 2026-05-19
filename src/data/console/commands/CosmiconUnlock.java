@@ -133,7 +133,7 @@ public class CosmiconUnlock implements BaseCommand {
             return;
         }
 
-        if (!PrismaticDiceRegistry.has(id)) {
+        if (PrismaticDiceRegistry.isNotRegistered(id)) {
             Console.showMessage("Error: unknown prismatic dice '" + id + "'. Valid IDs:");
             for (String diceId : PrismaticDiceRegistry.getAll().keySet()) {
                 String name = PrismaticDisplayHelper.getDiceDisplayName(diceId);
@@ -169,7 +169,7 @@ public class CosmiconUnlock implements BaseCommand {
             return;
         }
 
-        if (!PrismaticDiceRegistry.has(id)) {
+        if (PrismaticDiceRegistry.isNotRegistered(id)) {
             Console.showMessage("Error: unknown prismatic dice '" + id + "'.");
             return;
         }

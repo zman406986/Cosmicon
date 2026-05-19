@@ -1189,7 +1189,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
     
     private void notifyRestDiceValueChanges(List<Integer> oldValues, List<Integer> newValues, boolean forPlayer) {
         if (diceRollManager == null || oldValues == null || newValues == null) return;
-        if (!diceRollManager.hasRestAnimators(forPlayer)) {
+        if (diceRollManager.isRestAnimatorsEmpty(forPlayer)) {
             CosmiconLogger.info("[DICE-REST] notifyRestDiceValueChanges SKIPPED: no rest animators forPlayer=%s", forPlayer);
             return;
         }
@@ -1206,7 +1206,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
 
     private void notifyRestDiceTypeChanges(List<DiceType> oldTypes, List<DiceType> newTypes, boolean forPlayer) {
         if (diceRollManager == null || oldTypes == null || newTypes == null) return;
-        if (!diceRollManager.hasRestAnimators(forPlayer)) return;
+        if (diceRollManager.isRestAnimatorsEmpty(forPlayer)) return;
 
         int minSize = Math.min(oldTypes.size(), newTypes.size());
         for (int i = 0; i < minSize; i++) {

@@ -53,6 +53,7 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
         turnProcessor.onDamageImpacted();
     }
 
+    @SuppressWarnings("ConstantConditions")
     private void configureOpponentPrismaticDefaults(CharacterCard opponentCard) {
         Map<String, Integer> oppPrismatic = opponentCard.getPrismaticDiceIds();
         if (!oppPrismatic.isEmpty()) {
@@ -69,6 +70,7 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
         }
     }
 
+    @SuppressWarnings("ConstantConditions")
     public void initBattleWithSelection(boolean playerIsAttacker) {
         CosmiconLogger.info("Initializing battle with player selection");
 
@@ -103,9 +105,16 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
                 }
             }
         } else {
-            opponentCard = CharacterRegistry.getRandomOpponent();
-            CosmiconEventState.setOpponentCharacter(Objects.requireNonNull(opponentCard).getId());
-            configureOpponentPrismaticDefaults(opponentCard);
+            String oppCharId = CosmiconEventState.getOpponentCharacter();
+            if (oppCharId != null) {
+                opponentCard = CharacterRegistry.getCharacterById(oppCharId);
+            } else {
+                opponentCard = CharacterRegistry.getRandomOpponent();
+                if (opponentCard != null) {
+                    CosmiconEventState.setOpponentCharacter(opponentCard.getId());
+                    configureOpponentPrismaticDefaults(opponentCard);
+                }
+            }
         }
 
         if (playerCard == null) {

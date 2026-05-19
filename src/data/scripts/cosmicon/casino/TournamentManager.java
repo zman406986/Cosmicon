@@ -506,6 +506,14 @@ public class TournamentManager {
         return -1;
     }
 
+    public int getCurrentBracket() {
+        return currentBracket;
+    }
+
+    public int getCurrentRound() {
+        return currentRound;
+    }
+
     public boolean isGrandFinal() {
         return currentBracket == BRACKET_GF;
     }

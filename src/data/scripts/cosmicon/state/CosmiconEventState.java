@@ -22,6 +22,7 @@ public class CosmiconEventState {
     private static final String KEY_CASINO_BATTLE_USE_TRUE = "$cos_casino_battle_use_true";
     private static final String KEY_CASINO_BATTLE_RESULT_DAMAGE = "$cos_casino_battle_result_damage";
     private static final String KEY_TRASHCAN_HUNTER_LEVEL = "$cos_trashcan_hunter_level";
+    private static final String KEY_ORIGINAL_NPC_CHAR = "$cos_original_npc_char";
 
     private static final String KEY_TOURNAMENT_WINS = "$cos_tournament_wins";
     private static final String KEY_TOURNAMENT_LOSSES = "$cos_tournament_losses";
@@ -41,7 +42,8 @@ public class CosmiconEventState {
         KEY_TOURNAMENT_WINS, KEY_TOURNAMENT_LOSSES,
         KEY_TOURNAMENT_IN_LOSER_BRACKET, KEY_TOURNAMENT_GRAND_FINAL,
         KEY_TOURNAMENT_SERIES_SCORE, KEY_TOURNAMENT_BRACKET_DATA,
-        KEY_TOURNAMENT_PENDING_REWARDS
+        KEY_TOURNAMENT_PENDING_REWARDS,
+        KEY_ORIGINAL_NPC_CHAR
     );
 
     private static final List<String> TOURNAMENT_KEYS = List.of(
@@ -222,6 +224,20 @@ public class CosmiconEventState {
         MemoryAPI mem = getMemory();
         if (!mem.contains(KEY_TRASHCAN_HUNTER_LEVEL)) return 0;
         return (int) mem.getFloat(KEY_TRASHCAN_HUNTER_LEVEL);
+    }
+
+    public static void setOriginalNpcCharId(String charId) {
+        if (charId != null) {
+            getMemory().set(KEY_ORIGINAL_NPC_CHAR, charId);
+        } else {
+            getMemory().unset(KEY_ORIGINAL_NPC_CHAR);
+        }
+    }
+
+    public static String getOriginalNpcCharId() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_ORIGINAL_NPC_CHAR)) return null;
+        return mem.getString(KEY_ORIGINAL_NPC_CHAR);
     }
 
     public static void setTournamentWins(int wins) {

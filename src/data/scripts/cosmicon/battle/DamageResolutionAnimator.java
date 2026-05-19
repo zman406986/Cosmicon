@@ -341,8 +341,8 @@ public class DamageResolutionAnimator {
     }
 
     private void advanceIconRotation() {
-        boolean atkDone = atkFlyingIcon == null || !atkFlyingIcon.isRotating();
-        boolean defDone = defFlyingIcon == null || !defFlyingIcon.isRotating();
+        boolean atkDone = atkFlyingIcon == null || atkFlyingIcon.isRotationDone();
+        boolean defDone = defFlyingIcon == null || defFlyingIcon.isRotationDone();
 
         if (phaseElapsed >= ICON_ROTATION_DURATION || (atkDone && defDone)) {
             if (atkFlyingIcon != null) {

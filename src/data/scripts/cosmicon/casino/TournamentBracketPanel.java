@@ -123,7 +123,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
 
     private void createTitleLabel() {
         titleLabel = Global.getSettings().createLabel(
-            "Tournament Bracket - 8 Players", Fonts.INSIGNIA_LARGE);
+            Strings.format("casino.tournament_bracket_title", 8), Fonts.INSIGNIA_LARGE);
         titleLabel.setColor(Color.YELLOW);
         titleLabel.setAlignment(Alignment.MID);
         panel.addComponent((UIComponentAPI) titleLabel)
@@ -132,16 +132,16 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
     }
 
     private void createColumnHeaders() {
-        wbHeaderR1 = createHeaderLabel("WB R1", baseX, 38f);
-        wbHeaderR2 = createHeaderLabel("WB R2", baseX + colSpacing, 38f);
-        wbHeaderFinal = createHeaderLabel("WB Final", baseX + 2f * colSpacing, 38f);
-        gfHeader = createHeaderLabel("Grand Final", baseX + 3f * colSpacing, 38f);
+        wbHeaderR1 = createHeaderLabel(Strings.get("casino.tournament_header_wb_r1"), baseX, 38f);
+        wbHeaderR2 = createHeaderLabel(Strings.get("casino.tournament_header_wb_r2"), baseX + colSpacing, 38f);
+        wbHeaderFinal = createHeaderLabel(Strings.get("casino.tournament_header_wb_final"), baseX + 2f * colSpacing, 38f);
+        gfHeader = createHeaderLabel(Strings.get("casino.tournament_header_grand_final"), baseX + 3f * colSpacing, 38f);
 
         float lbHeaderY = getLbBaseY() - 18f;
-        lbHeaderR1 = createHeaderLabel("LB R1", baseX, lbHeaderY);
-        lbHeaderR2 = createHeaderLabel("LB R2", baseX + colSpacing, lbHeaderY);
-        lbHeaderR3 = createHeaderLabel("LB R3", baseX + 2f * colSpacing, lbHeaderY);
-        lbHeaderFinal = createHeaderLabel("LB Final", baseX + 3f * colSpacing, lbHeaderY);
+        lbHeaderR1 = createHeaderLabel(Strings.get("casino.tournament_header_lb_r1"), baseX, lbHeaderY);
+        lbHeaderR2 = createHeaderLabel(Strings.get("casino.tournament_header_lb_r2"), baseX + colSpacing, lbHeaderY);
+        lbHeaderR3 = createHeaderLabel(Strings.get("casino.tournament_header_lb_r3"), baseX + 2f * colSpacing, lbHeaderY);
+        lbHeaderFinal = createHeaderLabel(Strings.get("casino.tournament_header_lb_final"), baseX + 3f * colSpacing, lbHeaderY);
     }
 
     private LabelAPI createHeaderLabel(String text, float x, float y) {
@@ -221,8 +221,8 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
 
     private void updateAllLabels() {
         if (data == null) {
-            titleLabel.setText("Tournament Bracket - No Data");
-            statusLabel.setText("No tournament data available");
+            titleLabel.setText(Strings.get("casino.tournament_no_data_title"));
+            statusLabel.setText(Strings.get("casino.tournament_no_data_desc"));
             return;
         }
 
@@ -284,7 +284,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
                     ? getDisplayName(lbFinalWinner)
                     : getDisplayName(wbFinalWinner);
                 String score = data.gfPlayerWins + " : " + data.gfOpponentWins;
-                lbl.setText(truncate(playerName) + " vs " + truncate(opponentName) + "\n" + score);
+                lbl.setText(truncate(playerName) + Strings.get("casino.tournament_vs_separator") + truncate(opponentName) + "\n" + score);
 
                 if (data.playerChampion) {
                     lbl.setColor(COLOR_WINNER_TEXT);
@@ -298,7 +298,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
             } else {
                 String n0 = getDisplayName(wbFinalWinner);
                 String n1 = getDisplayName(lbFinalWinner);
-                lbl.setText(truncate(n0) + " vs " + truncate(n1));
+                lbl.setText(truncate(n0) + Strings.get("casino.tournament_vs_separator") + truncate(n1));
                 if (isCurrent) {
                     lbl.setColor(Color.YELLOW);
                 } else if (involvesPlayer) {
@@ -327,7 +327,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
         if (completed) {
             String winnerName = getDisplayName(winner);
             String loserName = getDisplayName(winner == slot0 ? slot1 : slot0);
-            lbl.setText(truncate(winnerName) + " vs " + truncate(loserName));
+                lbl.setText(truncate(winnerName) + Strings.get("casino.tournament_vs_separator") + truncate(loserName));
             if (involvesPlayer) {
                 lbl.setColor(winner == 0 ? COLOR_WINNER_TEXT : new Color(255, 100, 100));
             } else {
@@ -336,7 +336,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
         } else if (slot0 >= 0 && slot1 >= 0) {
             String name0 = getDisplayName(slot0);
             String name1 = getDisplayName(slot1);
-            lbl.setText(truncate(name0) + " vs " + truncate(name1));
+            lbl.setText(truncate(name0) + Strings.get("casino.tournament_vs_separator") + truncate(name1));
             if (isCurrent) {
                 lbl.setColor(Color.YELLOW);
             } else if (involvesPlayer) {
@@ -345,7 +345,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
                 lbl.setColor(COLOR_PENDING);
             }
         } else {
-            lbl.setText("TBD");
+            lbl.setText(Strings.get("casino.tournament_tbd"));
             lbl.setColor(COLOR_SIMULATED);
         }
     }
@@ -355,10 +355,8 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
 
         String playerName = getDisplayName(0);
         String position = getPlayerBracketPosition();
-        statusLabel.setText("Player: " + playerName
-            + "  |  Wins: " + data.playerWins
-            + "  |  Losses: " + data.playerLosses
-            + "  |  Status: " + position);
+        statusLabel.setText(Strings.format("casino.tournament_status",
+            playerName, data.playerWins, data.playerLosses, position));
 
         if (data.playerChampion) {
             statusLabel.setColor(COLOR_WINNER_TEXT);
@@ -370,19 +368,19 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
     }
 
     private String getPlayerBracketPosition() {
-        if (data.playerChampion) return "Champion";
-        if (data.playerEliminated) return "Eliminated";
+        if (data.playerChampion) return Strings.get("casino.tournament_position_champion");
+        if (data.playerEliminated) return Strings.get("casino.tournament_position_eliminated");
         return switch (data.currentBracket) {
             case TournamentManager.BRACKET_WB -> {
-                if (data.currentRound == 2) yield "WB Final";
-                yield "WB Round " + (data.currentRound + 1);
+                if (data.currentRound == 2) yield Strings.get("casino.tournament_position_wb_final");
+                yield Strings.format("casino.tournament_position_wb_round", data.currentRound + 1);
             }
             case TournamentManager.BRACKET_LB -> {
-                if (data.currentRound == 3) yield "LB Final";
-                yield "LB Round " + (data.currentRound + 1);
+                if (data.currentRound == 3) yield Strings.get("casino.tournament_position_lb_final");
+                yield Strings.format("casino.tournament_position_lb_round", data.currentRound + 1);
             }
-            case TournamentManager.BRACKET_GF -> "Grand Final";
-            default -> "Unknown";
+            case TournamentManager.BRACKET_GF -> Strings.get("casino.tournament_position_grand_final");
+            default -> Strings.get("casino.tournament_position_unknown");
         };
     }
 
@@ -408,14 +406,14 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
     }
 
     private String getDisplayName(int slot) {
-        if (slot < 0 || slot >= 8) return "???";
+        if (slot < 0 || slot >= 8) return Strings.get("casino.tournament_placeholder_name");
         if (displayNames != null && slot < displayNames.length && displayNames[slot] != null) {
             return displayNames[slot];
         }
         if (data.playerNames != null && slot < data.playerNames.length && data.playerNames[slot] != null) {
             return data.playerNames[slot];
         }
-        return "P" + (slot + 1);
+        return Strings.format("casino.tournament_slot_name", slot + 1);
     }
 
     private String truncate(String text) {

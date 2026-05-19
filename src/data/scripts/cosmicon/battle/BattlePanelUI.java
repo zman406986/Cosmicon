@@ -1119,7 +1119,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void startRollFromRestForSide(boolean isPlayer) {
-        if (!diceRollManager.hasRestAnimators(isPlayer)) {
+        if (diceRollManager.isRestAnimatorsEmpty(isPlayer)) {
             CosmiconLogger.info("[DICE-REST] startRollFromRestForSide SKIPPED: no rest for isPlayer=%s", isPlayer);
             return;
         }

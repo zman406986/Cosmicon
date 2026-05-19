@@ -13,8 +13,8 @@ import java.util.stream.Collectors;
 
 public abstract class AttackRerollAI implements CharacterAIProfile {
 
-    protected int rolloutsPerEvaluation = 200;
-    protected int maxExactOutcomeEnumeration = 256;
+    protected final int rolloutsPerEvaluation = 200;
+    protected final int maxExactOutcomeEnumeration = 256;
     private static final Map<DiceType, DieStoppingPolicy> policyCache = new EnumMap<>(DiceType.class);
     private static final Random SIM_RAND = new Random(42);
     private static final int MAX_REROLLS = 7;
@@ -45,6 +45,10 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
     @Override
     public boolean prefersHighValues(boolean isAttacking) {
+        // Always return true because both attacking and defending benefit from higher dice values
+        // (higher attack sum = more damage, higher defense sum = better block).
+        // The isAttacking parameter is reserved for future profiles where a passive might
+        // incentivize selecting low values (e.g. "if sum <= 5, gain bonus").
         return true;
     }
 
@@ -258,9 +262,8 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         List<Set<Integer>> choices = enumerateLegalSubsets(pool, requiredCount);
 
         if (choices.isEmpty()) {
-            double result = frozenSum;
-            evalCache.put(cacheKey, result);
-            return result;
+            evalCache.put(cacheKey, (double) frozenSum);
+            return frozenSum;
         }
 
         double bestUtil = Double.NEGATIVE_INFINITY;
@@ -502,7 +505,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         if (product <= maxExactOutcomeEnumeration) {
             return enumerateOutcomes(diceFaces);
         } else {
-            return sampleOutcomes(diceFaces, maxExactOutcomeEnumeration);
+            return sampleOutcomes(diceFaces);
         }
     }
 
@@ -528,15 +531,15 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         }
     }
 
-    private List<Outcome> sampleOutcomes(List<int[]> diceFaces, int sampleCount) {
+    private List<Outcome> sampleOutcomes(List<int[]> diceFaces) {
         List<Outcome> result = new ArrayList<>();
-        for (int s = 0; s < sampleCount; s++) {
+        for (int s = 0; s < maxExactOutcomeEnumeration; s++) {
             int[] faces = new int[diceFaces.size()];
             for (int i = 0; i < diceFaces.size(); i++) {
                 int[] possible = diceFaces.get(i);
                 faces[i] = possible[SIM_RAND.nextInt(possible.length)];
             }
-            result.add(new Outcome(faces, 1.0 / sampleCount));
+            result.add(new Outcome(faces, 1.0 / maxExactOutcomeEnumeration));
         }
         return result;
     }

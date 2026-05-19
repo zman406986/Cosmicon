@@ -107,8 +107,8 @@ public class FlyingIcon {
         }
     }
     
-    public boolean isRotating() {
-        return flyPhase == FlyPhase.ROTATING;
+    public boolean isRotationDone() {
+        return flyPhase != FlyPhase.ROTATING;
     }
     
     public void flyTo(float x, float y, float duration, boolean useLinear, boolean skipPullback) {

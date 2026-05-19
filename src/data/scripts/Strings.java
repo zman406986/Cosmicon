@@ -29,6 +29,7 @@ public class Strings {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private static void flattenJson(String prefix, JSONObject node, Map<String, String> target) {
         for (java.util.Iterator<String> it = node.keys(); it.hasNext(); ) {
             String key = it.next();

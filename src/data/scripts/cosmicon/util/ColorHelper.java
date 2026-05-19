@@ -17,8 +17,6 @@ public final class ColorHelper {
 
     public static final Color PLAYER_NAME = new Color(100, 150, 255);
     public static final Color OPPONENT_NAME = new Color(255, 100, 100);
-    public static final Color PLAYER_CARD_PLACEHOLDER = new Color(100, 120, 180);
-    public static final Color OPPONENT_CARD_PLACEHOLDER = new Color(180, 100, 120);
 
     public static final Color ATTACK_VALUE = new Color(255, 100, 80);
     public static final Color DEFENSE_VALUE = new Color(80, 150, 255);

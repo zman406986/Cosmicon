@@ -369,9 +369,9 @@ public class DiceRollManager {
         clearRestAnimators(false);
     }
 
-    public boolean hasRestAnimators(boolean forPlayer) {
+    public boolean isRestAnimatorsEmpty(boolean forPlayer) {
         DiceSide side = forPlayer ? playerSide : opponentSide;
-        return !side.restAnimators.isEmpty();
+        return side.restAnimators.isEmpty();
     }
 
     public void startRollFromRest(boolean forPlayer, List<DiceType> allTypes, List<Integer> allValues,
