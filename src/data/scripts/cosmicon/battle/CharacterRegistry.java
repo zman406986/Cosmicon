@@ -175,12 +175,16 @@ public class CharacterRegistry {
     }
 
     public static CharacterCard getRandomCharacter() {
-        if (threeStarCards.isEmpty()) return null;
+        if (threeStarCards.isEmpty()) {
+            throw new IllegalStateException("CharacterRegistry is empty — cards failed to load");
+        }
         return threeStarCards.get(ThreadLocalRandom.current().nextInt(threeStarCards.size())).copy();
     }
 
     public static CharacterCard getRandomOpponent() {
-        if (eligibleOpponents.isEmpty()) return null;
+        if (eligibleOpponents.isEmpty()) {
+            throw new IllegalStateException("No eligible opponents in CharacterRegistry — cards failed to load");
+        }
         return eligibleOpponents.get(ThreadLocalRandom.current().nextInt(eligibleOpponents.size())).copy();
     }
 

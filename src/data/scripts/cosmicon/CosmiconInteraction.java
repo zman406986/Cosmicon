@@ -140,16 +140,16 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         options.addOption(Strings.get("menu.character_setup"), "character_setup");
         if (CosmiconStats.getGamesPlayed() >= 1 && !CosmiconStats.isInTutorialMode()) {
-            options.addOption("Replay Tutorial Game 1", "replay_tutorial_1");
+            options.addOption(Strings.get("menu.replay_tutorial_1"), "replay_tutorial_1");
         }
         if (CosmiconStats.getGamesPlayed() >= 2 && !CosmiconStats.isInTutorialMode()) {
-            options.addOption("Replay Tutorial Game 2", "replay_tutorial_2");
+            options.addOption(Strings.get("menu.replay_tutorial_2"), "replay_tutorial_2");
         }
         if (CosmiconEventState.isTournamentActive()) {
             options.addOption(Strings.get("menu.view_tournament_standings"), "view_tournament_standings");
             
             if (tournamentManager != null && !tournamentManager.isPlayerChampion() && !tournamentManager.isPlayerEliminated()) {
-                String position = tournamentManager.getPlayerBracketPosition();
+                String position = getLocalizedBracketPosition(tournamentManager);
                 String opponentId = tournamentManager.getNextOpponentId();
                 String opponentName = opponentId != null
                     ? data.scripts.cosmicon.battle.CharacterRegistry.getCharacterById(opponentId).getName()
@@ -375,7 +375,8 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         } else if (tutorialGame2) {
             CosmiconStats.completeTutorialGame2();
             CosmiconEventState.setIsTutorialMode(false);
-            CosmiconEventState.setOpponentCharacter(null);
+            String npcChar = CosmiconEventState.getOriginalNpcCharId();
+            CosmiconEventState.setOpponentCharacter(npcChar);
             showTutorialReward();
             return;
         }
@@ -484,7 +485,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         CosmiconEventState.setReplayTutorialGame(-1);
         options.clearOptions();
         textPanel.addPara(Strings.get("battle.you_won"));
-        textPanel.addPara("(Replay tutorial - stats not recorded)");
+        textPanel.addPara(Strings.get("menu.replay_unrecorded"));
         options.addOption(Strings.get("menu.back"), "back");
         setState(State.REWARD_SELECTION);
     }
@@ -493,7 +494,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         CosmiconEventState.setReplayTutorialGame(-1);
         options.clearOptions();
         textPanel.addPara(Strings.get("battle.you_lost"));
-        textPanel.addPara("(Replay tutorial - stats not recorded)");
+        textPanel.addPara(Strings.get("menu.replay_unrecorded"));
         options.addOption(Strings.get("menu.back"), "back");
         setState(State.REWARD_SELECTION);
     }
@@ -851,7 +852,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
     private void handleTournamentBracketSelection(String data) {
         switch (data) {
-            case "tournament_next_fight" -> showMenu();
+            case "tournament_next_fight", "forfeit_tournament_cancel" -> showMenu();
             case "tournament_back_lounge" -> {
                 if (onLeaveAction != null) {
                     onLeaveAction.run();
@@ -878,7 +879,6 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 CosmiconEventState.setTournamentPendingRewards(tournamentPendingRewards);
                 showTournamentRewardOptions();
             }
-            case "forfeit_tournament_cancel" -> showMenu();
         }
     }
 
@@ -897,7 +897,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             textPanel.addPara(Strings.get("casino.tournament_runner_up"), Color.CYAN);
             tournamentPendingRewards = 2;
         } else {
-            String position = tournamentManager != null ? tournamentManager.getPlayerBracketPosition() : "Unknown";
+            String position = tournamentManager != null ? tournamentManager.getPlayerBracketPosition() : Strings.get("casino.tournament_position_unknown");
             textPanel.addPara(Strings.format("casino.tournament_eliminated", position), Color.RED);
             tournamentPendingRewards = 1;
         }
@@ -1051,9 +1051,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         }
         CosmiconEventState.setCasinoBattleBonusHp(0);
 
-        Boolean forcedPlayerIsAttacker = null;
-
-        CoinFlipPanelUI coinFlipUI = new CoinFlipPanelUI(forcedPlayerIsAttacker);
+        CoinFlipPanelUI coinFlipUI = new CoinFlipPanelUI(null);
 
         com.fs.starfarer.api.campaign.CustomVisualDialogDelegate coinDelegate =
             new com.fs.starfarer.api.campaign.CustomVisualDialogDelegate() {
@@ -1124,6 +1122,23 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     @Override
     public Map<String, MemoryAPI> getMemoryMap() {
         return memoryMap;
+    }
+
+    private static String getLocalizedBracketPosition(TournamentManager tm) {
+        if (tm.isPlayerChampion()) return Strings.get("casino.tournament_position_champion");
+        if (tm.isPlayerEliminated()) return Strings.get("casino.tournament_position_eliminated");
+        return switch (tm.getCurrentBracket()) {
+            case TournamentManager.BRACKET_WB -> {
+                if (tm.getCurrentRound() == 2) yield Strings.get("casino.tournament_position_wb_final");
+                yield Strings.format("casino.tournament_position_wb_round", tm.getCurrentRound() + 1);
+            }
+            case TournamentManager.BRACKET_LB -> {
+                if (tm.getCurrentRound() == 3) yield Strings.get("casino.tournament_position_lb_final");
+                yield Strings.format("casino.tournament_position_lb_round", tm.getCurrentRound() + 1);
+            }
+            case TournamentManager.BRACKET_GF -> Strings.get("casino.tournament_position_grand_final");
+            default -> Strings.get("casino.tournament_position_unknown");
+        };
     }
 
     public State getState() {

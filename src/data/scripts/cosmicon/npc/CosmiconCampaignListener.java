@@ -18,11 +18,7 @@ public class CosmiconCampaignListener extends BaseCampaignEventListener {
 
     private static final String NPC_TAG = "cosmicon_npc";
     private static final String SPAWN_TIME_KEY = "$cos_npc_spawn_time";
-
-    private static final String[] FIRST_NAMES = {
-        "Dice", "Roller", "Gambler", "Shaper", "Strategist",
-        "Fortune", "Chance", "Wager", "Maverick", "Blaze"
-    };
+    private static final String STORED_CHAR_KEY = "$cos_npc_stored_char";
 
     private static final LinkedHashMap<String, String> CHARACTER_PORTRAITS = new LinkedHashMap<>();
     static {
@@ -61,6 +57,13 @@ public class CosmiconCampaignListener extends BaseCampaignEventListener {
         if (marketMem.contains(SPAWN_TIME_KEY)) {
             long lastTimestamp = marketMem.getLong(SPAWN_TIME_KEY);
             if (Global.getSector().getClock().getElapsedDaysSince(lastTimestamp) < CosmiconConfig.NPC_SPAWN_INTERVAL_DAYS) {
+                if (marketMem.contains(STORED_CHAR_KEY)) {
+                    String charId = marketMem.getString(STORED_CHAR_KEY);
+                    CharacterCard card = CharacterRegistry.getCharacterById(charId);
+                    if (card != null) {
+                        spawnTempNPC(market, card);
+                    }
+                }
                 return;
             }
         }
@@ -70,30 +73,20 @@ public class CosmiconCampaignListener extends BaseCampaignEventListener {
             return;
         }
 
-        spawnTempNPC(market);
+        CharacterCard opponentCard = CharacterRegistry.getRandomOpponent();
+        if (opponentCard == null) return;
+        spawnTempNPC(market, opponentCard);
         marketMem.set(SPAWN_TIME_KEY, Global.getSector().getClock().getTimestamp());
+        marketMem.set(STORED_CHAR_KEY, opponentCard.getId());
     }
 
     @Override
     public void reportPlayerClosedMarket(MarketAPI market) {
         if (market == null) return;
-        boolean hadNpc = false;
-        for (PersonAPI person : market.getPeopleCopy()) {
-            if (person.hasTag(NPC_TAG)) {
-                hadNpc = true;
-                break;
-            }
-        }
         removeTempNPCs(market);
-        if (hadNpc) {
-            market.getMemory().set(SPAWN_TIME_KEY, Global.getSector().getClock().getTimestamp());
-        }
     }
 
-    private void spawnTempNPC(MarketAPI market) {
-        CharacterCard opponentCard = CharacterRegistry.getRandomOpponent();
-        if (opponentCard == null) return;
-
+    private void spawnTempNPC(MarketAPI market, CharacterCard opponentCard) {
         String characterId = opponentCard.getId();
         String portraitSprite = CHARACTER_PORTRAITS.get(characterId);
         if (portraitSprite == null) {
@@ -105,13 +98,20 @@ public class CosmiconCampaignListener extends BaseCampaignEventListener {
         person.setId(personId);
         person.setFaction(Factions.INDEPENDENT);
 
-        String prefix = FIRST_NAMES[CosmiconRandom.nextInt(FIRST_NAMES.length)];
-        person.getName().setFirst(prefix);
-        person.getName().setLast(opponentCard.getName());
+        String charName = opponentCard.getName();
+        int spaceIdx = charName.indexOf(' ');
+        if (spaceIdx > 0) {
+            person.getName().setFirst(charName.substring(0, spaceIdx));
+            person.getName().setLast(charName.substring(spaceIdx + 1));
+        } else {
+            person.getName().setFirst(charName);
+            person.getName().setLast("");
+        }
 
         person.setPortraitSprite(portraitSprite);
         person.addTag(NPC_TAG);
         person.getMemory().set("$cos_npc_char", characterId);
+        person.getMemory().set("$cos_npc_market_id", market.getId());
 
         market.getCommDirectory().addPerson(person, 0);
         market.addPerson(person);

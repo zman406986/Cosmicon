@@ -12,7 +12,10 @@
         "back": "返回",
         "play": "对战",
         "trashcan_hunter_welcome": "战力党玩家们警惕地看着你。你赌神的名声已经传开了。'是赌神等级{0}，'有人低语道。",
-        "session_won": "你赢了这一轮！去其他酒吧寻找新的对手吧。"
+        "session_won": "你赢了这一轮！去其他酒吧寻找新的对手吧。",
+        "replay_tutorial_1": "重玩教程 第1关",
+        "replay_tutorial_2": "重玩教程 第2关",
+        "replay_unrecorded": "（重玩教程——不记录战绩）"
     },
     "bar_event": {
         "tutorial_prompt": "一个桌游玩家摆弄着手里的骰子，对上了你的目光。[新手吗？要不要来一局战力党？]",
@@ -468,7 +471,8 @@
         "popup_robin_blocked": "知更鸟无法装备曜彩骰",
         "no_selection": "未选择角色",
         "prismatic_na": "曜彩骰：不可用",
-        "passive_none": "被动：无"
+        "passive_none": "被动：无",
+        "prismatic_true_prefix": "真·"
     },
     "ai": {
         "decision_selected": "已选: {0}",
@@ -568,7 +572,6 @@
         "tournament_cost": "15,000星石",
         "tournament_locked": "击败老赌神以解锁挑战赛。",
         "tournament_start": "8人淘汰赛开始！你是第{0}号选手。",
-        "tournament_bracket_title": "赛程表",
         "tournament_round_wb": "胜者组 第{0}轮",
         "tournament_round_lb": "败者组 第{0}轮",
         "tournament_round_lb_final": "败者组决赛",
@@ -605,7 +608,36 @@
         "forfeit_tournament_confirm": "确定要放弃挑战赛吗？你将失去所有进度并结算胜场奖励。",
         "forfeit_tournament_yes": "是的，放弃挑战赛",
         "forfeit_tournament_no": "不，继续战斗",
-        "tournament_forfeited": "你已放弃挑战赛。下次好运！"
+        "tournament_forfeited": "你已放弃挑战赛。下次好运！",
+
+        "boss_victory": "老赌神缓缓点头。「你证明了自己。」",
+        "boss_defeat": "老赌神目送你离去。「准备好再来。」",
+        "boss_all_unlocked": "所有奖励已领完，拿上额外星币走吧。",
+
+        "tournament_bracket_title": "赛程表 - {0}人",
+        "tournament_no_data_title": "赛程表 - 暂无数据",
+        "tournament_no_data_desc": "暂无挑战赛数据",
+        "tournament_header_wb_r1": "胜者组 第1轮",
+        "tournament_header_wb_r2": "胜者组 第2轮",
+        "tournament_header_wb_final": "胜者组决赛",
+        "tournament_header_lb_r1": "败者组 第1轮",
+        "tournament_header_lb_r2": "败者组 第2轮",
+        "tournament_header_lb_r3": "败者组 第3轮",
+        "tournament_header_lb_final": "败者组决赛",
+        "tournament_header_grand_final": "总决赛",
+        "tournament_vs_separator": " 对 ",
+        "tournament_status": "玩家：{0}  |  胜：{1}  |  负：{2}  |  状态：{3}",
+        "tournament_placeholder_name": "???",
+        "tournament_slot_name": "选手{0}",
+
+        "tournament_position_champion": "冠军",
+        "tournament_position_eliminated": "已淘汰",
+        "tournament_position_wb_final": "胜者组决赛",
+        "tournament_position_wb_round": "胜者组 第{0}轮",
+        "tournament_position_lb_final": "败者组决赛",
+        "tournament_position_lb_round": "败者组 第{0}轮",
+        "tournament_position_grand_final": "总决赛",
+        "tournament_position_unknown": "未知"
     },
     "lounge": {
         "btn_enter": "去酒馆上骰",

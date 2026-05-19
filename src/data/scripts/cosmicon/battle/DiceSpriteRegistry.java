@@ -12,14 +12,8 @@ public class DiceSpriteRegistry {
     private static final Map<String, SpriteAPI[]> cache = new HashMap<>();
     private static boolean loaded = false;
 
-    private static class CycleMapping {
-        final String cycleKey;
-        final int startFrame;
-
-        CycleMapping(String cycleKey, int startFrame) {
-            this.cycleKey = cycleKey;
-            this.startFrame = startFrame;
-        }
+    private record CycleMapping(String cycleKey, int startFrame)
+    {
     }
 
     private static final Map<String, CycleMapping> resultToCycle = new HashMap<>();
@@ -55,7 +49,7 @@ public class DiceSpriteRegistry {
                 frames[frame] = Global.getSettings().getSprite("cosmicon_dice_frames", spriteKey);
             }
             cache.put(cycleKey, frames);
-            resultToCycle.put("d4_" + result, new CycleMapping(cycleKey, FRAME_COUNT - 1));
+            resultToCycle.put("d4_" + result, new CycleMapping(cycleKey, 0));
         }
     }
 

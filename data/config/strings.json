@@ -12,7 +12,10 @@
         "back": "Back",
         "play": "Play",
         "trashcan_hunter_welcome": "The Cosmicon players eye you warily. Word of your mastery has spread. 'Master Dicer Level {0},' someone whispers.",
-        "session_won": "You've won this round! Find another bar encounter to play again."
+        "session_won": "You've won this round! Find another bar encounter to play again.",
+        "replay_tutorial_1": "Replay Tutorial Game 1",
+        "replay_tutorial_2": "Replay Tutorial Game 2",
+        "replay_unrecorded": "(Replay tutorial - stats not recorded)"
     },
     "bar_event": {
         "tutorial_prompt": "A cloaked figure approaches you in the bar, dice clicking in their palms. 'Care for a game, rookie? I'll go easy on you.'",
@@ -468,7 +471,8 @@
         "popup_robin_blocked": "Robin cannot equip prismatic dice",
         "no_selection": "No character selected",
         "prismatic_na": "Prismatic Dice: N/A",
-        "passive_none": "Passive: None"
+        "passive_none": "Passive: None",
+        "prismatic_true_prefix": "True "
     },
     "ai": {
         "decision_selected": "Selected: {0}",
@@ -568,7 +572,6 @@
         "tournament_cost": "15,000 Stargems",
         "tournament_locked": "Defeat the Gatekeeper to unlock the tournament.",
         "tournament_start": "The 8-player elimination tournament begins! You are contestant #{0}.",
-        "tournament_bracket_title": "Tournament Bracket",
         "tournament_round_wb": "Winner's Bracket - Round {0}",
         "tournament_round_lb": "Loser's Bracket - Round {0}",
         "tournament_round_lb_final": "Loser's Bracket Final",
@@ -605,7 +608,36 @@
         "forfeit_tournament_confirm": "Are you sure you want to forfeit the tournament? You will lose all progress and receive rewards for current number of wins.",
         "forfeit_tournament_yes": "Yes, forfeit the tournament",
         "forfeit_tournament_no": "No, continue fighting",
-        "tournament_forfeited": "You have forfeited the tournament. Better luck next time!"
+        "tournament_forfeited": "You have forfeited the tournament. Better luck next time!",
+
+        "boss_victory": "The Gatekeeper nods slowly. 'You've earned your shot at the big stage.'",
+        "boss_defeat": "The Gatekeeper watches you leave. 'Come back when you're ready.'",
+        "boss_all_unlocked": "All rewards have been claimed! Take your bonus credits.",
+
+        "tournament_bracket_title": "Tournament Bracket - {0} Players",
+        "tournament_no_data_title": "Tournament Bracket - No Data",
+        "tournament_no_data_desc": "No tournament data available",
+        "tournament_header_wb_r1": "WB R1",
+        "tournament_header_wb_r2": "WB R2",
+        "tournament_header_wb_final": "WB Final",
+        "tournament_header_lb_r1": "LB R1",
+        "tournament_header_lb_r2": "LB R2",
+        "tournament_header_lb_r3": "LB R3",
+        "tournament_header_lb_final": "LB Final",
+        "tournament_header_grand_final": "Grand Final",
+        "tournament_vs_separator": " vs ",
+        "tournament_status": "Player: {0}  |  Wins: {1}  |  Losses: {2}  |  Status: {3}",
+        "tournament_placeholder_name": "???",
+        "tournament_slot_name": "P{0}",
+
+        "tournament_position_champion": "Champion",
+        "tournament_position_eliminated": "Eliminated",
+        "tournament_position_wb_final": "WB Final",
+        "tournament_position_wb_round": "WB Round {0}",
+        "tournament_position_lb_final": "LB Final",
+        "tournament_position_lb_round": "LB Round {0}",
+        "tournament_position_grand_final": "Grand Final",
+        "tournament_position_unknown": "Unknown"
     },
     "lounge": {
         "btn_enter": "Cosmicon Dice Lounge",

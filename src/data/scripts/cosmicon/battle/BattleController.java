@@ -103,9 +103,16 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
                 }
             }
         } else {
-            opponentCard = CharacterRegistry.getRandomOpponent();
-            CosmiconEventState.setOpponentCharacter(Objects.requireNonNull(opponentCard).getId());
-            configureOpponentPrismaticDefaults(opponentCard);
+            String oppCharId = CosmiconEventState.getOpponentCharacter();
+            if (oppCharId != null) {
+                opponentCard = CharacterRegistry.getCharacterById(oppCharId);
+            } else {
+                opponentCard = CharacterRegistry.getRandomOpponent();
+                if (opponentCard != null) {
+                    CosmiconEventState.setOpponentCharacter(opponentCard.getId());
+                    configureOpponentPrismaticDefaults(opponentCard);
+                }
+            }
         }
 
         if (playerCard == null) {

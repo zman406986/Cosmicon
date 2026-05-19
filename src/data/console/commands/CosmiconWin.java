@@ -2,13 +2,14 @@ package data.console.commands;
 
 import data.scripts.cosmicon.battle.BattleController;
 import data.scripts.cosmicon.battle.TurnState;
+import org.jetbrains.annotations.NotNull;
 import org.lazywizard.console.BaseCommand;
 import org.lazywizard.console.Console;
 
 public class CosmiconWin implements BaseCommand {
 
     @Override
-    public CommandResult runCommand(String args, CommandContext context) {
+    public CommandResult runCommand(@NotNull String args, CommandContext context) {
         BattleController controller = BattleController.getCurrentInstance();
         if (controller == null) {
             Console.showMessage("No active Cosmicon battle.");

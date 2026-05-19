@@ -309,7 +309,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
             String displayName = PrismaticDisplayHelper.getDiceDisplayName(labels.diceId());
             if (useTrue && labels.hasBothVersions()) {
-                displayName = "True " + displayName;
+                displayName = Strings.get("setup.prismatic_true_prefix") + displayName;
             }
             labels.nameLabel().setText(displayName);
             labels.facesLabel().setText(PrismaticDisplayHelper.getFaceValuesDisplay(type, useTrue));

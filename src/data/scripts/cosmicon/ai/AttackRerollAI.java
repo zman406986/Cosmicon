@@ -258,9 +258,8 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         List<Set<Integer>> choices = enumerateLegalSubsets(pool, requiredCount);
 
         if (choices.isEmpty()) {
-            double result = frozenSum;
-            evalCache.put(cacheKey, result);
-            return result;
+            evalCache.put(cacheKey, (double) frozenSum);
+            return frozenSum;
         }
 
         double bestUtil = Double.NEGATIVE_INFINITY;

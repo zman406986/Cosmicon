@@ -84,6 +84,7 @@ public class StatusEffectProcessor {
             }
         }
 
+        String string = durationType == DurationType.TURN_BASED ? turns + "t" : durationType.name();
         if (existingIndex >= 0) {
             StatusEffectInstance old = activeEffects.get(existingIndex);
             int mergedLayers = old.layers() + layers;
@@ -94,12 +95,12 @@ public class StatusEffectProcessor {
             activeEffects.set(existingIndex, new StatusEffectInstance(effect, source, mergedLayers, durationType, newTurns));
             CosmiconLogger.info("[STATUS] +%d %s from %s (was %d, now %d layers, duration=%s)",
                 layers, effect.name(), source, old.layers(), mergedLayers,
-                durationType == DurationType.TURN_BASED ? turns + "t" : durationType.name());
+                    string);
         } else {
             activeEffects.add(new StatusEffectInstance(effect, source, layers, durationType, turns));
             CosmiconLogger.info("[STATUS] +%d %s from %s (new instance, duration=%s)",
                 layers, effect.name(), source,
-                durationType == DurationType.TURN_BASED ? turns + "t" : durationType.name());
+                    string);
         }
     }
 
@@ -583,15 +584,15 @@ public class StatusEffectProcessor {
             DiceType newType = DiceType.fromMaxFace(currentMaxFace);
 
             if (currentMaxFace != oldMaxFace) {
-                CosmiconLogger.info("[LEVEL_UP] die[%d] UPGRADED: %s(d%d) -> %s(d%d) | selected=%s prismatic=%s | diceValue=%d",
+                CosmiconLogger.info("[LEVEL_UP] die[%d] UPGRADED: %s(d%d) -> %s(d%d) | diceValue=%d",
                     i, oldType, oldMaxFace,
                     newType, currentMaxFace,
-                    isSelected, isPrismatic, diceValues.get(i));
+                    diceValues.get(i));
                 processedCount++;
             } else {
-                CosmiconLogger.info("[LEVEL_UP] die[%d] AT MAX: %s(d%d) | selected=%s prismatic=%s | diceValue=%d",
+                CosmiconLogger.info("[LEVEL_UP] die[%d] AT MAX: %s(d%d) | diceValue=%d",
                     i, oldType, oldMaxFace,
-                    isSelected, isPrismatic, diceValues.get(i));
+                    diceValues.get(i));
             }
         }
 
