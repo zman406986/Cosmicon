@@ -22,6 +22,9 @@ import data.scripts.cosmicon.state.CosmiconStats;
 import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.CosmiconConfig;
 
+// Retained for stale save compatibility: bar events from older saves may still reference this class.
+// New bar events are no longer generated (creator registration removed from CosmiconModPlugin).
+// NPC dialogue (CosmiconNPCDialogPlugin) is now the standalone entry point.
 public class CosmiconBarEvent extends BaseBarEvent {
 
     public enum OptionId {
@@ -150,6 +153,8 @@ public class CosmiconBarEvent extends BaseBarEvent {
                         }
                     }
 
+                    CosmiconEventState.clearCasinoBattleState();
+                    CosmiconEventState.setIsStandaloneEntry(true);
                     CosmiconEventState.setIsBarEvent(true);
                     BarEventManager.getInstance().notifyWasInteractedWith(this);
 

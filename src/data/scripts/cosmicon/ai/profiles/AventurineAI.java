@@ -26,11 +26,6 @@ public class AventurineAI extends AttackRerollAI {
     }
 
     @Override
-    public boolean shouldOptimizeForPassive(boolean isAttacking) {
-        return isAttacking;
-    }
-
-    @Override
     public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
         if (selectedValues.isEmpty() || !isAttacking) return PassiveEvaluation.notTriggered();
         int oddCount = DiceEvaluator.countOddNumbers(selectedValues);

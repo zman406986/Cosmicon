@@ -146,7 +146,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         if (CosmiconStats.getGamesPlayed() >= 2 && !CosmiconStats.isInTutorialMode()) {
             options.addOption(Strings.get("menu.replay_tutorial_2"), "replay_tutorial_2");
         }
-        if (CosmiconEventState.isTournamentActive()) {
+        if (CosmiconEventState.isTournamentActive() && !CosmiconEventState.isStandaloneEntry()) {
             options.addOption(Strings.get("menu.view_tournament_standings"), "view_tournament_standings");
             
             if (tournamentManager != null && !tournamentManager.isPlayerChampion() && !tournamentManager.isPlayerEliminated()) {
@@ -177,7 +177,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             case MAIN_MENU:
                 switch (data) {
                     case "start_game" -> {
-                        if (CosmiconEventState.isTournamentActive() && tournamentManager != null
+                        if (!CosmiconEventState.isStandaloneEntry() && CosmiconEventState.isTournamentActive() && tournamentManager != null
                             && !tournamentManager.isPlayerChampion() && !tournamentManager.isPlayerEliminated()) {
                             startCasinoBattleWithSelection();
                         } else {
@@ -198,6 +198,8 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                     case "help" -> showHelp();
                     case "leave" -> {
                         if (CosmiconEventState.isTournamentActive()) {
+                            CosmiconEventState.setIsStandaloneEntry(false);
+                            CosmiconEventState.setIsBarEvent(false);
                             CosmiconMusicPlugin.stopMusic();
                         } else {
                             CosmiconEventState.clearAll();
@@ -353,7 +355,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             return;
         }
 
-        if (CosmiconEventState.isCasinoBattleMode()) {
+        if (CosmiconEventState.isCasinoBattleMode() && !CosmiconEventState.isStandaloneEntry()) {
             handleCasinoVictory();
             return;
         }
@@ -396,7 +398,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             return;
         }
 
-        if (CosmiconEventState.isCasinoBattleMode()) {
+        if (CosmiconEventState.isCasinoBattleMode() && !CosmiconEventState.isStandaloneEntry()) {
             handleCasinoDefeat();
             return;
         }

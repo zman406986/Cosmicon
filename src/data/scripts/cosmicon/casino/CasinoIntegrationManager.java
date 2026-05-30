@@ -54,6 +54,7 @@ public class CasinoIntegrationManager {
 
     public static void startBossBattle(InteractionDialogAPI dialog, Runnable onLeave) {
         CosmiconEventState.clearCasinoBattleState();
+        CosmiconEventState.setIsStandaloneEntry(false);
         CosmiconEventState.setCasinoBattleMode(true);
         CosmiconEventState.setCasinoBattleIsBoss(true);
 
@@ -84,6 +85,7 @@ public class CasinoIntegrationManager {
 
     public static void startGatekeeperBattle(InteractionDialogAPI dialog, Runnable onLeave) {
         CosmiconEventState.clearCasinoBattleState();
+        CosmiconEventState.setIsStandaloneEntry(false);
         CosmiconEventState.setReplayTutorialGame(-1);
         CosmiconEventState.setIsTutorialMode(false);
         CosmiconEventState.setCasinoBattleMode(true);
@@ -101,6 +103,7 @@ public class CasinoIntegrationManager {
 
     public static void startTournament(InteractionDialogAPI dialog, Runnable onLeave) {
         CosmiconEventState.clearTournamentState();
+        CosmiconEventState.setIsStandaloneEntry(false);
         CosmiconEventState.setReplayTutorialGame(-1);
         CosmiconEventState.setIsTutorialMode(false);
 
@@ -155,6 +158,7 @@ public class CasinoIntegrationManager {
         }
 
         CosmiconEventState.clearCasinoBattleState();
+        CosmiconEventState.setIsStandaloneEntry(false);
         CosmiconEventState.setCasinoBattleMode(true);
         CosmiconEventState.setCasinoBattleIsBoss(false);
 

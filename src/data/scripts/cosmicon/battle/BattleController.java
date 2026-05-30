@@ -53,7 +53,6 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
         turnProcessor.onDamageImpacted();
     }
 
-    @SuppressWarnings("ConstantConditions")
     private void configureOpponentPrismaticDefaults(CharacterCard opponentCard) {
         Map<String, Integer> oppPrismatic = opponentCard.getPrismaticDiceIds();
         if (!oppPrismatic.isEmpty()) {

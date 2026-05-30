@@ -12,7 +12,7 @@ Version 0.3.0
 - Added TrashcanAI profile so the Trashcan character no longer falls back to default AI.
 - Fixed YaoGuang AI overcounting Thorns self-damage penalty (first 2 rerolls are now free per wiki, matching the actual Thorns application).
 - Fixed Aventurine AI evaluating passive as triggered during defense turns (passive is attack-only; also fixed shouldOptimizeForPassive to return false on defense).
-- Fixed DiceType.fromMaxFace(12) returning YELLOW_D12 instead of PRISMATIC (wiki: "d12 dice are treated as Prismatic Dice" for Level Up).
+- Reverted DiceType.fromMaxFace(12) to return YELLOW_D12 (d12 is its own type; wiki "treated as Prismatic" rule is handled via diceIsPrismatic flag, not type mapping).
 - Fixed Acid Rain weather applying Poison to the player with LESS HP instead of MORE HP (comparison operators were inverted).
 - Fixed Storm weather granting ATK/DEF +2 instead of +1 (was applied in both appearance effects and persistent mods; removed duplicate from appearance).
 - Fixed Loan prismatic dice Overload self-damage never triggering (was checking attacker effects with ATTACK turn type instead of defender effects with DEFENSE turn type).

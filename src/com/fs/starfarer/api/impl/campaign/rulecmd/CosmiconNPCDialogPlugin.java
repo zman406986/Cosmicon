@@ -61,6 +61,9 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements Intera
             }
         }
 
+        CosmiconEventState.clearCasinoBattleState();
+        CosmiconEventState.setIsStandaloneEntry(true);
+
         dialog.setPlugin(this);
 
         final String capturedMarketId = npcMarketId;
@@ -72,8 +75,14 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements Intera
                     mkt.getMemory().unset("$cos_npc_stored_char");
                 }
             }
-            CosmiconEventState.clearAll();
-            CosmiconMusicPlugin.stopMusic();
+            if (CosmiconEventState.isTournamentActive()) {
+                CosmiconEventState.setIsStandaloneEntry(false);
+                CosmiconEventState.setIsBarEvent(false);
+                CosmiconMusicPlugin.stopMusic();
+            } else {
+                CosmiconEventState.clearAll();
+                CosmiconMusicPlugin.stopMusic();
+            }
             dialog.dismiss();
         });
         interaction.init(dialog);

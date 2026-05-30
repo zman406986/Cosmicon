@@ -33,11 +33,16 @@ public enum DiceType {
         };
     }
 
+    // d12 is its own type (YELLOW_D12), NOT PRISMATIC.
+    // The wiki rule "d12 dice are treated as Prismatic Dice" only means d12 is immune
+    // to Arise/Hack effects, which is handled via the diceIsPrismatic flag in
+    // StatusEffectProcessor (type == PRISMATIC || type == YELLOW_D12).
+    // Do NOT change case 12 to PRISMATIC — that would break maxFace, rendering, and UI.
     public static DiceType fromMaxFace(int maxFace) {
         return switch (maxFace) {
             case 6 -> PURPLE_D6;
             case 8 -> ORANGE_D8;
-            case 12 -> PRISMATIC;
+            case 12 -> YELLOW_D12;
             default -> BLUE_D4;
         };
     }

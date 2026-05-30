@@ -181,7 +181,7 @@ public final class SelectionOptimizer {
 
         WeatherType weather = state != null && state.getWeatherController() != null
             ? state.getWeatherController().getCurrentWeather() : null;
-        float weatherBonus = getWeatherSelectionBonus(weather, selectedValues, selectedTypes, isAttacking, state, forPlayer);
+        float weatherBonus = getWeatherSelectionBonus(weather, selectedValues, isAttacking, state, forPlayer);
         effectiveScore += weatherBonus;
 
         return new SelectionResult(selectedIndices, sum, selectedValues, selectedTypes, false, 0f, effectiveScore);
@@ -223,7 +223,7 @@ public final class SelectionOptimizer {
     }
 
     private static float getWeatherSelectionBonus(WeatherType weather, List<Integer> selectedValues,
-            List<DiceType> selectedTypes, boolean isAttacking, BattleState state, boolean forPlayer) {
+            boolean isAttacking, BattleState state, boolean forPlayer) {
         if (weather == null) return 0f;
         float bonus = 0f;
         switch (weather) {
@@ -311,7 +311,7 @@ public final class SelectionOptimizer {
             float passiveScore = profile.getPassiveBonusValue(selectedValues, isAttacking, state, forPlayer);
             WeatherType weather = state != null && state.getWeatherController() != null
                 ? state.getWeatherController().getCurrentWeather() : null;
-            float weatherBonus = getWeatherSelectionBonus(weather, selectedValues, selectedTypes, isAttacking, state, forPlayer);
+            float weatherBonus = getWeatherSelectionBonus(weather, selectedValues, isAttacking, state, forPlayer);
             float score = sum + passiveScore + prismaticBonus + weatherBonus;
             if (eval.triggered()) {
                 score += profile.getPassiveTriggerScore();
