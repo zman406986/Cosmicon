@@ -19,6 +19,7 @@ public class CosmiconStats {
     private static final String KEY_GATEKEEPER_999_UNLOCKED = "$cos_gatekeeper_999_unlocked";
 
     private static final int TUTORIAL_GAMES = 2;
+    public static final int NORMAL_ENCOUNTER_CREDIT_PER_LEVEL = 1500;
     private static final String REPEATER_ID = "repeater";
 
     private static MemoryAPI memory;
@@ -176,6 +177,12 @@ public class CosmiconStats {
 
     public static int calculateCreditReward(int playerLevel) {
         return 3000 * Math.max(1, playerLevel);
+    }
+
+    public static int calculateNormalEncounterCreditReward(int playerLevel) {
+        int base = NORMAL_ENCOUNTER_CREDIT_PER_LEVEL * Math.max(1, playerLevel);
+        float factor = 0.9f + (float) Math.random() * 0.2f;
+        return Math.round(base * factor);
     }
 
     public static void initialize() {

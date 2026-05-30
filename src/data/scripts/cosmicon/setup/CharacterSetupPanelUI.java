@@ -490,9 +490,9 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
         GL11.glScissor(sX, sY, sW, sH);
 
-        UnifiedCoord galleryBgPos = new UnifiedCoord(MARGIN - 5f, galleryStartY - 5f);
-        Misc.renderQuad(galleryBgPos.glX(), galleryBgPos.glSpriteY(galleryHeight + 10f),
-            galleryWidth + 10f, galleryHeight + 10f,
+        UnifiedCoord galleryBgPos = new UnifiedCoord(MARGIN - 5f, galleryStartY);
+        Misc.renderQuad(galleryBgPos.glX(), galleryBgPos.glSpriteY(galleryHeight),
+            galleryWidth + 10f, galleryHeight,
             new Color(35, 40, 50, 180), alphaMult * 0.7f);
 
         renderCardBoxes(galleryStartY, alphaMult, galleryHeight, sX, sY, sW, sH);
@@ -600,9 +600,9 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         GLStateUtil.resetBlendState();
 
-        UnifiedCoord bgPos = new UnifiedCoord(DICE_LIST_X - 5f, listStartY - 5f);
-        Misc.renderQuad(bgPos.glX(), bgPos.glSpriteY(listHeight + 10f),
-            DICE_LIST_WIDTH + 10f, listHeight + 10f,
+        UnifiedCoord bgPos = new UnifiedCoord(DICE_LIST_X - 5f, listStartY);
+        Misc.renderQuad(bgPos.glX(), bgPos.glSpriteY(listHeight),
+            DICE_LIST_WIDTH + 10f, listHeight,
             COLOR_DICE_PANEL_BG, alphaMult);
 
         float[] c = ColorHelper.toGLComponents(COLOR_SECTION_HEADER, alphaMult * 0.6f);
@@ -610,11 +610,11 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         GL11.glLineWidth(1f);
         GL11.glBegin(GL11.GL_LINE_LOOP);
         float bx = bgPos.glX();
-        float by = bgPos.glSpriteY(listHeight + 10f);
+        float by = bgPos.glSpriteY(listHeight);
         GL11.glVertex2f(bx, by);
         GL11.glVertex2f(bx + DICE_LIST_WIDTH + 10f, by);
-        GL11.glVertex2f(bx + DICE_LIST_WIDTH + 10f, by + listHeight + 10f);
-        GL11.glVertex2f(bx, by + listHeight + 10f);
+        GL11.glVertex2f(bx + DICE_LIST_WIDTH + 10f, by + listHeight);
+        GL11.glVertex2f(bx, by + listHeight);
         GL11.glEnd();
         GLStateUtil.resetColor();
 
@@ -774,7 +774,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private void renderDiceScrollbar(float trackUiY, float listHeight, float alphaMult) {
         if (diceMaxScroll <= 0f) return;
 
-        float trackX = DICE_LIST_X + DICE_LIST_WIDTH + SCROLLBAR_WIDTH + 2f;
+        float trackX = DICE_LIST_X + DICE_LIST_WIDTH + 2f;
 
         float visibleRatio = listHeight / (listHeight + diceMaxScroll);
         float thumbHeight = Math.max(20f, listHeight * visibleRatio);

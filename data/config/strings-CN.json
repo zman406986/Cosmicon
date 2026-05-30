@@ -48,6 +48,7 @@
         "confirm_defense": "确认防御",
         "you_won": "你赢了！",
         "you_lost": "你输了！",
+        "credit_loss": "你损失了 {0} 星币！",
         "ability_btn": "角色能力",
         "click_to_continue": "点击继续",
         "click_to_roll": "点击投骰子",

@@ -1,6 +1,8 @@
 package data.scripts.cosmicon.battle;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import data.scripts.cosmicon.battle.StatusEffectProcessor.DurationType;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
@@ -51,10 +53,19 @@ public class WeatherController {
                 state.getOpponentEffects().addEffect(StatusEffect.VENOM, weather.name(), 1, DurationType.PERMANENT);
             }
             case SEA_OF_CLOUDS -> {
-                state.addPrismaticUse(1);
-                for (PrismaticDiceType type : PrismaticDiceRegistry.getAll().values()) {
-                    state.addPrismaticUseByType(type, true, 1);
-                    state.addPrismaticUseByType(type, false, 1);
+                for (boolean isPlayer : new boolean[]{true, false}) {
+                    CharacterCard card = state.getCard(isPlayer);
+                    Map<String, Integer> prismaticDiceIds = card != null
+                        ? card.getPrismaticDiceIds() : Collections.emptyMap();
+                    if (!prismaticDiceIds.isEmpty()) {
+                        state.addPrismaticUse(isPlayer, 1);
+                        for (String diceId : prismaticDiceIds.keySet()) {
+                            PrismaticDiceType type = PrismaticDiceRegistry.get(diceId);
+                            if (type != null) {
+                                state.addPrismaticUseByType(type, isPlayer, 1);
+                            }
+                        }
+                    }
                 }
             }
             default -> {}
@@ -146,14 +157,6 @@ public class WeatherController {
                     state.getEffects(isPlayer).addEffect(StatusEffect.PERFORATION, weather.name(), 1, DurationType.USAGE_BASED);
                 }
             }
-            case LUNISOLAR_LUMINANCE -> {
-                if (isAttacker) {
-                    int hp = isPlayer ? state.getPlayerHp() : state.getOpponentHp();
-                    if (hp <= 3) {
-                        state.multiplyAttackValue(2);
-                    }
-                }
-            }
             case HEAVY_SNOW -> {
                 boolean hasSeven = checkContainsValue(values, selected, 7);
                 if (hasSeven) {
@@ -201,6 +204,19 @@ public class WeatherController {
                 }
             }
             default -> {}
+        }
+    }
+    
+    public void applyPostModificationPhase(BattleState state) {
+        WeatherType weather = getCurrentWeather();
+        if (weather == null) return;
+
+        if (weather == WeatherType.LUNISOLAR_LUMINANCE) {
+            boolean attackerIsPlayer = state.isPlayerAttacker();
+            int hp = attackerIsPlayer ? state.getPlayerHp() : state.getOpponentHp();
+            if (hp <= 3) {
+                state.multiplyAttackValue(2);
+            }
         }
     }
     

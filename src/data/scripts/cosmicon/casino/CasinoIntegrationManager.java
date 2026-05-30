@@ -52,6 +52,11 @@ public class CasinoIntegrationManager {
         return CosmiconStats.calculateCreditReward(playerLevel);
     }
 
+    public static int getTournamentCreditReward() {
+        int playerLevel = Global.getSector().getPlayerStats().getLevel();
+        return CosmiconStats.NORMAL_ENCOUNTER_CREDIT_PER_LEVEL * 5 * Math.max(1, playerLevel);
+    }
+
     public static void startBossBattle(InteractionDialogAPI dialog, Runnable onLeave) {
         CosmiconEventState.clearCasinoBattleState();
         CosmiconEventState.setIsStandaloneEntry(false);

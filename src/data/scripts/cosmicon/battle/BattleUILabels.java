@@ -74,6 +74,7 @@ public class BattleUILabels {
     private Map<EffectInstanceKey, Integer> previousOpponentInstanceLayers;
     private Map<EffectInstanceKey, Integer> playerEffectDisplayIndex;
     private Map<EffectInstanceKey, Integer> opponentEffectDisplayIndex;
+    private Map<String, float[]> lastKnownEffectPositions;
     private StatusEffectAnimator statusEffectAnimator;
 
     private long lastStatusEffectStateHash = -1;
@@ -114,6 +115,7 @@ public class BattleUILabels {
         previousOpponentInstanceLayers = new HashMap<>();
         playerEffectDisplayIndex = new HashMap<>();
         opponentEffectDisplayIndex = new HashMap<>();
+        lastKnownEffectPositions = new HashMap<>();
         statusEffectAnimator = new StatusEffectAnimator();
     }
 
@@ -508,9 +510,11 @@ public class BattleUILabels {
             EffectInstanceKey key = new EffectInstanceKey(inst.effect(), inst.source());
             playerEffectDisplayIndex.put(key, playerIdx);
 
+            float[] pos = getPlayerStatusLabelPosition(playerIdx);
+            lastKnownEffectPositions.put("player_" + inst.effect().name(), pos);
+
             int previousLayers = previousPlayerInstanceLayers.getOrDefault(key, 0);
             if (inst.layers() > previousLayers) {
-                float[] pos = getPlayerStatusLabelPosition(playerIdx);
                 statusEffectAnimator.triggerAddAnimation(pos[0], pos[1], pos[2], pos[3]);
             }
 
@@ -536,9 +540,11 @@ public class BattleUILabels {
             EffectInstanceKey key = new EffectInstanceKey(inst.effect(), inst.source());
             opponentEffectDisplayIndex.put(key, opponentIdx);
 
+            float[] pos = getOpponentStatusLabelPosition(opponentIdx);
+            lastKnownEffectPositions.put("opponent_" + inst.effect().name(), pos);
+
             int previousLayers = previousOpponentInstanceLayers.getOrDefault(key, 0);
             if (inst.layers() > previousLayers) {
-                float[] pos = getOpponentStatusLabelPosition(opponentIdx);
                 statusEffectAnimator.triggerAddAnimation(pos[0], pos[1], pos[2], pos[3]);
             }
 
@@ -613,6 +619,11 @@ public class BattleUILabels {
 
     public float[] getStatusEffectLabelPosition(boolean isPlayer, int displayIndex) {
         return isPlayer ? getPlayerStatusLabelPosition(displayIndex) : getOpponentStatusLabelPosition(displayIndex);
+    }
+
+    public float[] getLastKnownEffectPosition(boolean isPlayer, StatusEffectProcessor.StatusEffect effect) {
+        String key = (isPlayer ? "player_" : "opponent_") + effect.name();
+        return lastKnownEffectPositions.get(key);
     }
 
     public StatusEffectAnimator getStatusEffectAnimator() {

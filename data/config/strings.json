@@ -48,6 +48,7 @@
         "confirm_defense": "Confirm Defense",
         "you_won": "You Won!",
         "you_lost": "You Lost!",
+        "credit_loss": "You lost {0} credits!",
         "ability_btn": "Character Ability",
         "click_to_continue": "Click to continue",
         "click_to_roll": "Click to roll dice",

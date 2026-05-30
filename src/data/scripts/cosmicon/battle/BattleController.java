@@ -327,11 +327,20 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
         state.notifyBattleEnd("player");
     }
 
+    public boolean isGatekeeperBattle() {
+        return CosmiconEventState.isCasinoBattleMode()
+            && !CosmiconEventState.isCasinoBattleBoss()
+            && CosmiconEventState.getCasinoBattleBonusHp() > 0;
+    }
+
     public boolean isGatekeeper999Battle() {
         return CosmiconEventState.isCasinoBattleMode()
             && !CosmiconEventState.isCasinoBattleBoss()
-            && !CosmiconEventState.isTournamentActive()
             && CosmiconEventState.getCasinoBattleBonusHp() == 974;
+    }
+
+    public boolean isGatekeeperEarlyExit() {
+        return isGatekeeperBattle() && state.getOpponentTotalDamageTaken() >= 99;
     }
 
     public boolean isGatekeeper999EarlyExit() {

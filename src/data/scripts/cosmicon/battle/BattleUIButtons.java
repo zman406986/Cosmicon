@@ -378,7 +378,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
                     }
                 }
                 case "close", ACTION_EXIT -> {
-                    if (battleController != null && battleController.isGatekeeper999EarlyExit()) {
+                    if (battleController != null && battleController.isGatekeeperEarlyExit()) {
                         battleController.getState().setWinner("player");
                     }
                     if (callbacks != null) {

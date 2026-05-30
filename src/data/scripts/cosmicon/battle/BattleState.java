@@ -560,6 +560,12 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
             prismaticManager.addPrismaticUse(null, false);
         }
     }
+
+    public void addPrismaticUse(boolean isPlayer, int amount) {
+        for (int i = 0; i < amount; i++) {
+            prismaticManager.addPrismaticUse(null, isPlayer);
+        }
+    }
     
     public void addPrismaticUseByType(PrismaticDiceType type, boolean isPlayer, int amount) {
         for (int i = 0; i < amount; i++) {

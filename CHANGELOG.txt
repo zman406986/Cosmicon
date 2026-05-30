@@ -1,4 +1,8 @@
 Version 0.3.0
+- Fixed Gatekeeper 999 in-battle messages (start hint and exit hint) not showing when a tournament is in progress; removed redundant `!isTournamentActive()` check from `isGatekeeper999Battle()` and added broader `isGatekeeperBattle()` for UI messages (now also covers 99 HP version).
+- Fixed CosmiconEventState integer getters using `getFloat()` instead of `getInt()` for memory-stored integers (latent correctness issue).
+- Fixed Hack and Arise not stacking when applied from multiple sources (e.g., Sparxie passive + Sorcerer prismatic dice); each instance now correctly modifies a separate die (highest/second-highest for Hack, lowest/second-lowest for Arise).
+- Fixed Sea of Clouds weather granting prismatic dice uses to characters without prismatic dice (e.g., Robin, Gatekeeper); now only grants uses for types the character already has.
 - Fixed playerLosses not incrementing on loser bracket elimination (display showed 1 loss instead of 2 after WB+LB losses).
 - Fixed tournament tier 2 rewards calling unlockPrismaticReward instead of unlockPrismaticTrueReward (true-version prismatic dice could not be unlocked via tournament).
 - Fixed tournament tier 4 rewards showing only credits, skipping dice selection entirely (now matches boss reward behavior).
@@ -25,6 +29,17 @@ Version 0.3.0
 - Added PARHELION thorns penalty to AI reroll evaluation (AI now accounts for +2 Thorns per reroll during Parhelion weather).
 - Added FINE SNOW skip-reroll incentive to AI (AI values avoiding rerolls during Fine Snow to gain +3 Toughness).
 - Added FROG RAIN and SUNSHOWER SimPool adjustments (AI correctly simulates min-face=2 during Frog Rain and reduced max-face for defenders during Sunshower).
+- Fixed tournament progress being accessible via bar event or NPC dialogue without entering through the casino (standalone entry points now suppress tournament/casino features via isStandaloneEntry flag).
+- Fixed NPC dialogue destroying active tournament state on leave (onLeaveAction now preserves tournament bracket data so the player can continue via casino later).
+- Disabled bar event generation (NPC dialogue is now the sole standalone entry point; CosmiconBarEvent retained for stale save compatibility).
+- Rebalanced normal encounter credit rewards: reduced to ~50% of previous value (1500 per level, randomized ±10%).
+- Losing a normal encounter now deducts credits (~1500 per level, ±10%) instead of awarding consolation credits; loss is capped at player's current credits (cannot go below 0). Does not apply to casino gatekeeper or tournament matches.
+- Fixed setup gallery prismatic dice column background being taller than the character column and scrollbar (removed extra vertical padding so both columns are the same height).
+- Fixed instant damage animation playing on the source side instead of the target side (flying number and impact effect now appear on the card taking damage, not the card dealing it).
+- Fixed Poison not showing expanding box animation or floating damage number on the character card (process animation now triggers via onSecondaryDamage like other damage types; added cached position fallback for effects removed before animation fires; secondary damage numbers no longer cleared on ROLLING phase transition so they can play out naturally).
+- Fixed setup gallery prismatic dice scrollbar sitting on the panel edge (removed double-counted SCROLLBAR_WIDTH from track X position).
+- Increased tournament credit rewards to 5x normal encounter base (7500 per level) so overall tournament payout remains roughly the same despite the normal encounter reduction.
+- Fixed Lunisolar Luminance weather doubling being lost when ARISE or HACK effects are active; ARISE/HACK now use `modifyAttackValue(delta)` instead of `setAttackValue(newSum)` to preserve prior bonuses, and Lunisolar Luminance doubling is applied after the modification phase so the final value (including ARISE/HACK changes) is correctly doubled.
 
 Version 0.2.0
 - Changed entry point from bars to comms (Custom NPCs generated for playing against).

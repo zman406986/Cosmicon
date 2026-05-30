@@ -562,6 +562,7 @@ public class TurnProcessor {
     public void proceedFromModificationPause() {
         if (state.getCurrentPhase() != TurnState.Phase.RESOLVING_MODIFICATION) return;
         applyPendingModifications();
+        applyPostModificationWeather();
         continueToClash();
     }
 
@@ -591,7 +592,7 @@ public class TurnProcessor {
                         diceRollManager.setRestDiceEffect(ariseDiceIndex, StatusEffect.ARISE, forPlayer);
                     }
                 }
-                effects.removeFromSource(StatusEffect.ARISE, "effect_system");
+                effects.removeLayersFromSource(StatusEffect.ARISE, "effect_system", 1);
                 state.setDiceValues(forPlayer, context.getDiceValues());
 
                 List<Integer> postValues = state.getDiceValues(forPlayer);
@@ -601,8 +602,8 @@ public class TurnProcessor {
                 if (newSum != oldSum) {
                     int delta = newSum - oldSum;
                     boolean isAttack = state.isAttacker(forPlayer);
-                    if (isAttack) state.setAttackValue(newSum);
-                    else state.setDefenseValue(newSum);
+                    if (isAttack) state.modifyAttackValue(delta);
+                    else state.modifyDefenseValue(delta);
                     String changeType = isAttack ? "ATTACK_LEVEL_UP" : "DEFENSE_LEVEL_UP";
                     state.queueValueChange(forPlayer, changeType, delta);
                     state.notifyValueChange(forPlayer, "ARISE", oldSum, newSum, delta);
@@ -629,8 +630,10 @@ public class TurnProcessor {
                 }
                 state.setDiceValues(targetIsPlayer, targetContext.getDiceValues());
                 boolean targetIsAttacker = state.isAttacker(targetIsPlayer);
-                if (targetIsAttacker) state.setAttackValue(state.calculateSelectedSum(targetIsPlayer));
-                else state.setDefenseValue(state.calculateSelectedSum(targetIsPlayer));
+                int hackNewSum = state.calculateSelectedSum(targetIsPlayer);
+                int hackDelta = hackNewSum - oldTargetSum;
+                if (targetIsAttacker) state.modifyAttackValue(hackDelta);
+                else state.modifyDefenseValue(hackDelta);
 
                 List<Integer> postHackValues = state.getDiceValues(targetIsPlayer);
                 notifyRestDiceValueChanges(preHackValues, postHackValues, targetIsPlayer);
@@ -649,7 +652,7 @@ public class TurnProcessor {
                     state.notifyValueChange(targetIsPlayer, "HACK", oldTargetSum, newTargetSum, delta);
                 }
 
-                effects.removeFromSource(StatusEffect.HACK, "effect_system");
+                effects.removeLayersFromSource(StatusEffect.HACK, "effect_system", 1);
             }
         }
 
@@ -1119,6 +1122,26 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
             int delta = newDef - oldDef;
             state.queueValueChange(forPlayer, "WEATHER", delta);
             state.notifyValueChange(forPlayer, "WEATHER", oldDef, newDef, delta);
+        }
+    }
+    
+    private void applyPostModificationWeather() {
+        int oldAtk = state.getAttackValue();
+        int oldDef = state.getDefenseValue();
+        weatherController.applyPostModificationPhase(state);
+        int newAtk = state.getAttackValue();
+        int newDef = state.getDefenseValue();
+        if (newAtk != oldAtk) {
+            boolean attackerIsPlayer = state.isPlayerAttacker();
+            int delta = newAtk - oldAtk;
+            state.queueValueChange(attackerIsPlayer, "WEATHER", delta);
+            state.notifyValueChange(attackerIsPlayer, "WEATHER", oldAtk, newAtk, delta);
+        }
+        if (newDef != oldDef) {
+            boolean defenderIsPlayer = !state.isPlayerAttacker();
+            int delta = newDef - oldDef;
+            state.queueValueChange(defenderIsPlayer, "WEATHER", delta);
+            state.notifyValueChange(defenderIsPlayer, "WEATHER", oldDef, newDef, delta);
         }
     }
     

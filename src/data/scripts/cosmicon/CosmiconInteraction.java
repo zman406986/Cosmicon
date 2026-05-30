@@ -453,7 +453,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         if (!hasCharReward && !hasPrismaticReward) {
             int playerLevel = Global.getSector().getPlayerStats().getLevel();
-            int credits = CosmiconStats.calculateCreditReward(playerLevel);
+            int credits = CosmiconStats.calculateNormalEncounterCreditReward(playerLevel);
             Global.getSector().getPlayerFleet().getCargo().getCredits().add(credits);
             AddRemoveCommodity.addCreditsGainText(credits, textPanel);
             options.addOption(Strings.get("menu.back"), "back");
@@ -471,9 +471,14 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         boolean isReplay = CosmiconEventState.isReplayTutorial();
         if (!isReplay && !CosmiconStats.isInTutorialMode()) {
             int playerLevel = Global.getSector().getPlayerStats().getLevel();
-            int consolationCredits = 500 * Math.max(1, playerLevel);
-            Global.getSector().getPlayerFleet().getCargo().getCredits().add(consolationCredits);
-            AddRemoveCommodity.addCreditsGainText(consolationCredits, textPanel);
+            int creditLoss = CosmiconStats.calculateNormalEncounterCreditReward(playerLevel);
+            long currentCredits = (long) Global.getSector().getPlayerFleet().getCargo().getCredits().get();
+            int actualLoss = Math.min(creditLoss, (int) currentCredits);
+            if (actualLoss > 0) {
+                Global.getSector().getPlayerFleet().getCargo().getCredits().subtract(actualLoss);
+                AddRemoveCommodity.addCreditsLossText(actualLoss, textPanel);
+                textPanel.addPara(Strings.format("battle.credit_loss", actualLoss));
+            }
         }
 
         int remaining = CosmiconStats.getRemainingTutorialGames();
@@ -522,7 +527,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             }
             case "take_credits" -> {
                 int playerLevel = Global.getSector().getPlayerStats().getLevel();
-                int credits = CosmiconStats.calculateCreditReward(playerLevel);
+                int credits = CosmiconStats.calculateNormalEncounterCreditReward(playerLevel);
                 Global.getSector().getPlayerFleet().getCargo().getCredits().add(credits);
                 AddRemoveCommodity.addCreditsGainText(credits, textPanel);
                 finishReward();
@@ -872,7 +877,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 }
             }
             case "forfeit_tournament_confirm" -> {
-                int baseCredits = CasinoIntegrationManager.getCreditReward() * 3;
+                int baseCredits = CasinoIntegrationManager.getTournamentCreditReward();
                 int totalCredits = baseCredits * tournamentWins;
                 Global.getSector().getPlayerFleet().getCargo().getCredits().add(totalCredits);
                 AddRemoveCommodity.addCreditsGainText(totalCredits, textPanel);
@@ -893,7 +898,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         boolean champion = tournamentManager != null && tournamentManager.isPlayerChampion();
         boolean runnerUp = tournamentManager != null && !champion && tournamentManager.isGrandFinal();
-        int baseCredits = CasinoIntegrationManager.getCreditReward() * 3;
+        int baseCredits = CasinoIntegrationManager.getTournamentCreditReward();
         int totalCredits = baseCredits * tournamentWins;
 
         if (champion) {
@@ -943,7 +948,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 options.addOption(Strings.format("casino.boss_reward_prismatic", displayName), "tournament_reward_" + i);
             }
         }
-        int credits = CasinoIntegrationManager.getCreditReward() * 3;
+        int credits = CasinoIntegrationManager.getTournamentCreditReward();
         options.addOption(Strings.format("casino.boss_reward_credits", credits), "tournament_reward_credits");
 
         setState(State.TOURNAMENT_REWARD);
@@ -955,7 +960,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             case "tournament_reward_1" -> applyTournamentReward(1);
             case "tournament_reward_2" -> applyTournamentReward(2);
             case "tournament_reward_credits" -> {
-                int credits = CasinoIntegrationManager.getCreditReward() * 3;
+                int credits = CasinoIntegrationManager.getTournamentCreditReward();
                 Global.getSector().getPlayerFleet().getCargo().getCredits().add(credits);
                 AddRemoveCommodity.addCreditsGainText(credits, textPanel);
                 tournamentPendingRewards--;

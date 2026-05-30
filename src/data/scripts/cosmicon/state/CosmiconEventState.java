@@ -150,7 +150,7 @@ public class CosmiconEventState {
     public static int getReplayTutorialGame() {
         MemoryAPI mem = getMemory();
         if (!mem.contains(KEY_REPLAY_TUTORIAL)) return -1;
-        return (int) mem.getFloat(KEY_REPLAY_TUTORIAL);
+        return mem.getInt(KEY_REPLAY_TUTORIAL);
     }
 
     public static boolean isReplayTutorial() {
@@ -204,7 +204,7 @@ public class CosmiconEventState {
     public static int getCasinoBattleBonusHp() {
         MemoryAPI mem = getMemory();
         if (!mem.contains(KEY_CASINO_BATTLE_BONUS_HP)) return 0;
-        return (int) mem.getFloat(KEY_CASINO_BATTLE_BONUS_HP);
+        return mem.getInt(KEY_CASINO_BATTLE_BONUS_HP);
     }
 
     public static void setCasinoBattleUseTrue(boolean useTrue) {
@@ -224,7 +224,7 @@ public class CosmiconEventState {
     public static int getCasinoBattleResultDamage() {
         MemoryAPI mem = getMemory();
         if (!mem.contains(KEY_CASINO_BATTLE_RESULT_DAMAGE)) return 0;
-        return (int) mem.getFloat(KEY_CASINO_BATTLE_RESULT_DAMAGE);
+        return mem.getInt(KEY_CASINO_BATTLE_RESULT_DAMAGE);
     }
 
     public static void setTrashcanHunterLevel(int level) {
@@ -234,7 +234,7 @@ public class CosmiconEventState {
     public static int getTrashcanHunterLevel() {
         MemoryAPI mem = getMemory();
         if (!mem.contains(KEY_TRASHCAN_HUNTER_LEVEL)) return 0;
-        return (int) mem.getFloat(KEY_TRASHCAN_HUNTER_LEVEL);
+        return mem.getInt(KEY_TRASHCAN_HUNTER_LEVEL);
     }
 
     public static void setOriginalNpcCharId(String charId) {
@@ -258,7 +258,7 @@ public class CosmiconEventState {
     public static int getTournamentWins() {
         MemoryAPI mem = getMemory();
         if (!mem.contains(KEY_TOURNAMENT_WINS)) return 0;
-        return (int) mem.getFloat(KEY_TOURNAMENT_WINS);
+        return mem.getInt(KEY_TOURNAMENT_WINS);
     }
 
     public static void setTournamentLosses(int losses) {
@@ -268,7 +268,7 @@ public class CosmiconEventState {
     public static int getTournamentLosses() {
         MemoryAPI mem = getMemory();
         if (!mem.contains(KEY_TOURNAMENT_LOSSES)) return 0;
-        return (int) mem.getFloat(KEY_TOURNAMENT_LOSSES);
+        return mem.getInt(KEY_TOURNAMENT_LOSSES);
     }
 
     public static void setTournamentInLoserBracket(boolean inLoserBracket) {
@@ -322,7 +322,9 @@ public class CosmiconEventState {
     }
 
     public static int getTournamentPendingRewards() {
-        return (int) getMemory().getFloat(KEY_TOURNAMENT_PENDING_REWARDS);
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_TOURNAMENT_PENDING_REWARDS)) return 0;
+        return mem.getInt(KEY_TOURNAMENT_PENDING_REWARDS);
     }
 
     public static void clearTournamentState() {

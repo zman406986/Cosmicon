@@ -289,7 +289,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             displayedOpponentHp = battleState.getOpponentHp();
         }
 
-        if (battleController != null && battleController.isGatekeeper999Battle()) {
+        if (battleController != null && battleController.isGatekeeperBattle()) {
             gatekeeper999StartMessageActive = true;
             gatekeeper999StartMessagePulseTimer = 0f;
             createGatekeeper999StartMessageLabel();
@@ -344,11 +344,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                 damageAnimationPending = false;
                 pendingDamageResult = null;
             }
-
-            for (SecondaryDamageEntry entry : secondaryDamageNumbers) {
-                entry.number.cleanup();
-            }
-            secondaryDamageNumbers.clear();
 
             inputHandler.setWaitingForClickToRoll(false);
 
@@ -464,7 +459,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     public void onDamageResolved(int damage, int playerHp, int opponentHp) {
         labels.updateLabelsFromState();
         if (!gatekeeper999HintShown && battleController != null
-                && battleController.isGatekeeper999EarlyExit()) {
+                && battleController.isGatekeeperEarlyExit()) {
             gatekeeper999HintShown = true;
             gatekeeper999HintActive = true;
             gatekeeper999HintPulseTimer = 0f;
@@ -620,8 +615,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     public void onSecondaryDamage(boolean isPlayer, int damage, String damageType) {
         if (damage <= 0) return;
 
-        boolean displayOnSource = "INSTANT_DAMAGE".equals(damageType);
-        boolean displayIsPlayer = displayOnSource != isPlayer;
+        boolean displayIsPlayer = isPlayer;
 
         float cardCenterX;
         float cardCenterY;
@@ -662,6 +656,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             case "COUNTER" -> labels.triggerEffectProcessAnimation(!isPlayer, StatusEffectProcessor.StatusEffect.COUNTER);
             case "OVERLOAD" -> labels.triggerEffectProcessAnimation(isPlayer, StatusEffectProcessor.StatusEffect.OVERLOAD);
             case "REFLECT" -> labels.triggerEffectProcessAnimation(!isPlayer, StatusEffectProcessor.StatusEffect.REFLECT);
+            case "POISON" -> labels.triggerEffectProcessAnimation(isPlayer, StatusEffectProcessor.StatusEffect.POISON);
             default -> {}
         }
 
@@ -1467,6 +1462,11 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             if (idx != null) {
                 float[] pos = labels.getStatusEffectLabelPosition(true, idx);
                 animator.triggerProcessAnimation(pos[0], pos[1], pos[2], pos[3]);
+            } else {
+                float[] cached = labels.getLastKnownEffectPosition(true, pe.effect());
+                if (cached != null) {
+                    animator.triggerProcessAnimation(cached[0], cached[1], cached[2], cached[3]);
+                }
             }
         }
 
@@ -1480,6 +1480,11 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             if (idx != null) {
                 float[] pos = labels.getStatusEffectLabelPosition(false, idx);
                 animator.triggerProcessAnimation(pos[0], pos[1], pos[2], pos[3]);
+            } else {
+                float[] cached = labels.getLastKnownEffectPosition(false, pe.effect());
+                if (cached != null) {
+                    animator.triggerProcessAnimation(cached[0], cached[1], cached[2], cached[3]);
+                }
             }
         }
     }
