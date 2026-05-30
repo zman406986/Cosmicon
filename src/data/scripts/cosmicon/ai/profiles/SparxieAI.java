@@ -29,6 +29,11 @@ public class SparxieAI extends SimplePassiveAI {
     }
 
     @Override
+    public float getPassiveTriggerScore() {
+        return 10f;
+    }
+
+    @Override
     protected boolean checkPassiveCondition(List<Integer> selectedValues, boolean isAttacking) {
         return DiceEvaluator.hasIdenticalNumbers(selectedValues);
     }

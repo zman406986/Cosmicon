@@ -66,7 +66,9 @@ public class PassiveEvaluator {
             } else if (ge.effect() == StatusEffect.HACK || ge.effect() == StatusEffect.ARISE) {
                 state.applyEffect(ge.effect(), ge.layers(), forPlayer);
             } else if (ge.effect() == StatusEffect.UNYIELDING) {
-                effects.addEffect(ge.effect(), source, ge.layers(), DurationType.TURN_BASED);
+                if (state.isPhainonUnyieldingAvailable(forPlayer)) {
+                    effects.addEffect(ge.effect(), source, ge.layers(), DurationType.TURN_BASED);
+                }
             } else {
                 effects.addEffect(ge.effect(), source, ge.layers(), DurationType.PERMANENT);
             }

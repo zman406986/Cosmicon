@@ -719,9 +719,6 @@ public class TurnProcessor {
             }
         }
 
-        PassiveEventSystem.onAttackResolution(state, state.isPlayerAttacker());
-        PassiveEventSystem.onAttackResolution(state, !state.isPlayerAttacker());
-
         if (playerThornsDamage > 0 && state.getPlayerEffects().hasEffect(StatusEffectProcessor.StatusEffect.THORNS)) {
             state.applyDamageTo(true, playerThornsDamage);
             state.notifySecondaryDamage(true, playerThornsDamage, "THORNS");
@@ -730,6 +727,9 @@ public class TurnProcessor {
             state.applyDamageTo(false, opponentThornsDamage);
             state.notifySecondaryDamage(false, opponentThornsDamage, "THORNS");
         }
+
+        PassiveEventSystem.onAttackResolution(state, state.isPlayerAttacker());
+        PassiveEventSystem.onAttackResolution(state, !state.isPlayerAttacker());
 
         state.setCurrentPhase(TurnState.Phase.RESOLVING);
         state.notifyPhaseChange(TurnState.Phase.RESOLVING);
@@ -879,7 +879,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
 
         int comboDamage = Math.max(0, modifiedAttack - modifiedDefense);
         
-        if (defenderEffects.isForcefieldActive() && comboDamage > 0) {
+        if (!attackerEffects.shouldIgnoreDefense() && defenderEffects.isForcefieldActive() && comboDamage > 0) {
             comboDamage = 0;
         }
         

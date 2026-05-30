@@ -39,7 +39,7 @@ public class DamageResolver {
         int damage = Math.max(0, modifiedAttack - modifiedDefense);
         
         boolean forcefieldUsed = false;
-        if (defenderEffects.isForcefieldActive() && damage > 0) {
+        if (!hasPerforation && defenderEffects.isForcefieldActive() && damage > 0) {
             damage = 0;
             forcefieldUsed = true;
         }
@@ -56,7 +56,7 @@ public class DamageResolver {
             attackerPrismaticValue, defenderPrismaticValue,
             hasPerforation, damage, counterDamage, modifiedAttack, prePerforationDefense);
         
-        int overloadSelfDamage = attackerEffects.calculateOverloadSelfDamage(TurnType.ATTACK);
+        int overloadSelfDamage = defenderEffects.calculateOverloadSelfDamage(TurnType.DEFENSE);
         
         int siphonHeal = attackerEffects.calculateSiphonHeal(damage);
         

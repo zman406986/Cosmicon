@@ -37,7 +37,7 @@ public enum DiceType {
         return switch (maxFace) {
             case 6 -> PURPLE_D6;
             case 8 -> ORANGE_D8;
-            case 12 -> YELLOW_D12;
+            case 12 -> PRISMATIC;
             default -> BLUE_D4;
         };
     }

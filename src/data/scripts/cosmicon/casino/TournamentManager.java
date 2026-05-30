@@ -7,6 +7,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import data.scripts.Strings;
+
 public class TournamentManager {
 
     public static final int PLAYER_SLOT = 0;
@@ -351,6 +353,7 @@ public class TournamentManager {
             } else {
                 lbResults[currentRound][currentMatchIndex] = opponentSlot;
                 advanceWinner(BRACKET_LB, currentRound, currentMatchIndex, opponentSlot, -1);
+                playerLosses++;
                 playerEliminated = true;
             }
         }
@@ -527,20 +530,20 @@ public class TournamentManager {
     }
 
     public String getPlayerBracketPosition() {
-        if (playerChampion) return "Champion";
-        if (playerEliminated) return "Eliminated";
+        if (playerChampion) return Strings.get("casino.tournament_position_champion");
+        if (playerEliminated) return Strings.get("casino.tournament_position_eliminated");
 
         return switch (currentBracket) {
             case BRACKET_WB -> {
-                if (currentRound == 2) yield "WB Final";
-                yield "WB Round " + (currentRound + 1);
+                if (currentRound == 2) yield Strings.get("casino.tournament_position_wb_final");
+                yield Strings.format("casino.tournament_position_wb_round", currentRound + 1);
             }
             case BRACKET_LB -> {
-                if (currentRound == 3) yield "LB Final";
-                yield "LB Round " + (currentRound + 1);
+                if (currentRound == 3) yield Strings.get("casino.tournament_position_lb_final");
+                yield Strings.format("casino.tournament_position_lb_round", currentRound + 1);
             }
-            case BRACKET_GF -> "Grand Final";
-            default -> "Unknown";
+            case BRACKET_GF -> Strings.get("casino.tournament_position_grand_final");
+            default -> Strings.get("casino.tournament_position_unknown");
         };
     }
 

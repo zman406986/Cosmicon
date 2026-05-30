@@ -107,7 +107,10 @@ public final class PrismaticDiceRegistry {
             "revenge",
             new int[]{6, 6, 8, 8, 12, 12},
             PrismaticEffect.NONE,
-            DamageTakenCondition.atLeast(25)
+            new CompositeCondition(
+                DamageTakenCondition.atLeast(25),
+                ActionTypeCondition.attackOnly()
+            )
         );
     }
     

@@ -1,7 +1,35 @@
+Version 0.3.0
+- Fixed playerLosses not incrementing on loser bracket elimination (display showed 1 loss instead of 2 after WB+LB losses).
+- Fixed tournament tier 2 rewards calling unlockPrismaticReward instead of unlockPrismaticTrueReward (true-version prismatic dice could not be unlocked via tournament).
+- Fixed tournament tier 4 rewards showing only credits, skipping dice selection entirely (now matches boss reward behavior).
+- Fixed tournamentPendingRewards not being restored when re-entering the dialog mid-reward-flow (pending reward picks were lost on ESC dismiss).
+- Fixed getPlayerBracketPosition() returning hardcoded English strings instead of localized text (now uses Strings.get/format for all 8 position strings).
+- Fixed Phainon AI considering Unyielding unneeded when it was actually available (inverted condition in isUnyieldingUnneeded).
+- Fixed Perforation not bypassing Forcefield in damage resolution and combo attack (now correctly ignores both Defense and Forcefield per wiki).
+- Fixed SelectionOptimizer discarding passive-optimized selections when passive didn't trigger (now compares score against greedy before falling back).
+- Fixed SelectionOptimizer.mergeForcedIndices not updating totalScore when adding forced dice indices.
+- Fixed Phainon's Unyielding passive being re-granted even after already consumed (now checks consumed state before applying).
+- Added TrashcanAI profile so the Trashcan character no longer falls back to default AI.
+- Fixed YaoGuang AI overcounting Thorns self-damage penalty (first 2 rerolls are now free per wiki, matching the actual Thorns application).
+- Fixed Aventurine AI evaluating passive as triggered during defense turns (passive is attack-only; also fixed shouldOptimizeForPassive to return false on defense).
+- Fixed DiceType.fromMaxFace(12) returning YELLOW_D12 instead of PRISMATIC (wiki: "d12 dice are treated as Prismatic Dice" for Level Up).
+- Fixed Acid Rain weather applying Poison to the player with LESS HP instead of MORE HP (comparison operators were inverted).
+- Fixed Storm weather granting ATK/DEF +2 instead of +1 (was applied in both appearance effects and persistent mods; removed duplicate from appearance).
+- Fixed Loan prismatic dice Overload self-damage never triggering (was checking attacker effects with ATTACK turn type instead of defender effects with DEFENSE turn type).
+- Fixed March 7th Instant Damage hitting herself instead of the opponent when defending (INSTANT_DAMAGE was processed as self-damage instead of opponent-damage).
+- Fixed Yao Guang Thorns damage being skipped when ATK >= 18 (onAttackResolution removed Thorns before damage was applied; reordered so Thorns damage applies first).
+- Fixed Revenge prismatic dice missing attack-only condition (wiki: "Available when attacking after taking 25 total DMG").
+- Fixed Acheron/Hyacine AI only pursuing all-4s/all-6s passive when already 1 die away from completion (findComboForSpecificValue now generates candidates when at least 1 die matches).
+- Fixed Sparxie AI always picking trivial pairs over high-value non-pairs (passive trigger score reduced from 100 to 10; new getPassiveTriggerScore() hook allows per-profile tuning).
+- Added weather awareness to AI dice selection: SelectionOptimizer now scores weather bonuses (Solar Eclipse, Dust, Rainbow, Lunisolar Luminance, Heavy Snow, Crepuscular Rays, Moderate Snow, Drizzle) when choosing which dice to keep.
+- Added PARHELION thorns penalty to AI reroll evaluation (AI now accounts for +2 Thorns per reroll during Parhelion weather).
+- Added FINE SNOW skip-reroll incentive to AI (AI values avoiding rerolls during Fine Snow to gain +3 Toughness).
+- Added FROG RAIN and SUNSHOWER SimPool adjustments (AI correctly simulates min-face=2 during Frog Rain and reduced max-face for defenders during Sunshower).
+
 Version 0.2.0
-- Changed entry point from bars to comms (Custom NPCs generated for playing against)
-- Fixed removal safety (0.1.0 if removed bricks save, update to 0.2.0 then it can be removed)
-- Added a language switching script to toggle between CN and EN
+- Changed entry point from bars to comms (Custom NPCs generated for playing against).
+- Fixed removal safety (0.1.0 if removed bricks save, update to 0.2.0 then it can be removed).
+- Added a language switching script to toggle between CN and EN.
 
 Version 0.1.0
 - Initial release.

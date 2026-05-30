@@ -3,6 +3,7 @@ package data.scripts.cosmicon.ai;
 import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
+import data.scripts.cosmicon.battle.WeatherType;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticEffect;
 import data.scripts.CosmiconConfig;
@@ -26,10 +27,10 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
     private final Map<Integer, Double> evalCache = new HashMap<>();
 
     static {
-        for (int maxFace : new int[]{4, 6, 8, 12}) {
-            DieStoppingPolicy policy = computePolicyStatic(maxFace);
-            policyCache.put(DiceType.fromMaxFace(maxFace), policy);
-        }
+        policyCache.put(DiceType.BLUE_D4, computePolicyStatic(4));
+        policyCache.put(DiceType.PURPLE_D6, computePolicyStatic(6));
+        policyCache.put(DiceType.ORANGE_D8, computePolicyStatic(8));
+        policyCache.put(DiceType.YELLOW_D12, computePolicyStatic(12));
         policyCache.put(DiceType.PRISMATIC, computePolicyStatic(6));
     }
 
@@ -275,7 +276,11 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
                 selectedTypes.add(pool.getType(idx));
             }
             double util = evaluator.evaluateSelection(selectedValues, selectedTypes, isAttacking, state, forPlayer);
-            util -= calculateRerollSelfDamage(rerollsUsed);
+            util -= calculateRerollSelfDamage(rerollsUsed, state);
+            if (rerollsUsed == 0 && isAttacking && state != null && state.getWeatherController() != null
+                && state.getWeatherController().getCurrentWeather() == WeatherType.FINE_SNOW) {
+                util += 3f;
+            }
             if (util > bestUtil) bestUtil = util;
         }
         double result = bestUtil + frozenSum;
@@ -400,7 +405,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             if (pool.getValue(i) == targetValue) matchCount++;
             else nonMatchingIndices.add(i);
         }
-        if (matchCount >= requiredCount - 1 && matchCount < requiredCount && !nonMatchingIndices.isEmpty()) {
+        if (matchCount >= 1 && matchCount < requiredCount && !nonMatchingIndices.isEmpty()) {
             return new HashSet<>(nonMatchingIndices);
         }
         return null;
@@ -611,9 +616,13 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         };
     }
 
-    protected double calculateRerollSelfDamage(int rerollsUsed) {
+    protected double calculateRerollSelfDamage(int rerollsUsed, BattleState state) {
         float penaltyPerReroll = getThornsPenaltyPerReroll();
-        return rerollsUsed * penaltyPerReroll;
+        if (state != null && state.getWeatherController() != null
+            && state.getWeatherController().getCurrentWeather() == WeatherType.PARHELION) {
+            penaltyPerReroll += 2f;
+        }
+        return Math.max(0, rerollsUsed - 2) * penaltyPerReroll;
     }
 
     protected boolean isSpecialFaceNeverReroll(int index, DiceType type,
@@ -736,6 +745,12 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         DiceType[] types = new DiceType[n];
         int[][] possibleFaces = new int[n][];
 
+        WeatherType weather = state != null && state.getWeatherController() != null
+            ? state.getWeatherController().getCurrentWeather() : null;
+        boolean preventMin = weather == WeatherType.FROG_RAIN;
+        boolean isDefender = state != null && !state.isAttacker(forPlayer);
+        boolean preventMax = weather == WeatherType.SUNSHOWER && isDefender;
+
         for (int i = 0; i < n; i++) {
             values[i] = currentValues.get(i);
             types[i] = diceTypes.get(i);
@@ -750,9 +765,24 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             } else {
                 possibleFaces[i] = regularFaces(types[i].getMaxFace());
             }
+
+            if (preventMin || preventMax) {
+                possibleFaces[i] = adjustFacesForWeather(possibleFaces[i], preventMin, preventMax);
+            }
         }
 
         return new SimPool(values, types, possibleFaces);
+    }
+
+    private static int[] adjustFacesForWeather(int[] faces, boolean preventMin, boolean preventMax) {
+        int min = preventMin ? 2 : 1;
+        int max = preventMax ? faces[faces.length - 1] - 1 : faces[faces.length - 1];
+        if (min > max) return faces;
+        int[] adjusted = new int[max - min + 1];
+        for (int v = min; v <= max; v++) {
+            adjusted[v - min] = v;
+        }
+        return adjusted;
     }
 
     private static final Map<Integer, int[]> regularFacesCache = new HashMap<>();

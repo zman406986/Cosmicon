@@ -103,6 +103,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             if (bracketJson != null) {
                 tournamentManager = TournamentManager.fromJson(bracketJson);
                 tournamentWins = CosmiconEventState.getTournamentWins();
+                tournamentPendingRewards = CosmiconEventState.getTournamentPendingRewards();
             }
         }
 
@@ -928,23 +929,20 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         int tier = CasinoIntegrationManager.getBossRewardTier();
         pendingCasinoRewardTier = tier;
 
-        if (tier == 4) {
-            int credits = CasinoIntegrationManager.getCreditReward() * 3;
-            options.addOption(Strings.format("casino.boss_reward_credits", credits), "tournament_reward_credits");
-        } else {
-            pendingCasinoRewardCandidates = CasinoIntegrationManager.getRewardCandidates(tier, 3);
-            for (int i = 0; i < pendingCasinoRewardCandidates.size(); i++) {
-                String id = pendingCasinoRewardCandidates.get(i);
-                String displayName = CasinoIntegrationManager.getRewardDisplayName(id, tier);
-                if (tier == 1) {
-                    options.addOption(Strings.format("casino.boss_reward_char", displayName), "tournament_reward_" + i);
-                } else {
-                    options.addOption(Strings.format("casino.boss_reward_prismatic", displayName), "tournament_reward_" + i);
-                }
+        pendingCasinoRewardCandidates = CasinoIntegrationManager.getRewardCandidates(tier, 3);
+        for (int i = 0; i < pendingCasinoRewardCandidates.size(); i++) {
+            String id = pendingCasinoRewardCandidates.get(i);
+            String displayName = CasinoIntegrationManager.getRewardDisplayName(id, tier);
+            if (tier == 1) {
+                options.addOption(Strings.format("casino.boss_reward_char", displayName), "tournament_reward_" + i);
+            } else if (tier == 2) {
+                options.addOption(Strings.format("casino.boss_reward_prismatic_true", displayName), "tournament_reward_" + i);
+            } else {
+                options.addOption(Strings.format("casino.boss_reward_prismatic", displayName), "tournament_reward_" + i);
             }
-            int credits = CasinoIntegrationManager.getCreditReward() * 3;
-            options.addOption(Strings.format("casino.boss_reward_credits", credits), "tournament_reward_credits");
         }
+        int credits = CasinoIntegrationManager.getCreditReward() * 3;
+        options.addOption(Strings.format("casino.boss_reward_credits", credits), "tournament_reward_credits");
 
         setState(State.TOURNAMENT_REWARD);
     }
@@ -992,12 +990,15 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         switch (tier) {
             case 1 -> CasinoIntegrationManager.unlockCharacterReward(id);
-            case 2, 3 -> CasinoIntegrationManager.unlockPrismaticReward(id);
+            case 2 -> CasinoIntegrationManager.unlockPrismaticTrueReward(id);
+            case 3, 4 -> CasinoIntegrationManager.unlockPrismaticReward(id);
         }
 
         String displayName = CasinoIntegrationManager.getRewardDisplayName(id, tier);
         if (tier == 1) {
             textPanel.addPara(Strings.format("reward.character_unlocked", displayName), Color.GREEN);
+        } else if (tier == 2) {
+            textPanel.addPara(Strings.format("reward.prismatic_true_unlocked", displayName), Color.GREEN);
         } else {
             textPanel.addPara(Strings.format("reward.prismatic_unlocked", displayName), Color.GREEN);
         }

@@ -50,12 +50,6 @@ public class WeatherController {
                 state.getPlayerEffects().addEffect(StatusEffect.VENOM, weather.name(), 1, DurationType.PERMANENT);
                 state.getOpponentEffects().addEffect(StatusEffect.VENOM, weather.name(), 1, DurationType.PERMANENT);
             }
-            case STORM -> {
-                state.modifyWeatherAtkMod(true, 1);
-                state.modifyWeatherDefMod(true, 1);
-                state.modifyWeatherAtkMod(false, 1);
-                state.modifyWeatherDefMod(false, 1);
-            }
             case SEA_OF_CLOUDS -> {
                 state.addPrismaticUse(1);
                 for (PrismaticDiceType type : PrismaticDiceRegistry.getAll().values()) {
@@ -79,9 +73,9 @@ public class WeatherController {
             case ACID_RAIN -> {
                 int playerHp = state.getPlayerHp();
                 int opponentHp = state.getOpponentHp();
-                if (playerHp < opponentHp) {
+                if (playerHp > opponentHp) {
                     state.getPlayerEffects().addEffect(StatusEffect.POISON, weather.name(), 1, DurationType.PERMANENT);
-                } else if (opponentHp < playerHp) {
+                } else if (opponentHp > playerHp) {
                     state.getOpponentEffects().addEffect(StatusEffect.POISON, weather.name(), 1, DurationType.PERMANENT);
                 } else {
                     state.getPlayerEffects().addEffect(StatusEffect.POISON, weather.name(), 1, DurationType.PERMANENT);

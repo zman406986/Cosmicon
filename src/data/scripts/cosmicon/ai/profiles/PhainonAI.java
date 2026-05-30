@@ -14,7 +14,7 @@ public class PhainonAI extends AttackRerollAI {
 
     private boolean isUnyieldingUnneeded(BattleState state, boolean forPlayer) {
         if (state == null) return false;
-        if (state.isPhainonUnyieldingAvailable(forPlayer)) return true;
+        if (!state.isPhainonUnyieldingAvailable(forPlayer)) return true;
         int currentHp = forPlayer ? state.getPlayerHp() : state.getOpponentHp();
         int attackValue = state.getAttackValue();
         return attackValue < currentHp;

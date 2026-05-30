@@ -310,6 +310,10 @@ public class CosmiconEventState {
         getMemory().set(KEY_TOURNAMENT_PENDING_REWARDS, count);
     }
 
+    public static int getTournamentPendingRewards() {
+        return (int) getMemory().getFloat(KEY_TOURNAMENT_PENDING_REWARDS);
+    }
+
     public static void clearTournamentState() {
         MemoryAPI mem = getMemory();
         for (String key : TOURNAMENT_KEYS) {

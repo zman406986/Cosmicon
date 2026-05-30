@@ -3,6 +3,7 @@ package data.scripts.cosmicon.ai;
 import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.DiceType;
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
+import data.scripts.cosmicon.battle.WeatherType;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticEffect;
 import data.scripts.cosmicon.util.CosmiconLogger;
@@ -47,6 +48,7 @@ public final class SelectionOptimizer {
         int forcedCount = forcedIndices.size();
         int freeSlots = Math.max(0, effectiveRequired - forcedCount);
 
+        SelectionResult passiveOptResult = null;
         if (profile != null && profile.shouldOptimizeForPassive(isAttacking)) {
             SelectionResult passiveResult = optimizeForPassive(diceValues, diceTypes, effectiveRequired, 
                 profile, isAttacking, state, forPlayer, forcedIndices, freeSlots);
@@ -55,6 +57,7 @@ public final class SelectionOptimizer {
                     passiveResult.selectedIndices, passiveResult.passiveBonus);
                 return passiveResult;
             }
+            passiveOptResult = passiveResult;
         }
 
         if (profile != null && profile.prefersPairs()) {
@@ -79,6 +82,12 @@ public final class SelectionOptimizer {
                     greedyResult.totalScore, enhancedResult.totalScore);
                 return enhancedResult;
             }
+        }
+
+        if (passiveOptResult != null && passiveOptResult.totalScore > greedyResult.totalScore) {
+            CosmiconLogger.debug("Selection: passive optimization (non-triggered) chosen over greedy, score %.1f vs %.1f", 
+                passiveOptResult.totalScore, greedyResult.totalScore);
+            return passiveOptResult;
         }
 
         CosmiconLogger.debug("Selection: greedy selection chosen, indices: %s, sum: %d, score: %.1f", 
@@ -115,6 +124,7 @@ public final class SelectionOptimizer {
                 mergedValues.add(diceValues.get(idx));
                 mergedTypes.add(diceTypes.get(idx));
                 mergedSum += diceValues.get(idx);
+                mergedScore += diceValues.get(idx);
             }
         }
         
@@ -169,6 +179,11 @@ public final class SelectionOptimizer {
             selectedTypes.add(dv.type());
         }
 
+        WeatherType weather = state != null && state.getWeatherController() != null
+            ? state.getWeatherController().getCurrentWeather() : null;
+        float weatherBonus = getWeatherSelectionBonus(weather, selectedValues, selectedTypes, isAttacking, state, forPlayer);
+        effectiveScore += weatherBonus;
+
         return new SelectionResult(selectedIndices, sum, selectedValues, selectedTypes, false, 0f, effectiveScore);
     }
 
@@ -205,6 +220,55 @@ public final class SelectionOptimizer {
         if (effect.isGainPrismaticUse()) return 2f;
 
         return 1f;
+    }
+
+    private static float getWeatherSelectionBonus(WeatherType weather, List<Integer> selectedValues,
+            List<DiceType> selectedTypes, boolean isAttacking, BattleState state, boolean forPlayer) {
+        if (weather == null) return 0f;
+        float bonus = 0f;
+        switch (weather) {
+            case SOLAR_ECLIPSE -> {
+                if (isAttacking) {
+                    Set<Integer> unique = new HashSet<>(selectedValues);
+                    if (unique.size() == selectedValues.size()) bonus += 4f;
+                }
+            }
+            case DUST -> {
+                if (isAttacking && selectedValues.stream().allMatch(v -> v % 2 != 0)) bonus += 3f;
+            }
+            case RAINBOW -> {
+                if (isAttacking) {
+                    int sum = selectedValues.stream().mapToInt(Integer::intValue).sum();
+                    if (sum <= 10) bonus += 8f;
+                }
+            }
+            case LUNISOLAR_LUMINANCE -> {
+                if (isAttacking) {
+                    int hp = forPlayer ? state.getPlayerHp() : state.getOpponentHp();
+                    if (hp <= 3) bonus += selectedValues.stream().mapToInt(Integer::intValue).sum();
+                }
+            }
+            case HEAVY_SNOW -> {
+                if (selectedValues.contains(7)) bonus += 4f;
+            }
+            case CREPUSCULAR_RAYS -> {
+                if (isAttacking) {
+                    int atkHp = forPlayer ? state.getPlayerHp() : state.getOpponentHp();
+                    int defHp = forPlayer ? state.getOpponentHp() : state.getPlayerHp();
+                    if (atkHp < defHp) bonus += 6f;
+                }
+            }
+            case MODERATE_SNOW -> {
+                int[] freq = new int[13];
+                for (int v : selectedValues) if (v >= 1 && v <= 12) freq[v]++;
+                for (int f : freq) if (f >= 3) { bonus += 10f; break; }
+            }
+            case DRIZZLE -> {
+                if (selectedValues.contains(6)) bonus += 3f;
+            }
+            default -> {}
+        }
+        return bonus;
     }
 
     private static SelectionResult optimizeForPassive(
@@ -245,9 +309,12 @@ public final class SelectionOptimizer {
             CharacterAIProfile.PassiveEvaluation eval = profile.evaluatePassiveTrigger(selectedValues, selectedTypes, isAttacking, state, forPlayer);
 
             float passiveScore = profile.getPassiveBonusValue(selectedValues, isAttacking, state, forPlayer);
-            float score = sum + passiveScore + prismaticBonus;
+            WeatherType weather = state != null && state.getWeatherController() != null
+                ? state.getWeatherController().getCurrentWeather() : null;
+            float weatherBonus = getWeatherSelectionBonus(weather, selectedValues, selectedTypes, isAttacking, state, forPlayer);
+            float score = sum + passiveScore + prismaticBonus + weatherBonus;
             if (eval.triggered()) {
-                score += 100f;
+                score += profile.getPassiveTriggerScore();
             }
 
             if (score > bestScore) {

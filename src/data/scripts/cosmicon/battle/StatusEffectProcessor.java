@@ -283,8 +283,8 @@ public class StatusEffectProcessor {
             for (StatusEffectInstance inst : activeEffects) {
                 if (inst.effect() == StatusEffect.INSTANT_DAMAGE) {
                     processedEffects.add(new ProcessedEffect(StatusEffect.INSTANT_DAMAGE, inst.layers()));
-                    CosmiconLogger.info("[STATUS] INSTANT_DAMAGE: %d self-damage from %s", inst.layers(), inst.source());
-                    context.subtractInstantDamageFromHolder(inst.layers());
+                    CosmiconLogger.info("[STATUS] INSTANT_DAMAGE: %d damage to opponent from %s", inst.layers(), inst.source());
+                    context.addInstantDamageToOpponent(inst.layers());
                     removeFromSource(StatusEffect.INSTANT_DAMAGE, inst.source());
                     break;
                 }

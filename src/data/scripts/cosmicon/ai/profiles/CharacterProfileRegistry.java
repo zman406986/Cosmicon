@@ -31,6 +31,7 @@ public final class CharacterProfileRegistry {
         register(new CyreneAI());
         register(new PhainonAI());
         register(new HyacineAI());
+        register(new TrashcanAI());
     }
 
     private static void register(CharacterAIProfile profile) {

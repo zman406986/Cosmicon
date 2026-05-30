@@ -56,6 +56,10 @@ public interface CharacterAIProfile {
         return 0f;
     }
 
+    default float getPassiveTriggerScore() {
+        return 100f;
+    }
+
     record PassiveEvaluation(boolean triggered, float triggerProbability, float bonusValue, String description) {
         public static PassiveEvaluation notTriggered() {
             return new PassiveEvaluation(false, 0f, 0f, "");

@@ -27,24 +27,25 @@ public class AventurineAI extends AttackRerollAI {
 
     @Override
     public boolean shouldOptimizeForPassive(boolean isAttacking) {
-        return true;
+        return isAttacking;
     }
 
     @Override
     public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
-        if (selectedValues.isEmpty()) return PassiveEvaluation.notTriggered();
+        if (selectedValues.isEmpty() || !isAttacking) return PassiveEvaluation.notTriggered();
         int oddCount = DiceEvaluator.countOddNumbers(selectedValues);
         return PassiveEvaluation.triggered(oddCount + 7f, Strings.format("character.aventurine.passive_desc", oddCount));
     }
 
     @Override
     public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking) {
-        if (selectedValues.isEmpty()) return 0f;
+        if (selectedValues.isEmpty() || !isAttacking) return 0f;
         return DiceEvaluator.countOddNumbers(selectedValues) + 7f;
     }
 
     @Override
     public float getPassiveBonusValue(List<Integer> selectedValues, boolean isAttacking, BattleState state, boolean forPlayer) {
+        if (!isAttacking) return 0f;
         if (state == null) return getPassiveBonusValue(selectedValues, isAttacking);
 
         int currentToughness = state.getEffects(forPlayer).getLayers(StatusEffect.TOUGHNESS);
