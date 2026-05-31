@@ -644,9 +644,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             || effect == StatusEffect.FORCEFIELD
             || effect == StatusEffect.UNYIELDING
             || effect == StatusEffect.DESTINED
-            || effect == StatusEffect.DETERRENCE
-            || effect == StatusEffect.COUNTER
-            || effect == StatusEffect.REFLECT;
+            || effect == StatusEffect.COUNTER;
     }
 
     // ==================== SimPool ====================

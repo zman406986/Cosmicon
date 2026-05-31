@@ -21,7 +21,7 @@ Version 0.3.0
 - Fixed Storm weather granting ATK/DEF +2 instead of +1 (was applied in both appearance effects and persistent mods; removed duplicate from appearance).
 - Fixed Loan prismatic dice Overload self-damage never triggering (was checking attacker effects with ATTACK turn type instead of defender effects with DEFENSE turn type).
 - Fixed March 7th Instant Damage hitting herself instead of the opponent when defending (INSTANT_DAMAGE was processed as self-damage instead of opponent-damage).
-- Fixed Yao Guang Thorns damage being skipped when ATK >= 18 (onAttackResolution removed Thorns before damage was applied; reordered so Thorns damage applies first).
+- Fixed Yao Guang self-inflicted Thorns not being removed before dealing damage when ATK >= 18 (onAttackResolution now runs before Thorns damage application so the passive cleanse takes effect).
 - Fixed Revenge prismatic dice missing attack-only condition (wiki: "Available when attacking after taking 25 total DMG").
 - Fixed Acheron/Hyacine AI only pursuing all-4s/all-6s passive when already 1 die away from completion (findComboForSpecificValue now generates candidates when at least 1 die matches).
 - Fixed Sparxie AI always picking trivial pairs over high-value non-pairs (passive trigger score reduced from 100 to 10; new getPassiveTriggerScore() hook allows per-profile tuning).
@@ -39,7 +39,13 @@ Version 0.3.0
 - Fixed Poison not showing expanding box animation or floating damage number on the character card (process animation now triggers via onSecondaryDamage like other damage types; added cached position fallback for effects removed before animation fires; secondary damage numbers no longer cleared on ROLLING phase transition so they can play out naturally).
 - Fixed setup gallery prismatic dice scrollbar sitting on the panel edge (removed double-counted SCROLLBAR_WIDTH from track X position).
 - Increased tournament credit rewards to 5x normal encounter base (7500 per level) so overall tournament payout remains roughly the same despite the normal encounter reduction.
+- Split tournament credits into participation reward (normal encounter base × total games played) and prize credits (5x normal encounter base per selection); clarified text to distinguish the two.
 - Fixed Lunisolar Luminance weather doubling being lost when ARISE or HACK effects are active; ARISE/HACK now use `modifyAttackValue(delta)` instead of `setAttackValue(newSum)` to preserve prior bonuses, and Lunisolar Luminance doubling is applied after the modification phase so the final value (including ARISE/HACK changes) is correctly doubled.
+- Fixed Master Dicer level not updating when damage exceeded the current record in Gatekeeper 999 battles; `updateTrashcanHunterLevel` now derives the damage cap from the actual battle's bonus HP instead of the `isGatekeeper999Unlocked()` flag, which could be stale or out-of-sync with the battle configuration.
+- Fixed status effect box text and hover tooltip zones being misaligned (labels used 30f spacing/28f height while buttons used 20f/18f, causing cumulative drift per row); also fixed excessive line spacing making text appear to have extra blank lines between entries (label height reduced to 18f, spacing to 20f; both now share constants so they stay in sync).
+- Fixed Frost weather incorrectly granting Counter in addition to +1 DEF level (only Dan Heng PT's passive should grant Counter alongside the pending DEF level boost; added `pendingDefLevelBoostWithCounter` flag to distinguish the two sources).
+- Removed 4 hallucinated prismatic dice that had no wiki basis: Mirror, Sanctions, Strategy, Toxic; also removed their 3 associated status effects (REFLECT, DETERRENCE, TACTICS) and all references across 8 Java files and 2 localization files.
+- Added per-version availability condition support for prismatic dice; Doctor's Advice default version now correctly requires HP ≤ 10 (was always available), while the True version remains always available, matching the wiki.
 
 Version 0.2.0
 - Changed entry point from bars to comms (Custom NPCs generated for playing against).

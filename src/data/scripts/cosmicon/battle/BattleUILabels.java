@@ -66,7 +66,8 @@ public class BattleUILabels {
     private List<LabelAPI> playerStatusLabels;
     private List<LabelAPI> opponentStatusLabels;
     static final int MAX_STATUS_EFFECTS = 8;
-    private static final float STATUS_LABEL_SPACING = 30f;
+    static final float STATUS_LABEL_SPACING = 20f;
+    static final float STATUS_LABEL_HEIGHT = 18f;
 
     private record EffectInstanceKey(StatusEffectProcessor.StatusEffect effect, String source) {}
 
@@ -292,13 +293,13 @@ public class BattleUILabels {
         for (int i = 0; i < MAX_STATUS_EFFECTS; i++) {
             float yOffset = i * STATUS_LABEL_SPACING;
             LabelAPI playerLabel = UIComponentFactory.createLabelSmall(panel, "",
-                Color.WHITE, Alignment.LMID, BattleRenderingUtils.STATUS_BOX_WIDTH - 2f * BattleRenderingUtils.STATUS_BOX_PADDING, 28f,
+                Color.WHITE, Alignment.LMID, BattleRenderingUtils.STATUS_BOX_WIDTH - 2f * BattleRenderingUtils.STATUS_BOX_PADDING, STATUS_LABEL_HEIGHT,
                 playerBoxX + BattleRenderingUtils.STATUS_BOX_PADDING, playerCardY + BattleRenderingUtils.STATUS_BOX_PADDING + yOffset);
             playerLabel.setOpacity(0f);
             playerStatusLabels.add(playerLabel);
 
             LabelAPI opponentLabel = UIComponentFactory.createLabelSmall(panel, "",
-                Color.WHITE, Alignment.LMID, BattleRenderingUtils.STATUS_BOX_WIDTH - 2f * BattleRenderingUtils.STATUS_BOX_PADDING, 28f,
+                Color.WHITE, Alignment.LMID, BattleRenderingUtils.STATUS_BOX_WIDTH - 2f * BattleRenderingUtils.STATUS_BOX_PADDING, STATUS_LABEL_HEIGHT,
                 opponentBoxX + BattleRenderingUtils.STATUS_BOX_PADDING, opponentCardY + BattleRenderingUtils.STATUS_BOX_PADDING + yOffset);
             opponentLabel.setOpacity(0f);
             opponentStatusLabels.add(opponentLabel);
@@ -592,8 +593,7 @@ public class BattleUILabels {
         float x = playerBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
         float y = playerCardY + BattleRenderingUtils.STATUS_BOX_PADDING + displayIndex * STATUS_LABEL_SPACING;
         float w = BattleRenderingUtils.STATUS_BOX_WIDTH - 2f * BattleRenderingUtils.STATUS_BOX_PADDING;
-        float h = 28f;
-        return new float[]{x, y, w, h};
+        return new float[]{x, y, w, STATUS_LABEL_HEIGHT};
     }
 
     private float[] getOpponentStatusLabelPosition(int displayIndex) {
@@ -603,8 +603,7 @@ public class BattleUILabels {
         float x = opponentBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
         float y = opponentCardY + BattleRenderingUtils.STATUS_BOX_PADDING + displayIndex * STATUS_LABEL_SPACING;
         float w = BattleRenderingUtils.STATUS_BOX_WIDTH - 2f * BattleRenderingUtils.STATUS_BOX_PADDING;
-        float h = 28f;
-        return new float[]{x, y, w, h};
+        return new float[]{x, y, w, STATUS_LABEL_HEIGHT};
     }
 
     public Integer getEffectDisplayIndex(boolean isPlayer, StatusEffectProcessor.StatusEffect effect) {

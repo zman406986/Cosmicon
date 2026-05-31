@@ -11,7 +11,6 @@ public class StatusEffectProcessor {
         POISON,
         STRENGTH,
         TOUGHNESS,
-        DETERRENCE,
         FORCEFIELD,
         PERFORATION,
         COMBO,
@@ -28,9 +27,7 @@ public class StatusEffectProcessor {
         DESTINED,
         VENOM,
         INSTANT_DAMAGE,
-        TACTICS,
         YAO_GUANG_REROLLS,
-        REFLECT,
         CYRENE_TALLY
     }
 
@@ -215,26 +212,12 @@ public class StatusEffectProcessor {
 
     private void processBeforeRoll(TurnType turnType, BattleContext context) {
         if (turnType == TurnType.ATTACK) {
-            int tacticsLayers = getLayers(StatusEffect.TACTICS);
-            if (tacticsLayers > 0) {
-                context.addRerolls(tacticsLayers);
-                processedEffects.add(new ProcessedEffect(StatusEffect.TACTICS, tacticsLayers));
-                CosmiconLogger.info("[STATUS] TACTICS: +%d rerolls", tacticsLayers);
-            }
-
             int yaoGuangRerolls = getLayers(StatusEffect.YAO_GUANG_REROLLS);
             if (yaoGuangRerolls > 0) {
                 context.addRerolls(yaoGuangRerolls);
                 processedEffects.add(new ProcessedEffect(StatusEffect.YAO_GUANG_REROLLS, yaoGuangRerolls));
                 CosmiconLogger.info("[STATUS] YAO_GUANG_REROLLS: +%d rerolls", yaoGuangRerolls);
             }
-        }
-
-        int deterrenceLayers = getLayers(StatusEffect.DETERRENCE);
-        if (deterrenceLayers > 0) {
-            context.reduceRerolls(deterrenceLayers);
-            processedEffects.add(new ProcessedEffect(StatusEffect.DETERRENCE, deterrenceLayers));
-            CosmiconLogger.info("[STATUS] DETERRENCE: -%d rerolls", deterrenceLayers);
         }
     }
 
@@ -388,6 +371,10 @@ public class StatusEffectProcessor {
         }
         return 0;
     }
+
+
+
+
 
     public boolean shouldIgnoreDefense() {
         return hasEffect(StatusEffect.PERFORATION);

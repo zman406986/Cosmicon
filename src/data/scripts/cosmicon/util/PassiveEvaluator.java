@@ -93,6 +93,7 @@ public class PassiveEvaluator {
         
         if (result.getPendingDefLevelBoost() > 0) {
             state.setPendingDefLevelBoost(forPlayer, result.getPendingDefLevelBoost());
+            state.setPendingDefLevelBoostWithCounter(forPlayer, true);
         }
         
         if (result.getPendingStrength() > 0) {

@@ -39,7 +39,8 @@ public class CasinoIntegrationManager {
     }
 
     public static void updateTrashcanHunterLevel(int damageDealt) {
-        int maxHp = CosmiconStats.isGatekeeper999Unlocked() ? 999 : 99;
+        int bonusHp = CosmiconEventState.getCasinoBattleBonusHp();
+        int maxHp = (bonusHp >= 974) ? 999 : 99;
         int capped = Math.min(damageDealt, maxHp);
         int current = getTrashcanHunterLevel();
         if (capped > current) {
@@ -57,9 +58,14 @@ public class CasinoIntegrationManager {
         return CosmiconStats.NORMAL_ENCOUNTER_CREDIT_PER_LEVEL * 5 * Math.max(1, playerLevel);
     }
 
+    public static int getTournamentParticipationCredits(int totalGames) {
+        int playerLevel = Global.getSector().getPlayerStats().getLevel();
+        return CosmiconStats.NORMAL_ENCOUNTER_CREDIT_PER_LEVEL * totalGames * Math.max(1, playerLevel);
+    }
+
     public static void startBossBattle(InteractionDialogAPI dialog, Runnable onLeave) {
         CosmiconEventState.clearCasinoBattleState();
-        CosmiconEventState.setIsStandaloneEntry(false);
+        CosmiconEventState.setIsEmbeddedEntry(true);
         CosmiconEventState.setCasinoBattleMode(true);
         CosmiconEventState.setCasinoBattleIsBoss(true);
 
@@ -90,7 +96,7 @@ public class CasinoIntegrationManager {
 
     public static void startGatekeeperBattle(InteractionDialogAPI dialog, Runnable onLeave) {
         CosmiconEventState.clearCasinoBattleState();
-        CosmiconEventState.setIsStandaloneEntry(false);
+        CosmiconEventState.setIsEmbeddedEntry(true);
         CosmiconEventState.setReplayTutorialGame(-1);
         CosmiconEventState.setIsTutorialMode(false);
         CosmiconEventState.setCasinoBattleMode(true);
@@ -99,6 +105,7 @@ public class CasinoIntegrationManager {
         int bonusHp = CosmiconStats.isGatekeeper999Unlocked() ? 974 : 74;
         CosmiconEventState.setCasinoBattleBonusHp(bonusHp);
         CosmiconEventState.setCasinoBattleUseTrue(false);
+        CosmiconEventState.setLegendSkipEnabled(CosmiconStats.isLegendTitleInherited());
 
         CosmiconInteraction interaction = new CosmiconInteraction();
         interaction.setOnLeaveAction(onLeave);
@@ -108,7 +115,7 @@ public class CasinoIntegrationManager {
 
     public static void startTournament(InteractionDialogAPI dialog, Runnable onLeave) {
         CosmiconEventState.clearTournamentState();
-        CosmiconEventState.setIsStandaloneEntry(false);
+        CosmiconEventState.setIsEmbeddedEntry(true);
         CosmiconEventState.setReplayTutorialGame(-1);
         CosmiconEventState.setIsTutorialMode(false);
 
@@ -163,7 +170,7 @@ public class CasinoIntegrationManager {
         }
 
         CosmiconEventState.clearCasinoBattleState();
-        CosmiconEventState.setIsStandaloneEntry(false);
+        CosmiconEventState.setIsEmbeddedEntry(true);
         CosmiconEventState.setCasinoBattleMode(true);
         CosmiconEventState.setCasinoBattleIsBoss(false);
 

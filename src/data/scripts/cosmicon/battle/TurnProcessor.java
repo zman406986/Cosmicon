@@ -722,6 +722,9 @@ public class TurnProcessor {
             }
         }
 
+        PassiveEventSystem.onAttackResolution(state, state.isPlayerAttacker());
+        PassiveEventSystem.onAttackResolution(state, !state.isPlayerAttacker());
+
         if (playerThornsDamage > 0 && state.getPlayerEffects().hasEffect(StatusEffectProcessor.StatusEffect.THORNS)) {
             state.applyDamageTo(true, playerThornsDamage);
             state.notifySecondaryDamage(true, playerThornsDamage, "THORNS");
@@ -730,9 +733,6 @@ public class TurnProcessor {
             state.applyDamageTo(false, opponentThornsDamage);
             state.notifySecondaryDamage(false, opponentThornsDamage, "THORNS");
         }
-
-        PassiveEventSystem.onAttackResolution(state, state.isPlayerAttacker());
-        PassiveEventSystem.onAttackResolution(state, !state.isPlayerAttacker());
 
         state.setCurrentPhase(TurnState.Phase.RESOLVING);
         state.notifyPhaseChange(TurnState.Phase.RESOLVING);
@@ -830,12 +830,6 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
             state.notifySecondaryDamage(defenderIsPlayer, result.instantDamage(), "INSTANT_DAMAGE");
         }
 
-        if (result.reflectDamage() > 0) {
-            state.applyDamageTo(playerIsAttacker, result.reflectDamage());
-            state.notifySecondaryDamage(playerIsAttacker, result.reflectDamage(), "REFLECT");
-            state.getEffects(defenderIsPlayer).removeEffect(StatusEffectProcessor.StatusEffect.REFLECT);
-        }
-
         applyComboAttack(playerIsAttacker, defenderIsPlayer);
 
         if (result.perforationSuccessful()) {
@@ -893,14 +887,6 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
             
             CosmiconLogger.info("COMBO attack: %d damage (Attack=%d, Defense=%d, modifiedAtk=%d, modifiedDef=%d)",
                 comboDamage, attackValue, defenseValue, modifiedAttack, modifiedDefense);
-            
-            int reflectDamage = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.REFLECT);
-            if (reflectDamage > 0) {
-                state.applyDamageTo(playerIsAttacker, reflectDamage);
-                state.notifySecondaryDamage(playerIsAttacker, reflectDamage, "REFLECT");
-                defenderEffects.removeEffect(StatusEffectProcessor.StatusEffect.REFLECT);
-                CosmiconLogger.debug("COMBO reflect: %d damage to attacker", reflectDamage);
-            }
             
             int instantDamageToAttacker = PassiveEventSystem.onDamageTaken(state, defenderIsPlayer, comboDamage);
             if (instantDamageToAttacker > 0) {

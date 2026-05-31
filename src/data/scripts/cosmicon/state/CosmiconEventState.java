@@ -22,6 +22,8 @@ public class CosmiconEventState {
     private static final String KEY_CASINO_BATTLE_BONUS_HP = "$cos_casino_battle_bonus_hp";
     private static final String KEY_CASINO_BATTLE_USE_TRUE = "$cos_casino_battle_use_true";
     private static final String KEY_CASINO_BATTLE_RESULT_DAMAGE = "$cos_casino_battle_result_damage";
+    private static final String KEY_CASINO_BATTLE_OPPONENT_KILLED = "$cos_casino_battle_opponent_killed";
+    private static final String KEY_LEGEND_SKIP_ENABLED = "$cos_legend_skip_enabled";
     private static final String KEY_TRASHCAN_HUNTER_LEVEL = "$cos_trashcan_hunter_level";
     private static final String KEY_ORIGINAL_NPC_CHAR = "$cos_original_npc_char";
 
@@ -40,6 +42,7 @@ public class CosmiconEventState {
         KEY_CASINO_BATTLE_MODE, KEY_CASINO_BATTLE_IS_BOSS,
         KEY_CASINO_BATTLE_OPPONENT, KEY_CASINO_BATTLE_BONUS_HP,
         KEY_CASINO_BATTLE_USE_TRUE, KEY_CASINO_BATTLE_RESULT_DAMAGE,
+        KEY_CASINO_BATTLE_OPPONENT_KILLED, KEY_LEGEND_SKIP_ENABLED,
         KEY_TOURNAMENT_WINS, KEY_TOURNAMENT_LOSSES,
         KEY_TOURNAMENT_IN_LOSER_BRACKET, KEY_TOURNAMENT_GRAND_FINAL,
         KEY_TOURNAMENT_SERIES_SCORE, KEY_TOURNAMENT_BRACKET_DATA,
@@ -101,14 +104,14 @@ public class CosmiconEventState {
         return mem.getBoolean(KEY_IS_BAR_EVENT);
     }
 
-    public static void setIsStandaloneEntry(boolean isStandalone) {
-        getMemory().set(KEY_IS_STANDALONE_ENTRY, isStandalone);
+    public static void setIsEmbeddedEntry(boolean isEmbedded) {
+        getMemory().set(KEY_IS_STANDALONE_ENTRY, !isEmbedded);
     }
 
-    public static boolean isStandaloneEntry() {
+    public static boolean isEmbeddedEntry() {
         MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_IS_STANDALONE_ENTRY)) return false;
-        return mem.getBoolean(KEY_IS_STANDALONE_ENTRY);
+        if (!mem.contains(KEY_IS_STANDALONE_ENTRY)) return true;
+        return !mem.getBoolean(KEY_IS_STANDALONE_ENTRY);
     }
 
     public static void setSessionWon(boolean won) {
@@ -225,6 +228,26 @@ public class CosmiconEventState {
         MemoryAPI mem = getMemory();
         if (!mem.contains(KEY_CASINO_BATTLE_RESULT_DAMAGE)) return 0;
         return mem.getInt(KEY_CASINO_BATTLE_RESULT_DAMAGE);
+    }
+
+    public static void setCasinoBattleOpponentKilled(boolean killed) {
+        getMemory().set(KEY_CASINO_BATTLE_OPPONENT_KILLED, killed);
+    }
+
+    public static boolean isCasinoBattleOpponentKilled() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_CASINO_BATTLE_OPPONENT_KILLED)) return false;
+        return mem.getBoolean(KEY_CASINO_BATTLE_OPPONENT_KILLED);
+    }
+
+    public static void setLegendSkipEnabled(boolean enabled) {
+        getMemory().set(KEY_LEGEND_SKIP_ENABLED, enabled);
+    }
+
+    public static boolean isLegendSkipEnabled() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_LEGEND_SKIP_ENABLED)) return false;
+        return mem.getBoolean(KEY_LEGEND_SKIP_ENABLED);
     }
 
     public static void setTrashcanHunterLevel(int level) {
@@ -349,5 +372,7 @@ public class CosmiconEventState {
         mem.unset(KEY_CASINO_BATTLE_BONUS_HP);
         mem.unset(KEY_CASINO_BATTLE_USE_TRUE);
         mem.unset(KEY_CASINO_BATTLE_RESULT_DAMAGE);
+        mem.unset(KEY_CASINO_BATTLE_OPPONENT_KILLED);
+        mem.unset(KEY_LEGEND_SKIP_ENABLED);
     }
 }

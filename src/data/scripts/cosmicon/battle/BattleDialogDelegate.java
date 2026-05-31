@@ -49,6 +49,11 @@ public class BattleDialogDelegate implements com.fs.starfarer.api.campaign.Custo
     @Override
     public void init(CustomPanelAPI panel, DialogCallbacks callbacks) {
         battleController.initBattleWithSelection(playerIsAttacker);
+
+        if (CosmiconEventState.isLegendSkipEnabled()) {
+            battleController.preApplyOpponentDamage(99);
+        }
+
         battlePanel.init(panel, callbacks);
         battlePanel.wireTutorial(battleController.getTutorialController());
         battlePanel.updateLabelsFromState();
@@ -74,6 +79,8 @@ public class BattleDialogDelegate implements com.fs.starfarer.api.campaign.Custo
         if (CosmiconEventState.isCasinoBattleMode()) {
             int damageDealt = battleController.getState().getOpponentTotalDamageTaken();
             CosmiconEventState.setCasinoBattleResultDamage(damageDealt);
+            boolean opponentKilled = battleController.getState().getOpponentHp() <= 0;
+            CosmiconEventState.setCasinoBattleOpponentKilled(opponentKilled);
         }
 
         battleController.cleanup();

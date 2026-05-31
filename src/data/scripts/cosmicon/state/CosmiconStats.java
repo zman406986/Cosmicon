@@ -17,6 +17,7 @@ public class CosmiconStats {
     private static final String KEY_PRISMATIC_FEATURE_UNLOCKED = "$cos_prismatic_feature_unlocked";
     private static final String KEY_TOURNAMENT_UNLOCKED = "$cos_tournament_unlocked";
     private static final String KEY_GATEKEEPER_999_UNLOCKED = "$cos_gatekeeper_999_unlocked";
+    private static final String KEY_LEGEND_TITLE_INHERITED = "$cos_legend_title_inherited";
 
     private static final int TUTORIAL_GAMES = 2;
     public static final int NORMAL_ENCOUNTER_CREDIT_PER_LEVEL = 1500;
@@ -173,6 +174,16 @@ public class CosmiconStats {
 
     public static void setGatekeeper999Unlocked(boolean unlocked) {
         getMemory().set(KEY_GATEKEEPER_999_UNLOCKED, unlocked);
+    }
+
+    public static boolean isLegendTitleInherited() {
+        MemoryAPI mem = getMemory();
+        if (!mem.contains(KEY_LEGEND_TITLE_INHERITED)) return false;
+        return mem.getBoolean(KEY_LEGEND_TITLE_INHERITED);
+    }
+
+    public static void setLegendTitleInherited(boolean inherited) {
+        getMemory().set(KEY_LEGEND_TITLE_INHERITED, inherited);
     }
 
     public static int calculateCreditReward(int playerLevel) {

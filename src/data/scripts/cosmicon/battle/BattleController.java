@@ -347,6 +347,10 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
         return isGatekeeper999Battle() && state.getOpponentTotalDamageTaken() >= 99;
     }
 
+    public void preApplyOpponentDamage(int damage) {
+        state.preApplyOpponentDamage(damage);
+    }
+
     public void cleanup() {
         currentInstance = null;
         CosmiconLogger.info("========== BATTLE CLEANUP ==========");

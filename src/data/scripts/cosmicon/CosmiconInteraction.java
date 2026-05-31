@@ -146,7 +146,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         if (CosmiconStats.getGamesPlayed() >= 2 && !CosmiconStats.isInTutorialMode()) {
             options.addOption(Strings.get("menu.replay_tutorial_2"), "replay_tutorial_2");
         }
-        if (CosmiconEventState.isTournamentActive() && !CosmiconEventState.isStandaloneEntry()) {
+        if (CosmiconEventState.isTournamentActive() && CosmiconEventState.isEmbeddedEntry()) {
             options.addOption(Strings.get("menu.view_tournament_standings"), "view_tournament_standings");
             
             if (tournamentManager != null && !tournamentManager.isPlayerChampion() && !tournamentManager.isPlayerEliminated()) {
@@ -177,7 +177,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             case MAIN_MENU:
                 switch (data) {
                     case "start_game" -> {
-                        if (!CosmiconEventState.isStandaloneEntry() && CosmiconEventState.isTournamentActive() && tournamentManager != null
+                        if (CosmiconEventState.isEmbeddedEntry() && CosmiconEventState.isTournamentActive() && tournamentManager != null
                             && !tournamentManager.isPlayerChampion() && !tournamentManager.isPlayerEliminated()) {
                             startCasinoBattleWithSelection();
                         } else {
@@ -198,7 +198,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                     case "help" -> showHelp();
                     case "leave" -> {
                         if (CosmiconEventState.isTournamentActive()) {
-                            CosmiconEventState.setIsStandaloneEntry(false);
+                            CosmiconEventState.setIsEmbeddedEntry(true);
                             CosmiconEventState.setIsBarEvent(false);
                             CosmiconMusicPlugin.stopMusic();
                         } else {
@@ -355,7 +355,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             return;
         }
 
-        if (CosmiconEventState.isCasinoBattleMode() && !CosmiconEventState.isStandaloneEntry()) {
+        if (CosmiconEventState.isCasinoBattleMode() && CosmiconEventState.isEmbeddedEntry()) {
             handleCasinoVictory();
             return;
         }
@@ -398,7 +398,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             return;
         }
 
-        if (CosmiconEventState.isCasinoBattleMode() && !CosmiconEventState.isStandaloneEntry()) {
+        if (CosmiconEventState.isCasinoBattleMode() && CosmiconEventState.isEmbeddedEntry()) {
             handleCasinoDefeat();
             return;
         }
@@ -651,7 +651,16 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         CasinoIntegrationManager.updateTrashcanHunterLevel(damageDealt);
         int newLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
 
-        textPanel.addPara(Strings.get("casino.gatekeeper_victory"), Color.GREEN);
+        boolean is999Battle = CosmiconEventState.getCasinoBattleBonusHp() >= 974;
+        boolean opponentKilled = CosmiconEventState.isCasinoBattleOpponentKilled();
+
+        if (is999Battle && opponentKilled && !CosmiconStats.isLegendTitleInherited()) {
+            textPanel.addPara(Strings.get("casino.legend_true_kill"), Color.GREEN);
+            textPanel.addPara(Strings.get("casino.legend_title_inherited"), Color.CYAN);
+            CosmiconStats.setLegendTitleInherited(true);
+        } else {
+            textPanel.addPara(Strings.get("casino.gatekeeper_victory"), Color.GREEN);
+        }
 
         if (newLevel > oldLevel) {
             textPanel.addPara(Strings.format("casino.gatekeeper_hunter_level_up", newLevel), Color.CYAN);
@@ -877,13 +886,11 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 }
             }
             case "forfeit_tournament_confirm" -> {
-                int baseCredits = CasinoIntegrationManager.getTournamentCreditReward();
-                int totalCredits = baseCredits * tournamentWins;
-                Global.getSector().getPlayerFleet().getCargo().getCredits().add(totalCredits);
-                AddRemoveCommodity.addCreditsGainText(totalCredits, textPanel);
-                if (tournamentWins > 0) {
-                    textPanel.addPara(Strings.format("casino.tournament_credits_earned", totalCredits, tournamentWins, baseCredits));
-                }
+                int totalGames = tournamentWins + CosmiconEventState.getTournamentLosses();
+                int participationCredits = CasinoIntegrationManager.getTournamentParticipationCredits(totalGames);
+                Global.getSector().getPlayerFleet().getCargo().getCredits().add(participationCredits);
+                AddRemoveCommodity.addCreditsGainText(participationCredits, textPanel);
+                textPanel.addPara(Strings.format("casino.tournament_participation_credits", participationCredits, totalGames));
                 textPanel.addPara(Strings.get("casino.tournament_forfeited"), Color.RED);
                 boolean inGrandFinal = tournamentManager != null && tournamentManager.isGrandFinal();
                 tournamentPendingRewards = inGrandFinal ? 2 : 1;
@@ -898,8 +905,8 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         boolean champion = tournamentManager != null && tournamentManager.isPlayerChampion();
         boolean runnerUp = tournamentManager != null && !champion && tournamentManager.isGrandFinal();
-        int baseCredits = CasinoIntegrationManager.getTournamentCreditReward();
-        int totalCredits = baseCredits * tournamentWins;
+        int totalGames = tournamentWins + CosmiconEventState.getTournamentLosses();
+        int participationCredits = CasinoIntegrationManager.getTournamentParticipationCredits(totalGames);
 
         if (champion) {
             textPanel.addPara(Strings.get("casino.tournament_victory"), Color.YELLOW);
@@ -913,9 +920,9 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             tournamentPendingRewards = 1;
         }
 
-        Global.getSector().getPlayerFleet().getCargo().getCredits().add(totalCredits);
-        AddRemoveCommodity.addCreditsGainText(totalCredits, textPanel);
-        textPanel.addPara(Strings.format("casino.tournament_credits_earned", totalCredits, tournamentWins, baseCredits));
+        Global.getSector().getPlayerFleet().getCargo().getCredits().add(participationCredits);
+        AddRemoveCommodity.addCreditsGainText(participationCredits, textPanel);
+        textPanel.addPara(Strings.format("casino.tournament_participation_credits", participationCredits, totalGames));
 
         CosmiconEventState.setTournamentPendingRewards(tournamentPendingRewards);
 
@@ -949,7 +956,8 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             }
         }
         int credits = CasinoIntegrationManager.getTournamentCreditReward();
-        options.addOption(Strings.format("casino.boss_reward_credits", credits), "tournament_reward_credits");
+        textPanel.addPara(Strings.format("casino.tournament_prize_credits_hint", credits, tournamentWins));
+        options.addOption(Strings.format("casino.tournament_prize_credits", credits), "tournament_reward_credits");
 
         setState(State.TOURNAMENT_REWARD);
     }

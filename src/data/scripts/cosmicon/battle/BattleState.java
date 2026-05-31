@@ -39,6 +39,8 @@ public class BattleState {
     
     private int playerPendingDefLevelBoost;
     private int opponentPendingDefLevelBoost;
+    private boolean playerPendingDefLevelBoostWithCounter;
+    private boolean opponentPendingDefLevelBoostWithCounter;
     private int playerOriginalDefLevel;
     private int opponentOriginalDefLevel;
     private int playerPendingStrength;
@@ -160,6 +162,8 @@ public class BattleState {
         this.aiSelectionVisualizer = new AISelectionVisualizer();
         this.playerPendingDefLevelBoost = 0;
         this.opponentPendingDefLevelBoost = 0;
+        this.playerPendingDefLevelBoostWithCounter = false;
+        this.opponentPendingDefLevelBoostWithCounter = false;
         this.playerOriginalDefLevel = 0;
         this.opponentOriginalDefLevel = 0;
         this.phainonUnyieldingConsumed = false;
@@ -382,6 +386,12 @@ public class BattleState {
     
     public void setOpponentHp(int hp) {
         hpManager.setOpponentHp(hp, opponentCard);
+    }
+
+    public void preApplyOpponentDamage(int damage) {
+        int currentHp = getOpponentHp();
+        setOpponentHp(Math.max(0, currentHp - damage));
+        hpManager.recordDamageTaken(damage, false);
     }
 
     public int getTurnNumber() {
@@ -823,8 +833,22 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     public void clearPendingDefLevelBoost(boolean forPlayer) {
         if (forPlayer) {
             playerPendingDefLevelBoost = 0;
+            playerPendingDefLevelBoostWithCounter = false;
         } else {
             opponentPendingDefLevelBoost = 0;
+            opponentPendingDefLevelBoostWithCounter = false;
+        }
+    }
+
+    public boolean getPendingDefLevelBoostWithCounter(boolean forPlayer) {
+        return forPlayer ? playerPendingDefLevelBoostWithCounter : opponentPendingDefLevelBoostWithCounter;
+    }
+
+    public void setPendingDefLevelBoostWithCounter(boolean forPlayer, boolean withCounter) {
+        if (forPlayer) {
+            playerPendingDefLevelBoostWithCounter = withCounter;
+        } else {
+            opponentPendingDefLevelBoostWithCounter = withCounter;
         }
     }
 
@@ -932,6 +956,8 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         hpManager.cleanup();
         playerPendingDefLevelBoost = 0;
         opponentPendingDefLevelBoost = 0;
+        playerPendingDefLevelBoostWithCounter = false;
+        opponentPendingDefLevelBoostWithCounter = false;
         playerOriginalDefLevel = 0;
         opponentOriginalDefLevel = 0;
         phainonUnyieldingConsumed = false;

@@ -39,7 +39,7 @@ public class CosmiconCasinoGatekeeper implements BaseCommand {
         CosmiconEventState.setIsBarEvent(false);
         CosmiconEventState.setIsTutorialMode(false);
 
-        Console.showMessage("Starting gatekeeper battle vs Trashcan (+" + bonusHp + " HP)...");
+        Console.showMessage("Starting legend battle vs Trashcan (+" + bonusHp + " HP)...");
 
         Console.showDialogOnClose(
             new CosmiconInteraction(),

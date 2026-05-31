@@ -262,7 +262,9 @@ public class CharacterPassives {
                 state.setOriginalDefLevel(forPlayer, originalDefLevel);
                 card.setDefLevel(originalDefLevel + pendingBoost);
             }
-            state.getEffects(forPlayer).addEffect(StatusEffect.COUNTER, characterId, 1, DurationType.USAGE_BASED);
+            if (state.getPendingDefLevelBoostWithCounter(forPlayer)) {
+                state.getEffects(forPlayer).addEffect(StatusEffect.COUNTER, characterId, 1, DurationType.USAGE_BASED);
+            }
             state.clearPendingDefLevelBoost(forPlayer);
         }
     }

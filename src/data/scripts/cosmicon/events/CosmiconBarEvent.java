@@ -154,7 +154,7 @@ public class CosmiconBarEvent extends BaseBarEvent {
                     }
 
                     CosmiconEventState.clearCasinoBattleState();
-                    CosmiconEventState.setIsStandaloneEntry(true);
+                    CosmiconEventState.setIsEmbeddedEntry(false);
                     CosmiconEventState.setIsBarEvent(true);
                     BarEventManager.getInstance().notifyWasInteractedWith(this);
 

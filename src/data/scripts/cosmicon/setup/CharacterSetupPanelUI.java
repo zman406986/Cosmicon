@@ -837,7 +837,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         float diceListStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 15f;
         float diceListHeight = PANEL_HEIGHT - diceListStartY - BUTTON_AREA_HEIGHT - 20f;
-        float diceTrackX = DICE_LIST_X + DICE_LIST_WIDTH + SCROLLBAR_WIDTH + 2f;
+        float diceTrackX = DICE_LIST_X + DICE_LIST_WIDTH + 2f;
 
         // Gallery scrollbar drag
         if (isDraggingScrollbar) {

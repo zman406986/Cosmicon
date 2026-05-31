@@ -290,9 +290,17 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         }
 
         if (battleController != null && battleController.isGatekeeperBattle()) {
-            gatekeeper999StartMessageActive = true;
-            gatekeeper999StartMessagePulseTimer = 0f;
-            createGatekeeper999StartMessageLabel();
+            if (battleController.isGatekeeperEarlyExit()) {
+                gatekeeper999HintShown = true;
+                gatekeeper999HintActive = true;
+                gatekeeper999HintPulseTimer = 0f;
+                createGatekeeper999HintLabel();
+            } else {
+                gatekeeper999StartMessageActive = true;
+                gatekeeper999StartMessagePulseTimer = 0f;
+                createGatekeeper999StartMessageLabel();
+            }
+            inputHandler.consumeClick();
         }
     }
 
@@ -327,7 +335,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             tutorialController.onPhaseChange(newPhase);
         }
 
-        if (gatekeeper999HintActive && newPhase == Phase.WAITING_NEXT_TURN) {
+        if (gatekeeper999HintActive && newPhase == Phase.ROLLING) {
             gatekeeper999HintActive = false;
             removeGatekeeper999HintLabel();
         }
@@ -615,11 +623,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     public void onSecondaryDamage(boolean isPlayer, int damage, String damageType) {
         if (damage <= 0) return;
 
-        boolean displayIsPlayer = isPlayer;
-
         float cardCenterX;
         float cardCenterY;
-        if (displayIsPlayer) {
+        if (isPlayer) {
             float cardX = BattleRenderingUtils.getPlayerCardX();
             float cardY = BattleRenderingUtils.getPlayerCardY();
             cardCenterX = cardX + BattleRenderingUtils.CARD_WIDTH / 2f;
@@ -631,7 +637,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         int sameTargetCount = 0;
         for (SecondaryDamageEntry entry : secondaryDamageNumbers) {
-            if (entry.isPlayer == displayIsPlayer) sameTargetCount++;
+            if (entry.isPlayer == isPlayer) sameTargetCount++;
         }
         float yOffset = sameTargetCount * 20f;
 
@@ -650,12 +656,11 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             impactEffect.triggerParticles(cardCenterX, cardCenterY, 10, color);
         }
 
-        secondaryDamageNumbers.add(new SecondaryDamageEntry(fn, displayIsPlayer, impactEffect));
+        secondaryDamageNumbers.add(new SecondaryDamageEntry(fn, isPlayer, impactEffect));
 
         switch (damageType) {
             case "COUNTER" -> labels.triggerEffectProcessAnimation(!isPlayer, StatusEffectProcessor.StatusEffect.COUNTER);
             case "OVERLOAD" -> labels.triggerEffectProcessAnimation(isPlayer, StatusEffectProcessor.StatusEffect.OVERLOAD);
-            case "REFLECT" -> labels.triggerEffectProcessAnimation(!isPlayer, StatusEffectProcessor.StatusEffect.REFLECT);
             case "POISON" -> labels.triggerEffectProcessAnimation(isPlayer, StatusEffectProcessor.StatusEffect.POISON);
             default -> {}
         }
@@ -708,7 +713,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             case "INSTANT_DAMAGE" -> ColorHelper.INSTANT_DAMAGE;
             case "POISON" -> ColorHelper.POISON_DAMAGE;
             case "THORNS" -> ColorHelper.THORNS_DAMAGE;
-            case "REFLECT" -> ColorHelper.REFLECT_DAMAGE;
             case "OVERLOAD" -> ColorHelper.OVERLOAD_DAMAGE;
             default -> FlyingNumber.DAMAGE_RESULT;
         };

@@ -62,7 +62,7 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements Intera
         }
 
         CosmiconEventState.clearCasinoBattleState();
-        CosmiconEventState.setIsStandaloneEntry(true);
+        CosmiconEventState.setIsEmbeddedEntry(false);
 
         dialog.setPlugin(this);
 
@@ -76,7 +76,7 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements Intera
                 }
             }
             if (CosmiconEventState.isTournamentActive()) {
-                CosmiconEventState.setIsStandaloneEntry(false);
+                CosmiconEventState.setIsEmbeddedEntry(true);
                 CosmiconEventState.setIsBarEvent(false);
                 CosmiconMusicPlugin.stopMusic();
             } else {

@@ -35,7 +35,6 @@ public final class ColorHelper {
     public static final Color INSTANT_DAMAGE = new Color(255, 160, 50);
     public static final Color POISON_DAMAGE = new Color(100, 220, 80);
     public static final Color THORNS_DAMAGE = new Color(140, 200, 60);
-    public static final Color REFLECT_DAMAGE = new Color(80, 220, 255);
     public static final Color OVERLOAD_DAMAGE = new Color(255, 80, 50);
     public static final Color HEAL = new Color(80, 255, 120);
 

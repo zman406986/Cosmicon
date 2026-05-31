@@ -68,11 +68,6 @@ public class DamageResolver {
             weatherSiphon = (int)(damage * siphonMultiplier);
         }
         
-        int reflectDamage = 0;
-        if (damage > 0) {
-            reflectDamage = defenderEffects.getLayers(StatusEffectProcessor.StatusEffect.REFLECT);
-        }
-        
         int instantDamage = state.getPrismaticInstantDamage(!state.isPlayerAttacker());
         
         DamageResult result = new DamageResult(
@@ -82,7 +77,6 @@ public class DamageResolver {
             counterDamage,
             overloadSelfDamage,
             siphonHeal + weatherSiphon,
-            reflectDamage,
             instantDamage,
             perforationSuccessful,
             forcefieldUsed
@@ -95,7 +89,7 @@ public class DamageResolver {
     }
 
     public record DamageResult(int damageToDefender, int thornsDamage, int selfThornsDamage, int counterDamage, 
-                               int overloadSelfDamage, int siphonHeal, int reflectDamage, int instantDamage,
+                               int overloadSelfDamage, int siphonHeal, int instantDamage,
                                boolean perforationSuccessful, boolean forcefieldUsed)
     {
     }
@@ -129,9 +123,6 @@ public class DamageResolver {
         }
         if (result.siphonHeal() > 0) {
             sb.append("\n  Siphon heal: ").append(result.siphonHeal());
-        }
-        if (result.reflectDamage() > 0) {
-            sb.append("\n  Reflect: ").append(result.reflectDamage());
         }
         if (result.instantDamage() > 0) {
             sb.append("\n  Instant damage: ").append(result.instantDamage());

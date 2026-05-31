@@ -68,10 +68,12 @@ public class PrismaticManager {
     public List<PrismaticDiceType> getAvailable(boolean forPlayer, BattleState state) {
         PrismaticState ps = getState(forPlayer);
         ConditionContext context = createConditionContext(state, forPlayer);
+        CharacterCard card = state.getCard(forPlayer);
+        boolean useTrueVersion = card != null && card.isUseTruePrismatic();
         
         List<PrismaticDiceType> available = new ArrayList<>();
         for (PrismaticDiceType type : PrismaticDiceRegistry.getAll().values()) {
-            if (ps.getUsesByType(type) > 0 && type.isAvailable(context)) {
+            if (ps.getUsesByType(type) > 0 && type.isAvailable(context, useTrueVersion)) {
                 available.add(type);
             }
         }

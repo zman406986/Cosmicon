@@ -170,9 +170,9 @@ public class BattleUIButtons implements ActionListenerDelegate {
         opponentStatusButtons = new ArrayList<>();
         playerStatusButtons = new ArrayList<>();
 
-        float btnWidth = BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
-        float btnHeight = 18f;
-        float spacing = 20f;
+        float btnWidth = BattleRenderingUtils.STATUS_BOX_WIDTH - 2f * BattleRenderingUtils.STATUS_BOX_PADDING;
+        float btnHeight = BattleUILabels.STATUS_LABEL_HEIGHT;
+        float spacing = BattleUILabels.STATUS_LABEL_SPACING;
 
         float opponentCardX = BattleRenderingUtils.getOpponentCardX();
         float opponentCardY = BattleRenderingUtils.getOpponentCardY();
