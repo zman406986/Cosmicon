@@ -1,5 +1,8 @@
 {
     "cosmiconDiceEnabled": true,
+    "debugEnabled": true,
+    "rerollLogEnabled": false,
+    "npcEnabled": true,
     "marketSizeMin": 3,
     "defaultHP": 20,
     "defaultRerolls": 2,
@@ -7,6 +10,26 @@
     "npcSpawnIntervalDays": 7,
     "npcMinLifetimeDays": 30,
     "npcMaxLifetimeDays": 60,
+    "credits": {
+        "normalEncounterPerLevel": 1500,
+        "baseRewardPerLevel": 3000,
+        "randomFactorMin": 0.9,
+        "randomFactorMax": 1.1
+    },
+    "casino": {
+        "gatekeeperCost": 5000,
+        "tournamentCost": 15000,
+        "gatekeeperBonusHp": 74,
+        "gatekeeper999BonusHp": 974,
+        "bossBonusHp": 15,
+        "bossCreditMultiplier": 3,
+        "gatekeeperWinCreditMultiplier": 4,
+        "gatekeeperLossCreditMultiplier": 2,
+        "tournamentCreditPerLevelMultiplier": 5,
+        "tournamentChampionRewards": 3,
+        "tournamentRunnerUpRewards": 2,
+        "tournamentEliminatedRewards": 1
+    },
     "graphics": {
         "cosmicon_dice": {
             "d4": "graphics/cosmicon/Dice/Dice_D4.png",

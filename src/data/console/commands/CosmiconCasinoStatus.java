@@ -1,5 +1,6 @@
 package data.console.commands;
 
+import data.scripts.CosmiconConfig;
 import data.scripts.cosmicon.casino.CasinoIntegrationManager;
 import data.scripts.cosmicon.casino.TournamentManager;
 import data.scripts.cosmicon.state.CosmiconEventState;
@@ -38,7 +39,7 @@ public class CosmiconCasinoStatus implements BaseCommand {
         Console.showMessage("Boss Reward Tier: " + rewardTier
             + " (" + tierName(rewardTier) + ")");
         Console.showMessage("Credit Reward (base): " + creditReward);
-        int normalBase = CosmiconStats.NORMAL_ENCOUNTER_CREDIT_PER_LEVEL;
+        int normalBase = CosmiconConfig.NORMAL_ENCOUNTER_CREDIT_PER_LEVEL;
         int playerLevel = com.fs.starfarer.api.Global.getSector().getPlayerStats().getLevel();
         int normalMin = (int) (normalBase * Math.max(1, playerLevel) * 0.9f);
         int normalMax = (int) (normalBase * Math.max(1, playerLevel) * 1.1f);
