@@ -9,6 +9,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.InteractionDialogAPI;
 
+import data.scripts.CosmiconConfig;
 import data.scripts.cosmicon.CosmiconInteraction;
 import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.CharacterRegistry;
@@ -55,12 +56,12 @@ public class CasinoIntegrationManager {
 
     public static int getTournamentCreditReward() {
         int playerLevel = Global.getSector().getPlayerStats().getLevel();
-        return CosmiconStats.NORMAL_ENCOUNTER_CREDIT_PER_LEVEL * 5 * Math.max(1, playerLevel);
+        return CosmiconConfig.NORMAL_ENCOUNTER_CREDIT_PER_LEVEL * CosmiconConfig.TOURNAMENT_CREDIT_PER_LEVEL_MULTIPLIER * Math.max(1, playerLevel);
     }
 
     public static int getTournamentParticipationCredits(int totalGames) {
         int playerLevel = Global.getSector().getPlayerStats().getLevel();
-        return CosmiconStats.NORMAL_ENCOUNTER_CREDIT_PER_LEVEL * totalGames * Math.max(1, playerLevel);
+        return CosmiconConfig.NORMAL_ENCOUNTER_CREDIT_PER_LEVEL * totalGames * Math.max(1, playerLevel);
     }
 
     public static void startBossBattle(InteractionDialogAPI dialog, Runnable onLeave) {
@@ -85,7 +86,7 @@ public class CasinoIntegrationManager {
         }
 
         CosmiconEventState.setCasinoBattleOpponent(oppId);
-        CosmiconEventState.setCasinoBattleBonusHp(15);
+        CosmiconEventState.setCasinoBattleBonusHp(CosmiconConfig.BOSS_BONUS_HP);
         CosmiconEventState.setCasinoBattleUseTrue(useTrue);
 
         CosmiconInteraction interaction = new CosmiconInteraction();
@@ -102,7 +103,7 @@ public class CasinoIntegrationManager {
         CosmiconEventState.setCasinoBattleMode(true);
         CosmiconEventState.setCasinoBattleIsBoss(false);
         CosmiconEventState.setCasinoBattleOpponent(CharacterIds.TRASHCAN);
-        int bonusHp = CosmiconStats.isGatekeeper999Unlocked() ? 974 : 74;
+        int bonusHp = CosmiconStats.isGatekeeper999Unlocked() ? CosmiconConfig.GATEKEEPER_999_BONUS_HP : CosmiconConfig.GATEKEEPER_BONUS_HP;
         CosmiconEventState.setCasinoBattleBonusHp(bonusHp);
         CosmiconEventState.setCasinoBattleUseTrue(false);
         CosmiconEventState.setLegendSkipEnabled(CosmiconStats.isLegendTitleInherited());

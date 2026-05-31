@@ -44,10 +44,6 @@ public class WeatherController {
                 state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, weather.name(), 5, DurationType.PERMANENT);
                 state.getOpponentEffects().addEffect(StatusEffect.STRENGTH, weather.name(), 5, DurationType.PERMANENT);
             }
-            case TOXIC_FOG -> {
-                state.getPlayerEffects().addEffect(StatusEffect.POISON, weather.name(), 2, DurationType.PERMANENT);
-                state.getOpponentEffects().addEffect(StatusEffect.POISON, weather.name(), 2, DurationType.PERMANENT);
-            }
             case VENOCLLOUD -> {
                 state.getPlayerEffects().addEffect(StatusEffect.VENOM, weather.name(), 1, DurationType.PERMANENT);
                 state.getOpponentEffects().addEffect(StatusEffect.VENOM, weather.name(), 1, DurationType.PERMANENT);
@@ -81,6 +77,10 @@ public class WeatherController {
         if (!schedule.isFullTurnBoundary()) return;
         
         switch (weather) {
+            case TOXIC_FOG -> {
+                state.getPlayerEffects().addEffect(StatusEffect.POISON, weather.name(), 2, DurationType.PERMANENT);
+                state.getOpponentEffects().addEffect(StatusEffect.POISON, weather.name(), 2, DurationType.PERMANENT);
+            }
             case ACID_RAIN -> {
                 int playerHp = state.getPlayerHp();
                 int opponentHp = state.getOpponentHp();

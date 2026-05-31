@@ -10,6 +10,7 @@ import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import com.fs.starfarer.api.combat.EngagementResultAPI;
 import com.fs.starfarer.api.impl.campaign.rulecmd.AddRemoveCommodity;
 
+import data.scripts.CosmiconConfig;
 import data.scripts.CosmiconMusicPlugin;
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleDialogDelegate;
@@ -546,7 +547,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             int tier = CasinoIntegrationManager.getBossRewardTier();
 
             if (tier == 5) {
-                int credits = CasinoIntegrationManager.getCreditReward() * 3;
+                int credits = CasinoIntegrationManager.getCreditReward() * CosmiconConfig.BOSS_CREDIT_MULTIPLIER;
                 Global.getSector().getPlayerFleet().getCargo().getCredits().add(credits);
                 AddRemoveCommodity.addCreditsGainText(credits, textPanel);
                 textPanel.addPara(Strings.get("casino.boss_all_unlocked"), Color.GRAY);
@@ -568,7 +569,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                     }
                 }
 
-                int credits = CasinoIntegrationManager.getCreditReward() * 3;
+                int credits = CasinoIntegrationManager.getCreditReward() * CosmiconConfig.BOSS_CREDIT_MULTIPLIER;
                 options.addOption(Strings.format("casino.boss_reward_credits", credits), "casino_reward_credits");
                 setState(State.CASINO_BOSS_REWARD);
             }
@@ -600,7 +601,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             case "casino_reward_1" -> applyCasinoReward(1);
             case "casino_reward_2" -> applyCasinoReward(2);
             case "casino_reward_credits" -> {
-                int credits = CasinoIntegrationManager.getCreditReward() * 3;
+                int credits = CasinoIntegrationManager.getCreditReward() * CosmiconConfig.BOSS_CREDIT_MULTIPLIER;
                 Global.getSector().getPlayerFleet().getCargo().getCredits().add(credits);
                 AddRemoveCommodity.addCreditsGainText(credits, textPanel);
                 options.clearOptions();
@@ -666,7 +667,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             textPanel.addPara(Strings.format("casino.gatekeeper_hunter_level_up", newLevel), Color.CYAN);
         }
 
-        int credits = CasinoIntegrationManager.getCreditReward() * 4;
+        int credits = CasinoIntegrationManager.getCreditReward() * CosmiconConfig.GATEKEEPER_WIN_CREDIT_MULTIPLIER;
         Global.getSector().getPlayerFleet().getCargo().getCredits().add(credits);
         AddRemoveCommodity.addCreditsGainText(credits, textPanel);
         textPanel.addPara(Strings.format("casino.gatekeeper_reward_win", credits));
@@ -703,7 +704,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             textPanel.addPara(Strings.format("casino.gatekeeper_hunter_level_up", newLevel), Color.CYAN);
         }
 
-        int credits = CasinoIntegrationManager.getCreditReward() * 2;
+        int credits = CasinoIntegrationManager.getCreditReward() * CosmiconConfig.GATEKEEPER_LOSS_CREDIT_MULTIPLIER;
         Global.getSector().getPlayerFleet().getCargo().getCredits().add(credits);
         AddRemoveCommodity.addCreditsGainText(credits, textPanel);
         textPanel.addPara(Strings.format("casino.gatekeeper_reward_lose", credits));
@@ -910,14 +911,14 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         if (champion) {
             textPanel.addPara(Strings.get("casino.tournament_victory"), Color.YELLOW);
-            tournamentPendingRewards = 3;
+            tournamentPendingRewards = CosmiconConfig.TOURNAMENT_CHAMPION_REWARDS;
         } else if (runnerUp) {
             textPanel.addPara(Strings.get("casino.tournament_runner_up"), Color.CYAN);
-            tournamentPendingRewards = 2;
+            tournamentPendingRewards = CosmiconConfig.TOURNAMENT_RUNNER_UP_REWARDS;
         } else {
             String position = tournamentManager != null ? tournamentManager.getPlayerBracketPosition() : Strings.get("casino.tournament_position_unknown");
             textPanel.addPara(Strings.format("casino.tournament_eliminated", position), Color.RED);
-            tournamentPendingRewards = 1;
+            tournamentPendingRewards = CosmiconConfig.TOURNAMENT_ELIMINATED_REWARDS;
         }
 
         Global.getSector().getPlayerFleet().getCargo().getCredits().add(participationCredits);

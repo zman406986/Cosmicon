@@ -2,6 +2,7 @@ package data.scripts.cosmicon.state;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
+import data.scripts.CosmiconConfig;
 import data.scripts.cosmicon.util.CharacterIds;
 
 import java.util.HashSet;
@@ -20,7 +21,6 @@ public class CosmiconStats {
     private static final String KEY_LEGEND_TITLE_INHERITED = "$cos_legend_title_inherited";
 
     private static final int TUTORIAL_GAMES = 2;
-    public static final int NORMAL_ENCOUNTER_CREDIT_PER_LEVEL = 1500;
     private static final String REPEATER_ID = "repeater";
 
     private static MemoryAPI memory;
@@ -187,12 +187,12 @@ public class CosmiconStats {
     }
 
     public static int calculateCreditReward(int playerLevel) {
-        return 3000 * Math.max(1, playerLevel);
+        return CosmiconConfig.BASE_CREDIT_REWARD_PER_LEVEL * Math.max(1, playerLevel);
     }
 
     public static int calculateNormalEncounterCreditReward(int playerLevel) {
-        int base = NORMAL_ENCOUNTER_CREDIT_PER_LEVEL * Math.max(1, playerLevel);
-        float factor = 0.9f + (float) Math.random() * 0.2f;
+        int base = CosmiconConfig.NORMAL_ENCOUNTER_CREDIT_PER_LEVEL * Math.max(1, playerLevel);
+        float factor = CosmiconConfig.CREDIT_RANDOM_FACTOR_MIN + (float) Math.random() * (CosmiconConfig.CREDIT_RANDOM_FACTOR_MAX - CosmiconConfig.CREDIT_RANDOM_FACTOR_MIN);
         return Math.round(base * factor);
     }
 

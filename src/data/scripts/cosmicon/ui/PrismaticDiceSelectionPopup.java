@@ -162,7 +162,7 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
             if (!isTutorial && !CosmiconStats.isPrismaticDiceUnlocked(diceId)) continue;
 
             int uses = manager != null ? manager.getUsesByType(type, true) : entry.getValue();
-            boolean useTrueVersion = playerCard != null && playerCard.isUseTruePrismatic();
+            boolean useTrueVersion = playerCard.isUseTruePrismatic();
             boolean isAvailable = type.isAvailable(context, useTrueVersion);
 
             if ((!isTutorial && !isAvailable) || uses <= 0) continue;
