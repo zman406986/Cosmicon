@@ -25,6 +25,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
     private String currentDestinedKey = "[]";
     private final Map<String, List<Set<Integer>>> subsetCache = new HashMap<>();
     private final Map<Integer, Double> evalCache = new HashMap<>();
+    private final Map<Long, Double> stateCache = new HashMap<>();
 
     static {
         policyCache.put(DiceType.BLUE_D4, computePolicyStatic(4));
@@ -95,6 +96,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         this.currentDestinedKey = currentDestinedIndices.toString();
         this.subsetCache.clear();
         this.evalCache.clear();
+        this.stateCache.clear();
 
         double currentEV = evaluateFinalPool(pool, 0, 0, effectiveRequired, isAttacking, state, forPlayer);
 
@@ -198,38 +200,59 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
     private double evaluateStateWithRerolls(SimPool pool, int rerollsLeft, int requiredCount,
                                               boolean isAttacking, BattleState state, boolean forPlayer) {
-        // Optimization 1: Frozen die elimination
-        SplitPool split = splitFrozenDice(pool, isAttacking);
+        // Optimization 1: Three-tier die elimination (frozen + doomed)
+        ThreeTierSplit split = splitThreeTiers(pool, rerollsLeft, isAttacking, currentDestinedIndices);
         int frozenSum = 0;
+        int doomedSum = 0;
+        int doomedRerollsUsed = 0;
         Set<Integer> savedDestined = null;
         String savedDestinedKey = null;
         if (split != null) {
-            int frozenCount = pool.size() - split.reduced().size();
-            if (frozenCount >= requiredCount) {
-                rerollLog("frozenCount=%d >= required=%d, evaluating full pool", frozenCount, requiredCount);
+            int removedCount = pool.size() - split.reduced().size();
+            if (removedCount >= requiredCount) {
+                rerollLog("removed=%d >= required=%d, evaluating full pool", removedCount, requiredCount);
                 return evaluateFinalPool(pool, 0, 0, requiredCount, isAttacking, state, forPlayer);
             }
             frozenSum = split.frozenSum();
+            doomedSum = split.doomedSum();
+            doomedRerollsUsed = split.doomedRerollsUsed();
+            int frozenCount = removedCount - doomedRerollsUsed;
             int effectiveRequired = requiredCount - frozenCount;
-            rerollLog("frozen=%d (sum=%d), reduced pool=%d, effectiveRequired=%d",
-                frozenCount, frozenSum, split.reduced().size(), effectiveRequired);
-            // Remap destined indices for reduced pool
+            rerollLog("frozen=%d (sum=%d), doomed=%d (ev=%d, rerollsUsed=%d), reduced pool=%d, effectiveRequired=%d",
+                frozenCount, frozenSum, doomedRerollsUsed, doomedSum, doomedRerollsUsed,
+                split.reduced().size(), effectiveRequired);
             savedDestined = this.currentDestinedIndices;
             savedDestinedKey = this.currentDestinedKey;
             this.currentDestinedIndices = remapDestinedIndices(currentDestinedIndices, split);
             this.currentDestinedKey = this.currentDestinedIndices.toString();
             pool = split.reduced();
             requiredCount = effectiveRequired;
+            rerollsLeft -= doomedRerollsUsed;
         }
 
+        // Cache lookup (after split, using reduced pool)
+        long cacheKey = (long) pool.fingerprint() * 31L
+                      + (long) rerollsLeft * 1_000_003L
+                      + (long) (frozenSum + doomedSum) * 1_000_033L
+                      + (long) requiredCount * 1_000_037L;
+        Double cached = stateCache.get(cacheKey);
+        if (cached != null) {
+            if (savedDestined != null) {
+                this.currentDestinedIndices = savedDestined;
+                this.currentDestinedKey = savedDestinedKey;
+            }
+            return cached;
+        }
+
+        int baseSum = frozenSum + doomedSum;
         double result;
         if (rerollsLeft <= 0) {
-            result = evaluateFinalPool(pool, frozenSum, 0, requiredCount, isAttacking, state, forPlayer);
+            result = evaluateFinalPool(pool, baseSum, 0, requiredCount, isAttacking, state, forPlayer);
         } else {
             Set<Integer> toReroll = findPolicyRerollSet(pool, rerollsLeft, isAttacking, state, forPlayer);
 
             if (toReroll.isEmpty()) {
-                result = evaluateFinalPool(pool, frozenSum, 0, requiredCount, isAttacking, state, forPlayer);
+                result = evaluateFinalPool(pool, baseSum, 0, requiredCount, isAttacking, state, forPlayer);
             } else {
                 long product = 1;
                 for (int idx : toReroll) {
@@ -247,7 +270,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
                         double util = evaluateStateWithRerolls(newPool, rerollsLeft - 1, requiredCount, isAttacking, state, forPlayer);
                         totalUtility += outcome.probability * util;
                     }
-                    result = totalUtility + frozenSum;
+                    result = totalUtility + baseSum;
                 } else {
                     // Optimization 3: Adaptive Monte Carlo rollouts scaled by rerollsLeft
                     int minRollouts = getMinRollouts(rerollsLeft);
@@ -257,7 +280,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
                     for (int i = 0; i < maxRollouts; i++) {
                         RolloutResult rollout = simulateBasePolicy(pool, rerollsLeft, isAttacking, state, forPlayer);
-                        double finalUtil = evaluateFinalPool(rollout.pool, frozenSum, rollout.rerollsUsed, requiredCount, isAttacking, state, forPlayer);
+                        double finalUtil = evaluateFinalPool(rollout.pool, baseSum, rollout.rerollsUsed, requiredCount, isAttacking, state, forPlayer);
                         sum += finalUtil;
                         sumSq += finalUtil * finalUtil;
                         actualRollouts = i + 1;
@@ -275,7 +298,8 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             }
         }
 
-        // Restore destined indices if we split
+        stateCache.put(cacheKey, result);
+
         if (savedDestined != null) {
             this.currentDestinedIndices = savedDestined;
             this.currentDestinedKey = savedDestinedKey;
@@ -412,7 +436,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
         if (!borderline.isEmpty()) {
             List<Set<Integer>> borderlineSubs = new ArrayList<>();
-            generateCandidateSubsets(borderline, borderlineSubs);
+            generateCandidateSubsets(borderline, borderlineSubs, pool);
             Set<Integer> guaranteedSet = new HashSet<>(guaranteed);
             for (Set<Integer> sub : borderlineSubs) {
                 Set<Integer> combined = new HashSet<>(guaranteedSet);
@@ -424,9 +448,13 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             candidates.add(new HashSet<>(guaranteed));
         }
 
+        Set<Integer> aboveThresholdSeen = new HashSet<>();
         for (int i = 0; i < pool.size(); i++) {
             if (!neverReroll[i] && !thresholdSet.contains(i)) {
-                candidates.add(new HashSet<>(Collections.singletonList(i)));
+                int key = symmetryKey(pool, i);
+                if (aboveThresholdSeen.add(key)) {
+                    candidates.add(new HashSet<>(Collections.singletonList(i)));
+                }
             }
         }
 
@@ -435,34 +463,64 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         return candidates.stream().distinct().collect(Collectors.toList());
     }
 
-    private void generateCandidateSubsets(List<Integer> elements, List<Set<Integer>> result) {
+    private int symmetryKey(SimPool pool, int index) {
+        DiceType type = pool.getType(index);
+        int hash = type.hashCode() * 31 + pool.getValue(index);
+        if (type == DiceType.PRISMATIC) {
+            hash = hash * 31 + java.util.Arrays.hashCode(pool.getPossibleFaces(index));
+        }
+        return hash;
+    }
+
+    private void generateCandidateSubsets(List<Integer> elements, List<Set<Integer>> result, SimPool pool) {
+        Map<Integer, List<Integer>> groups = new LinkedHashMap<>();
+        for (int idx : elements) {
+            groups.computeIfAbsent(symmetryKey(pool, idx), k -> new ArrayList<>()).add(idx);
+        }
+        List<List<Integer>> groupList = new ArrayList<>(groups.values());
+        for (List<Integer> g : groupList) Collections.sort(g);
+
         int n = elements.size();
         if (n <= 5) {
-            generateAllSubsetsRec(elements, 0, new HashSet<>(), result);
-            return;
-        }
-
-        for (int i = 0; i < n; i++) {
-            result.add(new HashSet<>(Collections.singletonList(elements.get(i))));
-        }
-        for (int i = 0; i < n; i++) {
-            for (int j = i + 1; j < n; j++) {
-                Set<Integer> pair = new HashSet<>();
-                pair.add(elements.get(i));
-                pair.add(elements.get(j));
-                result.add(pair);
+            generateCanonicalSubsets(groupList, 0, new HashSet<>(), result);
+        } else {
+            for (List<Integer> g : groupList) {
+                result.add(new HashSet<>(Collections.singletonList(g.get(0))));
+            }
+            for (int i = 0; i < groupList.size(); i++) {
+                for (int j = i; j < groupList.size(); j++) {
+                    List<Integer> gi = groupList.get(i);
+                    List<Integer> gj = groupList.get(j);
+                    if (i == j) {
+                        if (gi.size() >= 2) {
+                            Set<Integer> pair = new HashSet<>();
+                            pair.add(gi.get(0));
+                            pair.add(gi.get(1));
+                            result.add(pair);
+                        }
+                    } else {
+                        Set<Integer> pair = new HashSet<>();
+                        pair.add(gi.get(0));
+                        pair.add(gj.get(0));
+                        result.add(pair);
+                    }
+                }
             }
         }
     }
 
-    private void generateAllSubsetsRec(List<Integer> elements, int start, Set<Integer> current, List<Set<Integer>> result) {
+    private void generateCanonicalSubsets(List<List<Integer>> groups, int groupIdx,
+                                           Set<Integer> current, List<Set<Integer>> result) {
         if (!current.isEmpty()) {
             result.add(new HashSet<>(current));
         }
-        for (int i = start; i < elements.size(); i++) {
-            current.add(elements.get(i));
-            generateAllSubsetsRec(elements, i + 1, current, result);
-            current.remove(elements.get(i));
+        for (int g = groupIdx; g < groups.size(); g++) {
+            List<Integer> group = groups.get(g);
+            for (int take = 1; take <= group.size(); take++) {
+                for (int i = 0; i < take; i++) current.add(group.get(i));
+                generateCanonicalSubsets(groups, g + 1, current, result);
+                for (int i = 0; i < take; i++) current.remove(group.get(i));
+            }
         }
     }
 
@@ -517,8 +575,11 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
     public static class DieStoppingPolicy {
         private final int[] thresholds;
-        public DieStoppingPolicy(int[] thresholds) {
+        private final double[] freshExpectation;
+
+        public DieStoppingPolicy(int[] thresholds, double[] freshExpectation) {
             this.thresholds = thresholds;
+            this.freshExpectation = freshExpectation;
         }
 
         public boolean shouldReroll(int currentFace, int rerollsLeft) {
@@ -533,6 +594,11 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             return currentFace < Math.max(1, thresholds[rerollsLeft] - 1);
         }
 
+        public double getFreshExpectation(int rerollsLeft) {
+            if (rerollsLeft <= 0) return 0;
+            if (rerollsLeft >= freshExpectation.length) rerollsLeft = freshExpectation.length - 1;
+            return freshExpectation[rerollsLeft];
+        }
     }
 
     public static DieStoppingPolicy getStoppingPolicy(DiceType type) {
@@ -542,11 +608,13 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
     private static DieStoppingPolicy computePolicyStatic(int maxFace) {
         double[][] expected = new double[MAX_REROLLS + 1][maxFace + 1];
         int[] thresholds = new int[MAX_REROLLS + 1];
+        double[] freshEV = new double[MAX_REROLLS + 1];
 
         for (int face = 1; face <= maxFace; face++) {
             expected[0][face] = face;
         }
         thresholds[0] = maxFace + 1;
+        freshEV[0] = 0;
 
         for (int r = 1; r <= MAX_REROLLS; r++) {
             double freshExpectation = 0;
@@ -554,6 +622,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
                 freshExpectation += expected[r - 1][newFace];
             }
             freshExpectation /= maxFace;
+            freshEV[r] = freshExpectation;
 
             int ceilFresh = (int) Math.ceil(freshExpectation);
             thresholds[r] = Math.min(ceilFresh, maxFace);
@@ -563,7 +632,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             }
         }
 
-        return new DieStoppingPolicy(thresholds);
+        return new DieStoppingPolicy(thresholds, freshEV);
     }
 
     // ==================== Outcome generation ====================
@@ -812,6 +881,104 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             }
         }
         return remapped;
+    }
+
+    private Set<Integer> remapDestinedIndices(Set<Integer> original, ThreeTierSplit split) {
+        Set<Integer> remapped = new HashSet<>();
+        for (int idx : original) {
+            Integer newIdx = split.reverseRemap().get(idx);
+            if (newIdx != null) {
+                remapped.add(newIdx);
+            }
+        }
+        return remapped;
+    }
+
+    private record ThreeTierSplit(
+        SimPool reduced,
+        int frozenSum,
+        int doomedSum,
+        int doomedRerollsUsed,
+        int[] indexRemap,
+        Map<Integer, Integer> reverseRemap
+    ) {}
+
+    private ThreeTierSplit splitThreeTiers(SimPool pool, int rerollsLeft,
+                                             boolean isAttacking, Set<Integer> destinedIndices) {
+        if (rerollsLeft <= 0) {
+            SplitPool frozen = splitFrozenDice(pool, isAttacking);
+            if (frozen == null) return null;
+            return new ThreeTierSplit(frozen.reduced(), frozen.frozenSum(), 0, 0,
+                frozen.indexRemap(), frozen.reverseRemap());
+        }
+
+        List<Integer> active = new ArrayList<>();
+        List<int[]> doomedEntries = new ArrayList<>();
+        int frozenSum = 0;
+
+        for (int i = 0; i < pool.size(); i++) {
+            DiceType type = pool.getType(i);
+            int value = pool.getValue(i);
+
+            if (isSpecialFaceNeverReroll(i, type, isAttacking, null, false)) {
+                active.add(i);
+                continue;
+            }
+
+            if (value == type.getMaxFace()) {
+                frozenSum += value;
+                continue;
+            }
+
+            DieStoppingPolicy policy = getStoppingPolicy(type);
+            if (policy.shouldReroll(value, rerollsLeft) && !destinedIndices.contains(i)) {
+                doomedEntries.add(new int[]{i, value});
+            } else {
+                active.add(i);
+            }
+        }
+
+        if (doomedEntries.isEmpty()) {
+            if (active.isEmpty()) return null;
+            SplitPool frozen = splitFrozenDice(pool, isAttacking);
+            if (frozen == null) return null;
+            return new ThreeTierSplit(frozen.reduced(), frozen.frozenSum(), 0, 0,
+                frozen.indexRemap(), frozen.reverseRemap());
+        }
+
+        int doomedToRemove = Math.min(doomedEntries.size(), rerollsLeft);
+        if (doomedEntries.size() > rerollsLeft) {
+            doomedEntries.sort(Comparator.comparingInt(e -> e[1]));
+            for (int i = rerollsLeft; i < doomedEntries.size(); i++) {
+                active.add(doomedEntries.get(i)[0]);
+            }
+        }
+
+        int doomedSum = 0;
+        for (int i = 0; i < doomedToRemove; i++) {
+            int origIdx = doomedEntries.get(i)[0];
+            DiceType type = pool.getType(origIdx);
+            DieStoppingPolicy policy = getStoppingPolicy(type);
+            doomedSum += (int) Math.ceil(policy.getFreshExpectation(rerollsLeft - 1));
+        }
+
+        Collections.sort(active);
+        int[] remap = active.stream().mapToInt(Integer::intValue).toArray();
+        Map<Integer, Integer> reverse = new HashMap<>();
+        for (int i = 0; i < remap.length; i++) {
+            reverse.put(remap[i], i);
+        }
+
+        if (remap.length == 0) return null;
+
+        return new ThreeTierSplit(
+            pool.subset(remap),
+            frozenSum,
+            doomedSum,
+            doomedToRemove,
+            remap,
+            reverse
+        );
     }
 
     private SimPool createSimPool(List<Integer> currentValues, List<DiceType> diceTypes,
