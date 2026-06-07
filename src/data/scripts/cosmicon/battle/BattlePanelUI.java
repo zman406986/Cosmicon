@@ -66,7 +66,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     private float opponentAutoRollDelay;
 
     private boolean opponentDiceAnimating;
-    private float opponentRollDelay;
+
 
     private float roleTransitionProgress;
     private float targetRoleTransition;
@@ -126,7 +126,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         this.lastPlayerWasAttacker = true;
         this.cachedRotationAngle = 0f;
         this.opponentDiceAnimating = false;
-        this.opponentRollDelay = 0f;
         this.dicePreviewActive = false;
         this.dicePreviewDelay = 0f;
         this.opponentAutoRollDelay = 0f;
@@ -360,7 +359,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
             if (!battleState.isDefenderRolling()) {
                 opponentDiceAnimating = false;
-                opponentRollDelay = 0f;
                 opponentAutoRollDelay = 0f;
             }
 
@@ -454,7 +452,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             rerollAnimSkipGuard = 0.15f;
         } else {
             diceRollManager.rerollOpponentDice(rerolledIndices, newValues);
-            opponentRollDelay = animDuration;
             opponentDiceAnimating = true;
         }
 
@@ -503,7 +500,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         dicePreviewActive = false;
         dicePreviewDelay = 0f;
         opponentDiceAnimating = false;
-        opponentRollDelay = 0f;
         opponentAutoRollDelay = 0f;
         diceDisplayTimer = 0f;
         
@@ -952,7 +948,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             if (opponentAutoRollDelay <= 0f && diceRollManager.isOpponentWaitingForRollTrigger()) {
                 diceRollManager.triggerOpponentRollFromStationary();
                 opponentDiceAnimating = true;
-                opponentRollDelay = DiceAnimator.getTotalDuration() + 0.1f;
                 CosmiconLogger.debug("[ANIM] Opponent auto-roll triggered");
             }
         }
@@ -970,15 +965,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         }
 
         if (opponentDiceAnimating) {
-            opponentRollDelay -= amount;
-
-            if (diceRollManager.hasOpponentAnimators()) {
-                if (diceRollManager.isOpponentComplete()) {
-                    opponentRollDelay = 0f;
-                    opponentDiceAnimating = false;
-                }
-            } else if (opponentRollDelay <= 0f) {
-                startOpponentDiceAnimation();
+            if (diceRollManager.hasOpponentAnimators() && diceRollManager.isOpponentComplete()) {
+                opponentDiceAnimating = false;
             }
         }
     }

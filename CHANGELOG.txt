@@ -1,4 +1,5 @@
 Version 0.3.0
+- Fixed opponent AI reroll pausing ~2s longer than the actual dice animation; removed redundant `getTotalDuration()` guard timer from `REROLL_ANIMATING` phase (now gates purely on animation-complete check) and removed dead `opponentRollDelay` field from `BattlePanelUI`.
 - Fixed Gatekeeper 999 in-battle messages (start hint and exit hint) not showing when a tournament is in progress; removed redundant `!isTournamentActive()` check from `isGatekeeper999Battle()` and added broader `isGatekeeperBattle()` for UI messages (now also covers 99 HP version).
 - Fixed CosmiconEventState integer getters using `getFloat()` instead of `getInt()` for memory-stored integers (latent correctness issue).
 - Fixed Hack and Arise not stacking when applied from multiple sources (e.g., Sparxie passive + Sorcerer prismatic dice); each instance now correctly modifies a separate die (highest/second-highest for Hack, lowest/second-lowest for Arise).

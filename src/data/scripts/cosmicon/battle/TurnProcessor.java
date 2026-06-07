@@ -351,15 +351,13 @@ public class TurnProcessor {
                 aiPhaseTimer -= amount;
                 if (aiPhaseTimer <= 0f) {
                     aiVisualPhase = AIVisualPhase.REROLL_ANIMATING;
-                    aiPhaseTimer = DiceAnimator.getTotalDuration() + 0.1f;
                     
                     executePlannedAiReroll();
                 }
             }
             
             case REROLL_ANIMATING -> {
-                aiPhaseTimer -= amount;
-                if (aiPhaseTimer <= 0f && opponentAnimationCompleteChecker.getAsBoolean()) {
+                if (opponentAnimationCompleteChecker.getAsBoolean()) {
                     if (viz != null) viz.reset();
 
                     int remainingRerolls = state.getRemainingRerolls(false);
