@@ -14,8 +14,8 @@ import java.util.stream.Collectors;
 
 public abstract class AttackRerollAI implements CharacterAIProfile {
 
-    protected final int rolloutsPerEvaluation = 200;
     protected final int maxExactOutcomeEnumeration = 256;
+    private static final int TOP_K_CANDIDATES = 4;
     private static final Map<DiceType, DieStoppingPolicy> policyCache = new EnumMap<>(DiceType.class);
     private static final Random SIM_RAND = new Random(42);
     private static final int MAX_REROLLS = 7;
@@ -111,13 +111,57 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         double bestEV = currentEV;
         Set<Integer> bestAction = Set.of();
 
-        for (Set<Integer> diceToReroll : candidates) {
+        // Top-K heuristic pruning: score candidates, keep top 4 + guaranteed candidate
+        List<Set<Integer>> evaluated;
+        if (candidates.size() <= TOP_K_CANDIDATES) {
+            evaluated = candidates;
+        } else {
+            Set<Integer> guaranteedCandidate = null;
+            for (Set<Integer> c : candidates) {
+                if (c.stream().allMatch(i -> pool.getValue(i) == 1)) {
+                    guaranteedCandidate = c;
+                    break;
+                }
+            }
+
+            List<Map.Entry<Set<Integer>, Double>> scored = new ArrayList<>();
+            for (Set<Integer> c : candidates) {
+                double h = scoreCandidateHeuristic(pool, c, rerollsAvailable);
+                scored.add(Map.entry(c, h));
+            }
+            scored.sort((a, b) -> Double.compare(b.getValue(), a.getValue()));
+
+            Set<Set<Integer>> topK = new LinkedHashSet<>();
+            for (int i = 0; i < Math.min(TOP_K_CANDIDATES, scored.size()); i++) {
+                topK.add(scored.get(i).getKey());
+            }
+            if (guaranteedCandidate != null) {
+                topK.add(guaranteedCandidate);
+            }
+            evaluated = new ArrayList<>(topK);
+
+            rerollLog("%s: pruned %d candidates to %d (top-%d + guaranteed)",
+                getCharacterId(), candidates.size(), evaluated.size(), TOP_K_CANDIDATES);
+        }
+
+        // Upper-bound pruning + full evaluation
+        int prunedCount = 0;
+        for (Set<Integer> diceToReroll : evaluated) {
+            double ub = computeRerollUpperBound(pool, diceToReroll);
+            if (ub <= bestEV) {
+                prunedCount++;
+                rerollLog("PRUNE %s: UB %.1f <= bestEV %.1f", diceToReroll, ub, bestEV);
+                continue;
+            }
             SIM_RAND.setSeed(42);
             double ev = evaluateImmediateAction(pool, diceToReroll, rerollsAvailable, effectiveRequired, isAttacking, state, forPlayer);
             if (ev > bestEV) {
                 bestEV = ev;
                 bestAction = diceToReroll;
             }
+        }
+        if (prunedCount > 0) {
+            rerollLog("%s: pruned %d/%d candidates by UB", getCharacterId(), prunedCount, evaluated.size());
         }
 
         if (!bestAction.isEmpty()) {
@@ -205,9 +249,9 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
                     }
                     result = totalUtility + frozenSum;
                 } else {
-                    // Optimization 3: Adaptive Monte Carlo rollouts (min 20, max rolloutsPerEvaluation, early stop)
-                    int minRollouts = 20;
-                    int maxRollouts = rolloutsPerEvaluation;
+                    // Optimization 3: Adaptive Monte Carlo rollouts scaled by rerollsLeft
+                    int minRollouts = getMinRollouts(rerollsLeft);
+                    int maxRollouts = getMaxRollouts(rerollsLeft);
                     double sum = 0, sumSq = 0;
                     int actualRollouts = 0;
 
@@ -222,7 +266,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
                             double mean = sum / actualRollouts;
                             double variance = (sumSq / actualRollouts) - mean * mean;
                             double stderr = Math.sqrt(Math.max(0, variance) / actualRollouts);
-                            if (stderr < Math.abs(mean) * 0.01) break;
+                            if (stderr < Math.max(Math.abs(mean) * 0.05, 0.5)) break;
                         }
                     }
                     rerollLog("Monte Carlo: %d/%d rollouts (converged=%b)", actualRollouts, maxRollouts, actualRollouts < maxRollouts);
@@ -286,6 +330,35 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         double result = bestUtil + frozenSum;
         evalCache.put(cacheKey, result);
         return result;
+    }
+
+    protected int getMinRollouts(int rerollsLeft) {
+        return Math.max(10, 8 * rerollsLeft);
+    }
+
+    protected int getMaxRollouts(int rerollsLeft) {
+        return Math.max(30, 50 * rerollsLeft);
+    }
+
+    private double computeRerollUpperBound(SimPool pool, Set<Integer> diceToReroll) {
+        double sum = 0;
+        for (int i = 0; i < pool.size(); i++) {
+            if (diceToReroll.contains(i)) {
+                sum += pool.getType(i).getMaxFace();
+            } else {
+                sum += pool.getValue(i);
+            }
+        }
+        return sum;
+    }
+
+    private double scoreCandidateHeuristic(SimPool pool, Set<Integer> diceToReroll, int rerollsLeft) {
+        double score = 0;
+        for (int idx : diceToReroll) {
+            DieEVTable table = DieEVTable.get(pool.getType(idx));
+            score += Math.max(0, table.gain(pool.getValue(idx), rerollsLeft));
+        }
+        return score;
     }
 
     // ==================== Base policy simulation ====================
@@ -510,7 +583,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         if (product <= maxExactOutcomeEnumeration) {
             return enumerateOutcomes(diceFaces);
         } else {
-            return sampleOutcomes(diceFaces);
+            return sampleOutcomes(diceFaces, (int) Math.min(maxExactOutcomeEnumeration, product));
         }
     }
 
@@ -536,15 +609,20 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         }
     }
 
-    private List<Outcome> sampleOutcomes(List<int[]> diceFaces) {
+    private int computeSampleCount(int faceProduct) {
+        return Math.max(16, Math.min(maxExactOutcomeEnumeration, faceProduct * 4));
+    }
+
+    private List<Outcome> sampleOutcomes(List<int[]> diceFaces, int faceProduct) {
+        int sampleCount = computeSampleCount(faceProduct);
         List<Outcome> result = new ArrayList<>();
-        for (int s = 0; s < maxExactOutcomeEnumeration; s++) {
+        for (int s = 0; s < sampleCount; s++) {
             int[] faces = new int[diceFaces.size()];
             for (int i = 0; i < diceFaces.size(); i++) {
                 int[] possible = diceFaces.get(i);
                 faces[i] = possible[SIM_RAND.nextInt(possible.length)];
             }
-            result.add(new Outcome(faces, 1.0 / maxExactOutcomeEnumeration));
+            result.add(new Outcome(faces, 1.0 / sampleCount));
         }
         return result;
     }
