@@ -442,11 +442,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     public void onDiceRerolled(boolean isPlayer, List<Integer> newValues, List<Integer> rerolledIndices) {
         if (rerolledIndices.isEmpty()) return;
 
-        float animDuration = DiceAnimator.getTotalDuration() + 0.1f;
-
         if (isPlayer) {
             diceRollManager.partialReroll(rerolledIndices, newValues);
-            rollAnimationDelay = animDuration;
             diceAnimating = true;
             rerollSelectionClearPending = true;
             rerollAnimSkipGuard = 0.15f;
@@ -1118,19 +1115,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             diceRollManager.startRollFromRest(isPlayer, types, values, centerX, centerY);
             inputHandler.consumeClick();
         }
-    }
-
-    private void startOpponentDiceAnimation() {
-        List<DiceType> types = battleState.getOpponentDiceTypes();
-        List<Integer> values = battleState.getOpponentDiceValues();
-
-        if (types == null || values == null || types.isEmpty()) {
-            opponentDiceAnimating = false;
-            return;
-        }
-
-        diceRollManager.startOpponentStationaryPreview(types, values, opponentDiceZoneCenterX, opponentDiceZoneCenterY);
-        opponentAutoRollDelay = OPPONENT_AUTO_ROLL_DELAY;
     }
 
     public void triggerOpponentDiceRoll() {

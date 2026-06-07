@@ -218,7 +218,6 @@ public class DiceRollManager {
             }
 
             DiceAnimator restAnimator = new DiceAnimator();
-            restAnimator.init();
             int displayValue = values.get(i);
             if (battleState.isPrismaticDiceAt(i, forPlayer)) {
                 PrismaticDiceInstance prismatic = battleState.getPrismaticDiceAt(i, forPlayer);
@@ -429,8 +428,7 @@ public class DiceRollManager {
             pendingScatterDestinations = null;
 
             int count = Math.min(types.size(), results.size());
-            List<PlannedPath> gridPaths = DicePathPlanner.planPaths(types, results, centerX, centerY, DICE_SPACING,
-                    BattleRenderingUtils.PANEL_WIDTH, BattleRenderingUtils.PANEL_HEIGHT);
+            float[][] gridTargets = DicePathPlanner.planGridTargets(count, centerX, centerY, DICE_SPACING);
 
             float panelW = BattleRenderingUtils.PANEL_WIDTH;
             float panelH = BattleRenderingUtils.PANEL_HEIGHT;
@@ -440,18 +438,16 @@ public class DiceRollManager {
             float[] targetXs = new float[count];
             float[] targetYs = new float[count];
             for (int i = 0; i < count; i++) {
-                targetXs[i] = gridPaths.get(i).targetCenterX();
-                targetYs[i] = gridPaths.get(i).targetCenterY();
+                targetXs[i] = gridTargets[i][0];
+                targetYs[i] = gridTargets[i][1];
             }
             pendingRollPaths = DicePathPlanner.planTravelPaths(
                 scatters, targetXs, targetYs, panelW, panelH);
 
             for (int i = 0; i < count; i++) {
                 DiceAnimator animator = new DiceAnimator();
-                animator.init();
-                PlannedPath path = gridPaths.get(i);
 
-                animator.startStationaryPreview(types.get(i), results.get(i), path.targetCenterX(), path.targetCenterY());
+                animator.startStationaryPreview(types.get(i), results.get(i), gridTargets[i][0], gridTargets[i][1]);
                 animators.add(animator);
             }
 
@@ -560,7 +556,6 @@ public class DiceRollManager {
             PlannedPath travelPath = travelPaths.get(0);
 
             DiceAnimator animator = new DiceAnimator();
-            animator.init();
             animator.startFromScatterPosition(type, value, scatterX, scatterY, prismaticPath.delay(),
                     travelPath.rotation(), travelPath.travelDistance(),
                     travelPath.bounceCount(), travelPath.bounceHeights(),
@@ -627,16 +622,15 @@ public class DiceRollManager {
             float panelW = BattleRenderingUtils.PANEL_WIDTH;
             float panelH = BattleRenderingUtils.PANEL_HEIGHT;
 
-            List<PlannedPath> gridPaths = DicePathPlanner.planPaths(allTypes, allValues, centerX, centerY, DICE_SPACING,
-                    panelW, panelH);
+            float[][] gridTargets = DicePathPlanner.planGridTargets(count, centerX, centerY, DICE_SPACING);
 
             float[][] scatters = DicePathPlanner.planScatterDestinations(count, panelW, panelH);
 
             float[] targetXs = new float[count];
             float[] targetYs = new float[count];
             for (int i = 0; i < count; i++) {
-                targetXs[i] = gridPaths.get(i).targetCenterX();
-                targetYs[i] = gridPaths.get(i).targetCenterY();
+                targetXs[i] = gridTargets[i][0];
+                targetYs[i] = gridTargets[i][1];
             }
             List<PlannedPath> travelPaths = DicePathPlanner.planTravelPaths(scatters, targetXs, targetYs, panelW, panelH);
 
@@ -646,7 +640,6 @@ public class DiceRollManager {
 
             for (int i = 0; i < count; i++) {
                 DiceAnimator animator = new DiceAnimator();
-                animator.init();
                 PlannedPath path = travelPaths.get(i);
                 int displayValue = allValues.get(i);
                 if (battleState.isPrismaticDiceAt(i, forPlayer)) {

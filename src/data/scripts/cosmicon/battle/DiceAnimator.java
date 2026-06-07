@@ -9,11 +9,9 @@ import data.scripts.cosmicon.util.EasingUtil;
 import data.scripts.cosmicon.util.GLStateUtil;
 
 public class DiceAnimator {
-    private static final float ROLL_DURATION = 6.0f;
     private static final float SETTLE_DURATION = 0.15f;
     private static final float REVEAL_DURATION = 0.1f;
-    private static final float RETURN_DURATION = 0.5f;
-    private static final float TOTAL_DURATION = ROLL_DURATION + SETTLE_DURATION + REVEAL_DURATION + RETURN_DURATION;
+    private static final float TOTAL_DURATION = 6.75f;
     private static final float SCALE_BOUNCE = 0.08f;
     
     private static final float DROP_DURATION = 0.4f;
@@ -37,7 +35,7 @@ public class DiceAnimator {
     private static final float VALUE_CHANGE_SCALE = 1.3f;
     
     private enum Phase { STATIONARY_PREVIEW, SCATTER_PICKUP, SCATTER_TRAVEL, SCATTER_DROP,
-                         ROLL_PICKUP, ROLLING, DROP, TRAVEL, SETTLE, REVEAL, 
+                         ROLL_PICKUP, DROP, TRAVEL, SETTLE, REVEAL,
                          WAITING_FOR_CENTERING, PICKUP, CENTERING_TRAVEL, CENTERING_DROP,
                          TRAVEL_TO_REST, REST_DROP, RESTING, VALUE_CHANGE, COMPLETE }
     
@@ -75,9 +73,7 @@ public class DiceAnimator {
     
     private Phase phase;
     private float phaseElapsed;
-    
-    private boolean useDirectionalAnimation;
-    
+
     private int stationaryFrameIndex;
     private int stationaryResultIndex;
     private float rollPickupStartScale;
@@ -102,7 +98,6 @@ public DiceAnimator() {
         resetCommonFields();
         scale = 1f;
         directionRad = 0f;
-        useDirectionalAnimation = false;
         bounceCount = 0;
         bounceHeights = new float[0];
         bounceScale = 1f;
@@ -110,7 +105,7 @@ public DiceAnimator() {
         travelDistance = 0f;
         travelProgress = 0f;
         rotation = 0f;
-        phase = Phase.ROLLING;
+        phase = Phase.COMPLETE;
         diceEffect = null;
     }
 
@@ -133,68 +128,6 @@ public DiceAnimator() {
         this.bounceYOffset = 0f;
     }
     
-    public void init() {
-    }
-    
-public void start(DiceType type, int finalValue, float x, float y, float delay) {
-        this.type = type;
-        this.finalValue = finalValue;
-        this.x = x;
-        this.y = y;
-        this.elapsed = -delay;
-        resetCommonFields();
-        this.scale = 1f;
-        this.useDirectionalAnimation = false;
-        this.rotation = 0f;
-        this.directionRad = 0f;
-        this.travelDistance = 0f;
-        this.travelProgress = 0f;
-        this.bounceCount = 0;
-        this.bounceHeights = new float[0];
-        this.bounceScale = 1f;
-        this.bounceYOffset = 0f;
-        this.phase = Phase.ROLLING;
-    }
-    
-    public void start(DiceType type, int finalValue, float x, float y, float delay,
-                      float rotation, float travelDistance, int bounceCount, float[] bounceHeights,
-                      float targetCenterX, float targetCenterY) {
-        this.type = type;
-        this.finalValue = finalValue;
-        this.x = x;
-        this.y = y;
-        this.elapsed = -delay;
-        resetCommonFields();
-
-        applyDirectional(rotation, travelDistance, bounceCount, bounceHeights);
-        this.phase = Phase.DROP;
-        this.scale = INITIAL_SCALE;
-        this.useDirectionalAnimation = true;
-        this.targetCenterX = targetCenterX;
-        this.targetCenterY = targetCenterY;
-    }
-    
-    public void reroll(int newFinalValue) {
-        this.finalValue = newFinalValue;
-        this.elapsed = 0f;
-        resetCommonFields();
-        this.scale = 1f;
-        this.travelProgress = 0f;
-        this.targetCenterX = 0f;
-        this.targetCenterY = 0f;
-        this.bounceHeights = new float[0];
-        this.bounceCount = 0;
-        this.bounceScale = 1f;
-        this.bounceYOffset = 0f;
-        if (useDirectionalAnimation) {
-            this.phase = Phase.DROP;
-            this.scale = INITIAL_SCALE;
-        } else {
-            this.phase = Phase.ROLLING;
-            this.rotation = 0f;
-        }
-    }
-    
     public void rerollWithNewPath(int newFinalValue, float startX, float startY,
                                    float rotation, float travelDistance, 
                                    int bounceCount, float[] bounceHeights,
@@ -209,7 +142,6 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.travelProgress = 0f;
 
         applyDirectional(rotation, travelDistance, bounceCount, bounceHeights);
-        this.useDirectionalAnimation = true;
         this.phase = Phase.SCATTER_PICKUP;
         this.scale = 1f;
         this.stationaryFrameIndex = AnimationConstants.FRAME_COUNT - 1;
@@ -237,7 +169,6 @@ public void start(DiceType type, int finalValue, float x, float y, float delay) 
         this.scale = 1.0f;
         this.phase = Phase.STATIONARY_PREVIEW;
         this.elapsed = 0f;
-        this.useDirectionalAnimation = false;
         this.rotation = 0f;
         this.directionRad = 0f;
         this.travelDistance = 0f;
@@ -264,7 +195,6 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         resetCommonFields();
         this.elapsed = -delay;
         this.phase = Phase.SCATTER_PICKUP;
-        this.useDirectionalAnimation = true;
     }
     
     
@@ -286,7 +216,6 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         applyDirectional(rotation, travelDistance, bounceCount, bounceHeights);
         this.phase = Phase.DROP;
         this.scale = INITIAL_SCALE;
-        this.useDirectionalAnimation = true;
         this.stationaryFrameIndex = AnimationConstants.FRAME_COUNT - 1;
         if (type == DiceType.PRISMATIC) {
             this.stationaryResultIndex = (int)(Math.random() * 6);
@@ -302,11 +231,7 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         
         if (elapsed < 0f) return;
         
-        if (phase == Phase.STATIONARY_PREVIEW || useDirectionalAnimation) {
-            advanceDirectional(amount);
-        } else {
-            advanceSimple();
-        }
+        advanceDirectional(amount);
     }
     
     private void advanceDirectional(float amount) {
@@ -556,30 +481,7 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         }
     }
     
-    private void advanceSimple() {
-        float returnStartTime = ROLL_DURATION + SETTLE_DURATION + REVEAL_DURATION;
-        
-        if (elapsed < ROLL_DURATION) {
-            float rollProgress = elapsed / ROLL_DURATION;
-            currentFrame = (int)(rollProgress * 6f * AnimationConstants.FRAME_COUNT) % AnimationConstants.FRAME_COUNT;
-            scale = 1f;
-        } else if (elapsed < ROLL_DURATION + SETTLE_DURATION) {
-            currentFrame = AnimationConstants.FRAME_COUNT - 1;
-            scale = 1f;
-        } else if (elapsed < returnStartTime) {
-            currentFrame = AnimationConstants.FRAME_COUNT - 1;
-            float revealProgress = (elapsed - ROLL_DURATION - SETTLE_DURATION) / REVEAL_DURATION;
-            scale = 1f + SCALE_BOUNCE * (float)Math.sin(revealProgress * Math.PI);
-        } else if (elapsed < TOTAL_DURATION) {
-            currentFrame = AnimationConstants.FRAME_COUNT - 1;
-            scale = 1f;
-        } else {
-            currentFrame = AnimationConstants.FRAME_COUNT - 1;
-            scale = 1f;
-            complete = true;
-        }
-    }
-    
+
     public void render(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
         if (elapsed < 0f) return;
         
@@ -666,9 +568,7 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
             if (type == DiceType.BLUE_D4) {
                 visualRotation -= 90f;
             }
-        } else if (isSettledPhase || phase == Phase.COMPLETE || (complete && useDirectionalAnimation)) {
-            visualRotation = 0f;
-        } else if (complete) {
+        } else if (isSettledPhase || phase == Phase.COMPLETE) {
             visualRotation = 0f;
         } else {
             visualRotation = 180f - rotation;
@@ -714,7 +614,6 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         this.scale = source.getScale();
         this.stationaryFrameIndex = AnimationConstants.FRAME_COUNT - 1;
         this.stationaryResultIndex = value;
-        this.useDirectionalAnimation = true;
     }
     
     public void startFromRestPosition(DiceType type, int finalValue,
@@ -736,7 +635,6 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         applyDirectional(rotation, travelDistance, bounceCount, bounceHeights);
         this.phase = Phase.SCATTER_PICKUP;
         this.scale = 1f;
-        this.useDirectionalAnimation = true;
         this.stationaryFrameIndex = AnimationConstants.FRAME_COUNT - 1;
         this.stationaryResultIndex = finalValue;
         this.rollPickupStartScale = 1f;
@@ -843,7 +741,6 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         bounceYOffset = 0f;
         travelDistance = 0f;
         travelProgress = 0f;
-        useDirectionalAnimation = false;
         stationaryFrameIndex = AnimationConstants.FRAME_COUNT - 1;
         stationaryResultIndex = 0;
         rollPickupStartScale = 0f;
@@ -865,10 +762,6 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
     
     public float getScale() {
         return scale;
-    }
-    
-    public float getRotation() {
-        return rotation;
     }
     
     public float getVisualX() {

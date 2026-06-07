@@ -47,7 +47,7 @@ public class DicePathPlanner {
         for (int cpIdx = 0; cpIdx < CHECKPOINT_COUNT; cpIdx++) {
             float[] newCp = newCheckpoints[cpIdx];
             for (float[][] existing : existingCheckpoints) {
-                float[] exCp = existing[CHECKPOINT_COUNT - 1];
+                float[] exCp = existing[cpIdx];
                 float dx = newCp[0] - exCp[0];
                 float dy = newCp[1] - exCp[1];
                 if (dx * dx + dy * dy < minDistSq) {
@@ -87,37 +87,15 @@ public class DicePathPlanner {
         return clampToBounds(newX, newY, panelW, panelH);
     }
 
-    public static List<PlannedPath> planPaths(List<DiceType> types, List<Integer> results,
-                                               float centerX, float centerY, float spacing,
-                                               float panelW, float panelH) {
-        int count = Math.min(types.size(), results.size());
-        List<PlannedPath> paths = new ArrayList<>(count);
-
-        float totalWidth = spacing * (count - 1) + DICE_SIZE;
-        float startX = centerX - totalWidth / 2f;
-        float startY = centerY - DICE_SIZE / 2f;
-
-        float targetStartX = centerX - (count - 1) * spacing / 2f - DICE_SIZE / 2f;
-
-        List<float[][]> plannedCheckpoints = new ArrayList<>();
-
+    public static float[][] planGridTargets(int count, float centerX, float centerY, float spacing) {
+        float[][] targets = new float[count][2];
+        float startX = centerX - (count - 1) * spacing / 2f;
+        float y = centerY - DICE_SIZE / 2f;
         for (int i = 0; i < count; i++) {
-            float diceX = startX + i * spacing;
-            float delay = i * 0.05f;
-
-            float targetX = targetStartX + i * spacing;
-            float targetY = centerY - DICE_SIZE / 2f;
-
-            PlannedPath path = planSingleDice(diceX, startY, delay, plannedCheckpoints,
-                                              targetX, targetY, panelW, panelH);
-            paths.add(path);
-
-            float[][] checkpoints = calculateCheckpoints(path.startX(), path.startY(),
-                                                         path.actualLandingX(), path.actualLandingY());
-            plannedCheckpoints.add(checkpoints);
+            targets[i][0] = startX + i * spacing;
+            targets[i][1] = y;
         }
-
-        return paths;
+        return targets;
     }
 
     private static PlannedPath planSingleDice(float startX, float startY,
