@@ -226,82 +226,114 @@
     "character": {
         "acheron": {
             "name": "Acheron",
+            "title": "Self-Annihilator",
+            "open": "I weep for the departed..Dusk's rain... it too shall fall..",
             "passive": "When attacking: If all selected dice numbers are 4, this attack gains Perforation: for each successful Perforation triggered, increases ATK Level by 1. Perforation: When attacking, ignores the opponent's Defense and Forcefield. Attack Level: The required number of dice that must be selected for attack.",
             "passive_desc": "All dice = 4: Perforation"
         },
         "castorice": {
             "name": "Castorice",
+            "title": "Servant of Death",
+            "open": "May wandering souls find their own way out.",
             "passive": "When defending: If DMG taken is no less than 8, increases ATK Level and DEF Level by 1. If DMG taken is no more than 5, immediately deals 3 Instant Damage. Attack/Defense Level: The required number of dice that must be selected for attack/defense. Instant Damage: Deals damage instantly, skipping the calculation of Final DMG."
         },
         "firefly": {
             "name": "Firefly",
+            "title": "Molten Knight",
+            "open": "I shall... set the seas ablaze!",
             "passive": "When attacking, If the selected dice contain 2 pairs of matching numbers, this attack gains Combo. If this unit has full HP, increases Attack by 5. Combo: Performs 1 additional attack based on the current Attack.",
             "passive_desc": "2 pairs: Combo"
         },
         "robin": {
             "name": "Robin",
+            "title": "Galactic Singer",
+            "open": "Tonight, the stars echo because of me.",
             "passive": "When attacking: If all selected dice are even numbers, the selected dice gain a Level Up. Level Up: Upgrades eligible dice by increasing their Rarity and max number of faces up to twelve. Note: The d12 dice are treated as Prismatic Dice.",
             "passive_desc": "All even: Level Up"
         },
         "the_herta": {
             "name": "The Herta",
+            "title": "Genius Society #83",
+            "open": "What's wrong? Never seen perfection up close before?",
             "passive": "At the end of the turn: Gains 1 Prismatic Dice Use. If its special effect has been triggered more than 4 times, subsequently gains Arise each turn. Arise: Before the end of the turn, randomly turns the selected die with the lowest value to that die's maximum value. (Prismatic Dice are unaffected)"
         },
         "kafka": {
             "name": "Kafka",
+            "title": "Stellaron Hunter",
+            "open": "Good times never last.",
             "passive": "When attacking: For each different number on the selected dice, applies 1 stack of Poison. When defense fails, removes 1 stack of Poison from the opponent. Poison: At the end of the turn, takes DMG based on the number of stacks, then reduce the number of stacks by 1.",
             "passive_desc": "{0} Poison stacks"
         },
         "aventurine": {
             "name": "Aventurine",
+            "title": "Aventurine of Stratagems",
+            "open": "Bust? Or maybe I'll take it all!",
             "passive": "When attacking: Gains 1 stack of Toughness for every 1 odd number in the selected dice. When Toughness accumulates to 7 stacks, immediately deals 7 Instant Damage and removes 7 stacks of Toughness. Toughness: When defending, provides a DEF bonus based on the number of stacks. Instant Damage: Deals damage instantly, skipping the calculation of Final DMG.",
             "passive_desc": "{0} Toughness"
         },
         "march_7th": {
             "name": "March 7th",
+            "title": "Mysterious Foreign Guest",
+            "open": "Check out this awesome move~",
             "passive": "When attacking or defending: For each 1 pair of matching numbers on selected dice, deals 3 Instant Damage. Instant Damage: Deals damage instantly, skipping the calculation of Final DMG.",
             "passive_desc": "{0} pair(s) = {1} Instant Damage"
         },
         "dan_heng": {
             "name": "Dan Heng",
+            "title": "Permansor Terrae",
+            "open": "The truth of life and death, revealed in an instant.",
             "passive": "When attacking: If Attack is no less than 18, next time when defending, increases DEF Level by 3, and gains Counter. After defense ends, DEF Level will be restored to the initial value. Defense Level: The required number of dice that must be selected for defense. Counter: When attacked, if your DEF is higher, deals DMG to the attacker equal to the difference.",
             "passive_desc": "Attack >= 18: Counter + DEF boost"
         },
         "sparxie": {
             "name": "Sparxie",
+            "title": "Masked Fool",
+            "open": "Let's play hide and seek.",
             "passive": "When attacking or defending: If the selected dice include identical numbers, gains Hack. Hack: Before the end of the turn, turns your opponent's selected die with the highest value into a 2. (Prismatic Dice are unaffected)",
             "passive_desc": "Pair detected: Hack effect"
         },
         "yao_guang": {
             "name": "Yao Guang",
+            "title": "The Seer Strategist",
+            "open": "Fortune favors the bold. Make your move.",
             "passive": "When attacking: Gain 4 reroll attempts; after exceeding 2 rerolls in a single turn, each reroll grants 2 stacks of Thorns. Additionally, if Attack is no less than 18, removes all Thorns and gains 1 Prismatic Dice use. Thorns: Before the end of the turn, takes DMG based on the number of stacks. This effect is removed at the end of the turn.",
             "passive_desc": "Attack >= 18: Thorns cleansed + Prismatic use"
         },
         "cyrene": {
             "name": "Cyrene",
+            "title": "Ripples of Past Reverie",
+            "open": "Every memory turns into ripples.",
             "passive": "This unit's ATK and DEF values are tallied each turn. When the total exceeds 24, Attack Level becomes 5, and subsequently gains Arise each turn. Attack Level: The required number of dice that must be selected for attack. Arise: Before the end of the turn, randomly turns the selected die with the lowest value to that die's maximum value. (Prismatic Dice are unaffected)",
             "passive_desc": "Cumulative ATK+DEF > 24: ATK Level 5 + Arise",
             "passive_progress": "Turn value: %d toward threshold"
         },
         "phainon": {
             "name": "Phainon",
+            "title": "Prisoner of Flames",
+            "open": "I grant you a dawn where all stars burn to ash.",
             "passive": "When attacking: Siphons HP equal to 50% of the DMG dealt. When defending: If all selected dice have the same number, gains Unyielding, which can be triggered up to 1 time. Siphon: When attacking, restores HP equal to a portion of the DMG dealt. Unyielding: While active, always keeps 1 HP.",
             "passive_desc": "All same: Unyielding"
         },
         "hyacine": {
             "name": "Hyacine",
+            "title": "Healer of Light",
+            "open": "Even faint sparks can converge into a bright river of stars.",
             "passive": "After attacking: Sets Strength stacks to 50% of this attack's value. If all selected dice numbers are 6, sets it to 100% and Heals 6 HP. Strength: When attacking, provides an ATK bonus based on the number of stacks. Heal: Restores a specified amount of HP.",
             "passive_desc_full": "All dice = 6: 100% Strength + heal",
             "passive_desc_half": "Strength = 50% of attack"
         },
         "trashcan": {
             "name": "Trashcan",
+            "title": "Trashcan",
+            "open": "...",
             "passive": "After attacking: Gains 2 stack(s) of Strength. If all the selected dice show even numbers, gains 4 stack(s) of Strength instead. Strength: When attacking, provides an ATK bonus based on the number of stacks.",
             "passive_desc_even": "All even: 4 Strength",
             "passive_desc_odd": "2 Strength"
         },
         "default": {
-            "name": "Default"
+            "name": "Default",
+            "title": "Cosmicon Player",
+            "open": "Care for a game of Cosmicon?"
         }
     },
     "prismatic": {

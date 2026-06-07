@@ -1,3 +1,8 @@
 id,trigger,conditions,script,text,options
+cosmicon_npc_pickgreeting,PickGreeting,$tag:cosmicon_npc score:100,"$cos_npc_greeted = true 0
+ShowPersonVisual
+FireAll PopulateOptions","""$cos_npc_open""",,
+cosmicon_npc_pickgreeting_return,PickGreeting,$tag:cosmicon_npc score:100 $cos_npc_greeted,ShowPersonVisual
+FireAll PopulateOptions,"""Back for another round?""",,
 cosmicon_npc_greeting,PopulateOptions,$isPerson $tag:cosmicon_npc,Cosmicon_AddNPCOption,,
 cosmicon_npc_play,DialogOptionSelected,$option == cosmicon_npc_play,CosmiconNPCDialogPlugin,,

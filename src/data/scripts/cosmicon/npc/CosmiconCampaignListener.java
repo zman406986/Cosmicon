@@ -7,6 +7,8 @@ import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import com.fs.starfarer.api.characters.ImportantPeopleAPI;
 import com.fs.starfarer.api.characters.PersonAPI;
 import com.fs.starfarer.api.impl.campaign.ids.Factions;
+import com.fs.starfarer.api.impl.campaign.ids.Ranks;
+import data.scripts.Strings;
 import data.scripts.CosmiconConfig;
 import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.CharacterRegistry;
@@ -110,8 +112,25 @@ public class CosmiconCampaignListener extends BaseCampaignEventListener {
 
         person.setPortraitSprite(portraitSprite);
         person.addTag(NPC_TAG);
+
+        String charTitle = Strings.get("character." + characterId + ".title");
+        if (charTitle != null && !charTitle.isEmpty()) {
+            person.setPostId(charTitle);
+        } else {
+            person.setPostId(Ranks.POST_ENTREPRENEUR);
+        }
+        person.setRankId(Ranks.CITIZEN);
+
         person.getMemory().set("$cos_npc_char", characterId);
         person.getMemory().set("$cos_npc_market_id", market.getId());
+
+        String openLine = Strings.get("character." + characterId + ".open");
+        if (openLine != null && !openLine.isEmpty()) {
+            person.getMemory().set("$cos_npc_open", openLine);
+        }
+        if (charTitle != null && !charTitle.isEmpty()) {
+            person.getMemory().set("$cos_npc_title", charTitle);
+        }
 
         market.getCommDirectory().addPerson(person, 0);
         market.addPerson(person);
