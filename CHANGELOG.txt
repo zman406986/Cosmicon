@@ -1,8 +1,5 @@
-Version 0.4.0
-- Added character titles and opening dialogue lines for all NPC opponents (both EN/CN); NPCs now display assigned title as their post and show character-specific opening line on first greeting.
-- Added NPC greeting and return greeting rules for personalized dialogue flow.
-
 Version 0.3.0
+- Added NPC opponent titles, opening dialogue lines, and greeting rules (EN/CN); NPCs display assigned title and character-specific opening line.
 - Fixed tournament bracket position strings not localized; fixed playerLosses not incrementing on loser bracket elimination.
 - Fixed tournament reward bugs: tier 2 unlocking wrong prismatic dice, tier 4 skipping dice selection, pending rewards lost on ESC dismiss.
 - Fixed tournament progress accessible via bar/NPC without casino entry; NPC dialogue no longer destroys active tournament state.
