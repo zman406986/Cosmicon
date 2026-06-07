@@ -203,7 +203,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     public void cleanup() {
-        CosmiconLogger.info("Battle dialog closed");
+        CosmiconLogger.debug("Battle dialog closed");
         if (battleState != null) {
             battleState.removeListener(this);
         }
@@ -250,7 +250,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     public void init(CustomPanelAPI panel, DialogCallbacks callbacks) {
-        CosmiconLogger.info("Battle dialog opened");
+        CosmiconLogger.debug("Battle dialog opened");
         this.panel = panel;
         callbacks.getPanelFader().setDurationOut(0.5f);
 
@@ -404,7 +404,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                 startRollFromRestForSide(!battleState.isPlayerAttacker());
             }
 
-            CosmiconLogger.info("[PHASE] ROLLING: isDefRolling=%s playerAttacker=%s startSide=%s",
+            CosmiconLogger.debug("[PHASE] ROLLING: isDefRolling=%s playerAttacker=%s startSide=%s",
                     battleState.isDefenderRolling(),
                     battleState.isPlayerAttacker(),
                     (battleState.isDefenderRolling() != battleState.isPlayerAttacker()) ? "player" : "opponent");
@@ -426,7 +426,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         if (newPhase == Phase.DICE_DISPLAY_ATTACK || newPhase == Phase.DICE_DISPLAY_DEFENSE) {
             diceDisplayTimer = 0f;
             boolean isPlayerDice = (newPhase == Phase.DICE_DISPLAY_ATTACK) == battleState.isPlayerAttacker();
-            CosmiconLogger.info("[PHASE] %s: isPlayerDice=%s playerAttacker=%s",
+            CosmiconLogger.debug("[PHASE] %s: isPlayerDice=%s playerAttacker=%s",
                     newPhase, isPlayerDice, battleState.isPlayerAttacker());
             float gridCenterX = isPlayerDice ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_X : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_X;
             float gridCenterY = isPlayerDice ? BattleRenderingUtils.PLAYER_REST_GRID_CENTER_Y : BattleRenderingUtils.OPPONENT_REST_GRID_CENTER_Y;
@@ -924,7 +924,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                 boolean showPlayerDice = isDefenderRolling != battleState.isPlayerAttacker();
                 boolean anyDiceStarted = false;
 
-                CosmiconLogger.debug("[ANIM] Starting stationary preview - isDefenderRolling=%s, showPlayerDice=%s, playerIsAttacker=%s",
+                CosmiconLogger.verbose("[ANIM] Starting stationary preview - isDefenderRolling=%s, showPlayerDice=%s, playerIsAttacker=%s",
                     isDefenderRolling, showPlayerDice, battleState.isPlayerAttacker());
 
                 if (showPlayerDice) {
@@ -934,7 +934,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                         diceRollManager.startStationaryPreview(types, values, diceZoneCenterX, diceZoneCenterY);
                         inputHandler.setWaitingForClickToRoll(true);
                         anyDiceStarted = true;
-                        CosmiconLogger.debug("[ANIM] Player stationary preview started - %d dice, waiting for click", types.size());
+                        CosmiconLogger.verbose("[ANIM] Player stationary preview started - %d dice, waiting for click", types.size());
                     }
                 } else {
                     List<DiceType> types = battleState.getOpponentDiceTypes();
@@ -943,7 +943,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                         diceRollManager.startOpponentStationaryPreview(types, values, opponentDiceZoneCenterX, opponentDiceZoneCenterY);
                         opponentAutoRollDelay = OPPONENT_AUTO_ROLL_DELAY;
                         anyDiceStarted = true;
-                        CosmiconLogger.debug("[ANIM] Opponent stationary preview started - %d dice, auto-roll in %.1fs", types.size(), OPPONENT_AUTO_ROLL_DELAY);
+                        CosmiconLogger.verbose("[ANIM] Opponent stationary preview started - %d dice, auto-roll in %.1fs", types.size(), OPPONENT_AUTO_ROLL_DELAY);
                     }
                 }
 
@@ -973,7 +973,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             if (opponentAutoRollDelay <= 0f && diceRollManager.isOpponentWaitingForRollTrigger()) {
                 diceRollManager.triggerOpponentRollFromStationary();
                 opponentDiceAnimating = true;
-                CosmiconLogger.debug("[ANIM] Opponent auto-roll triggered");
+                CosmiconLogger.verbose("[ANIM] Opponent auto-roll triggered");
             }
         }
 
@@ -1132,7 +1132,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
     private void startRollFromRestForSide(boolean isPlayer) {
         if (diceRollManager.isRestAnimatorsEmpty(isPlayer)) {
-            CosmiconLogger.info("[DICE-REST] startRollFromRestForSide SKIPPED: no rest for isPlayer=%s", isPlayer);
+            CosmiconLogger.verbose("[DICE-REST] startRollFromRestForSide SKIPPED: no rest for isPlayer=%s", isPlayer);
             return;
         }
         List<DiceType> types = isPlayer ? battleState.getPlayerDiceTypes() : battleState.getOpponentDiceTypes();

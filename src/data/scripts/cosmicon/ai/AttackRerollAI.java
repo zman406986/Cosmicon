@@ -104,7 +104,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             getCharacterId(), currentValues, rerollsAvailable, effectiveRequired, candidates.size(), currentEV);
 
         if (candidates.isEmpty()) {
-            CosmiconLogger.debug("[AI_REROLL] %s: no candidates generated", getCharacterId());
+            CosmiconLogger.verbose("[AI_REROLL] %s: no candidates generated", getCharacterId());
             return Set.of();
         }
 
@@ -169,10 +169,10 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         }
 
         if (!bestAction.isEmpty()) {
-            CosmiconLogger.debug("[AI_REROLL] %s: rerolling indices %s, EV %.1f vs current %.1f",
+            CosmiconLogger.verbose("[AI_REROLL] %s: rerolling indices %s, EV %.1f vs current %.1f",
                 getCharacterId(), bestAction, bestEV, currentEV);
         } else {
-            CosmiconLogger.debug("[AI_REROLL] %s: no beneficial reroll (current EV %.1f)", getCharacterId(), currentEV);
+            CosmiconLogger.verbose("[AI_REROLL] %s: no beneficial reroll (current EV %.1f)", getCharacterId(), currentEV);
         }
 
         return bestAction;

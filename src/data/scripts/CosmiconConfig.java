@@ -16,7 +16,8 @@ public class CosmiconConfig {
     public static int DEFAULT_HP = 20;
     public static int DEFAULT_REROLLS = 2;
     public static boolean COSMICON_ENABLED = true;
-    public static boolean DEBUG_ENABLED = true;
+    public static boolean DEBUG_ENABLED = false;
+    public static boolean VERBOSE_ENABLED = false;
     public static boolean REROLL_LOG_ENABLED = false;
 
     public static boolean NPC_ENABLED = true;
@@ -59,7 +60,8 @@ public class CosmiconConfig {
             MARKET_SIZE_MIN = settings.optInt("marketSizeMin", 1);
             DEFAULT_HP = settings.optInt("defaultHP", 20);
             DEFAULT_REROLLS = settings.optInt("defaultRerolls", 2);
-            DEBUG_ENABLED = settings.optBoolean("debugEnabled", true);
+            DEBUG_ENABLED = settings.optBoolean("debugEnabled", false);
+            VERBOSE_ENABLED = settings.optBoolean("verboseEnabled", false);
             REROLL_LOG_ENABLED = settings.optBoolean("rerollLogEnabled", false);
 
             NPC_ENABLED = settings.optBoolean("npcEnabled", true);

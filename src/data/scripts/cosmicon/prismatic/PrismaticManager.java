@@ -57,7 +57,7 @@ public class PrismaticManager {
             }
         }
         
-        CosmiconLogger.debug("Prismatic uses initialized - Player: %d, Opponent: %d", 
+        CosmiconLogger.verbose("Prismatic uses initialized - Player: %d, Opponent: %d", 
             playerPrismatic.getUses(), opponentPrismatic.getUses());
     }
     
@@ -95,7 +95,7 @@ public class PrismaticManager {
         ps.decrementUsesByType(type);
         ps.decrementUses();
         int newUses = ps.getUsesByType(type);
-        CosmiconLogger.debug("Prismatic dice consumed: %s by %s (uses: %d -> %d)", 
+        CosmiconLogger.verbose("Prismatic dice consumed: %s by %s (uses: %d -> %d)", 
             type.getId(), forPlayer ? "Player" : "Opponent", oldUses, newUses);
     }
     

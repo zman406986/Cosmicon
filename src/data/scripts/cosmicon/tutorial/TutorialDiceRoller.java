@@ -110,7 +110,7 @@ public class TutorialDiceRoller {
                 && "repeater".equals(type.getId()) && !isTrueVersion) {
             PrismaticDiceInstance instance = new PrismaticDiceInstance(
                 type, false, GAME2_PRISMATIC_FACE, GAME2_PRISMATIC_FACE_INDEX);
-            CosmiconLogger.debug("TutorialDiceRoller: Fixed prismatic roll for %s - face: %d, special: %s",
+            CosmiconLogger.verbose("TutorialDiceRoller: Fixed prismatic roll for %s - face: %d, special: %s",
                 type.getId(), instance.rolledFace, instance.isSpecialFace);
             return instance;
         }
@@ -127,14 +127,14 @@ public class TutorialDiceRoller {
         if (controller.getGame() == TutorialController.TutorialGame.GAME_2_ACHERON) {
             if (opponentRerollCount < GAME2_OPPONENT_REROLL_INDICES.length) {
                 int[] indices = GAME2_OPPONENT_REROLL_INDICES[opponentRerollCount];
-                CosmiconLogger.debug("TutorialDiceRoller: predetermined opponent reroll #%d - indices: %s",
+                CosmiconLogger.verbose("TutorialDiceRoller: predetermined opponent reroll #%d - indices: %s",
                     opponentRerollCount + 1, Arrays.toString(indices));
                 return toList(indices);
             }
         } else {
             if (opponentRerollCount < GAME1_OPPONENT_REROLL_INDICES.length) {
                 int[] indices = GAME1_OPPONENT_REROLL_INDICES[opponentRerollCount];
-                CosmiconLogger.debug("TutorialDiceRoller: predetermined Game 1 opponent reroll #%d - indices: %s",
+                CosmiconLogger.verbose("TutorialDiceRoller: predetermined Game 1 opponent reroll #%d - indices: %s",
                     opponentRerollCount + 1, Arrays.toString(indices));
                 return toList(indices);
             }
@@ -156,7 +156,7 @@ public class TutorialDiceRoller {
         }
         if (selections != null) {
             opponentSelectionCount++;
-            CosmiconLogger.debug("TutorialDiceRoller: predetermined opponent selection #%d - indices: %s",
+            CosmiconLogger.verbose("TutorialDiceRoller: predetermined opponent selection #%d - indices: %s",
                 idx + 1, Arrays.toString(selections));
             return toList(selections);
         }
@@ -165,7 +165,7 @@ public class TutorialDiceRoller {
         for (int i = 0; i < required; i++) {
             fallback.add(i);
         }
-        CosmiconLogger.debug("TutorialDiceRoller: fallback opponent selection - indices: %s", fallback);
+        CosmiconLogger.verbose("TutorialDiceRoller: fallback opponent selection - indices: %s", fallback);
         return fallback;
     }
 
@@ -271,7 +271,7 @@ public class TutorialDiceRoller {
         state.decrementRerolls(true);
         state.incrementRerollsUsed(true);
 
-        CosmiconLogger.debug("TutorialDiceRoller: Game 1 Turn 3 reroll - indices: %s", rerolledIndices);
+        CosmiconLogger.verbose("TutorialDiceRoller: Game 1 Turn 3 reroll - indices: %s", rerolledIndices);
     }
 
     private void rerollGame1Opponent(BattleState state) {
@@ -294,7 +294,7 @@ public class TutorialDiceRoller {
         state.decrementRerolls(false);
         state.incrementRerollsUsed(false);
 
-        CosmiconLogger.debug("TutorialDiceRoller: Game 1 opponent reroll #%d - indices: %s",
+        CosmiconLogger.verbose("TutorialDiceRoller: Game 1 opponent reroll #%d - indices: %s",
             opponentRerollCount + 1, rerolledIndices);
     }
 
@@ -330,7 +330,7 @@ public class TutorialDiceRoller {
         state.decrementRerolls(true);
         state.incrementRerollsUsed(true);
 
-        CosmiconLogger.debug("TutorialDiceRoller: Game 2 T3 reroll (non-prismatic) - indices: %s", rerolledIndices);
+        CosmiconLogger.verbose("TutorialDiceRoller: Game 2 T3 reroll (non-prismatic) - indices: %s", rerolledIndices);
     }
 
     private void rerollGame2T3Second(BattleState state) {
@@ -353,7 +353,7 @@ public class TutorialDiceRoller {
         state.decrementRerolls(true);
         state.incrementRerollsUsed(true);
 
-        CosmiconLogger.debug("TutorialDiceRoller: Game 2 T3 second reroll (non-prismatic) - indices: %s", rerolledIndices);
+        CosmiconLogger.verbose("TutorialDiceRoller: Game 2 T3 second reroll (non-prismatic) - indices: %s", rerolledIndices);
     }
 
     private void rerollGame2Opponent(BattleState state) {
@@ -376,7 +376,7 @@ public class TutorialDiceRoller {
         state.decrementRerolls(false);
         state.incrementRerollsUsed(false);
 
-        CosmiconLogger.debug("TutorialDiceRoller: opponent reroll #%d - indices: %s",
+        CosmiconLogger.verbose("TutorialDiceRoller: opponent reroll #%d - indices: %s",
             opponentRerollCount + 1, rerolledIndices);
     }
 
@@ -406,7 +406,7 @@ public class TutorialDiceRoller {
 
         state.notifyDiceRolled(forPlayer, typeList, valueList);
 
-        CosmiconLogger.debug("TutorialDiceRoller: Fixed roll for %s - values: %s",
+        CosmiconLogger.verbose("TutorialDiceRoller: Fixed roll for %s - values: %s",
             forPlayer ? "Player" : "Opponent", valueList);
     }
 }

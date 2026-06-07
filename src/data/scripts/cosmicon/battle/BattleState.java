@@ -201,7 +201,7 @@ public class BattleState {
 
         prismaticManager.initializeFromCards(playerCard, opponentCard);
 
-        CosmiconLogger.debug("BattleState initialized - Player: %s (HP %d), Opponent: %s (HP %d)",
+        CosmiconLogger.verbose("BattleState initialized - Player: %s (HP %d), Opponent: %s (HP %d)",
             playerCard.getName(), hpManager.getPlayerHp(), opponentCard.getName(), hpManager.getOpponentHp());
     }
 
@@ -934,7 +934,7 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
     
     public void cleanup() {
-        CosmiconLogger.debug("BattleState cleanup - clearing listeners and state");
+        CosmiconLogger.verbose("BattleState cleanup - clearing listeners and state");
 
         eventBus.cleanup();
 
@@ -957,6 +957,6 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         turnState.cleanup();
         rerollState.cleanup();
         
-        CosmiconLogger.debug("BattleState cleanup complete");
+        CosmiconLogger.verbose("BattleState cleanup complete");
     }
 }

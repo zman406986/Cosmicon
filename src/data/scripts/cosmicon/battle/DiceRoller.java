@@ -60,11 +60,11 @@ public class DiceRoller {
 
         List<DiceType> rawTypes = state.getUpgradedDicePool(forPlayer);
         if (rawTypes == null) {
-            CosmiconLogger.info("[DICE_ROLL] %s using BASE pool: %s",
+            CosmiconLogger.debug("[DICE_ROLL] %s using BASE pool: %s",
                 card.getName(), card.getDicePool());
             rawTypes = card.getDicePool();
         } else {
-            CosmiconLogger.info("[DICE_ROLL] %s using UPGRADED pool: %s | base=%s",
+            CosmiconLogger.debug("[DICE_ROLL] %s using UPGRADED pool: %s | base=%s",
                 card.getName(), rawTypes, card.getDicePool());
         }
         List<DiceType> types = new ArrayList<>(rawTypes);
@@ -103,7 +103,7 @@ public class DiceRoller {
             sb.append(type.name()).append("(").append(value).append(")");
         }
         sb.append(" = ").append(total);
-        CosmiconLogger.debug(sb.toString());
+        CosmiconLogger.verbose(sb.toString());
     }
     
     public void rerollSelected(BattleState state, boolean forPlayer) {
@@ -192,7 +192,7 @@ public class DiceRoller {
             total += values.get(i);
         }
         sb.append(" | New total: ").append(total);
-        CosmiconLogger.debug(sb.toString());
+        CosmiconLogger.verbose(sb.toString());
     }
 
     private static void setMustSelectForDestined(PrismaticDiceInstance instance, PrismaticDiceType type) {

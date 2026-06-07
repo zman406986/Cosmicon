@@ -18,7 +18,7 @@ public class PrismaticDiceProcessor {
         switch (effect.getType()) {
             case DOUBLE_VALUE -> {
                 state.setDoubleValueActive(forPlayer, true);
-                CosmiconLogger.debug("Prismatic effect applied: DoubleValue to %s",
+                CosmiconLogger.verbose("Prismatic effect applied: DoubleValue to %s",
                     forPlayer ? "Player" : "Opponent");
             }
             case GRANT_STATUS -> {
@@ -26,26 +26,26 @@ public class PrismaticDiceProcessor {
                 int layers = effect.calculateLayers(dice.rolledFace);
                 boolean target = (statusEffect == StatusEffect.POISON) != forPlayer;
                 state.applyEffect(statusEffect, layers, target);
-                CosmiconLogger.debug("Prismatic effect applied: %s x%d to %s",
+                CosmiconLogger.verbose("Prismatic effect applied: %s x%d to %s",
                     statusEffect.name(), layers, target ? "Player" : "Opponent");
             }
             case HEAL_HP -> {
                 int healAmount = dice.rolledFace;
                 state.applyHealTo(forPlayer, healAmount);
                 state.notifyHeal(forPlayer, healAmount);
-                CosmiconLogger.debug("Prismatic effect applied: Heal %d HP to %s",
+                CosmiconLogger.verbose("Prismatic effect applied: Heal %d HP to %s",
                     healAmount, forPlayer ? "Player" : "Opponent");
             }
             case GAIN_PRISMATIC_USE -> {
                 state.addPrismaticUse(dice.type, forPlayer);
-                CosmiconLogger.debug("Prismatic effect applied: GainPrismaticUse (%s) to %s",
+                CosmiconLogger.verbose("Prismatic effect applied: GainPrismaticUse (%s) to %s",
                     dice.type.getId(), forPlayer ? "Player" : "Opponent");
             }
             case INSTANT_DAMAGE -> {
                 int damage = effect.getInstantDamageAmount();
                 state.applyDamageTo(!forPlayer, damage);
                 state.notifySecondaryDamage(!forPlayer, damage, "INSTANT_DAMAGE");
-                CosmiconLogger.debug("Prismatic effect applied: InstantDamage %d to %s",
+                CosmiconLogger.verbose("Prismatic effect applied: InstantDamage %d to %s",
                     damage, forPlayer ? "Opponent" : "Player");
             }
             case NONE -> {}

@@ -31,7 +31,7 @@ public class WeatherController {
         schedule.advanceTurn(allowSafeguard, allowAttack);
         WeatherType newWeather = schedule.getCurrentWeather();
         if (oldWeather != newWeather) {
-            CosmiconLogger.debug("Weather changed: %s -> %s", oldWeather, newWeather);
+            CosmiconLogger.verbose("Weather changed: %s -> %s", oldWeather, newWeather);
         }
     }
     
@@ -121,12 +121,12 @@ public class WeatherController {
             case FISH_RAIN -> {
                 state.setRemainingRerolls(true, state.getRemainingRerolls(true) + 1);
                 state.setRemainingRerolls(false, state.getRemainingRerolls(false) + 1);
-                CosmiconLogger.debug("%s: +1 reroll for both sides", weather);
+                CosmiconLogger.verbose("%s: +1 reroll for both sides", weather);
             }
             case PARHELION -> {
                 boolean attackerIsPlayer = state.isPlayerAttacker();
                 state.setRemainingRerolls(attackerIsPlayer, state.getRemainingRerolls(attackerIsPlayer) + 2);
-                CosmiconLogger.debug("%s: +2 rerolls for attacker", weather);
+                CosmiconLogger.verbose("%s: +2 rerolls for attacker", weather);
             }
             default -> {}
         }
@@ -206,7 +206,7 @@ public class WeatherController {
                 boolean hasSix = checkContainsValue(values, selected, 6);
                 if (hasSix) {
                     state.getEffects(isPlayer).removeEffect(StatusEffect.POISON);
-                    CosmiconLogger.debug("DRIZZLE: Removed POISON from %s (rolled a 6)", isPlayer ? "Player" : "Opponent");
+                    CosmiconLogger.verbose("DRIZZLE: Removed POISON from %s (rolled a 6)", isPlayer ? "Player" : "Opponent");
                 }
             }
             default -> {}
@@ -238,7 +238,7 @@ public class WeatherController {
             {
                 state.getEffects(isPlayer).addEffect(StatusEffect.COUNTER, weather.name(), 1, DurationType.USAGE_BASED);
                 state.modifyWeatherDefMod(isPlayer, 2);
-                CosmiconLogger.debug("%s: COUNTER + DEF+2 for defender (%s) [pre-selection]", weather, isPlayer ? "Player" : "Opponent");
+                CosmiconLogger.verbose("%s: COUNTER + DEF+2 for defender (%s) [pre-selection]", weather, isPlayer ? "Player" : "Opponent");
             }
         }
     }
@@ -281,7 +281,7 @@ public class WeatherController {
             case BLIZZARD -> {
                 if (state.getDefenseValue() <= 8) {
                     state.getEffects(isPlayer).addEffect(StatusEffect.FORCEFIELD, weather.name(), 1, DurationType.USAGE_BASED);
-                    CosmiconLogger.debug("%s: FORCEFIELD granted to defender (%s)", weather, isPlayer ? "Player" : "Opponent");
+                    CosmiconLogger.verbose("%s: FORCEFIELD granted to defender (%s)", weather, isPlayer ? "Player" : "Opponent");
                 }
             }
             case FROST -> {
@@ -301,7 +301,7 @@ public class WeatherController {
                 }
                 if (hasMatch) {
                     state.setPendingDefLevelBoost(attackerIsPlayer, 1);
-                    CosmiconLogger.debug("%s: DEF level +1 next turn for attacker (%s)", weather, attackerIsPlayer ? "Player" : "Opponent");
+                    CosmiconLogger.verbose("%s: DEF level +1 next turn for attacker (%s)", weather, attackerIsPlayer ? "Player" : "Opponent");
                 }
             }
             default -> {}

@@ -68,7 +68,7 @@ public class HpManager {
             newHp = 1;
             setHp(isPlayer, 1);
             effects.removeEffect(StatusEffectProcessor.StatusEffect.UNYIELDING);
-            CosmiconLogger.info("%s: UNYIELDING prevented death (HP: 1)", characterName);
+            CosmiconLogger.debug("%s: UNYIELDING prevented death (HP: 1)", characterName);
 
             if (card != null && CharacterIds.PHAINON.equals(card.getId())) {
                 unyieldingCheck.checkAndConsumeUnyielding(isPlayer);
@@ -79,7 +79,7 @@ public class HpManager {
 
         CosmiconLogger.hpChange(characterName, oldHp, newHp, maxHp);
         if (damage > 0) {
-            CosmiconLogger.info("%s took %d damage (HP: %d/%d)", characterName, damage, newHp, maxHp);
+            CosmiconLogger.debug("%s took %d damage (HP: %d/%d)", characterName, damage, newHp, maxHp);
         }
     }
 
@@ -91,7 +91,7 @@ public class HpManager {
         setHp(isPlayer, Math.min(oldHp + heal, maxHp));
 
         if (heal > 0) {
-            CosmiconLogger.debug("%s healed %d (HP: %d -> %d/%d)", characterName, heal, oldHp,
+            CosmiconLogger.verbose("%s healed %d (HP: %d -> %d/%d)", characterName, heal, oldHp,
                 getHp(isPlayer), maxHp);
         }
     }

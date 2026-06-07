@@ -162,7 +162,7 @@ public class DiceRollManager {
 
         int totalCount = Math.min(selected.size(), side.animators.size());
         if (totalCount == 0) {
-            CosmiconLogger.info("[DICE-REST] moveSelectedToRestGrid SKIPPED: forPlayer=%s selected=%d animators=%d restAnimators=%d",
+            CosmiconLogger.verbose("[DICE-REST] moveSelectedToRestGrid SKIPPED: forPlayer=%s selected=%d animators=%d restAnimators=%d",
                     forPlayer, selected.size(), side.animators.size(), side.restAnimators.size());
             return;
         }
@@ -225,7 +225,7 @@ public class DiceRollManager {
         }
 
         side.clearMain();
-        CosmiconLogger.info("[DICE-REST] moveSelectedToRestGrid OK: forPlayer=%s total=%d active=%d reserve=%d restAnimators=%d",
+        CosmiconLogger.verbose("[DICE-REST] moveSelectedToRestGrid OK: forPlayer=%s total=%d active=%d reserve=%d restAnimators=%d",
                 forPlayer, totalCount, activeCount, reserveCount, side.restAnimators.size());
     }
 
@@ -314,11 +314,11 @@ public class DiceRollManager {
         DiceSide side = forPlayer ? playerSide : opponentSide;
         if (index >= 0 && index < side.restAnimators.size()) {
             int displayValue = resolveDisplayValue(battleState, index, forPlayer, newValue);
-            CosmiconLogger.info("[DICE-REST] updateRestDiceValue: forPlayer=%s idx=%d newVal=%d displayVal=%d restCount=%d",
+            CosmiconLogger.verbose("[DICE-REST] updateRestDiceValue: forPlayer=%s idx=%d newVal=%d displayVal=%d restCount=%d",
                     forPlayer, index, newValue, displayValue, side.restAnimators.size());
             side.restAnimators.get(index).animateValueChange(displayValue);
         } else {
-            CosmiconLogger.info("[DICE-REST] updateRestDiceValue SKIPPED: forPlayer=%s idx=%d newVal=%d restCount=%d",
+            CosmiconLogger.verbose("[DICE-REST] updateRestDiceValue SKIPPED: forPlayer=%s idx=%d newVal=%d restCount=%d",
                     forPlayer, index, newValue, side.restAnimators.size());
         }
     }
@@ -333,11 +333,11 @@ public class DiceRollManager {
     public void setRestDiceEffect(int index, StatusEffectProcessor.StatusEffect effect, boolean forPlayer) {
         DiceSide side = forPlayer ? playerSide : opponentSide;
         if (index >= 0 && index < side.restAnimators.size()) {
-            CosmiconLogger.info("[DICE-REST] setRestDiceEffect: forPlayer=%s idx=%d effect=%s restCount=%d",
+            CosmiconLogger.verbose("[DICE-REST] setRestDiceEffect: forPlayer=%s idx=%d effect=%s restCount=%d",
                     forPlayer, index, effect, side.restAnimators.size());
             side.restAnimators.get(index).setDiceEffect(effect);
         } else {
-            CosmiconLogger.info("[DICE-REST] setRestDiceEffect SKIPPED: forPlayer=%s idx=%d effect=%s restCount=%d",
+            CosmiconLogger.verbose("[DICE-REST] setRestDiceEffect SKIPPED: forPlayer=%s idx=%d effect=%s restCount=%d",
                     forPlayer, index, effect, side.restAnimators.size());
         }
     }
@@ -621,7 +621,7 @@ public class DiceRollManager {
             List<PlannedPath> travelPaths = DicePathPlanner.planTravelPaths(scatters, targetXs, targetYs, panelW, panelH);
 
             int restCount = restAnimators.size();
-            CosmiconLogger.info("[DICE-REST] startRollFromRest: forPlayer=%s diceCount=%d restCount=%d animators=%d",
+            CosmiconLogger.verbose("[DICE-REST] startRollFromRest: forPlayer=%s diceCount=%d restCount=%d animators=%d",
                     forPlayer, count, restCount, animators.size());
 
             for (int i = 0; i < count; i++) {

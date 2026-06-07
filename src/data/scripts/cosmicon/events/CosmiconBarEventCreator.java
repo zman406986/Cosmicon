@@ -11,7 +11,7 @@ public class CosmiconBarEventCreator extends BaseBarEventCreator {
 
     @Override
     public PortsideBarEvent createBarEvent() {
-        if (CosmiconConfig.DEBUG_ENABLED) {
+        if (CosmiconConfig.VERBOSE_ENABLED) {
             boolean inTimeout = BarEventManager.getInstance().getTimeout().contains(this);
             Global.getLogger(this.getClass()).info("Cosmicon bar event CREATE called, inTimeout=" + inTimeout);
         }
@@ -30,7 +30,7 @@ public class CosmiconBarEventCreator extends BaseBarEventCreator {
 
     @Override
     public float getBarEventTimeoutDuration() {
-        if (CosmiconConfig.DEBUG_ENABLED) {
+        if (CosmiconConfig.VERBOSE_ENABLED) {
             Global.getLogger(this.getClass()).info("Cosmicon getBarEventTimeoutDuration called");
         }
         return 1f;
@@ -38,7 +38,7 @@ public class CosmiconBarEventCreator extends BaseBarEventCreator {
 
     @Override
     public float getBarEventAcceptedTimeoutDuration() {
-        if (CosmiconConfig.DEBUG_ENABLED) {
+        if (CosmiconConfig.VERBOSE_ENABLED) {
             Global.getLogger(this.getClass()).info("Cosmicon getBarEventAcceptedTimeoutDuration called");
         }
         return 1f;

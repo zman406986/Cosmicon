@@ -12,6 +12,10 @@ public final class CosmiconLogger {
         return CosmiconConfig.DEBUG_ENABLED;
     }
 
+    public static boolean isVerboseEnabled() {
+        return CosmiconConfig.VERBOSE_ENABLED;
+    }
+
     public static boolean isInfoEnabled() {
         return LOG.isInfoEnabled();
     }
@@ -39,7 +43,19 @@ public final class CosmiconLogger {
             LOG.info("[DEBUG] " + String.format(format, args));
         }
     }
-    
+
+    public static void verbose(String message) {
+        if (isVerboseEnabled()) {
+            LOG.info("[VERBOSE] " + message);
+        }
+    }
+
+    public static void verbose(String format, Object... args) {
+        if (isVerboseEnabled()) {
+            LOG.info("[VERBOSE] " + String.format(format, args));
+        }
+    }
+
     public static void warn(String message) {
         LOG.warn(message);
     }
@@ -71,6 +87,6 @@ public final class CosmiconLogger {
     }
     
     public static void hpChange(String character, int oldHp, int newHp, int maxHp) {
-        debug("%s HP: %d -> %d / %d", character, oldHp, newHp, maxHp);
+        verbose("%s HP: %d -> %d / %d", character, oldHp, newHp, maxHp);
     }
 }

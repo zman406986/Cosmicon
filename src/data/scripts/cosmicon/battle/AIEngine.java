@@ -28,7 +28,7 @@ public class AIEngine {
         int rerolls = state.getRemainingRerolls(forPlayer);
         String charId = card.getId();
         
-        CosmiconLogger.info("[AI] Executing selection for %s (%s), dice: %s", 
+        CosmiconLogger.debug("[AI] Executing selection for %s (%s), dice: %s", 
             charId, isAttacking ? "attack" : "defense", diceValues);
         
         AIDecision decision = CosmiconAICore.makeDecision(
@@ -47,7 +47,7 @@ public class AIEngine {
             state.recordFaceSelection(diceValues.get(idx), forPlayer);
         }
         
-        CosmiconLogger.info("[AI] Selection applied: %s selected indices %s, values: %s, sum: %d", 
+        CosmiconLogger.debug("[AI] Selection applied: %s selected indices %s, values: %s, sum: %d", 
             charId, decision.getSelectedIndicesList(), decision.selection.selectedValues, decision.selection.sumValue);
     }
     
@@ -69,7 +69,7 @@ public class AIEngine {
         int rerolls = state.getRemainingRerolls(forPlayer);
         String charId = card.getId();
         
-        CosmiconLogger.info("[AI] Planning selection for %s (%s), dice: %s", 
+        CosmiconLogger.debug("[AI] Planning selection for %s (%s), dice: %s", 
             charId, isAttacking ? "attack" : "defense", diceValues);
         
         AIDecision decision = CosmiconAICore.makeDecision(
@@ -97,7 +97,7 @@ public class AIEngine {
         CharacterCard card = state.getCard(forPlayer);
         String charId = card != null ? card.getId() : "unknown";
         
-        CosmiconLogger.info("[AI] Planning reroll for %s (%s), dice: %s, rerolls left: %d", 
+        CosmiconLogger.debug("[AI] Planning reroll for %s (%s), dice: %s, rerolls left: %d", 
             charId, isAttacking ? "attack" : "defense", diceValues, rerollsAvailable);
         
         Set<Integer> rerollIndices = CosmiconAICore.recommendRerolls(
@@ -110,7 +110,7 @@ public class AIEngine {
     public PrismaticDecision planPrismaticUse(BattleState state, boolean forPlayer) {
         PrismaticDecision decision = AIPrismaticSelector.selectPrismaticDice(state, forPlayer);
         if (decision != null) {
-            CosmiconLogger.info("[AI] Prismatic decision: %s, score=%.1f, use=%s (for %s)",
+            CosmiconLogger.debug("[AI] Prismatic decision: %s, score=%.1f, use=%s (for %s)",
                 decision.instance() != null ? decision.instance().type : "none",
                 decision.score(), decision.shouldUse(),
                 forPlayer ? "player" : "opponent");

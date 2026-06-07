@@ -71,7 +71,7 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
 
     @SuppressWarnings("ConstantConditions")
     public void initBattleWithSelection(boolean playerIsAttacker) {
-        CosmiconLogger.info("Initializing battle with player selection");
+        CosmiconLogger.debug("Initializing battle with player selection");
 
         CharacterCard playerCard = CosmiconPlayerState.getConfiguredPlayerCard();
 
@@ -81,7 +81,7 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
             String opponentId = replayGame == 1 ? "trashcan" : "robin";
             opponentCard = CharacterRegistry.getCharacterById(opponentId);
             CosmiconEventState.setOpponentCharacter(opponentCard.getId());
-            CosmiconLogger.info("Replay tutorial game %d: opponent = %s", replayGame, opponentCard.getName());
+            CosmiconLogger.debug("Replay tutorial game %d: opponent = %s", replayGame, opponentCard.getName());
         } else if (CosmiconStats.isInTutorialMode()) {
             int gamesPlayed = CosmiconStats.getGamesPlayed();
             if (gamesPlayed == 0) {
@@ -142,7 +142,7 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
                 CosmiconLogger.error("Tutorial character '%s' not found in registry", tutorialPlayerId);
                 throw new IllegalStateException("Tutorial character not found: " + tutorialPlayerId);
             }
-            CosmiconLogger.info("Tutorial game: forced player character = %s", playerCard.getName());
+            CosmiconLogger.debug("Tutorial game: forced player character = %s", playerCard.getName());
         }
 
         if (!isTutorial) {
@@ -160,11 +160,11 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
                 && !savedPrismaticId.equals(defaultPrismaticId)) {
                 int uses = playerCard.getPrismaticDiceIds().getOrDefault(savedPrismaticId, 2);
                 playerCard = playerCard.withPrismaticDice(savedPrismaticId, uses, useTrueVersion);
-                CosmiconLogger.info("Applied custom prismatic dice: %s (true: %b)", savedPrismaticId, useTrueVersion);
+                CosmiconLogger.debug("Applied custom prismatic dice: %s (true: %b)", savedPrismaticId, useTrueVersion);
             } else if (playerHasPrismatic && repeaterUnlocked && !playerHasCustomPrismatic) {
                 int uses = playerCard.getPrismaticDiceIds().getOrDefault("repeater", 2);
                 playerCard = playerCard.withPrismaticDice("repeater", uses, false);
-                CosmiconLogger.info("Applied default repeater prismatic dice (non-true)");
+                CosmiconLogger.debug("Applied default repeater prismatic dice (non-true)");
             } else if (playerHasPrismatic && defaultPrismaticId != null) {
                 int uses = playerCard.getPrismaticDiceIds().getOrDefault(defaultPrismaticId, 2);
                 playerCard = playerCard.withPrismaticDice(defaultPrismaticId, uses, useTrueVersion);
@@ -198,10 +198,10 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
                 playerCard = playerCard.withPrismaticDice(primId, uses, false);
                 CosmiconPlayerState.savePrismaticDice(primId);
                 CosmiconPlayerState.savePrismaticDiceTrueVersion(false);
-                CosmiconLogger.info("Tutorial Game 2: Enabled prismatic dice %s x%d (basic version)", primId, uses);
+                CosmiconLogger.debug("Tutorial Game 2: Enabled prismatic dice %s x%d (basic version)", primId, uses);
             }
         } else {
-            CosmiconLogger.info("Tutorial mode: prismatic dice disabled");
+            CosmiconLogger.debug("Tutorial mode: prismatic dice disabled");
         }
 
         CosmiconLogger.info("Selected characters - Player: %s, Opponent: %s",
@@ -220,20 +220,20 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
             TutorialDiceRoller tutorialDiceRoller = new TutorialDiceRoller(tutorialController);
             turnProcessor.getDiceRoller().setTutorialDiceRoller(tutorialDiceRoller);
             state.setTutorialDiceRoller(tutorialDiceRoller);
-            CosmiconLogger.info("Tutorial controller initialized for game: %s", tutorialGameType);
+            CosmiconLogger.debug("Tutorial controller initialized for game: %s", tutorialGameType);
 
             if (tutorialGameType == TutorialController.TutorialGame.GAME_1_SPARXIE) {
                 state.getWeatherController().getWeatherManager().setWeatherDisabled(true);
-                CosmiconLogger.info("Tutorial Game 1: Weather disabled");
+                CosmiconLogger.debug("Tutorial Game 1: Weather disabled");
             } else if (tutorialGameType == TutorialController.TutorialGame.GAME_2_ACHERON) {
                 java.util.Map<Integer, WeatherType> forcedWeather = new java.util.HashMap<>();
                 forcedWeather.put(2, WeatherType.SLEET);
                 state.getWeatherController().getWeatherManager().setForcedWeatherSchedule(forcedWeather);
-                CosmiconLogger.info("Tutorial Game 2: Forced SLEET weather at turn 2");
+                CosmiconLogger.debug("Tutorial Game 2: Forced SLEET weather at turn 2");
             }
         }
 
-        CosmiconLogger.debug("Battle state initialized");
+        CosmiconLogger.verbose("Battle state initialized");
     }
 
     public void startBattle() {

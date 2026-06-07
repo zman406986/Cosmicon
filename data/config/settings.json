@@ -1,6 +1,7 @@
 {
     "cosmiconDiceEnabled": true,
-    "debugEnabled": true,
+    "debugEnabled": false,
+    "verboseEnabled": false,
     "rerollLogEnabled": false,
     "npcEnabled": true,
     "marketSizeMin": 3,

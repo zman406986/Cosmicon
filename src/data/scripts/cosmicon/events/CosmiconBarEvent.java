@@ -38,26 +38,26 @@ public class CosmiconBarEvent extends BaseBarEvent {
     @Override
     public boolean shouldShowAtMarket(MarketAPI market) {
         if (!super.shouldShowAtMarket(market)) {
-            if (CosmiconConfig.DEBUG_ENABLED) {
+            if (CosmiconConfig.VERBOSE_ENABLED) {
                 Global.getLogger(this.getClass()).info("Cosmicon shouldShowAtMarket REJECTED by super: " +
                         (market != null ? market.getName() + " (size " + market.getSize() + ")" : "null"));
             }
             return false;
         }
         if (market == null) {
-            if (CosmiconConfig.DEBUG_ENABLED) {
+            if (CosmiconConfig.VERBOSE_ENABLED) {
                 Global.getLogger(this.getClass()).info("Cosmicon shouldShowAtMarket REJECTED: market is null");
             }
             return false;
         }
         if (market.getSize() < CosmiconConfig.MARKET_SIZE_MIN) {
-            if (CosmiconConfig.DEBUG_ENABLED) {
+            if (CosmiconConfig.VERBOSE_ENABLED) {
                 Global.getLogger(this.getClass()).info("Cosmicon shouldShowAtMarket REJECTED: " +
                         market.getName() + " size " + market.getSize() + " < min " + CosmiconConfig.MARKET_SIZE_MIN);
             }
             return false;
         }
-        if (CosmiconConfig.DEBUG_ENABLED) {
+        if (CosmiconConfig.VERBOSE_ENABLED) {
             Global.getLogger(this.getClass()).info("Cosmicon shouldShowAtMarket ACCEPTED: " +
                     market.getName() + " (size " + market.getSize() + ")");
         }
@@ -68,7 +68,7 @@ public class CosmiconBarEvent extends BaseBarEvent {
     public void addPromptAndOption(InteractionDialogAPI dialog, Map<String, MemoryAPI> memoryMap) {
         super.addPromptAndOption(dialog, memoryMap);
 
-        if (CosmiconConfig.DEBUG_ENABLED) {
+        if (CosmiconConfig.VERBOSE_ENABLED) {
             Global.getLogger(this.getClass()).info("Cosmicon addPromptAndOption called - event appearing at bar");
         }
 
@@ -78,7 +78,11 @@ public class CosmiconBarEvent extends BaseBarEvent {
         if (CasinoIntegrationManager.isCasinoLoaded()) {
             int hunterLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
             if (hunterLevel > 0) {
-                textPanel.addPara(Strings.format("bar_event.trashcan_hunter_prompt", hunterLevel));
+                if (CosmiconStats.isLegendTitleInherited()) {
+                    textPanel.addPara(Strings.get("bar_event.trashcan_hunter_prompt_legend"));
+                } else {
+                    textPanel.addPara(Strings.format("bar_event.trashcan_hunter_prompt", hunterLevel));
+                }
                 dialog.getOptionPanel().addOption(Strings.get("bar_event.approach"), this);
                 return;
             }

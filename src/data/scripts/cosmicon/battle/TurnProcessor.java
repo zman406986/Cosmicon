@@ -146,7 +146,7 @@ public class TurnProcessor {
         
         weatherController.applyRerollPhase(state);
         
-        CosmiconLogger.debug("[AI_REROLL_DIAG] After base+weather: playerRerolls=%d, opponentRerolls=%d", 
+        CosmiconLogger.verbose("[AI_REROLL_DIAG] After base+weather: playerRerolls=%d, opponentRerolls=%d", 
             state.getRemainingRerolls(true), state.getRemainingRerolls(false));
         
         TurnType playerTurnType = playerIsAttacker ? TurnType.ATTACK : TurnType.DEFENSE;
@@ -161,7 +161,7 @@ public class TurnProcessor {
         int playerRerollBonus = playerContext.getRerollCount();
         int opponentRerollBonus = opponentContext.getRerollCount();
         
-        CosmiconLogger.debug("[AI_REROLL_DIAG] BEFORE_ROLL bonuses: playerRerollBonus=%d, opponentRerollBonus=%d", 
+        CosmiconLogger.verbose("[AI_REROLL_DIAG] BEFORE_ROLL bonuses: playerRerollBonus=%d, opponentRerollBonus=%d", 
             playerRerollBonus, opponentRerollBonus);
         
         if (playerRerollBonus != 0) {
@@ -171,7 +171,7 @@ public class TurnProcessor {
             state.setRemainingRerolls(false, state.getRemainingRerolls(false) + opponentRerollBonus);
         }
         
-        CosmiconLogger.debug("[AI_REROLL_DIAG] FINAL rerolls after bonuses: playerRerolls=%d, opponentRerolls=%d", 
+        CosmiconLogger.verbose("[AI_REROLL_DIAG] FINAL rerolls after bonuses: playerRerolls=%d, opponentRerolls=%d", 
             state.getRemainingRerolls(true), state.getRemainingRerolls(false));
         
         diceRoller.rollForAttacker(state);
@@ -279,7 +279,7 @@ public class TurnProcessor {
                 diceRollManager.appendOpponentInstantDice(DiceType.PRISMATIC, prismDecision.instance().faceIndex,
                     opponentCenterX, opponentCenterY);
             }
-            CosmiconLogger.debug("AI added prismatic dice: %s with score %.1f", 
+            CosmiconLogger.verbose("AI added prismatic dice: %s with score %.1f", 
                 prismDecision.instance().type.getId(), prismDecision.score());
         }
         
@@ -291,7 +291,7 @@ public class TurnProcessor {
             if (rerollIndices == null) {
                 rerollIndices = aiEngine.planReroll(state, false);
             }
-            CosmiconLogger.debug("[AI_REROLL_DIAG] planReroll returned: %s (size=%d)", rerollIndices, rerollIndices.size());
+            CosmiconLogger.verbose("[AI_REROLL_DIAG] planReroll returned: %s (size=%d)", rerollIndices, rerollIndices.size());
             aiPlannedIndices = rerollIndices;
             if (!rerollIndices.isEmpty()) {
                 aiVisualPhase = AIVisualPhase.REROLL_PLANNING;
@@ -300,7 +300,7 @@ public class TurnProcessor {
                     viz.planSelection(rerollIndices, true);
                 }
                 aiPhaseTimer = 0f;
-                CosmiconLogger.debug("AI entering REROLL_PLANNING with indices: %s", rerollIndices);
+                CosmiconLogger.verbose("AI entering REROLL_PLANNING with indices: %s", rerollIndices);
                 return;
             }
         }
@@ -371,7 +371,7 @@ public class TurnProcessor {
                             nextRerollIndices = aiEngine.planReroll(state, false);
                         }
                         if (!nextRerollIndices.isEmpty()) {
-                            CosmiconLogger.debug("AI planning additional reroll: %s", nextRerollIndices);
+                            CosmiconLogger.verbose("AI planning additional reroll: %s", nextRerollIndices);
                             aiPlannedIndices = nextRerollIndices;
                             aiVisualPhase = AIVisualPhase.REROLL_PLANNING;
                             if (viz != null) {
@@ -381,7 +381,7 @@ public class TurnProcessor {
                         }
                     }
 
-                    CosmiconLogger.debug("AI reroll complete, transitioning to SELECTION_PLANNING");
+                    CosmiconLogger.verbose("AI reroll complete, transitioning to SELECTION_PLANNING");
                     aiVisualPhase = AIVisualPhase.SELECTION_PLANNING;
                     aiPlannedIndices = null;
                 }
@@ -449,7 +449,7 @@ public class TurnProcessor {
         
         diceRoller.rerollSelected(state, false);
         
-        CosmiconLogger.debug("AI executed planned reroll for indices: %s", aiPlannedIndices);
+        CosmiconLogger.verbose("AI executed planned reroll for indices: %s", aiPlannedIndices);
     }
     
     private void executePlannedAiSelection() {
@@ -488,7 +488,7 @@ public class TurnProcessor {
             advanceToDiceDisplayDefense();
         }
         
-        CosmiconLogger.debug("AI executed planned selection for indices: %s", aiPlannedIndices);
+        CosmiconLogger.verbose("AI executed planned selection for indices: %s", aiPlannedIndices);
     }
     
     private void performAiSelection() {
@@ -568,17 +568,17 @@ public class TurnProcessor {
         List<ModificationRecord> orderedModifications = state.getModificationOrder();
         orderedModifications.sort(Comparator.comparingInt(ModificationRecord::sequence));
 
-        CosmiconLogger.info("[MOD] applyPendingModifications: count=%d", orderedModifications.size());
+        CosmiconLogger.debug("[MOD] applyPendingModifications: count=%d", orderedModifications.size());
 
         for (ModificationRecord record : orderedModifications) {
             StatusEffect effect = record.effect();
             boolean forPlayer = record.forPlayer();
-            CosmiconLogger.info("[MOD] processing seq=%d effect=%s forPlayer=%s",
+            CosmiconLogger.debug("[MOD] processing seq=%d effect=%s forPlayer=%s",
                     record.sequence(), effect, forPlayer ? "player" : "opponent");
             StatusEffectProcessor effects = state.getEffects(forPlayer);
 
             if (effect == StatusEffect.ARISE && effects.hasEffect(StatusEffect.ARISE)) {
-                CosmiconLogger.debug("ARISE triggered for %s", forPlayer ? "player" : "opponent");
+                CosmiconLogger.verbose("ARISE triggered for %s", forPlayer ? "player" : "opponent");
                 StatusEffectProcessor.BattleContext context = createBattleContext(forPlayer);
                 List<Integer> preValues = new ArrayList<>(state.getDiceValues(forPlayer));
                 int oldSum = state.calculateSelectedSum(forPlayer);
@@ -614,7 +614,7 @@ public class TurnProcessor {
                 List<Integer> preHackValues = new ArrayList<>(state.getDiceValues(targetIsPlayer));
                 int oldTargetSum = state.calculateSelectedSum(targetIsPlayer);
 
-                CosmiconLogger.info("[HACK] TRIGGER: hacker=%s target=%s preValues=%s preSum=%d",
+                CosmiconLogger.debug("[HACK] TRIGGER: hacker=%s target=%s preValues=%s preSum=%d",
                         forPlayer ? "player" : "opponent",
                         targetIsPlayer ? "player" : "opponent",
                         preHackValues, oldTargetSum);
@@ -636,7 +636,7 @@ public class TurnProcessor {
                 List<Integer> postHackValues = state.getDiceValues(targetIsPlayer);
                 notifyRestDiceValueChanges(preHackValues, postHackValues, targetIsPlayer);
 
-                CosmiconLogger.info("[HACK] RESULT: target=%s hackIdx=%d preSum=%d postSum=%d postValues=%s",
+                CosmiconLogger.debug("[HACK] RESULT: target=%s hackIdx=%d preSum=%d postSum=%d postValues=%s",
                         targetIsPlayer ? "player" : "opponent",
                         hackDiceIndex, oldTargetSum, hackNewSum,
                         postHackValues);
@@ -881,7 +881,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         if (comboDamage > 0) {
             state.applyDamageTo(defenderIsPlayer, comboDamage);
             
-            CosmiconLogger.info("COMBO attack: %d damage (Attack=%d, Defense=%d, modifiedAtk=%d, modifiedDef=%d)",
+            CosmiconLogger.debug("COMBO attack: %d damage (Attack=%d, Defense=%d, modifiedAtk=%d, modifiedDef=%d)",
                 comboDamage, attackValue, defenseValue, modifiedAttack, modifiedDefense);
             
             int instantDamageToAttacker = PassiveEventSystem.onDamageTaken(state, defenderIsPlayer, comboDamage);
@@ -975,6 +975,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         state.setCurrentPhase(TurnState.Phase.ENDED);
         String winner = state.getPlayerHp() <= 0 ? "opponent" : "player";
         state.setWinner(winner);
+        state.notifyPhaseChange(TurnState.Phase.ENDED);
         state.notifyBattleEnd(winner);
     }
     
@@ -1001,7 +1002,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         int selectedCount = state.countSelectedDice(true);
 
         if (selectedCount != requiredCount) {
-            CosmiconLogger.debug("Cannot confirm: need %d dice selected, have %d", requiredCount, selectedCount);
+            CosmiconLogger.verbose("Cannot confirm: need %d dice selected, have %d", requiredCount, selectedCount);
             return;
         }
 
@@ -1049,7 +1050,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         int oldValue = isAttackPhase ? state.getAttackValue() : state.getDefenseValue();
         List<Integer> preSelectValues = new ArrayList<>(state.getDiceValues(forPlayer));
         List<DiceType> preSelectTypes = state.getDiceTypes(forPlayer) != null ? new ArrayList<>(state.getDiceTypes(forPlayer)) : null;
-        CosmiconLogger.info("[POST_SELECT] %s before effects | types=%s | values=%s | selected=%s",
+        CosmiconLogger.debug("[POST_SELECT] %s before effects | types=%s | values=%s | selected=%s",
             forPlayer ? "Player" : "Opponent",
             preSelectTypes,
             preSelectValues,
@@ -1057,7 +1058,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         state.getEffects(forPlayer).processPhase(Phase.AFTER_SELECT, turnType, context);
         state.setDiceValues(forPlayer, context.getDiceValues());
         state.setDiceTypes(forPlayer, context.getDiceTypes());
-        CosmiconLogger.info("[POST_SELECT] %s after effects | types=%s | values=%s | selected=%s",
+        CosmiconLogger.debug("[POST_SELECT] %s after effects | types=%s | values=%s | selected=%s",
             forPlayer ? "Player" : "Opponent",
             state.getDiceTypes(forPlayer),
             state.getDiceValues(forPlayer),
@@ -1163,7 +1164,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         
         PassiveEvaluator.applyPassiveEffects(result, state, forPlayer, characterId);
 
-        CosmiconLogger.info("[PASSIVE] %s (isAttacking=%s) | allValues=%s | selectedFlags=%s | selectedValues=%s | hp=%d/%d",
+        CosmiconLogger.debug("[PASSIVE] %s (isAttacking=%s) | allValues=%s | selectedFlags=%s | selectedValues=%s | hp=%d/%d",
             characterId, isAttacking,
             allValues,
             selectedFlags,
@@ -1197,14 +1198,14 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
     private void notifyRestDiceValueChanges(List<Integer> oldValues, List<Integer> newValues, boolean forPlayer) {
         if (diceRollManager == null || oldValues == null || newValues == null) return;
         if (diceRollManager.isRestAnimatorsEmpty(forPlayer)) {
-            CosmiconLogger.info("[DICE-REST] notifyRestDiceValueChanges SKIPPED: no rest animators forPlayer=%s", forPlayer);
+            CosmiconLogger.verbose("[DICE-REST] notifyRestDiceValueChanges SKIPPED: no rest animators forPlayer=%s", forPlayer);
             return;
         }
 
         int minSize = Math.min(oldValues.size(), newValues.size());
         for (int i = 0; i < minSize; i++) {
             if (!oldValues.get(i).equals(newValues.get(i))) {
-                CosmiconLogger.info("[DICE-REST] valueChanged: forPlayer=%s idx=%d old=%d new=%d",
+                CosmiconLogger.verbose("[DICE-REST] valueChanged: forPlayer=%s idx=%d old=%d new=%d",
                         forPlayer, i, oldValues.get(i), newValues.get(i));
                 diceRollManager.updateRestDiceValue(i, newValues.get(i), forPlayer);
             }
@@ -1247,7 +1248,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
             }
         }
 
-        CosmiconLogger.info("[UPGRADE_POOL] %s | base=%s | previous=%s | current=%s | changedFromBase=%s | newThisTurn=%s",
+        CosmiconLogger.verbose("[UPGRADE_POOL] %s | base=%s | previous=%s | current=%s | changedFromBase=%s | newThisTurn=%s",
             forPlayer ? "Player" : "Opponent",
             basePool,
             previousPool,
@@ -1269,7 +1270,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
                     }
                 }
             }
-            CosmiconLogger.info("[UPGRADE_POOL] %s saving merged pool: %s",
+            CosmiconLogger.verbose("[UPGRADE_POOL] %s saving merged pool: %s",
                 forPlayer ? "Player" : "Opponent", mergedPool);
             state.setUpgradedDicePool(forPlayer, mergedPool);
         }

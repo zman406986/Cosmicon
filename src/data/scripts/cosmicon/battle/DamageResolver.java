@@ -51,7 +51,7 @@ public class DamageResolver {
         
         int counterDamage = defenderEffects.calculateCounterDamage(modifiedAttack, prePerforationDefense);
         
-        CosmiconLogger.info("[DMG_DIAG] resolve: attacker=%s, atkValue=%d, defValue=%d, atkBonus=%d, defBonus=%d, prismAtk=%d, prismDef=%d, perf=%s, damage=%d, counter=%d (modAtk=%d vs prePerfDef=%d)",
+        CosmiconLogger.debug("[DMG_DIAG] resolve: attacker=%s, atkValue=%d, defValue=%d, atkBonus=%d, defBonus=%d, prismAtk=%d, prismDef=%d, perf=%s, damage=%d, counter=%d (modAtk=%d vs prePerfDef=%d)",
             playerIsAttacker ? "Player" : "Opponent",
             attackValue, defenseValue, atkBonus, defBonus,
             attackerPrismaticValue, defenderPrismaticValue,
@@ -131,6 +131,6 @@ public class DamageResolver {
             sb.append("\n  Instant damage: ").append(result.instantDamage());
         }
         
-        CosmiconLogger.info(sb.toString());
+        CosmiconLogger.debug(sb.toString());
     }
 }

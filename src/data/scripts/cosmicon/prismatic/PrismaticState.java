@@ -43,7 +43,7 @@ public class PrismaticState {
     public boolean isDoubleValueActive() { return doubleValueActive; }
     public void setDoubleValueActive(boolean active) { 
         this.doubleValueActive = active;
-        CosmiconLogger.debug("Prismatic DoubleValue %s", active ? "activated" : "deactivated");
+        CosmiconLogger.verbose("Prismatic DoubleValue %s", active ? "activated" : "deactivated");
     }
     
     public int getInstantDamage() { return instantDamage; }

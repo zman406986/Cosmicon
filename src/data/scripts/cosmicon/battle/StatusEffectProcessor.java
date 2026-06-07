@@ -90,12 +90,12 @@ public class StatusEffectProcessor {
                 newTurns = Math.min(old.remainingTurns(), turns);
             }
             activeEffects.set(existingIndex, new StatusEffectInstance(effect, source, mergedLayers, durationType, newTurns));
-            CosmiconLogger.info("[STATUS] +%d %s from %s (was %d, now %d layers, duration=%s)",
+            CosmiconLogger.debug("[STATUS] +%d %s from %s (was %d, now %d layers, duration=%s)",
                 layers, effect.name(), source, old.layers(), mergedLayers,
                     string);
         } else {
             activeEffects.add(new StatusEffectInstance(effect, source, layers, durationType, turns));
-            CosmiconLogger.info("[STATUS] +%d %s from %s (new instance, duration=%s)",
+            CosmiconLogger.debug("[STATUS] +%d %s from %s (new instance, duration=%s)",
                 layers, effect.name(), source,
                     string);
         }
@@ -133,7 +133,7 @@ public class StatusEffectProcessor {
     public void removeEffect(StatusEffect effect) {
         int totalLayers = getLayers(effect);
         if (totalLayers > 0) {
-            CosmiconLogger.info("[STATUS] Removed all %s (was %d layers)", effect.name(), totalLayers);
+            CosmiconLogger.debug("[STATUS] Removed all %s (was %d layers)", effect.name(), totalLayers);
         }
         activeEffects.removeIf(inst -> inst.effect() == effect);
     }
@@ -141,7 +141,7 @@ public class StatusEffectProcessor {
     public void removeFromSource(StatusEffect effect, String source) {
         boolean removed = activeEffects.removeIf(inst -> inst.effect() == effect && inst.source().equals(source));
         if (removed) {
-            CosmiconLogger.info("[STATUS] Removed %s from source %s", effect.name(), source);
+            CosmiconLogger.debug("[STATUS] Removed %s from source %s", effect.name(), source);
         }
     }
 
@@ -151,10 +151,10 @@ public class StatusEffectProcessor {
             if (inst.effect() == effect && inst.source().equals(source)) {
                 if (inst.layers() <= layers) {
                     activeEffects.remove(i);
-                    CosmiconLogger.info("[STATUS] Removed %s from %s (all layers consumed)", effect.name(), source);
+                    CosmiconLogger.debug("[STATUS] Removed %s from %s (all layers consumed)", effect.name(), source);
                 } else {
                     activeEffects.set(i, new StatusEffectInstance(effect, source, inst.layers() - layers, inst.durationType(), inst.remainingTurns()));
-                    CosmiconLogger.info("[STATUS] -%d %s from %s (now %d layers)", layers, effect.name(), source, inst.layers() - layers);
+                    CosmiconLogger.debug("[STATUS] -%d %s from %s (now %d layers)", layers, effect.name(), source, inst.layers() - layers);
                 }
                 return;
             }
@@ -167,10 +167,10 @@ public class StatusEffectProcessor {
             if (inst.effect() == effect && inst.source().equals(source)) {
                 if (layers <= 0) {
                     activeEffects.remove(i);
-                    CosmiconLogger.info("[STATUS] Effect cleared: %s from %s (was %d layers)", effect.name(), source, inst.layers());
+                    CosmiconLogger.debug("[STATUS] Effect cleared: %s from %s (was %d layers)", effect.name(), source, inst.layers());
                 } else {
                     activeEffects.set(i, new StatusEffectInstance(effect, source, layers, inst.durationType(), inst.remainingTurns()));
-                    CosmiconLogger.info("[STATUS] Effect set: %s from %s %d layers (was %d)", effect.name(), source, layers, inst.layers());
+                    CosmiconLogger.debug("[STATUS] Effect set: %s from %s %d layers (was %d)", effect.name(), source, layers, inst.layers());
                 }
                 return;
             }
@@ -218,7 +218,7 @@ public class StatusEffectProcessor {
                 context.setCurrentHp(1);
                 processedEffects.add(new ProcessedEffect(StatusEffect.LAST_STAND, layers));
                 removeEffect(StatusEffect.LAST_STAND);
-                CosmiconLogger.info("[STATUS] LAST_STAND triggered: HP %d -> 1, attack bonus = %d",
+                CosmiconLogger.debug("[STATUS] LAST_STAND triggered: HP %d -> 1, attack bonus = %d",
                     lastStandHpReduction + 1, lastStandHpReduction);
             }
         }
@@ -230,7 +230,7 @@ public class StatusEffectProcessor {
             if (yaoGuangRerolls > 0) {
                 context.addRerolls(yaoGuangRerolls);
                 processedEffects.add(new ProcessedEffect(StatusEffect.YAO_GUANG_REROLLS, yaoGuangRerolls));
-                CosmiconLogger.info("[STATUS] YAO_GUANG_REROLLS: +%d rerolls", yaoGuangRerolls);
+                CosmiconLogger.debug("[STATUS] YAO_GUANG_REROLLS: +%d rerolls", yaoGuangRerolls);
             }
         }
     }
@@ -239,7 +239,7 @@ public class StatusEffectProcessor {
         int layers = getLayersIfPresent(StatusEffect.DESTINED);
         if (layers > 0) {
             processedEffects.add(new ProcessedEffect(StatusEffect.DESTINED, layers));
-            CosmiconLogger.info("[STATUS] DESTINED: auto-selecting all dice");
+            CosmiconLogger.debug("[STATUS] DESTINED: auto-selecting all dice");
             context.markDestinedDice();
             removeEffect(StatusEffect.DESTINED);
         }
@@ -249,7 +249,7 @@ public class StatusEffectProcessor {
         int levelUpLayers = getLayersIfPresent(StatusEffect.LEVEL_UP);
         if (levelUpLayers > 0) {
             processedEffects.add(new ProcessedEffect(StatusEffect.LEVEL_UP, levelUpLayers));
-            CosmiconLogger.info("[STATUS] LEVEL_UP: layers=%d | context: types=%s selected=%s prismatic=%s",
+            CosmiconLogger.debug("[STATUS] LEVEL_UP: layers=%d | context: types=%s selected=%s prismatic=%s",
                 levelUpLayers,
                 context.getDiceTypes(),
                 context.getDiceSelected(),
@@ -260,7 +260,7 @@ public class StatusEffectProcessor {
         int awakeningLayers = getLayersIfPresent(StatusEffect.AWAKENING);
         if (awakeningLayers > 0) {
             processedEffects.add(new ProcessedEffect(StatusEffect.AWAKENING, awakeningLayers));
-            CosmiconLogger.info("[STATUS] AWAKENING: doubling selected dice values");
+            CosmiconLogger.debug("[STATUS] AWAKENING: doubling selected dice values");
             context.applyAwakening();
             removeEffect(StatusEffect.AWAKENING);
         }
@@ -272,14 +272,14 @@ public class StatusEffectProcessor {
         int thornsDamage = getLayersIfPresent(StatusEffect.THORNS);
         if (thornsDamage > 0) {
             processedEffects.add(new ProcessedEffect(StatusEffect.THORNS, thornsDamage));
-            CosmiconLogger.info("[STATUS] THORNS: dealing %d damage to attacker", thornsDamage);
+            CosmiconLogger.debug("[STATUS] THORNS: dealing %d damage to attacker", thornsDamage);
             damage += thornsDamage;
         }
 
         for (StatusEffectInstance inst : activeEffects) {
             if (inst.effect() == StatusEffect.INSTANT_DAMAGE) {
                 processedEffects.add(new ProcessedEffect(StatusEffect.INSTANT_DAMAGE, inst.layers()));
-                CosmiconLogger.info("[STATUS] INSTANT_DAMAGE: %d damage to opponent from %s", inst.layers(), inst.source());
+                CosmiconLogger.debug("[STATUS] INSTANT_DAMAGE: %d damage to opponent from %s", inst.layers(), inst.source());
                 context.addInstantDamageToOpponent(inst.layers());
                 removeFromSource(StatusEffect.INSTANT_DAMAGE, inst.source());
                 break;
@@ -296,7 +296,7 @@ public class StatusEffectProcessor {
         if (poisonLayers > 0) {
             int venomLayers = getLayersIfPresent(StatusEffect.VENOM);
             int poisonDamage = venomLayers > 0 ? poisonLayers * 2 : poisonLayers;
-            CosmiconLogger.info("[STATUS] POISON: %d damage%s", poisonDamage,
+            CosmiconLogger.debug("[STATUS] POISON: %d damage%s", poisonDamage,
                 venomLayers > 0 ? " (doubled by VENOM)" : "");
             processedEffects.add(new ProcessedEffect(StatusEffect.POISON, poisonLayers));
             damage += poisonDamage;
@@ -321,7 +321,7 @@ public class StatusEffectProcessor {
             if (inst.durationType() == DurationType.TURN_BASED) {
                 int remaining = inst.remainingTurns() - 1;
                 if (remaining <= 0) {
-                    CosmiconLogger.info("[STATUS] %s from %s expired (duration ended)", inst.effect().name(), inst.source());
+                    CosmiconLogger.debug("[STATUS] %s from %s expired (duration ended)", inst.effect().name(), inst.source());
                 } else {
                     surviving.add(new StatusEffectInstance(inst.effect(), inst.source(), inst.layers(), inst.durationType(), remaining));
                 }
@@ -493,7 +493,7 @@ public class StatusEffectProcessor {
                 }
             }
             if (maxIndex >= 0) {
-                CosmiconLogger.info("[STATUS] HACK: transformed highest dice %d to 2", maxValue);
+                CosmiconLogger.debug("[STATUS] HACK: transformed highest dice %d to 2", maxValue);
                 diceValues.set(maxIndex, 2);
                 return maxIndex;
             }
@@ -512,7 +512,7 @@ public class StatusEffectProcessor {
                 }
             }
             if (minIndex >= 0) {
-                CosmiconLogger.info("[STATUS] ARISE: transformed lowest dice %d to %d", minValue, minMaxFace);
+                CosmiconLogger.debug("[STATUS] ARISE: transformed lowest dice %d to %d", minValue, minMaxFace);
                 diceValues.set(minIndex, minMaxFace);
                 return minIndex;
             }
@@ -528,7 +528,7 @@ public class StatusEffectProcessor {
         }
 
         public void applyLevelUp(int count) {
-        CosmiconLogger.info("[LEVEL_UP] count=%d | dice=%d | selected=%s | prismatic=%s | types=%s | maxFaces=%s",
+        CosmiconLogger.verbose("[LEVEL_UP] count=%d | dice=%d | selected=%s | prismatic=%s | types=%s | maxFaces=%s",
             count,
             diceValues.size(),
             diceSelected,
@@ -546,14 +546,14 @@ public class StatusEffectProcessor {
 
             if (!isSelected) {
                 skippedUnselected++;
-                CosmiconLogger.info("[LEVEL_UP] die[%d] SKIPPED: not selected | type=%s value=%d prismatic=%s",
+                CosmiconLogger.verbose("[LEVEL_UP] die[%d] SKIPPED: not selected | type=%s value=%d prismatic=%s",
                     i, i < diceTypes.size() ? diceTypes.get(i) : "?", diceValues.get(i), isPrismatic);
                 continue;
             }
 
             if (isPrismatic) {
                 skippedPrismatic++;
-                CosmiconLogger.info("[LEVEL_UP] die[%d] SKIPPED: prismatic | type=%s value=%d selected=true",
+                CosmiconLogger.verbose("[LEVEL_UP] die[%d] SKIPPED: prismatic | type=%s value=%d selected=true",
                     i, i < diceTypes.size() ? diceTypes.get(i) : "?", diceValues.get(i));
                 continue;
             }
@@ -577,19 +577,19 @@ public class StatusEffectProcessor {
             DiceType newType = DiceType.fromMaxFace(currentMaxFace);
 
             if (currentMaxFace != oldMaxFace) {
-                CosmiconLogger.info("[LEVEL_UP] die[%d] UPGRADED: %s(d%d) -> %s(d%d) | diceValue=%d",
+                CosmiconLogger.verbose("[LEVEL_UP] die[%d] UPGRADED: %s(d%d) -> %s(d%d) | diceValue=%d",
                     i, oldType, oldMaxFace,
                     newType, currentMaxFace,
                     diceValues.get(i));
                 processedCount++;
             } else {
-                CosmiconLogger.info("[LEVEL_UP] die[%d] AT MAX: %s(d%d) | diceValue=%d",
+                CosmiconLogger.verbose("[LEVEL_UP] die[%d] AT MAX: %s(d%d) | diceValue=%d",
                     i, oldType, oldMaxFace,
                     diceValues.get(i));
             }
         }
 
-        CosmiconLogger.info("[LEVEL_UP] SUMMARY: processed=%d skipped_unselected=%d skipped_prismatic=%d total=%d",
+        CosmiconLogger.verbose("[LEVEL_UP] SUMMARY: processed=%d skipped_unselected=%d skipped_prismatic=%d total=%d",
             processedCount, skippedUnselected, skippedPrismatic, diceValues.size());
     }
 

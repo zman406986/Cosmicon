@@ -1,67 +1,23 @@
 Version 0.3.0
-- Fixed TournamentBracketPanel `COLOR_LOSER` being a self-reference (`COLOR_LOSER = COLOR_LOSER`); replaced with actual `new Color(255, 100, 100)`.
-- Optimized rendering: reused shared `GL_BUF` float[] buffer across all `ColorHelper.toGLComponents()` calls in BattleRenderingUtils (eliminates per-call array allocations); hoisted `resetBlendState`/`glLineWidth` out of per-match-box loops in TournamentBracketPanel; removed redundant GL state calls from `renderRectBorder`; cached `lbBaseY`, `RING_ARC_SEGMENTS`, dark arrow colors, and dice pool order list as fields/constants.
-- Fixed opponent AI reroll pausing ~2s longer than the actual dice animation; removed redundant `getTotalDuration()` guard timer from `REROLL_ANIMATING` phase (now gates purely on animation-complete check) and removed dead `opponentRollDelay` field from `BattlePanelUI`.
-- Fixed Gatekeeper 999 in-battle messages (start hint and exit hint) not showing when a tournament is in progress; removed redundant `!isTournamentActive()` check from `isGatekeeper999Battle()` and added broader `isGatekeeperBattle()` for UI messages (now also covers 99 HP version).
-- Fixed CosmiconEventState integer getters using `getFloat()` instead of `getInt()` for memory-stored integers (latent correctness issue).
-- Fixed Hack and Arise not stacking when applied from multiple sources (e.g., Sparxie passive + Sorcerer prismatic dice); each instance now correctly modifies a separate die (highest/second-highest for Hack, lowest/second-lowest for Arise).
-- Fixed Sea of Clouds weather granting prismatic dice uses to characters without prismatic dice (e.g., Robin, Gatekeeper); now only grants uses for types the character already has.
-- Fixed playerLosses not incrementing on loser bracket elimination (display showed 1 loss instead of 2 after WB+LB losses).
-- Fixed tournament tier 2 rewards calling unlockPrismaticReward instead of unlockPrismaticTrueReward (true-version prismatic dice could not be unlocked via tournament).
-- Fixed tournament tier 4 rewards showing only credits, skipping dice selection entirely (now matches boss reward behavior).
-- Fixed tournamentPendingRewards not being restored when re-entering the dialog mid-reward-flow (pending reward picks were lost on ESC dismiss).
-- Fixed getPlayerBracketPosition() returning hardcoded English strings instead of localized text (now uses Strings.get/format for all 8 position strings).
-- Fixed Phainon AI considering Unyielding unneeded when it was actually available (inverted condition in isUnyieldingUnneeded).
-- Fixed Perforation not bypassing Forcefield in damage resolution and combo attack (now correctly ignores both Defense and Forcefield per wiki).
-- Fixed SelectionOptimizer discarding passive-optimized selections when passive didn't trigger (now compares score against greedy before falling back).
-- Fixed SelectionOptimizer.mergeForcedIndices not updating totalScore when adding forced dice indices.
-- Fixed Phainon's Unyielding passive being re-granted even after already consumed (now checks consumed state before applying).
-- Added TrashcanAI profile so the Trashcan character no longer falls back to default AI.
-- Fixed YaoGuang AI overcounting Thorns self-damage penalty (first 2 rerolls are now free per wiki, matching the actual Thorns application).
-- Fixed Aventurine AI evaluating passive as triggered during defense turns (passive is attack-only; also fixed shouldOptimizeForPassive to return false on defense).
-- Reverted DiceType.fromMaxFace(12) to return YELLOW_D12 (d12 is its own type; wiki "treated as Prismatic" rule is handled via diceIsPrismatic flag, not type mapping).
-- Fixed Acid Rain weather applying Poison to the player with LESS HP instead of MORE HP (comparison operators were inverted).
-- Fixed Storm weather granting ATK/DEF +2 instead of +1 (was applied in both appearance effects and persistent mods; removed duplicate from appearance).
-- Fixed Loan prismatic dice Overload self-damage never triggering (was checking attacker effects with ATTACK turn type instead of defender effects with DEFENSE turn type).
-- Fixed March 7th Instant Damage hitting herself instead of the opponent when defending (INSTANT_DAMAGE was processed as self-damage instead of opponent-damage).
-- Fixed Yao Guang self-inflicted Thorns not being removed before dealing damage when ATK >= 18 (onAttackResolution now runs before Thorns damage application so the passive cleanse takes effect).
-- Fixed Revenge prismatic dice missing attack-only condition (wiki: "Available when attacking after taking 25 total DMG").
-- Fixed Acheron/Hyacine AI only pursuing all-4s/all-6s passive when already 1 die away from completion (findComboForSpecificValue now generates candidates when at least 1 die matches).
-- Fixed Sparxie AI always picking trivial pairs over high-value non-pairs (passive trigger score reduced from 100 to 10; new getPassiveTriggerScore() hook allows per-profile tuning).
-- Added weather awareness to AI dice selection: SelectionOptimizer now scores weather bonuses (Solar Eclipse, Dust, Rainbow, Lunisolar Luminance, Heavy Snow, Crepuscular Rays, Moderate Snow, Drizzle) when choosing which dice to keep.
-- Added PARHELION thorns penalty to AI reroll evaluation (AI now accounts for +2 Thorns per reroll during Parhelion weather).
-- Added FINE SNOW skip-reroll incentive to AI (AI values avoiding rerolls during Fine Snow to gain +3 Toughness).
-- Added FROG RAIN and SUNSHOWER SimPool adjustments (AI correctly simulates min-face=2 during Frog Rain and reduced max-face for defenders during Sunshower).
-- Fixed tournament progress being accessible via bar event or NPC dialogue without entering through the casino (standalone entry points now suppress tournament/casino features via isStandaloneEntry flag).
-- Fixed NPC dialogue destroying active tournament state on leave (onLeaveAction now preserves tournament bracket data so the player can continue via casino later).
-- Disabled bar event generation (NPC dialogue is now the sole standalone entry point; CosmiconBarEvent retained for stale save compatibility).
-- Rebalanced normal encounter credit rewards: reduced to ~50% of previous value (1500 per level, randomized ±10%).
-- Losing a normal encounter now deducts credits (~1500 per level, ±10%) instead of awarding consolation credits; loss is capped at player's current credits (cannot go below 0). Does not apply to casino gatekeeper or tournament matches.
-- Fixed setup gallery prismatic dice column background being taller than the character column and scrollbar (removed extra vertical padding so both columns are the same height).
-- Fixed instant damage animation playing on the source side instead of the target side (flying number and impact effect now appear on the card taking damage, not the card dealing it).
-- Fixed Poison not showing expanding box animation or floating damage number on the character card (process animation now triggers via onSecondaryDamage like other damage types; added cached position fallback for effects removed before animation fires; secondary damage numbers no longer cleared on ROLLING phase transition so they can play out naturally).
-- Fixed setup gallery prismatic dice scrollbar sitting on the panel edge (removed double-counted SCROLLBAR_WIDTH from track X position).
-- Increased tournament credit rewards to 5x normal encounter base (7500 per level) so overall tournament payout remains roughly the same despite the normal encounter reduction.
-- Split tournament credits into participation reward (normal encounter base × total games played) and prize credits (5x normal encounter base per selection); clarified text to distinguish the two.
-- Fixed Lunisolar Luminance weather doubling being lost when ARISE or HACK effects are active; ARISE/HACK now use `modifyAttackValue(delta)` instead of `setAttackValue(newSum)` to preserve prior bonuses, and Lunisolar Luminance doubling is applied after the modification phase so the final value (including ARISE/HACK changes) is correctly doubled.
-- Fixed Master Dicer level not updating when damage exceeded the current record in Gatekeeper 999 battles; `updateTrashcanHunterLevel` now derives the damage cap from the actual battle's bonus HP instead of the `isGatekeeper999Unlocked()` flag, which could be stale or out-of-sync with the battle configuration.
-- Fixed status effect box text and hover tooltip zones being misaligned (labels used 30f spacing/28f height while buttons used 20f/18f, causing cumulative drift per row); also fixed excessive line spacing making text appear to have extra blank lines between entries (label height reduced to 18f, spacing to 20f; both now share constants so they stay in sync).
-- Fixed Frost weather incorrectly granting Counter in addition to +1 DEF level (only Dan Heng PT's passive should grant Counter alongside the pending DEF level boost; added `pendingDefLevelBoostWithCounter` flag to distinguish the two sources).
-- Fixed dice roll collision avoidance only checking against existing paths' final checkpoints instead of same-timestep checkpoints; now compares checkpoint i of new path against checkpoint i of existing paths (two dice paths collide only if they occupy the same space at the same point in their rollout).
-- Removed 4 hallucinated prismatic dice that had no wiki basis: Mirror, Sanctions, Strategy, Toxic; also removed their 3 associated status effects (REFLECT, DETERRENCE, TACTICS) and all references across 8 Java files and 2 localization files.
-- Added per-version availability condition support for prismatic dice; Doctor's Advice default version now correctly requires HP ≤ 10 (was always available), while the True version remains always available, matching the wiki.
-- Optimized AI reroll decision performance with 9 parallel optimizations across 3 risk tiers:
-  - Tier 1 (zero risk): Added DieEVTable pre-computed EV/gain lookup table per die type; added candidate upper-bound pruning that skips candidates whose best-case sum cannot beat the current best EV.
-  - Tier 2 (low risk): Tightened Monte Carlo convergence to 3% relative error with 0.3 absolute floor (from uncapped 1%), improving close-call decision accuracy from ±5% to ±3%; scaled Monte Carlo sample count by dice outcome space (min 16, max 256, 4x face product) for 90% fewer samples on single-die rerolls; scaled rollout bounds by rerollsLeft (min=max(10,8r), max=max(50,80r)) so low-variance single-reroll cases use fewer rollouts; widened Top-K heuristic candidate pruning from 4 to 12 using DieEVTable gain scores with guaranteed-candidate safety net.
-  - Tier 3 (medium risk): Added symmetry pruning for identical dice (canonical subset generation reduces candidates ~40-60% in typical pools); added transposition table cache for evaluateStateWithRerolls intermediate results (keyed by pool fingerprint + rerollsLeft + baseSum + requiredCount); expanded frozen die splitting into three-tier splitting (frozen/doomed/active) where below-threshold dice are removed from the active pool and their expected value is added directly, reducing subset enumeration space.
-- Consolidated duplicate DP tables: DieStoppingPolicy now delegates to DieEVTable (single source of truth for optimal-stopping thresholds and expected values); shared MAX_REROLLS constant (DieEVTable.MAX_REROLLS) replaces duplicate definitions.
-- Fixed AttackRerollAI cache key collision where frozen/doomed sum components were added before hashing (different frozen/doomed splits produced identical keys, returning wrong EV values).
-- Optimized per-frame render allocations: cached UnifiedCoord, float[] color buffers, and Color objects across BattlePanelUI, DiceAnimator, CharacterSetupPanelUI, DamageResolutionAnimator, and BattleUILabels; merged BattleUILabels status-effect triple-pass into single-pass; added dirty-flag caching to CharacterSetupPanelUI label updates and TournamentManager bracket data; hoisted repeated isPlayerAttacker/getCurrentPhase calls and eliminated redundant calculateSelectedSum calls in TurnProcessor; simplified DamageResolutionAnimator.isIconClashActive from 15-way OR to 2 comparisons.
-- Fixed BattleController.proceedToClash() delegating to turnProcessor.proceedToModificationPause() instead of the intended clash method.
-- Fixed CosmiconStats.isPrismaticFeatureUnlocked() defaulting to true, making all unlock-guard blocks dead no-ops; now defaults to false so prismatic feature gating actually works.
-- Fixed CosmiconEventState/CosmiconStats/CosmiconPlayerState caching stale MemoryAPI references that break after save-game reload; removed the cache so each call resolves fresh from Global.getSector().
-- Fixed PrismaticState constructor initializing uses=2 which was immediately overwritten to 0 by initializePrismaticUses(); now initializes to 0 directly.
-- Optimized 58 files across codebase: eliminated per-frame allocations in render paths (IconShatterEffect batched GL_QUADS, StatusEffectAnimator/PassiveIndicationRenderer/TutorialUIRenderer UnifiedCoord reuse, CoinFlipAnimator sprite caching, ColorHelper scratch buffer); cached unmodifiable collection wrappers in CharacterCard, PrismaticDiceRegistry, EffectState, CosmiconLoungeProvider; replaced autoboxing patterns (TutorialDiceRoller stream().boxed() to manual loop, DiceEvaluator/CharacterPassives int[] over HashMap, DicePoolCounts removed redundant pre-population); removed dead code and redundant operations (ImpactEffect/CoinFlipAnimator GL fixes, DiceSpriteRegistry DRY, CompositeCondition store array directly, PrismaticManager eliminated redundant iteration); fixed PrismaticDiceProcessor if-chain to switch expression; consolidated duplicate logic in DiceSpriteRegistry, BattleController, HpManager, PrismaticState, CyreneAI.
+- Fixed tournament bracket position strings not localized; fixed playerLosses not incrementing on loser bracket elimination.
+- Fixed tournament reward bugs: tier 2 unlocking wrong prismatic dice, tier 4 skipping dice selection, pending rewards lost on ESC dismiss.
+- Fixed tournament progress accessible via bar/NPC without casino entry; NPC dialogue no longer destroys active tournament state.
+- Fixed AI evaluation errors: Phainon Unyielding (inverted/consumed state), YaoGuang Thorns overcounting, Aventurine passive on defense, Acheron/Hyacine combo generation, Sparxie pair scoring.
+- Fixed SelectionOptimizer discarding passive selections and not updating totalScore on forced indices.
+- Added TrashcanAI profile; added weather-aware AI dice selection for 8 weather types; AI now accounts for Parhelion Thorns, Fine Snow skip-reroll, and Frog Rain/Sunshower face adjustments.
+- Fixed Hack and Arise not stacking from multiple sources; fixed Perforation not bypassing Forcefield; fixed Revenge missing attack-only condition.
+- Fixed status effect bugs: Acid Rain targeting wrong HP, Loan Overload never triggering, March 7th hitting self on defense, Lunisolar Luminance lost with ARISE/HACK, Frost granting Counter incorrectly.
+- Fixed Sea of Clouds granting prismatic dice uses to characters without prismatic dice; TOXIC_FOG now applies poison per-turn instead of once at onset; STORM no longer grants ATK/DEF mods at onset.
+- Fixed UI layout issues: setup gallery column height/scrollbar, status effect box text alignment, true dice name label wrapping/clipping; fixed instant damage and Poison animations targeting wrong card; fixed dice roll collision only checking final checkpoints.
+- Rebalanced credit rewards: normal encounters reduced to ~50%, losses now deduct credits (capped at 0) with loss message shown, tournament rewards adjusted to maintain similar total payout with participation + prize split.
+- Removed 4 hallucinated prismatic dice (Mirror, Sanctions, Strategy, Toxic) and associated status effects; added per-version availability conditions for prismatic dice.
+- Optimized AI reroll performance (EV lookup table, candidate pruning, symmetry pruning, transposition cache, Monte Carlo tuning); optimized render allocations and memory usage across codebase.
+- Renamed Gatekeeper to Legend across all strings; added Legend title inheritance tracking.
+- Fixed miscellaneous bugs: Gatekeeper 999 messages not showing, Master Dicer level not updating, integer getters using getFloat, stale MemoryAPI cache after save reload, CosmiconStats.isPrismaticFeatureUnlocked defaulting to true, opponent AI reroll timing, Yao Guang Thorns cleanse timing.
+- Fixed tutorial bugs: continue button blocked in wrong states, dice selection condition inverted, prismatic dice roller filtering misaligned values, Acheron Game 2 prismatic popup broken.
+- Fixed continue button showing "Continue" instead of "Close" when battle ends by HP depletion.
+- Externalized hardcoded values to CosmiconConfig and settings.json (HP, costs, credit multipliers).
+- Added three-tier logging system: Tier 1 (always on: startup, battle lifecycle, errors), Tier 2 (debug: battle flow, damage, status effects, AI decisions), Tier 3 (verbose: AI internals, dice rest, animations, weather details); default changed from all-on to off; added `cosmicon_debug` console command with off/debug/verbose/reroll levels.
 
 Version 0.2.0
 - Changed entry point from bars to comms (Custom NPCs generated for playing against).
