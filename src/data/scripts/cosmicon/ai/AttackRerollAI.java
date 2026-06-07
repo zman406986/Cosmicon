@@ -289,7 +289,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
                             double mean = sum / actualRollouts;
                             double variance = (sumSq / actualRollouts) - mean * mean;
                             double stderr = Math.sqrt(Math.max(0, variance) / actualRollouts);
-                            if (stderr < Math.max(Math.abs(mean) * 0.05, 0.5)) break;
+                            if (stderr < Math.max(Math.abs(mean) * 0.03, 0.3)) break;
                         }
                     }
                     rerollLog("Monte Carlo: %d/%d rollouts (converged=%b)", actualRollouts, maxRollouts, actualRollouts < maxRollouts);
@@ -361,7 +361,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
     }
 
     protected int getMaxRollouts(int rerollsLeft) {
-        return Math.max(30, 50 * rerollsLeft);
+        return Math.max(50, 80 * rerollsLeft);
     }
 
     private double computeRerollUpperBound(SimPool pool, Set<Integer> diceToReroll) {
