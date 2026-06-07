@@ -1,4 +1,6 @@
 Version 0.3.0
+- Fixed TournamentBracketPanel `COLOR_LOSER` being a self-reference (`COLOR_LOSER = COLOR_LOSER`); replaced with actual `new Color(255, 100, 100)`.
+- Optimized rendering: reused shared `GL_BUF` float[] buffer across all `ColorHelper.toGLComponents()` calls in BattleRenderingUtils (eliminates per-call array allocations); hoisted `resetBlendState`/`glLineWidth` out of per-match-box loops in TournamentBracketPanel; removed redundant GL state calls from `renderRectBorder`; cached `lbBaseY`, `RING_ARC_SEGMENTS`, dark arrow colors, and dice pool order list as fields/constants.
 - Fixed opponent AI reroll pausing ~2s longer than the actual dice animation; removed redundant `getTotalDuration()` guard timer from `REROLL_ANIMATING` phase (now gates purely on animation-complete check) and removed dead `opponentRollDelay` field from `BattlePanelUI`.
 - Fixed Gatekeeper 999 in-battle messages (start hint and exit hint) not showing when a tournament is in progress; removed redundant `!isTournamentActive()` check from `isGatekeeper999Battle()` and added broader `isGatekeeperBattle()` for UI messages (now also covers 99 HP version).
 - Fixed CosmiconEventState integer getters using `getFloat()` instead of `getInt()` for memory-stored integers (latent correctness issue).

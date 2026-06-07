@@ -47,6 +47,8 @@ public final class BattleRenderingUtils {
 
     private static final float[] GL_BUF = new float[4];
 
+    private static final int RING_ARC_SEGMENTS = 36;
+
     public static final float PORTRAIT_DISPLAY_W = CARD_WIDTH * PORTRAIT_SCALE;
     public static final float PORTRAIT_DISPLAY_H = CARD_HEIGHT * PORTRAIT_SCALE;
 
@@ -143,13 +145,13 @@ public final class BattleRenderingUtils {
 
         GLStateUtil.resetBlendState();
 
-        float[] bg = ColorHelper.toGLComponents(COLOR_HP_CIRCLE_BG, alphaMult);
+        float[] bg = ColorHelper.toGLComponents(COLOR_HP_CIRCLE_BG, alphaMult, GL_BUF);
         GL11.glColor4f(bg[0], bg[1], bg[2], bg[3]);
         drawRingArc(glCenterX, glCenterY, radius, innerRadius, 0f, (float) (2 * Math.PI));
 
         if (clampedFill > 0f) {
             Color hpColor = getHpColor(clampedFill);
-            float[] fg = ColorHelper.toGLComponents(hpColor, alphaMult);
+            float[] fg = ColorHelper.toGLComponents(hpColor, alphaMult, GL_BUF);
             GL11.glColor4f(fg[0], fg[1], fg[2], fg[3]);
 
             float startAngle = (float) (-Math.PI / 2);
@@ -173,11 +175,10 @@ public final class BattleRenderingUtils {
     }
 
     private static void drawRingArc(float cx, float cy, float outerRadius, float innerRadius, float startAngle, float endAngle) {
-        int segments = 36;
-        float angleStep = (endAngle - startAngle) / segments;
+        float angleStep = (endAngle - startAngle) / RING_ARC_SEGMENTS;
 
         GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
-        for (int i = 0; i <= segments; i++) {
+        for (int i = 0; i <= RING_ARC_SEGMENTS; i++) {
             float angle = startAngle + i * angleStep;
             float cos = (float) Math.cos(angle);
             float sin = (float) Math.sin(angle);
@@ -276,7 +277,7 @@ public final class BattleRenderingUtils {
         GLStateUtil.resetBlendState();
 
         Color baseColor = isUp ? COLOR_ARROW_UP : COLOR_ARROW_DOWN;
-        float[] c = ColorHelper.toGLComponents(baseColor, alphaMult);
+        float[] c = ColorHelper.toGLComponents(baseColor, alphaMult, GL_BUF);
         GL11.glColor4f(c[0], c[1], c[2], c[3]);
 
         GL11.glBegin(GL11.GL_TRIANGLES);
@@ -291,8 +292,8 @@ public final class BattleRenderingUtils {
         }
         GL11.glEnd();
 
-        Color strokeColor = baseColor.darker();
-        float[] sc = ColorHelper.toGLComponents(strokeColor, alphaMult);
+        Color strokeColor = isUp ? COLOR_ARROW_UP_DARK : COLOR_ARROW_DOWN_DARK;
+        float[] sc = ColorHelper.toGLComponents(strokeColor, alphaMult, GL_BUF);
         GL11.glColor4f(sc[0], sc[1], sc[2], sc[3]);
         GL11.glLineWidth(1.5f);
 
@@ -398,12 +399,8 @@ public final class BattleRenderingUtils {
         float startX = cardX + CARD_WIDTH - DICE_POOL_RIGHT_MARGIN - DICE_ICON_SIZE;
         float startY = cardY + CARD_HEIGHT - DICE_POOL_TOP_MARGIN - DICE_ICON_SIZE;
 
-        List<DiceType> order = Arrays.asList(
-            DiceType.ORANGE_D8, DiceType.PURPLE_D6, DiceType.BLUE_D4, DiceType.PRISMATIC
-        );
-
         float offsetY = 0f;
-        for (DiceType type : order) {
+        for (DiceType type : DICE_POOL_ORDER) {
             SpriteAPI icon = CosmiconSprites.getDiceIcon(type);
             if (icon != null) {
                 icon.setSize(DICE_ICON_SIZE, DICE_ICON_SIZE);
@@ -443,7 +440,7 @@ public final class BattleRenderingUtils {
         Misc.renderQuad(x + 3, y - 3, w, h, COLOR_SHADOW, alphaMult * 0.3f);
         Misc.renderQuad(x, y, w, h, COLOR_STATUS_BG, alphaMult);
 
-        float[] c = ColorHelper.toGLComponents(COLOR_STATUS_BORDER, alphaMult);
+        float[] c = ColorHelper.toGLComponents(COLOR_STATUS_BORDER, alphaMult, GL_BUF);
         GL11.glColor4f(c[0], c[1], c[2], c[3]);
         GL11.glLineWidth(2f);
 
@@ -462,7 +459,7 @@ public final class BattleRenderingUtils {
         Misc.renderQuad(x + 2, y - 2, w, h, COLOR_SHADOW, alphaMult * 0.3f);
         Misc.renderQuad(x, y, w, h, COLOR_WEATHER_DESC_BG, alphaMult);
 
-        float[] c = ColorHelper.toGLComponents(COLOR_WEATHER_DESC_BORDER, alphaMult);
+        float[] c = ColorHelper.toGLComponents(COLOR_WEATHER_DESC_BORDER, alphaMult, GL_BUF);
         GL11.glColor4f(c[0], c[1], c[2], c[3]);
         GL11.glLineWidth(1.5f);
 
@@ -496,7 +493,7 @@ public final class BattleRenderingUtils {
         Misc.renderQuad(x, y, OPPONENT_DICE_ZONE_W, OPPONENT_DICE_ZONE_H, ColorHelper.OPPONENT_DICE_ZONE_BG, alphaMult);
         
         GL11.glLineWidth(2f);
-        float[] c = ColorHelper.toGLComponents(new Color(120, 80, 80, 150), alphaMult);
+        float[] c = ColorHelper.toGLComponents(COLOR_OPPONENT_DICE_BORDER, alphaMult, GL_BUF);
         GL11.glColor4f(c[0], c[1], c[2], c[3]);
         GL11.glBegin(GL11.GL_LINE_LOOP);
         GL11.glVertex2f(x, y);
@@ -512,7 +509,7 @@ public final class BattleRenderingUtils {
 
         Misc.renderQuad(x, y, w, h, bgColor, alphaMult);
 
-        float[] c = ColorHelper.toGLComponents(borderColor, alphaMult);
+        float[] c = ColorHelper.toGLComponents(borderColor, alphaMult, GL_BUF);
         GL11.glColor4f(c[0], c[1], c[2], c[3]);
         GL11.glLineWidth(1.5f);
 
