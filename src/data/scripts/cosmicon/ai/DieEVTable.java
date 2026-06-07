@@ -6,7 +6,7 @@ import java.util.Map;
 
 public final class DieEVTable {
 
-    private static final int MAX_REROLLS = 7;
+    public static final int MAX_REROLLS = 7;
     private static final Map<DiceType, DieEVTable> CACHE = new EnumMap<>(DiceType.class);
 
     static {

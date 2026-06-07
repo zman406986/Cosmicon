@@ -15,10 +15,9 @@ import java.util.stream.Collectors;
 public abstract class AttackRerollAI implements CharacterAIProfile {
 
     protected final int maxExactOutcomeEnumeration = 256;
-    private static final int TOP_K_CANDIDATES = 4;
+    private static final int TOP_K_CANDIDATES = 12;
     private static final Map<DiceType, DieStoppingPolicy> policyCache = new EnumMap<>(DiceType.class);
     private static final Random SIM_RAND = new Random(42);
-    private static final int MAX_REROLLS = 7;
 
     // Pre-computed destined indices for current planReroll call (avoids repeated lookups)
     private Set<Integer> currentDestinedIndices = Set.of();
@@ -28,11 +27,11 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
     private final Map<Long, Double> stateCache = new HashMap<>();
 
     static {
-        policyCache.put(DiceType.BLUE_D4, computePolicyStatic(4));
-        policyCache.put(DiceType.PURPLE_D6, computePolicyStatic(6));
-        policyCache.put(DiceType.ORANGE_D8, computePolicyStatic(8));
-        policyCache.put(DiceType.YELLOW_D12, computePolicyStatic(12));
-        policyCache.put(DiceType.PRISMATIC, computePolicyStatic(6));
+        policyCache.put(DiceType.BLUE_D4, computePolicyStatic(DiceType.BLUE_D4));
+        policyCache.put(DiceType.PURPLE_D6, computePolicyStatic(DiceType.PURPLE_D6));
+        policyCache.put(DiceType.ORANGE_D8, computePolicyStatic(DiceType.ORANGE_D8));
+        policyCache.put(DiceType.YELLOW_D12, computePolicyStatic(DiceType.YELLOW_D12));
+        policyCache.put(DiceType.PRISMATIC, computePolicyStatic(DiceType.PRISMATIC));
     }
 
     public AttackRerollAI() {}
@@ -602,36 +601,17 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
     }
 
     public static DieStoppingPolicy getStoppingPolicy(DiceType type) {
-        return policyCache.computeIfAbsent(type, k -> computePolicyStatic(k.getMaxFace()));
+        return policyCache.computeIfAbsent(type, k -> computePolicyStatic(k));
     }
 
-    private static DieStoppingPolicy computePolicyStatic(int maxFace) {
-        double[][] expected = new double[MAX_REROLLS + 1][maxFace + 1];
-        int[] thresholds = new int[MAX_REROLLS + 1];
-        double[] freshEV = new double[MAX_REROLLS + 1];
-
-        for (int face = 1; face <= maxFace; face++) {
-            expected[0][face] = face;
+    private static DieStoppingPolicy computePolicyStatic(DiceType type) {
+        DieEVTable table = DieEVTable.get(type);
+        int[] thresholds = new int[DieEVTable.MAX_REROLLS + 1];
+        double[] freshEV = new double[DieEVTable.MAX_REROLLS + 1];
+        for (int r = 0; r <= DieEVTable.MAX_REROLLS; r++) {
+            thresholds[r] = table.threshold(r);
+            freshEV[r] = table.freshEV(r);
         }
-        thresholds[0] = maxFace + 1;
-        freshEV[0] = 0;
-
-        for (int r = 1; r <= MAX_REROLLS; r++) {
-            double freshExpectation = 0;
-            for (int newFace = 1; newFace <= maxFace; newFace++) {
-                freshExpectation += expected[r - 1][newFace];
-            }
-            freshExpectation /= maxFace;
-            freshEV[r] = freshExpectation;
-
-            int ceilFresh = (int) Math.ceil(freshExpectation);
-            thresholds[r] = Math.min(ceilFresh, maxFace);
-
-            for (int face = 1; face <= maxFace; face++) {
-                expected[r][face] = Math.max(face, freshExpectation);
-            }
-        }
-
         return new DieStoppingPolicy(thresholds, freshEV);
     }
 
