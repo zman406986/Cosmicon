@@ -31,6 +31,7 @@ import data.scripts.cosmicon.state.CosmiconStats;
 import data.scripts.cosmicon.tutorial.TutorialController;
 import data.scripts.cosmicon.util.PrismaticDisplayHelper;
 
+import com.fs.starfarer.api.util.MutableValue;
 import java.awt.Color;
 
 public class CosmiconInteraction implements InteractionDialogPlugin {
@@ -114,7 +115,11 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         if (CasinoIntegrationManager.isCasinoLoaded()) {
             int hunterLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
             if (hunterLevel > 0) {
-                textPanel.addPara(Strings.format("menu.trashcan_hunter_welcome", hunterLevel), Color.CYAN);
+                if (CosmiconStats.isLegendTitleInherited()) {
+                    textPanel.addPara(Strings.get("menu.trashcan_hunter_welcome_legend"), Color.CYAN);
+                } else {
+                    textPanel.addPara(Strings.format("menu.trashcan_hunter_welcome", hunterLevel), Color.CYAN);
+                }
             }
         }
 
@@ -1086,7 +1091,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         };
     }
 
-    private static CargoAPI getCredits() {
+    private static MutableValue getCredits() {
         return Global.getSector().getPlayerFleet().getCargo().getCredits();
     }
 

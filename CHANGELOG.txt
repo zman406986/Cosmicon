@@ -8,16 +8,16 @@ Version 0.3.0
 - Fixed Hack and Arise not stacking from multiple sources; fixed Perforation not bypassing Forcefield; fixed Revenge missing attack-only condition.
 - Fixed status effect bugs: Acid Rain targeting wrong HP, Loan Overload never triggering, March 7th hitting self on defense, Lunisolar Luminance lost with ARISE/HACK, Frost granting Counter incorrectly.
 - Fixed Sea of Clouds granting prismatic dice uses to characters without prismatic dice; TOXIC_FOG now applies poison per-turn instead of once at onset; STORM no longer grants ATK/DEF mods at onset.
-- Fixed UI layout issues: setup gallery column height/scrollbar, status effect box text alignment, true dice name label wrapping/clipping; fixed instant damage and Poison animations targeting wrong card; fixed dice roll collision only checking final checkpoints.
+- Fixed UI layout issues: setup gallery column height/scrollbar, status effect box text alignment, true dice name label wrapping/clipping; fixed instant damage and Poison animations targeting wrong card; fixed dice roll collision only checking final checkpoints; fixed continue button showing "Continue" instead of "Close" on HP depletion.
 - Rebalanced credit rewards: normal encounters reduced to ~50%, losses now deduct credits (capped at 0) with loss message shown, tournament rewards adjusted to maintain similar total payout with participation + prize split.
 - Removed 4 hallucinated prismatic dice (Mirror, Sanctions, Strategy, Toxic) and associated status effects; added per-version availability conditions for prismatic dice.
 - Optimized AI reroll performance (EV lookup table, candidate pruning, symmetry pruning, transposition cache, Monte Carlo tuning); optimized render allocations and memory usage across codebase.
 - Renamed Gatekeeper to Legend across all strings; added Legend title inheritance tracking.
-- Fixed miscellaneous bugs: Gatekeeper 999 messages not showing, Master Dicer level not updating, integer getters using getFloat, stale MemoryAPI cache after save reload, CosmiconStats.isPrismaticFeatureUnlocked defaulting to true, opponent AI reroll timing, Yao Guang Thorns cleanse timing.
+- Fixed miscellaneous bugs: NPC opponent using random character instead of assigned, Gatekeeper 999 messages not showing, Master Dicer level not updating, integer getters using getFloat, stale MemoryAPI cache after save reload, CosmiconStats.isPrismaticFeatureUnlocked defaulting to true, opponent AI reroll timing, Yao Guang Thorns cleanse timing.
 - Fixed tutorial bugs: continue button blocked in wrong states, dice selection condition inverted, prismatic dice roller filtering misaligned values, Acheron Game 2 prismatic popup broken.
-- Fixed continue button showing "Continue" instead of "Close" when battle ends by HP depletion.
 - Externalized hardcoded values to CosmiconConfig and settings.json (HP, costs, credit multipliers).
 - Added three-tier logging system: Tier 1 (always on: startup, battle lifecycle, errors), Tier 2 (debug: battle flow, damage, status effects, AI decisions), Tier 3 (verbose: AI internals, dice rest, animations, weather details); default changed from all-on to off; added `cosmicon_debug` console command with off/debug/verbose/reroll levels.
+- Overhauled CN localization: eliminated translationese across ~43 strings (passive/causative structures, word order, unnatural phrasing); unified terminology (虹吸→吸取, 治愈等同于→回复等于, 转变为→变成, 一定比例→50%); distinguished Master Dicer (赌神), The Legend NPC (老赌神), and inherited Legend title (真 赌神); added Legend-specific dialogue variants for welcome/prompt/greeting strings in both EN and CN.
 
 Version 0.2.0
 - Changed entry point from bars to comms (Custom NPCs generated for playing against).

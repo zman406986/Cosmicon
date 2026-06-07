@@ -6,6 +6,8 @@ import java.util.Map;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.InteractionDialogAPI;
 import com.fs.starfarer.api.campaign.InteractionDialogPlugin;
+import com.fs.starfarer.api.campaign.SectorEntityToken;
+import com.fs.starfarer.api.characters.PersonAPI;
 import com.fs.starfarer.api.campaign.econ.MarketAPI;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import com.fs.starfarer.api.combat.EngagementResultAPI;
@@ -33,7 +35,9 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements Intera
         boolean isTutorial = CosmiconStats.isInTutorialMode();
         String npcMarketId = null;
 
-        MemoryAPI personMem = memoryMap.get("person");
+        SectorEntityToken entity = dialog.getInteractionTarget();
+        PersonAPI activePerson = entity != null ? entity.getActivePerson() : null;
+        MemoryAPI personMem = activePerson != null ? activePerson.getMemoryWithoutUpdate() : null;
         String npcCharId = (personMem != null && personMem.contains("$cos_npc_char"))
             ? personMem.getString("$cos_npc_char") : null;
 

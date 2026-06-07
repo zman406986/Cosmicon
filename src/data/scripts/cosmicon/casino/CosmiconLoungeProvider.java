@@ -11,6 +11,7 @@ import data.scripts.Strings;
 import data.scripts.casino.CasinoAPI;
 import data.scripts.casino.interaction.CasinoInteraction;
 import data.scripts.casino.interaction.LoungeProvider;
+import data.scripts.cosmicon.state.CosmiconStats;
 
 public class CosmiconLoungeProvider implements LoungeProvider {
 
@@ -59,7 +60,11 @@ public class CosmiconLoungeProvider implements LoungeProvider {
 
         int hunterLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
         if (hunterLevel > 0) {
-            dialog.getTextPanel().addPara(formatString("trashcan_hunter_greeting", hunterLevel), Color.CYAN);
+            if (CosmiconStats.isLegendTitleInherited()) {
+                dialog.getTextPanel().addPara(formatString("trashcan_hunter_greeting_legend"), Color.CYAN);
+            } else {
+                dialog.getTextPanel().addPara(formatString("trashcan_hunter_greeting", hunterLevel), Color.CYAN);
+            }
         }
 
         if (!CasinoIntegrationManager.isTutorialComplete()) {

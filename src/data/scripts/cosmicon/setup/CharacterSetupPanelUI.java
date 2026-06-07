@@ -55,7 +55,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private static final float DICE_LIST_X = GALLERY_WIDTH + MARGIN + 10f;
     private static final float DICE_LIST_WIDTH = PANEL_WIDTH - DICE_LIST_X - MARGIN - SCROLLBAR_WIDTH;
     private static final float DICE_ENTRY_HEIGHT = 65f;
-    private static final float DICE_LEFT_COL_WIDTH = 130f;
+    private static final float DICE_LEFT_COL_WIDTH = 165f;
 
     private static final float BUTTON_AREA_HEIGHT = 50f;
     private static final float BUTTON_WIDTH = 140f;
@@ -322,12 +322,12 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
             LabelAPI nameLabel = UIComponentFactory.createLabelSmall(panel,
                 defaultDisplayName,
-                ColorHelper.PRISMATIC_BRIGHT, Alignment.LMID, leftLabelW, 16f,
+                ColorHelper.PRISMATIC_BRIGHT, Alignment.LMID, leftLabelW, 24f,
                 labelX, entryY + 2f);
 
             LabelAPI facesLabel = UIComponentFactory.createLabelSmall(panel,
                 "", Color.LIGHT_GRAY, Alignment.LMID, leftLabelW, 16f,
-                labelX, entryY + 20f);
+                labelX, entryY + 28f);
 
             LabelAPI descLabel = UIComponentFactory.createLabelSmall(panel,
                 PrismaticDisplayHelper.getEffectDescription(type),
@@ -374,9 +374,9 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             float entryY = listStartY + titleOffset + i * DICE_ENTRY_HEIGHT - diceScrollOffset;
 
             labels.nameLabel().getPosition().inTL(labelX, entryY + 2f);
-            labels.nameLabel().setOpacity(labelOpacity(entryY + 2f, 16f, listStartY, listHeight));
-            labels.facesLabel().getPosition().inTL(labelX, entryY + 20f);
-            labels.facesLabel().setOpacity(labelOpacity(entryY + 20f, 16f, listStartY, listHeight));
+            labels.nameLabel().setOpacity(labelOpacity(entryY + 2f, 24f, listStartY, listHeight));
+            labels.facesLabel().getPosition().inTL(labelX, entryY + 28f);
+            labels.facesLabel().setOpacity(labelOpacity(entryY + 28f, 16f, listStartY, listHeight));
             labels.descLabel().getPosition().inTL(descX, entryY + 2f);
             labels.descLabel().setOpacity(labelOpacity(entryY + 2f, 48f, listStartY, listHeight));
         }

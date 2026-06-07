@@ -180,6 +180,8 @@ public class FlyingIcon {
     public void drawbackThenLaunchTo(float targetX, float targetY,
                                      float drawbackDist, float drawbackDuration,
                                      float launchDuration, boolean useLinear) {
+        this.startX = currentX;
+        this.startY = currentY;
         float dx = targetX - currentX;
         float dy = targetY - currentY;
         float dist = (float) Math.sqrt(dx * dx + dy * dy);

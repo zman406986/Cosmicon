@@ -12,6 +12,7 @@
         "back": "Back",
         "play": "Play",
         "trashcan_hunter_welcome": "The Cosmicon players eye you warily. Word of your mastery has spread. 'Master Dicer Level {0},' someone whispers.",
+        "trashcan_hunter_welcome_legend": "The Cosmicon players eye you with awe. Word of your legend has spread. 'The Legend,' someone whispers.",
         "session_won": "You've won this round! Find another bar encounter to play again.",
         "replay_tutorial_1": "Replay Tutorial Game 1",
         "replay_tutorial_2": "Replay Tutorial Game 2",
@@ -24,7 +25,8 @@
         "decline": "Politely decline",
         "declined": "You politely decline and return to your drink.",
         "approach": "Approach the Cosmicon player",
-        "trashcan_hunter_prompt": "The Cosmicon regulars immediately recognize you. 'It's the Master Dicer! Level {0}!' One of them eagerly offers you a seat at their table."
+        "trashcan_hunter_prompt": "The Cosmicon regulars immediately recognize you. 'It's the Master Dicer! Level {0}!' One of them eagerly offers you a seat at their table.",
+        "trashcan_hunter_prompt_legend": "The Cosmicon regulars immediately recognize you. 'It's the Legend!' One of them eagerly offers you a seat at their table."
     },
     "help": {
         "title": "=== How to Play Cosmicon ===",
@@ -643,6 +645,7 @@
         "btn_enter": "Cosmicon Dice Lounge",
         "welcome": "Welcome to the Cosmicon Dice Lounge. The air crackles with competitive energy.",
         "trashcan_hunter_greeting": "The lounge attendants nod respectfully. 'Welcome back, Master Dicer Level {0}.'",
+        "trashcan_hunter_greeting_legend": "The lounge attendants bow deeply. 'Welcome back, Legend.'",
         "tutorial_required": "The bouncer stops you. 'Sorry, you need to learn the basics at the bar first. Come back after you've completed your Cosmicon training.'",
         "gatekeeper": "Challenge the Legend (5,000 Stargems)",
         "gatekeeper_insufficient": "You don't have enough Stargems for the entry fee. You need 5,000 Stargems.",
