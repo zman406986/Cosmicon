@@ -74,6 +74,30 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private static final Color COLOR_RADIO_SELECTED = new Color(255, 215, 0);
     private static final Color COLOR_RADIO_UNSELECTED = new Color(100, 100, 100);
     private static final Color COLOR_VERSION_LABEL = new Color(140, 140, 160);
+    private static final Color COLOR_GALLERY_BG = new Color(35, 40, 50, 180);
+
+    private static final int RADIO_SEGMENTS = 24;
+    private static final float[] RADIO_COS = new float[RADIO_SEGMENTS];
+    private static final float[] RADIO_SIN = new float[RADIO_SEGMENTS];
+    static {
+        for (int i = 0; i < RADIO_SEGMENTS; i++) {
+            double rad = Math.toRadians(i * 15);
+            RADIO_COS[i] = (float) Math.cos(rad);
+            RADIO_SIN[i] = (float) Math.sin(rad);
+        }
+    }
+
+    private static final float[] SCRATCH_COLOR = new float[4];
+
+    private static float glX(float uiX) {
+        UnifiedCoord.PanelContext c = UnifiedCoord.getCurrent();
+        return c.panelX() + uiX;
+    }
+
+    private static float glSpriteY(float uiY, float spriteHeight) {
+        UnifiedCoord.PanelContext c = UnifiedCoord.getCurrent();
+        return c.panelY() + c.panelHeight() - uiY - spriteHeight;
+    }
 
     private static final String ACTION_CONFIRM = "setup_confirm";
     private static final String ACTION_CANCEL = "setup_cancel";
@@ -91,6 +115,14 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
     private boolean buttonsCreated = false;
     private boolean wasMousePressed = false;
+
+    private boolean needsLabelUpdate = true;
+    private float prevScrollOffset = -1f;
+    private float prevDiceScrollOffset = -1f;
+    private int prevSelectedIndex = -2;
+    private int prevDiceEntryIndex = -2;
+    private boolean prevUseTrueVersion = false;
+    private boolean canEquip = false;
 
     // Card gallery scrollbar
     private float scrollOffset = 0f;
@@ -121,6 +153,8 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private final List<DiceEntryLabels> diceEntryLabels = new ArrayList<>();
     private LabelAPI noPrismaticLabel;
 
+    private final List<CardDisplayData> cardDisplayData = new ArrayList<>();
+
     private final List<PrismaticDiceType> filteredDiceList;
 
     private final CharacterSetupCallback callback;
@@ -130,7 +164,13 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                               LabelAPI orangeLabel, LabelAPI purpleLabel, LabelAPI blueLabel, LabelAPI prismaticLabel) {}
     private record DiceClickRegion(float y, int entryIndex) {}
     private record VersionClickRegion(float x, float y, float width, float height, int entryIndex, boolean useTrue) {}
-    private record DiceEntryLabels(LabelAPI nameLabel, LabelAPI facesLabel, LabelAPI descLabel, String diceId, boolean hasBothVersions) {}
+    private record DiceEntryLabels(LabelAPI nameLabel, LabelAPI facesLabel, LabelAPI descLabel,
+                                   String diceId, boolean hasBothVersions,
+                                   String defaultDisplayName, String trueDisplayName,
+                                   String defaultFaces, String trueFaces) {}
+
+    private record CardDisplayData(String name, int hp, int atk, int def,
+                                   int orange, int purple, int blue, int prismatic) {}
 
     public interface CharacterSetupCallback {
         void onConfirm(String charId, String prismaticDiceId, boolean useTrueVersion);
@@ -170,6 +210,15 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         if (!characters.isEmpty()) {
             this.selectedIndex = 0;
+        }
+
+        for (CharacterCard card : this.characters) {
+            DicePoolCounts counts = DicePoolCounts.fromPool(card.getDicePool());
+            int prismatic = card.getPrismaticDiceIds().values().stream().mapToInt(Integer::intValue).sum();
+            cardDisplayData.add(new CardDisplayData(
+                card.getName(), card.getMaxHp(), card.getAtkLevel(), card.getDefLevel(),
+                counts.getCount(DiceType.ORANGE_D8), counts.getCount(DiceType.PURPLE_D6),
+                counts.getCount(DiceType.BLUE_D4), prismatic));
         }
 
         this.filteredDiceList = new ArrayList<>();
@@ -266,8 +315,13 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             boolean hasBoth = PrismaticDisplayHelper.hasDistinctDefaultFaces(type);
             float entryY = listStartY + titleOffset + i * DICE_ENTRY_HEIGHT;
 
+            String defaultDisplayName = PrismaticDisplayHelper.getDiceDisplayName(diceId);
+            String trueDisplayName = Strings.get("setup.prismatic_true_prefix") + defaultDisplayName;
+            String defaultFaces = PrismaticDisplayHelper.getFaceValuesDisplay(type, false);
+            String trueFaces = PrismaticDisplayHelper.getFaceValuesDisplay(type, true);
+
             LabelAPI nameLabel = UIComponentFactory.createLabelSmall(panel,
-                PrismaticDisplayHelper.getDiceDisplayName(diceId),
+                defaultDisplayName,
                 ColorHelper.PRISMATIC_BRIGHT, Alignment.LMID, leftLabelW, 16f,
                 labelX, entryY + 2f);
 
@@ -280,7 +334,8 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                 Color.LIGHT_GRAY, Alignment.LMID, descW, 48f,
                 descX, entryY + 2f);
 
-            diceEntryLabels.add(new DiceEntryLabels(nameLabel, facesLabel, descLabel, diceId, hasBoth));
+            diceEntryLabels.add(new DiceEntryLabels(nameLabel, facesLabel, descLabel, diceId, hasBoth,
+                defaultDisplayName, trueDisplayName, defaultFaces, trueFaces));
         }
 
         noPrismaticLabel = UIComponentFactory.createLabelSmall(panel,
@@ -291,13 +346,8 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     }
 
     private void updateDiceListLabels() {
-        boolean canEquip = selectedIndex >= 0 && selectedIndex < characters.size()
-            && !characters.get(selectedIndex).getPrismaticDiceIds().isEmpty();
-
         for (int i = 0; i < diceEntryLabels.size(); i++) {
             DiceEntryLabels labels = diceEntryLabels.get(i);
-            PrismaticDiceType type = PrismaticDiceRegistry.get(labels.diceId());
-            if (type == null) continue;
 
             if (!canEquip) {
                 labels.nameLabel().setOpacity(0f);
@@ -307,12 +357,8 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
             boolean useTrue = (i == selectedDiceEntryIndex) ? selectedUseTrueVersion : !labels.hasBothVersions();
 
-            String displayName = PrismaticDisplayHelper.getDiceDisplayName(labels.diceId());
-            if (useTrue && labels.hasBothVersions()) {
-                displayName = Strings.get("setup.prismatic_true_prefix") + displayName;
-            }
-            labels.nameLabel().setText(displayName);
-            labels.facesLabel().setText(PrismaticDisplayHelper.getFaceValuesDisplay(type, useTrue));
+            labels.nameLabel().setText(useTrue && labels.hasBothVersions() ? labels.trueDisplayName() : labels.defaultDisplayName());
+            labels.facesLabel().setText(useTrue ? labels.trueFaces() : labels.defaultFaces());
         }
     }
 
@@ -431,20 +477,18 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     }
 
     private void updateCardLabels() {
-        for (int i = 0; i < characters.size() && i < cardLabels.size(); i++) {
-            CharacterCard card = characters.get(i);
+        for (int i = 0; i < cardDisplayData.size() && i < cardLabels.size(); i++) {
+            CardDisplayData data = cardDisplayData.get(i);
             CardLabels labels = cardLabels.get(i);
 
-            labels.nameLabel.setText(card.getName());
-            labels.hpLabel.setText(String.valueOf(card.getMaxHp()));
-            labels.atkLabel.setText(String.valueOf(card.getAtkLevel()));
-            labels.defLabel.setText(String.valueOf(card.getDefLevel()));
-
-            DicePoolCounts counts = DicePoolCounts.fromPool(card.getDicePool());
-            labels.orangeLabel.setText(String.valueOf(counts.getCount(DiceType.ORANGE_D8)));
-            labels.purpleLabel.setText(String.valueOf(counts.getCount(DiceType.PURPLE_D6)));
-            labels.blueLabel.setText(String.valueOf(counts.getCount(DiceType.BLUE_D4)));
-            labels.prismaticLabel.setText(String.valueOf(card.getPrismaticDiceIds().values().stream().mapToInt(Integer::intValue).sum()));
+            labels.nameLabel.setText(data.name());
+            labels.hpLabel.setText(String.valueOf(data.hp()));
+            labels.atkLabel.setText(String.valueOf(data.atk()));
+            labels.defLabel.setText(String.valueOf(data.def()));
+            labels.orangeLabel.setText(String.valueOf(data.orange()));
+            labels.purpleLabel.setText(String.valueOf(data.purple()));
+            labels.blueLabel.setText(String.valueOf(data.blue()));
+            labels.prismaticLabel.setText(String.valueOf(data.prismatic()));
         }
     }
 
@@ -490,10 +534,9 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
         GL11.glScissor(sX, sY, sW, sH);
 
-        UnifiedCoord galleryBgPos = new UnifiedCoord(MARGIN - 5f, galleryStartY);
-        Misc.renderQuad(galleryBgPos.glX(), galleryBgPos.glSpriteY(galleryHeight),
+        Misc.renderQuad(glX(MARGIN - 5f), glSpriteY(galleryStartY, galleryHeight),
             galleryWidth + 10f, galleryHeight,
-            new Color(35, 40, 50, 180), alphaMult * 0.7f);
+            COLOR_GALLERY_BG, alphaMult * 0.7f);
 
         renderCardBoxes(galleryStartY, alphaMult, galleryHeight, sX, sY, sW, sH);
 
@@ -501,17 +544,39 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         renderScrollbar(galleryStartY, galleryHeight, alphaMult);
 
+        canEquip = selectedIndex >= 0 && selectedIndex < characters.size()
+            && !characters.get(selectedIndex).getPrismaticDiceIds().isEmpty();
+
         renderDiceList(alphaMult, panelX, panelY, scale);
 
         UnifiedCoord.clearCurrent();
 
-        repositionCardLabels(galleryStartY, galleryHeight);
-        float diceListStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 50f;
-        float diceListHeight = PANEL_HEIGHT - diceListStartY - BUTTON_AREA_HEIGHT - 20f;
-        repositionDiceListLabels(diceListStartY, diceListHeight);
-        updateLabels();
-        updateCardLabels();
-        updateDiceListLabels();
+        boolean scrollChanged = Float.compare(prevScrollOffset, scrollOffset) != 0
+            || Float.compare(prevDiceScrollOffset, diceScrollOffset) != 0;
+        boolean selectionChanged = prevSelectedIndex != selectedIndex
+            || prevDiceEntryIndex != selectedDiceEntryIndex
+            || prevUseTrueVersion != selectedUseTrueVersion;
+
+        if (needsLabelUpdate || scrollChanged || selectionChanged) {
+            if (scrollChanged || needsLabelUpdate) {
+                repositionCardLabels(galleryStartY, galleryHeight);
+                float diceListStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 50f;
+                float diceListHeight = PANEL_HEIGHT - diceListStartY - BUTTON_AREA_HEIGHT - 20f;
+                repositionDiceListLabels(diceListStartY, diceListHeight);
+            }
+            if (selectionChanged || needsLabelUpdate) {
+                updateLabels();
+                updateDiceListLabels();
+            }
+            updateCardLabels();
+
+            prevScrollOffset = scrollOffset;
+            prevDiceScrollOffset = diceScrollOffset;
+            prevSelectedIndex = selectedIndex;
+            prevDiceEntryIndex = selectedDiceEntryIndex;
+            prevUseTrueVersion = selectedUseTrueVersion;
+            needsLabelUpdate = false;
+        }
     }
 
     private void renderCardBoxes(float startY, float alphaMult, float galleryHeight,
@@ -537,16 +602,15 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
             clickRegions.add(new ClickRegion(boxX, boxY, i));
 
-            UnifiedCoord cardPos = new UnifiedCoord(boxX, boxY);
-            float cardGlX = cardPos.glX();
-            float cardGlY = cardPos.glSpriteY(CARD_HEIGHT);
+            float cardGlX = glX(boxX);
+            float cardGlY = glSpriteY(boxY, CARD_HEIGHT);
 
             CharacterCard card = characters.get(i);
             BattleRenderingUtils.renderCharacterCard(cardGlX, cardGlY, card, card.getAtkLevel(), card.getDefLevel(), alphaMult);
 
             if (i == selectedIndex) {
                 GLStateUtil.resetBlendState();
-                float[] c = ColorHelper.toGLComponents(COLOR_SELECTED, alphaMult);
+                float[] c = ColorHelper.toGLComponents(COLOR_SELECTED, alphaMult, SCRATCH_COLOR);
                 GL11.glColor4f(c[0], c[1], c[2], c[3]);
                 GL11.glLineWidth(3f);
                 GL11.glBegin(GL11.GL_LINE_LOOP);
@@ -558,8 +622,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                 GLStateUtil.resetColor();
             }
 
-            UnifiedCoord hpCenter = new UnifiedCoord(boxX + 22f, boxY + 24f);
-            BattleRenderingUtils.renderHpCircle(hpCenter.glX(), hpCenter.glY(),
+            BattleRenderingUtils.renderHpCircle(glX(boxX + 22f), glSpriteY(boxY + 24f, 0f),
                 BattleRenderingUtils.HP_CIRCLE_RADIUS, 1f, alphaMult);
 
             GL11.glEnable(GL11.GL_SCISSOR_TEST);
@@ -583,12 +646,10 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         GLStateUtil.resetBlendState();
 
-        UnifiedCoord trackPos = new UnifiedCoord(trackX, trackUiY);
-        Misc.renderQuad(trackPos.glX(), trackPos.glSpriteY(galleryHeight),
+        Misc.renderQuad(glX(trackX), glSpriteY(trackUiY, galleryHeight),
             SCROLLBAR_WIDTH, galleryHeight, COLOR_SCROLLBAR_TRACK, alphaMult);
 
-        UnifiedCoord thumbPos = new UnifiedCoord(trackX, thumbUiY);
-        Misc.renderQuad(thumbPos.glX(), thumbPos.glSpriteY(thumbHeight),
+        Misc.renderQuad(glX(trackX), glSpriteY(thumbUiY, thumbHeight),
             SCROLLBAR_WIDTH, thumbHeight, COLOR_SCROLLBAR_THUMB, alphaMult);
     }
 
@@ -600,26 +661,22 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         GLStateUtil.resetBlendState();
 
-        UnifiedCoord bgPos = new UnifiedCoord(DICE_LIST_X - 5f, listStartY);
-        Misc.renderQuad(bgPos.glX(), bgPos.glSpriteY(listHeight),
+        float bgGlX = glX(DICE_LIST_X - 5f);
+        float bgGlY = glSpriteY(listStartY, listHeight);
+        Misc.renderQuad(bgGlX, bgGlY,
             DICE_LIST_WIDTH + 10f, listHeight,
             COLOR_DICE_PANEL_BG, alphaMult);
 
-        float[] c = ColorHelper.toGLComponents(COLOR_SECTION_HEADER, alphaMult * 0.6f);
+        float[] c = ColorHelper.toGLComponents(COLOR_SECTION_HEADER, alphaMult * 0.6f, SCRATCH_COLOR);
         GL11.glColor4f(c[0], c[1], c[2], c[3]);
         GL11.glLineWidth(1f);
         GL11.glBegin(GL11.GL_LINE_LOOP);
-        float bx = bgPos.glX();
-        float by = bgPos.glSpriteY(listHeight);
-        GL11.glVertex2f(bx, by);
-        GL11.glVertex2f(bx + DICE_LIST_WIDTH + 10f, by);
-        GL11.glVertex2f(bx + DICE_LIST_WIDTH + 10f, by + listHeight);
-        GL11.glVertex2f(bx, by + listHeight);
+        GL11.glVertex2f(bgGlX, bgGlY);
+        GL11.glVertex2f(bgGlX + DICE_LIST_WIDTH + 10f, bgGlY);
+        GL11.glVertex2f(bgGlX + DICE_LIST_WIDTH + 10f, bgGlY + listHeight);
+        GL11.glVertex2f(bgGlX, bgGlY + listHeight);
         GL11.glEnd();
         GLStateUtil.resetColor();
-
-        boolean canEquip = selectedIndex >= 0 && selectedIndex < characters.size()
-            && !characters.get(selectedIndex).getPrismaticDiceIds().isEmpty();
 
         if (noPrismaticLabel != null) {
             noPrismaticLabel.setOpacity(canEquip ? 0f : 1f);
@@ -667,22 +724,21 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
             diceClickRegions.add(new DiceClickRegion(entryY, i));
 
-            UnifiedCoord entryPos = new UnifiedCoord(DICE_LIST_X, entryY);
+            float entryGlX = glX(DICE_LIST_X);
+            float entryGlY = glSpriteY(entryY, DICE_ENTRY_HEIGHT);
             Color bgColor = isSelected ? COLOR_DICE_ENTRY_SELECTED : COLOR_DICE_ENTRY_BG;
-            Misc.renderQuad(entryPos.glX(), entryPos.glSpriteY(DICE_ENTRY_HEIGHT),
+            Misc.renderQuad(entryGlX, entryGlY,
                 DICE_LIST_WIDTH, DICE_ENTRY_HEIGHT, bgColor, alphaMult);
 
             if (isSelected) {
-                float[] sel = ColorHelper.toGLComponents(COLOR_SELECTED, alphaMult * 0.8f);
+                float[] sel = ColorHelper.toGLComponents(COLOR_SELECTED, alphaMult * 0.8f, SCRATCH_COLOR);
                 GL11.glColor4f(sel[0], sel[1], sel[2], sel[3]);
                 GL11.glLineWidth(2f);
                 GL11.glBegin(GL11.GL_LINE_LOOP);
-                float ex = entryPos.glX();
-                float ey = entryPos.glSpriteY(DICE_ENTRY_HEIGHT);
-                GL11.glVertex2f(ex, ey);
-                GL11.glVertex2f(ex + DICE_LIST_WIDTH, ey);
-                GL11.glVertex2f(ex + DICE_LIST_WIDTH, ey + DICE_ENTRY_HEIGHT);
-                GL11.glVertex2f(ex, ey + DICE_ENTRY_HEIGHT);
+                GL11.glVertex2f(entryGlX, entryGlY);
+                GL11.glVertex2f(entryGlX + DICE_LIST_WIDTH, entryGlY);
+                GL11.glVertex2f(entryGlX + DICE_LIST_WIDTH, entryGlY + DICE_ENTRY_HEIGHT);
+                GL11.glVertex2f(entryGlX, entryGlY + DICE_ENTRY_HEIGHT);
                 GL11.glEnd();
                 GLStateUtil.resetColor();
             }
@@ -709,35 +765,35 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         boolean useTrue = entryIndex == selectedDiceEntryIndex && selectedUseTrueVersion;
 
         // "D" radio
-        UnifiedCoord dCenter = new UnifiedCoord(toggleX + radioSize / 2f, toggleY + radioSize / 2f);
+        float dCenterX = glX(toggleX + radioSize / 2f);
+        float dCenterY = glSpriteY(toggleY + radioSize / 2f, 0f);
         Color dColor = (!useTrue && entryIndex == selectedDiceEntryIndex) ? COLOR_RADIO_SELECTED : COLOR_RADIO_UNSELECTED;
         boolean dFilled = !trueUnlocked || (!useTrue && entryIndex == selectedDiceEntryIndex);
-        drawRadioCircle(dCenter.glX(), dCenter.glY(), radioSize, dColor, alphaMult, dFilled);
+        drawRadioCircle(dCenterX, dCenterY, radioSize, dColor, alphaMult, dFilled);
 
         versionClickRegions.add(new VersionClickRegion(toggleX, toggleY, radioSize + 14f, radioSize, entryIndex, false));
 
         if (trueUnlocked) {
             // "T" radio
             float tX = toggleX + radioSize + 18f;
-            UnifiedCoord tCenter = new UnifiedCoord(tX + radioSize / 2f, toggleY + radioSize / 2f);
+            float tCenterX = glX(tX + radioSize / 2f);
+            float tCenterY = glSpriteY(toggleY + radioSize / 2f, 0f);
             Color tColor = (useTrue && entryIndex == selectedDiceEntryIndex) ? COLOR_RADIO_SELECTED : COLOR_RADIO_UNSELECTED;
-            drawRadioCircle(tCenter.glX(), tCenter.glY(), radioSize, tColor, alphaMult, useTrue && entryIndex == selectedDiceEntryIndex);
+            drawRadioCircle(tCenterX, tCenterY, radioSize, tColor, alphaMult, useTrue && entryIndex == selectedDiceEntryIndex);
 
             versionClickRegions.add(new VersionClickRegion(tX, toggleY, radioSize + 14f, radioSize, entryIndex, true));
         }
 
         // D/T labels - drawn as small colored quads with text approximation
-        float[] labelC = ColorHelper.toGLComponents(COLOR_VERSION_LABEL, alphaMult);
+        float[] labelC = ColorHelper.toGLComponents(COLOR_VERSION_LABEL, alphaMult, SCRATCH_COLOR);
         GL11.glColor4f(labelC[0], labelC[1], labelC[2], labelC[3]);
 
         float indicatorSize = 8f;
-        UnifiedCoord dInd = new UnifiedCoord(toggleX + radioSize + 2f, toggleY + 2f);
-        Misc.renderQuad(dInd.glX(), dInd.glSpriteY(indicatorSize), indicatorSize, indicatorSize, COLOR_VERSION_LABEL, alphaMult);
+        Misc.renderQuad(glX(toggleX + radioSize + 2f), glSpriteY(toggleY + 2f, indicatorSize), indicatorSize, indicatorSize, COLOR_VERSION_LABEL, alphaMult);
 
         if (trueUnlocked) {
             float tX = toggleX + radioSize + 18f;
-            UnifiedCoord tInd = new UnifiedCoord(tX + radioSize + 2f, toggleY + 2f);
-            Misc.renderQuad(tInd.glX(), tInd.glSpriteY(indicatorSize), indicatorSize, indicatorSize, COLOR_VERSION_LABEL, alphaMult);
+            Misc.renderQuad(glX(tX + radioSize + 2f), glSpriteY(toggleY + 2f, indicatorSize), indicatorSize, indicatorSize, COLOR_VERSION_LABEL, alphaMult);
         }
 
         GLStateUtil.resetColor();
@@ -747,25 +803,21 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         float outerRadius = size / 2f;
         float innerRadius = outerRadius * 0.4f;
 
-        float[] outer = ColorHelper.toGLComponents(color, alphaMult);
+        float[] outer = ColorHelper.toGLComponents(color, alphaMult, SCRATCH_COLOR);
         GL11.glColor4f(outer[0], outer[1], outer[2], outer[3]);
 
         GL11.glBegin(GL11.GL_LINE_LOOP);
-        for (int angle = 0; angle < 360; angle += 15) {
-            double rad = Math.toRadians(angle);
-            float px = centerX + (float) Math.cos(rad) * outerRadius;
-            float py = centerY + (float) Math.sin(rad) * outerRadius;
-            GL11.glVertex2f(px, py);
+        for (int i = 0; i < RADIO_SEGMENTS; i++) {
+            GL11.glVertex2f(centerX + RADIO_COS[i] * outerRadius,
+                            centerY + RADIO_SIN[i] * outerRadius);
         }
         GL11.glEnd();
 
         if (filled) {
             GL11.glBegin(GL11.GL_POLYGON);
-            for (int angle = 0; angle < 360; angle += 15) {
-                double rad = Math.toRadians(angle);
-                float px = centerX + (float) Math.cos(rad) * innerRadius;
-                float py = centerY + (float) Math.sin(rad) * innerRadius;
-                GL11.glVertex2f(px, py);
+            for (int i = 0; i < RADIO_SEGMENTS; i++) {
+                GL11.glVertex2f(centerX + RADIO_COS[i] * innerRadius,
+                                centerY + RADIO_SIN[i] * innerRadius);
             }
             GL11.glEnd();
         }
@@ -787,12 +839,10 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         GLStateUtil.resetBlendState();
 
-        UnifiedCoord trackPos = new UnifiedCoord(trackX, trackUiY);
-        Misc.renderQuad(trackPos.glX(), trackPos.glSpriteY(listHeight),
+        Misc.renderQuad(glX(trackX), glSpriteY(trackUiY, listHeight),
             SCROLLBAR_WIDTH, listHeight, COLOR_SCROLLBAR_TRACK, alphaMult);
 
-        UnifiedCoord thumbPos = new UnifiedCoord(trackX, thumbUiY);
-        Misc.renderQuad(thumbPos.glX(), thumbPos.glSpriteY(thumbHeight),
+        Misc.renderQuad(glX(trackX), glSpriteY(thumbUiY, thumbHeight),
             SCROLLBAR_WIDTH, thumbHeight, COLOR_SCROLLBAR_THUMB, alphaMult);
     }
 
@@ -825,6 +875,10 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     public void processInput(List<InputEventAPI> events) {
         if (panel == null) return;
         boolean mouseDown = Mouse.isButtonDown(0);
+
+        if (!mouseDown && !wasMousePressed && !isDraggingScrollbar && !isDraggingDiceScrollbar) {
+            return;
+        }
 
         PositionAPI pos = panel.getPosition();
         UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(
@@ -951,7 +1005,6 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private void handleCardSelection(int index) {
         if (index < 0 || index >= characters.size()) return;
         selectedIndex = index;
-        updateLabels();
     }
 
     private List<PrismaticDiceType> getFilteredDiceList() {
@@ -1048,8 +1101,6 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                 break;
             }
         }
-
-        updateLabels();
     }
 
     public void setDefaultSelection() {
@@ -1071,7 +1122,6 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                     }
                 }
             }
-            updateLabels();
         }
     }
 

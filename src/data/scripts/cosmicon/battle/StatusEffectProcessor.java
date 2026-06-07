@@ -112,7 +112,18 @@ public class StatusEffectProcessor {
     }
 
     public boolean hasEffect(StatusEffect effect) {
-        return getLayers(effect) > 0;
+        for (StatusEffectInstance inst : activeEffects) {
+            if (inst.effect() == effect) return true;
+        }
+        return false;
+    }
+
+    private int getLayersIfPresent(StatusEffect effect) {
+        int total = 0;
+        for (StatusEffectInstance inst : activeEffects) {
+            if (inst.effect() == effect) total += inst.layers();
+        }
+        return total;
     }
 
     public List<StatusEffectInstance> getActiveEffects() {
@@ -173,8 +184,9 @@ public class StatusEffectProcessor {
     }
 
     public void processedEffectsFromModification(StatusEffect effect) {
-        if (hasEffect(effect)) {
-            processedEffects.add(new ProcessedEffect(effect, getLayers(effect)));
+        int layers = getLayersIfPresent(effect);
+        if (layers > 0) {
+            processedEffects.add(new ProcessedEffect(effect, layers));
         }
     }
 
@@ -199,14 +211,16 @@ public class StatusEffectProcessor {
     }
 
     private void processStartOfTurn(TurnType turnType, BattleContext context) {
-        if (turnType == TurnType.ATTACK && hasEffect(StatusEffect.LAST_STAND)) {
-            int layers = getLayers(StatusEffect.LAST_STAND);
-            lastStandHpReduction = context.getCurrentHp() - 1;
-            context.setCurrentHp(1);
-            processedEffects.add(new ProcessedEffect(StatusEffect.LAST_STAND, layers));
-            removeEffect(StatusEffect.LAST_STAND);
-            CosmiconLogger.info("[STATUS] LAST_STAND triggered: HP %d -> 1, attack bonus = %d",
-                lastStandHpReduction + 1, lastStandHpReduction);
+        if (turnType == TurnType.ATTACK) {
+            int layers = getLayersIfPresent(StatusEffect.LAST_STAND);
+            if (layers > 0) {
+                lastStandHpReduction = context.getCurrentHp() - 1;
+                context.setCurrentHp(1);
+                processedEffects.add(new ProcessedEffect(StatusEffect.LAST_STAND, layers));
+                removeEffect(StatusEffect.LAST_STAND);
+                CosmiconLogger.info("[STATUS] LAST_STAND triggered: HP %d -> 1, attack bonus = %d",
+                    lastStandHpReduction + 1, lastStandHpReduction);
+            }
         }
     }
 
@@ -222,8 +236,8 @@ public class StatusEffectProcessor {
     }
 
     private void processAfterRoll(BattleContext context) {
-        if (hasEffect(StatusEffect.DESTINED)) {
-            int layers = getLayers(StatusEffect.DESTINED);
+        int layers = getLayersIfPresent(StatusEffect.DESTINED);
+        if (layers > 0) {
             processedEffects.add(new ProcessedEffect(StatusEffect.DESTINED, layers));
             CosmiconLogger.info("[STATUS] DESTINED: auto-selecting all dice");
             context.markDestinedDice();
@@ -232,20 +246,20 @@ public class StatusEffectProcessor {
     }
 
     private void processAfterSelect(BattleContext context) {
-        if (hasEffect(StatusEffect.LEVEL_UP)) {
-            int layers = getLayers(StatusEffect.LEVEL_UP);
-            processedEffects.add(new ProcessedEffect(StatusEffect.LEVEL_UP, layers));
+        int levelUpLayers = getLayersIfPresent(StatusEffect.LEVEL_UP);
+        if (levelUpLayers > 0) {
+            processedEffects.add(new ProcessedEffect(StatusEffect.LEVEL_UP, levelUpLayers));
             CosmiconLogger.info("[STATUS] LEVEL_UP: layers=%d | context: types=%s selected=%s prismatic=%s",
-                layers,
+                levelUpLayers,
                 context.getDiceTypes(),
                 context.getDiceSelected(),
                 context.getDiceIsPrismatic());
-            context.applyLevelUp(layers);
+            context.applyLevelUp(levelUpLayers);
         }
 
-        if (hasEffect(StatusEffect.AWAKENING)) {
-            int layers = getLayers(StatusEffect.AWAKENING);
-            processedEffects.add(new ProcessedEffect(StatusEffect.AWAKENING, layers));
+        int awakeningLayers = getLayersIfPresent(StatusEffect.AWAKENING);
+        if (awakeningLayers > 0) {
+            processedEffects.add(new ProcessedEffect(StatusEffect.AWAKENING, awakeningLayers));
             CosmiconLogger.info("[STATUS] AWAKENING: doubling selected dice values");
             context.applyAwakening();
             removeEffect(StatusEffect.AWAKENING);
@@ -255,22 +269,20 @@ public class StatusEffectProcessor {
     private int processBeforeResolution(BattleContext context) {
         int damage = 0;
 
-        if (hasEffect(StatusEffect.THORNS)) {
-            int thornsDamage = getLayers(StatusEffect.THORNS);
+        int thornsDamage = getLayersIfPresent(StatusEffect.THORNS);
+        if (thornsDamage > 0) {
             processedEffects.add(new ProcessedEffect(StatusEffect.THORNS, thornsDamage));
             CosmiconLogger.info("[STATUS] THORNS: dealing %d damage to attacker", thornsDamage);
             damage += thornsDamage;
         }
 
-        if (hasEffect(StatusEffect.INSTANT_DAMAGE)) {
-            for (StatusEffectInstance inst : activeEffects) {
-                if (inst.effect() == StatusEffect.INSTANT_DAMAGE) {
-                    processedEffects.add(new ProcessedEffect(StatusEffect.INSTANT_DAMAGE, inst.layers()));
-                    CosmiconLogger.info("[STATUS] INSTANT_DAMAGE: %d damage to opponent from %s", inst.layers(), inst.source());
-                    context.addInstantDamageToOpponent(inst.layers());
-                    removeFromSource(StatusEffect.INSTANT_DAMAGE, inst.source());
-                    break;
-                }
+        for (StatusEffectInstance inst : activeEffects) {
+            if (inst.effect() == StatusEffect.INSTANT_DAMAGE) {
+                processedEffects.add(new ProcessedEffect(StatusEffect.INSTANT_DAMAGE, inst.layers()));
+                CosmiconLogger.info("[STATUS] INSTANT_DAMAGE: %d damage to opponent from %s", inst.layers(), inst.source());
+                context.addInstantDamageToOpponent(inst.layers());
+                removeFromSource(StatusEffect.INSTANT_DAMAGE, inst.source());
+                break;
             }
         }
 
@@ -280,14 +292,12 @@ public class StatusEffectProcessor {
     private int processEndOfTurn() {
         int damage = 0;
 
-        if (hasEffect(StatusEffect.POISON)) {
-            int poisonLayers = getLayers(StatusEffect.POISON);
-            int poisonDamage = poisonLayers;
-            if (hasEffect(StatusEffect.VENOM)) {
-                poisonDamage *= 2;
-            }
+        int poisonLayers = getLayersIfPresent(StatusEffect.POISON);
+        if (poisonLayers > 0) {
+            int venomLayers = getLayersIfPresent(StatusEffect.VENOM);
+            int poisonDamage = venomLayers > 0 ? poisonLayers * 2 : poisonLayers;
             CosmiconLogger.info("[STATUS] POISON: %d damage%s", poisonDamage,
-                hasEffect(StatusEffect.VENOM) ? " (doubled by VENOM)" : "");
+                venomLayers > 0 ? " (doubled by VENOM)" : "");
             processedEffects.add(new ProcessedEffect(StatusEffect.POISON, poisonLayers));
             damage += poisonDamage;
 
@@ -305,14 +315,13 @@ public class StatusEffectProcessor {
     }
 
     private void decrementDurations() {
-        List<StatusEffectInstance> expired = new ArrayList<>();
-        List<StatusEffectInstance> surviving = new ArrayList<>();
+        List<StatusEffectInstance> surviving = new ArrayList<>(activeEffects.size());
 
         for (StatusEffectInstance inst : activeEffects) {
             if (inst.durationType() == DurationType.TURN_BASED) {
                 int remaining = inst.remainingTurns() - 1;
                 if (remaining <= 0) {
-                    expired.add(inst);
+                    CosmiconLogger.info("[STATUS] %s from %s expired (duration ended)", inst.effect().name(), inst.source());
                 } else {
                     surviving.add(new StatusEffectInstance(inst.effect(), inst.source(), inst.layers(), inst.durationType(), remaining));
                 }
@@ -323,10 +332,6 @@ public class StatusEffectProcessor {
 
         activeEffects.clear();
         activeEffects.addAll(surviving);
-
-        for (StatusEffectInstance inst : expired) {
-            CosmiconLogger.info("[STATUS] %s from %s expired (duration ended)", inst.effect().name(), inst.source());
-        }
     }
 
     public int calculateAttackBonus(TurnType turnType) {
@@ -358,16 +363,17 @@ public class StatusEffectProcessor {
     }
 
     public int calculateOverloadSelfDamage(TurnType turnType) {
-        if (turnType == TurnType.DEFENSE && hasEffect(StatusEffect.OVERLOAD)) {
-            return getLayers(StatusEffect.OVERLOAD) / 2;
+        if (turnType == TurnType.DEFENSE) {
+            int layers = getLayersIfPresent(StatusEffect.OVERLOAD);
+            if (layers > 0) return layers / 2;
         }
         return 0;
     }
 
     public int calculateSiphonHeal(int damage) {
-        if (hasEffect(StatusEffect.SIPHON) && damage > 0) {
-            int percentage = getLayers(StatusEffect.SIPHON);
-            return (int)(damage * percentage / 100.0f);
+        if (damage > 0) {
+            int percentage = getLayersIfPresent(StatusEffect.SIPHON);
+            if (percentage > 0) return (int)(damage * percentage / 100.0f);
         }
         return 0;
     }
@@ -422,7 +428,7 @@ public class StatusEffectProcessor {
 
         public void setDiceValues(List<Integer> values, List<DiceType> types) {
             this.diceValues = new ArrayList<>(values);
-            this.diceIsPrismatic = new ArrayList<>();
+            this.diceIsPrismatic = new ArrayList<>(types.size());
             for (DiceType type : types) {
                 this.diceIsPrismatic.add(type == DiceType.PRISMATIC || type == DiceType.YELLOW_D12);
             }

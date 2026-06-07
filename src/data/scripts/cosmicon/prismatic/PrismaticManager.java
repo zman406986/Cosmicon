@@ -111,6 +111,15 @@ public class PrismaticManager {
         ps.incrementUses();
     }
     
+    public void addPrismaticUse(PrismaticDiceType type, boolean forPlayer, int amount) {
+        if (amount <= 0) return;
+        PrismaticState ps = getState(forPlayer);
+        if (type != null) {
+            ps.incrementUsesByType(type, amount);
+        }
+        ps.addUses(amount);
+    }
+    
     public int getUses(boolean forPlayer) {
         return getState(forPlayer).getUses();
     }

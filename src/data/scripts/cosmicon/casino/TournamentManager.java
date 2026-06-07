@@ -22,6 +22,8 @@ public class TournamentManager {
     private static final int LB_ROUNDS = 4;
     private static final int[] WB_MATCH_COUNTS = {4, 2, 1};
     private static final int[] LB_MATCH_COUNTS = {2, 2, 1, 1};
+    private static final int GF_SERIES_LENGTH = 3;
+    private static final int GF_WINS_NEEDED = 2;
 
     private String[] playerNames;
     private int[][] wbMatchups;
@@ -66,8 +68,8 @@ public class TournamentManager {
             lbResults[r] = new int[LB_MATCH_COUNTS[r]];
         }
 
-        gfSeries = new int[3];
-        for (int i = 0; i < 3; i++) {
+        gfSeries = new int[GF_SERIES_LENGTH];
+        for (int i = 0; i < GF_SERIES_LENGTH; i++) {
             gfSeries[i] = -1;
         }
         gfPlayerWins = 0;
@@ -126,9 +128,7 @@ public class TournamentManager {
 
         Integer[] nextMatch = findNextPlayerMatch();
         if (nextMatch == null) {
-            if (!playerEliminated && !playerChampion) {
-                finishTournament();
-            }
+            finishTournament();
             return;
         }
 
@@ -329,7 +329,6 @@ public class TournamentManager {
     public void recordPlayerMatch(boolean playerWon) {
         if (playerEliminated || playerChampion) return;
 
-        int playerSlot = PLAYER_SLOT;
         int opponentSlot = getNextOpponentSlot();
 
         int completedBracket = currentBracket;
@@ -337,18 +336,18 @@ public class TournamentManager {
 
         if (currentBracket == BRACKET_WB) {
             if (playerWon) {
-                wbResults[currentRound][currentMatchIndex] = playerSlot;
-                advanceWinner(BRACKET_WB, currentRound, currentMatchIndex, playerSlot, opponentSlot);
+                wbResults[currentRound][currentMatchIndex] = PLAYER_SLOT;
+                advanceWinner(BRACKET_WB, currentRound, currentMatchIndex, PLAYER_SLOT, opponentSlot);
                 playerWins++;
             } else {
                 wbResults[currentRound][currentMatchIndex] = opponentSlot;
-                advanceWinner(BRACKET_WB, currentRound, currentMatchIndex, opponentSlot, playerSlot);
+                advanceWinner(BRACKET_WB, currentRound, currentMatchIndex, opponentSlot, PLAYER_SLOT);
                 playerLosses++;
             }
         } else if (currentBracket == BRACKET_LB) {
             if (playerWon) {
-                lbResults[currentRound][currentMatchIndex] = playerSlot;
-                advanceWinner(BRACKET_LB, currentRound, currentMatchIndex, playerSlot, -1);
+                lbResults[currentRound][currentMatchIndex] = PLAYER_SLOT;
+                advanceWinner(BRACKET_LB, currentRound, currentMatchIndex, PLAYER_SLOT, -1);
                 playerWins++;
             } else {
                 lbResults[currentRound][currentMatchIndex] = opponentSlot;
@@ -394,13 +393,7 @@ public class TournamentManager {
     public void recordGrandFinalGame(boolean playerWon) {
         if (playerEliminated || playerChampion) return;
 
-        int gameIndex = 0;
-        for (int i = 0; i < 3; i++) {
-            if (gfSeries[i] < 0) {
-                gameIndex = i;
-                break;
-            }
-        }
+        int gameIndex = gfPlayerWins + gfOpponentWins;
 
         if (playerWon) {
             gfSeries[gameIndex] = PLAYER_SLOT;
@@ -410,9 +403,9 @@ public class TournamentManager {
             gfOpponentWins++;
         }
 
-        if (gfPlayerWins >= 2) {
+        if (gfPlayerWins >= GF_WINS_NEEDED) {
             playerChampion = true;
-        } else if (gfOpponentWins >= 2) {
+        } else if (gfOpponentWins >= GF_WINS_NEEDED) {
             playerEliminated = true;
         }
     }
@@ -597,7 +590,7 @@ public class TournamentManager {
         sb.append(",");
 
         sb.append("\"gfSeries\":[");
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < GF_SERIES_LENGTH; i++) {
             if (i > 0) sb.append(",");
             sb.append(gfSeries[i]);
         }
@@ -627,8 +620,9 @@ public class TournamentManager {
             TournamentManager tm = new TournamentManager();
 
             JSONArray namesArr = obj.getJSONArray("playerNames");
+            if (namesArr.length() != TOTAL_SLOTS) return null;
             tm.playerNames = new String[TOTAL_SLOTS];
-            for (int i = 0; i < TOTAL_SLOTS && i < namesArr.length(); i++) {
+            for (int i = 0; i < TOTAL_SLOTS; i++) {
                 tm.playerNames[i] = namesArr.getString(i);
             }
 
@@ -638,8 +632,8 @@ public class TournamentManager {
             tm.lbResults = parseIntArray2D(obj.getJSONArray("lbResults"));
 
             JSONArray gfArr = obj.getJSONArray("gfSeries");
-            tm.gfSeries = new int[3];
-            for (int i = 0; i < 3 && i < gfArr.length(); i++) {
+            tm.gfSeries = new int[GF_SERIES_LENGTH];
+            for (int i = 0; i < GF_SERIES_LENGTH && i < gfArr.length(); i++) {
                 tm.gfSeries[i] = gfArr.getInt(i);
             }
 

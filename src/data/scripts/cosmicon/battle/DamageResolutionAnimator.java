@@ -38,6 +38,8 @@ public class DamageResolutionAnimator {
 
     private static final Color DAMAGE_RESULT_COLOR = FlyingNumber.DAMAGE_RESULT;
     private static final Color DEFENDER_PULSE_COLOR = new Color(80, 200, 120);
+    private static final Color CLASH_FLASH_COLOR = new Color(255, 255, 200);
+    private static final Color CLASH_PARTICLE_COLOR = new Color(255, 200, 100);
 
     private boolean playerAttacker;
 
@@ -216,13 +218,13 @@ public class DamageResolutionAnimator {
     }
 
     private void calculateStaticIconPositions(BattleState state) {
-        float halfH = BattleRenderingUtils.PANEL_HEIGHT / 2f;
+        float halfH = centerY;
         iconSize = halfH * BattleRenderingUtils.ROLE_ICON_SIZE_RATIO;
 
-        float topIconCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
+        float topIconCenterX = centerX;
         float topIconCenterY = (halfH - iconSize) / 2f + iconSize / 2f;
 
-        float bottomIconCenterX = BattleRenderingUtils.PANEL_WIDTH / 2f;
+        float bottomIconCenterX = centerX;
         float bottomIconCenterY = halfH + (halfH - iconSize) / 2f + iconSize / 2f;
 
         float clashOffset = iconSize * 0.25f;
@@ -397,10 +399,10 @@ public class DamageResolutionAnimator {
     }
 
     private void triggerIconImpact() {
-        impactEffect.triggerFlash(centerX, centerY, 100f, new Color(255, 255, 200));
+        impactEffect.triggerFlash(centerX, centerY, 100f, CLASH_FLASH_COLOR);
 
         if (!perforation) {
-            impactEffect.triggerParticles(centerX, centerY, 18, new Color(255, 200, 100));
+            impactEffect.triggerParticles(centerX, centerY, 18, CLASH_PARTICLE_COLOR);
         }
 
         if (callback != null) {
@@ -631,9 +633,9 @@ public class DamageResolutionAnimator {
         boolean defDone = defFlyingIcon == null || defFlyingIcon.isComplete();
 
         if (phaseElapsed >= ICON_CLASH_DURATION || (atkDone && defDone)) {
-            impactEffect.triggerFlash(centerX, centerY, 90f, new Color(255, 255, 200));
+            impactEffect.triggerFlash(centerX, centerY, 90f, CLASH_FLASH_COLOR);
             if (!perforation) {
-                impactEffect.triggerParticles(centerX, centerY, 14, new Color(255, 200, 100));
+                impactEffect.triggerParticles(centerX, centerY, 14, CLASH_PARTICLE_COLOR);
             }
 
             if (callback != null) {
@@ -747,17 +749,11 @@ public class DamageResolutionAnimator {
     public void render(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
         if (phase == Phase.IDLE) return;
 
-        boolean isComboPhase = phase == Phase.COMBO_PAUSE ||
-            phase == Phase.COMBO_SECOND_CLASH ||
-            phase == Phase.COMBO_SECOND_IMPACT ||
-            phase == Phase.COMBO_WINNER_DRAWBACK ||
-            phase == Phase.COMBO_WINNER_IMPACT ||
-            phase == Phase.COMBO_ICON_RETREAT;
+        boolean isComboPhase = isComboPhase();
 
         renderNumbersOnIcons(panelX, panelY, panelWidth, panelHeight, alphaMult);
 
-        if (!isComboPhase || phase == Phase.COMBO_SECOND_CLASH || phase == Phase.COMBO_SECOND_IMPACT ||
-            phase == Phase.COMBO_WINNER_DRAWBACK || phase == Phase.COMBO_WINNER_IMPACT) {
+        if (phase != Phase.COMBO_PAUSE && phase != Phase.COMBO_ICON_RETREAT) {
             shatterEffect.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
             splitEffect.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
         }
@@ -779,12 +775,7 @@ public class DamageResolutionAnimator {
             phase == Phase.ICON_RETREAT ||
             phase == Phase.SHATTER_RESTORE;
 
-        boolean isComboPhase = phase == Phase.COMBO_PAUSE ||
-            phase == Phase.COMBO_SECOND_CLASH ||
-            phase == Phase.COMBO_SECOND_IMPACT ||
-            phase == Phase.COMBO_WINNER_DRAWBACK ||
-            phase == Phase.COMBO_WINNER_IMPACT ||
-            phase == Phase.COMBO_ICON_RETREAT;
+        boolean isComboPhase = isComboPhase();
 
         if (!shouldRenderNumbers && !isComboPhase) return;
 
@@ -833,9 +824,8 @@ public class DamageResolutionAnimator {
         boolean defShattered = attackWins;
         boolean restoring = phase == Phase.SHATTER_RESTORE;
         boolean splitDone = !splitEffect.isActive();
-        boolean splitRestoring = splitEffect.isRestoring();
-        boolean atkHiddenBySplit = (splitEffect.isActive() && atkShattered) || (splitRestoring && atkShattered);
-        boolean defHiddenBySplit = (splitEffect.isActive() && defShattered) || (splitRestoring && defShattered);
+        boolean atkHiddenBySplit = splitEffect.isActive() && atkShattered;
+        boolean defHiddenBySplit = splitEffect.isActive() && defShattered;
 
         if (atkFlyingIcon != null && !atkHiddenBySplit && (!atkShattered || (restoring && splitDone))) {
             float restoreAlpha = atkShattered ? shatterRestoreAlpha : alphaMult;
@@ -860,6 +850,15 @@ public class DamageResolutionAnimator {
                phase == Phase.ICON_RETREAT ||
                phase == Phase.SHATTER_RESTORE ||
                phase == Phase.COMBO_PAUSE ||
+               phase == Phase.COMBO_SECOND_CLASH ||
+               phase == Phase.COMBO_SECOND_IMPACT ||
+               phase == Phase.COMBO_WINNER_DRAWBACK ||
+               phase == Phase.COMBO_WINNER_IMPACT ||
+               phase == Phase.COMBO_ICON_RETREAT;
+    }
+
+    private boolean isComboPhase() {
+        return phase == Phase.COMBO_PAUSE ||
                phase == Phase.COMBO_SECOND_CLASH ||
                phase == Phase.COMBO_SECOND_IMPACT ||
                phase == Phase.COMBO_WINNER_DRAWBACK ||

@@ -1,14 +1,13 @@
 package data.scripts.cosmicon.battle;
 
-import org.lwjgl.opengl.GL11;
-
 import com.fs.starfarer.api.graphics.SpriteAPI;
 
 import data.scripts.cosmicon.util.UnifiedCoord;
 import data.scripts.cosmicon.util.EasingUtil;
-import data.scripts.cosmicon.util.GLStateUtil;
 
 public class DiceAnimator {
+    private static final float[] EMPTY_FLOAT_ARRAY = new float[0];
+
     private static final float SETTLE_DURATION = 0.15f;
     private static final float REVEAL_DURATION = 0.1f;
     private static final float TOTAL_DURATION = 6.75f;
@@ -53,7 +52,10 @@ public class DiceAnimator {
     
     private float rotation;
     private float directionRad;
+    private float cosDir;
+    private float sinDir;
     private float travelDistance;
+    private float travelDuration;
     private float travelProgress;
     
     private float centeringStartX;
@@ -99,10 +101,11 @@ public DiceAnimator() {
         scale = 1f;
         directionRad = 0f;
         bounceCount = 0;
-        bounceHeights = new float[0];
+        bounceHeights = EMPTY_FLOAT_ARRAY;
         bounceScale = 1f;
         bounceYOffset = 0f;
         travelDistance = 0f;
+        travelDuration = 0f;
         travelProgress = 0f;
         rotation = 0f;
         phase = Phase.COMPLETE;
@@ -121,7 +124,10 @@ public DiceAnimator() {
                                    float[] bounceHeights) {
         this.rotation = rotation;
         this.directionRad = (float) Math.toRadians(rotation);
+        this.cosDir = (float) Math.cos(this.directionRad);
+        this.sinDir = (float) Math.sin(this.directionRad);
         this.travelDistance = travelDistance;
+        this.travelDuration = calculateTravelDuration();
         this.bounceCount = bounceCount;
         this.bounceHeights = bounceHeights;
         this.bounceScale = 1f;
@@ -172,9 +178,10 @@ public DiceAnimator() {
         this.rotation = 0f;
         this.directionRad = 0f;
         this.travelDistance = 0f;
+        this.travelDuration = 0f;
         this.travelProgress = 0f;
         this.bounceCount = 0;
-        this.bounceHeights = new float[0];
+        this.bounceHeights = EMPTY_FLOAT_ARRAY;
         this.bounceScale = 1f;
         this.bounceYOffset = 0f;
         this.targetCenterX = targetCenterX;
@@ -327,33 +334,33 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
     }
     
     private void advanceTravel() {
-        float travelDuration = calculateTravelDuration();
         travelProgress = Math.min(1f, phaseElapsed / travelDuration);
-        
-        float frameIndex = calculateFrameIndexWithSlowdown(travelDuration);
+
+        float frameIndex = calculateFrameIndexWithSlowdown();
         currentFrame = (int)frameIndex % AnimationConstants.FRAME_COUNT;
-        
-        posXOffset = (float)Math.cos(directionRad) * travelDistance * travelProgress;
-        posYOffset = (float)Math.sin(directionRad) * travelDistance * travelProgress;
-        
+
+        posXOffset = cosDir * travelDistance * travelProgress;
+        posYOffset = sinDir * travelDistance * travelProgress;
+
         calculateBounceAtStart();
         scale = bounceScale;
         posYOffset += bounceYOffset;
-        
+
         if (phaseElapsed >= travelDuration) {
             travelProgress = 1.0f;
             currentFrame = AnimationConstants.FRAME_COUNT - 1;
-            posXOffset = (float)Math.cos(directionRad) * travelDistance;
-            posYOffset = (float)Math.sin(directionRad) * travelDistance;
+            posXOffset = cosDir * travelDistance;
+            posYOffset = sinDir * travelDistance;
             scale = 1f;
             phase = Phase.SETTLE;
             phaseElapsed = 0f;
         }
     }
     
-    private float calculateFrameIndexWithSlowdown(float travelDuration) {
-        float progress = phaseElapsed / travelDuration;
-        float currentFrameRate = AnimationConstants.FRAME_RATE_START - (AnimationConstants.FRAME_RATE_START - AnimationConstants.FRAME_RATE_END) * progress;
+    private static final float FRAME_RATE_RANGE = AnimationConstants.FRAME_RATE_START - AnimationConstants.FRAME_RATE_END;
+
+    private float calculateFrameIndexWithSlowdown() {
+        float currentFrameRate = AnimationConstants.FRAME_RATE_START - FRAME_RATE_RANGE * travelProgress;
         float avgFrameRate = (AnimationConstants.FRAME_RATE_START + currentFrameRate) / 2f;
         return phaseElapsed * avgFrameRate;
     }
@@ -509,11 +516,11 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         }
         if (sprite == null) return;
         
-        GLStateUtil.resetBlendState();
-        
         float displaySize = getDisplaySize();
         float centeringOffset = (AnimationConstants.DICE_SIZE - displaySize) / 2f;
-        
+        float extraWidth = displaySize * (scale - 1f);
+        float extraHeight = displaySize * (scale - 1f);
+
         boolean isSettledPhase = phase == Phase.PICKUP || phase == Phase.CENTERING_TRAVEL || 
                                   phase == Phase.CENTERING_DROP ||
                                   phase == Phase.SCATTER_PICKUP || phase == Phase.SCATTER_TRAVEL ||
@@ -529,12 +536,11 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
             UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(panelX, panelY, panelWidth, panelHeight));
         }
         try {
-            UnifiedCoord dicePos = new UnifiedCoord(x + posXOffset + centeringOffset, y + posYOffset + centeringOffset);
-            
-            float extraHeight = displaySize * (scale - 1f);
-            float extraWidth = displaySize * (scale - 1f);
-            float renderX = dicePos.glX() - extraWidth / 2f;
-            float renderY = dicePos.glSpriteY(displaySize) - extraHeight / 2f;
+            UnifiedCoord.PanelContext ctx = existingCtx != null ? existingCtx : UnifiedCoord.getCurrent();
+            float uiX = x + posXOffset + centeringOffset;
+            float uiY = y + posYOffset + centeringOffset;
+            float renderX = ctx.panelX() + uiX - extraWidth / 2f;
+            float renderY = ctx.panelY() + ctx.panelHeight() - uiY - displaySize - extraHeight / 2f;
             if (type == DiceType.BLUE_D4) {
                 renderY -= 5f;
             }
@@ -554,29 +560,13 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
                 UnifiedCoord.clearCurrent();
             }
         }
-        
-        GL11.glColor4f(1f, 1f, 1f, 1f);
     }
 
-    private float getVisualRotation(boolean isSettledPhase)
-    {
-        float visualRotation;
-        if (phase == Phase.STATIONARY_PREVIEW) {
-            visualRotation = 0f;
-        } else if (phase == Phase.WAITING_FOR_CENTERING) {
-            visualRotation = 180f - rotation;
-            if (type == DiceType.BLUE_D4) {
-                visualRotation -= 90f;
-            }
-        } else if (isSettledPhase || phase == Phase.COMPLETE) {
-            visualRotation = 0f;
-        } else {
-            visualRotation = 180f - rotation;
-            if (type == DiceType.BLUE_D4) {
-                visualRotation -= 90f;
-            }
-        }
-        return visualRotation;
+    private float getVisualRotation(boolean isSettledPhase) {
+        if (phase == Phase.STATIONARY_PREVIEW || isSettledPhase || phase == Phase.COMPLETE) return 0f;
+        float vr = 180f - rotation;
+        if (type == DiceType.BLUE_D4) vr -= 90f;
+        return vr;
     }
 
     public boolean isRunning() {
@@ -684,17 +674,21 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         }
     }
     
+    private static final float VC_SHRINK_END = 0.3f;
+    private static final float VC_GROW_END = 0.5f;
+    private static final float VC_MIN_SCALE = 0.7f;
+
     private void advanceValueChange() {
         float progress = Math.min(1f, phaseElapsed / VALUE_CHANGE_DURATION);
-        
-        if (progress < 0.3f) {
-            float shrinkProgress = progress / 0.3f;
-            scale = 1f - (1f - 0.7f) * EasingUtil.easeInQuad(shrinkProgress);
-        } else if (progress < 0.5f) {
-            float growProgress = (progress - 0.3f) / 0.2f;
-            scale = 0.7f + (VALUE_CHANGE_SCALE - 0.7f) * EasingUtil.easeOutQuad(growProgress);
+
+        if (progress < VC_SHRINK_END) {
+            float shrinkProgress = progress / VC_SHRINK_END;
+            scale = 1f - (1f - VC_MIN_SCALE) * EasingUtil.easeInQuad(shrinkProgress);
+        } else if (progress < VC_GROW_END) {
+            float growProgress = (progress - VC_SHRINK_END) / (VC_GROW_END - VC_SHRINK_END);
+            scale = VC_MIN_SCALE + (VALUE_CHANGE_SCALE - VC_MIN_SCALE) * EasingUtil.easeOutQuad(growProgress);
         } else {
-            float settleProgress = (progress - 0.5f) / 0.5f;
+            float settleProgress = (progress - VC_GROW_END) / (1f - VC_GROW_END);
             scale = VALUE_CHANGE_SCALE - (VALUE_CHANGE_SCALE - 1f) * EasingUtil.easeInQuad(settleProgress);
         }
         
@@ -736,10 +730,11 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         rotation = 0f;
         directionRad = 0f;
         bounceCount = 0;
-        bounceHeights = new float[0];
+        bounceHeights = EMPTY_FLOAT_ARRAY;
         bounceScale = 1f;
         bounceYOffset = 0f;
         travelDistance = 0f;
+        travelDuration = 0f;
         travelProgress = 0f;
         stationaryFrameIndex = AnimationConstants.FRAME_COUNT - 1;
         stationaryResultIndex = 0;

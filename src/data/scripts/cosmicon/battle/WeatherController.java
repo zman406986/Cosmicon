@@ -41,15 +41,18 @@ public class WeatherController {
         
         switch (weather) {
             case SUNNY, THE_DECISIVE_MOMENT -> {
-                state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, weather.name(), 5, DurationType.PERMANENT);
-                state.getOpponentEffects().addEffect(StatusEffect.STRENGTH, weather.name(), 5, DurationType.PERMANENT);
+                String src = weather.name();
+                state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, src, 5, DurationType.PERMANENT);
+                state.getOpponentEffects().addEffect(StatusEffect.STRENGTH, src, 5, DurationType.PERMANENT);
             }
             case VENOCLLOUD -> {
-                state.getPlayerEffects().addEffect(StatusEffect.VENOM, weather.name(), 1, DurationType.PERMANENT);
-                state.getOpponentEffects().addEffect(StatusEffect.VENOM, weather.name(), 1, DurationType.PERMANENT);
+                String src = weather.name();
+                state.getPlayerEffects().addEffect(StatusEffect.VENOM, src, 1, DurationType.PERMANENT);
+                state.getOpponentEffects().addEffect(StatusEffect.VENOM, src, 1, DurationType.PERMANENT);
             }
             case SEA_OF_CLOUDS -> {
-                for (boolean isPlayer : new boolean[]{true, false}) {
+                for (int i = 0; i < 2; i++) {
+                    boolean isPlayer = (i == 0);
                     CharacterCard card = state.getCard(isPlayer);
                     Map<String, Integer> prismaticDiceIds = card != null
                         ? card.getPrismaticDiceIds() : Collections.emptyMap();
@@ -78,29 +81,32 @@ public class WeatherController {
         
         switch (weather) {
             case TOXIC_FOG -> {
-                state.getPlayerEffects().addEffect(StatusEffect.POISON, weather.name(), 2, DurationType.PERMANENT);
-                state.getOpponentEffects().addEffect(StatusEffect.POISON, weather.name(), 2, DurationType.PERMANENT);
+                String src = weather.name();
+                state.getPlayerEffects().addEffect(StatusEffect.POISON, src, 2, DurationType.PERMANENT);
+                state.getOpponentEffects().addEffect(StatusEffect.POISON, src, 2, DurationType.PERMANENT);
             }
             case ACID_RAIN -> {
+                String src = weather.name();
                 int playerHp = state.getPlayerHp();
                 int opponentHp = state.getOpponentHp();
                 if (playerHp > opponentHp) {
-                    state.getPlayerEffects().addEffect(StatusEffect.POISON, weather.name(), 1, DurationType.PERMANENT);
+                    state.getPlayerEffects().addEffect(StatusEffect.POISON, src, 1, DurationType.PERMANENT);
                 } else if (opponentHp > playerHp) {
-                    state.getOpponentEffects().addEffect(StatusEffect.POISON, weather.name(), 1, DurationType.PERMANENT);
+                    state.getOpponentEffects().addEffect(StatusEffect.POISON, src, 1, DurationType.PERMANENT);
                 } else {
-                    state.getPlayerEffects().addEffect(StatusEffect.POISON, weather.name(), 1, DurationType.PERMANENT);
+                    state.getPlayerEffects().addEffect(StatusEffect.POISON, src, 1, DurationType.PERMANENT);
                 }
             }
             case HIGH_TEMPERATURE -> {
+                String src = weather.name();
                 int playerHp = state.getPlayerHp();
                 int opponentHp = state.getOpponentHp();
                 if (playerHp < opponentHp) {
-                    state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, weather.name(), 2, DurationType.PERMANENT);
+                    state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, src, 2, DurationType.PERMANENT);
                 } else if (opponentHp < playerHp) {
-                    state.getOpponentEffects().addEffect(StatusEffect.STRENGTH, weather.name(), 2, DurationType.PERMANENT);
+                    state.getOpponentEffects().addEffect(StatusEffect.STRENGTH, src, 2, DurationType.PERMANENT);
                 } else {
-                    state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, weather.name(), 2, DurationType.PERMANENT);
+                    state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, src, 2, DurationType.PERMANENT);
                 }
             }
             default -> {}
@@ -254,12 +260,14 @@ public class WeatherController {
         if (oldWeather == null) return;
         switch (oldWeather) {
             case SUNNY, THE_DECISIVE_MOMENT -> {
-                state.getPlayerEffects().removeLayersFromSource(StatusEffect.STRENGTH, oldWeather.name(), 5);
-                state.getOpponentEffects().removeLayersFromSource(StatusEffect.STRENGTH, oldWeather.name(), 5);
+                String src = oldWeather.name();
+                state.getPlayerEffects().removeLayersFromSource(StatusEffect.STRENGTH, src, 5);
+                state.getOpponentEffects().removeLayersFromSource(StatusEffect.STRENGTH, src, 5);
             }
             case HIGH_TEMPERATURE -> {
-                state.getPlayerEffects().removeLayersFromSource(StatusEffect.STRENGTH, oldWeather.name(), 2);
-                state.getOpponentEffects().removeLayersFromSource(StatusEffect.STRENGTH, oldWeather.name(), 2);
+                String src = oldWeather.name();
+                state.getPlayerEffects().removeLayersFromSource(StatusEffect.STRENGTH, src, 2);
+                state.getOpponentEffects().removeLayersFromSource(StatusEffect.STRENGTH, src, 2);
             }
             default -> {}
         }
@@ -359,21 +367,21 @@ public class WeatherController {
     
     private int countSelected(List<Boolean> selected) {
         int count = 0;
-        for (Boolean aBoolean : selected)
-        {
-            if (aBoolean) count++;
+        for (int i = 0; i < selected.size(); i++) {
+            if (selected.get(i)) count++;
         }
         return count;
     }
     
     private boolean checkAllDifferentValues(List<Integer> values, List<Boolean> selected) {
-        int lastValue = -1;
+        boolean[] seen = new boolean[13];
         for (int i = 0; i < values.size(); i++) {
             if (selected.get(i)) {
-                if (lastValue != -1 && values.get(i) == lastValue) {
-                    return false;
+                int v = values.get(i);
+                if (v >= 1 && v <= 12) {
+                    if (seen[v]) return false;
+                    seen[v] = true;
                 }
-                lastValue = values.get(i);
             }
         }
         return true;

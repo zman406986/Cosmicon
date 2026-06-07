@@ -9,7 +9,7 @@ import data.scripts.cosmicon.prismatic.PrismaticEffect;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -146,16 +146,17 @@ public final class SelectionOptimizer {
         List<DiceIndexValue> indexedValues = new ArrayList<>();
         for (int i = 0; i < diceValues.size(); i++) {
             float value = diceValues.get(i);
-            if (diceTypes.get(i) == DiceType.PRISMATIC && state != null) {
+            DiceType type = diceTypes.get(i);
+            if (type == DiceType.PRISMATIC && state != null) {
                 PrismaticDiceInstance pd = state.getPrismaticDiceAt(i, forPlayer);
                 if (pd != null && pd.isSpecialFace) {
                     value += getEffectBonusForSelection(pd.type.getEffect(), isAttacking, state, forPlayer);
                 }
             }
-            if (profile != null && diceTypes.get(i) == DiceType.PRISMATIC) {
-                value += profile.getPrismaticDiceBonus(diceTypes.get(i), diceValues.get(i), isAttacking);
+            if (profile != null && type == DiceType.PRISMATIC) {
+                value += profile.getPrismaticDiceBonus(type, diceValues.get(i), isAttacking);
             }
-            indexedValues.add(new DiceIndexValue(i, value, diceTypes.get(i)));
+            indexedValues.add(new DiceIndexValue(i, value, type));
         }
 
         Comparator<DiceIndexValue> comparator = preferHigh 
@@ -234,18 +235,27 @@ public final class SelectionOptimizer {
                 }
             }
             case DUST -> {
-                if (isAttacking && selectedValues.stream().allMatch(v -> v % 2 != 0)) bonus += 3f;
+                if (isAttacking) {
+                    boolean allOdd = true;
+                    for (int v : selectedValues) { if (v % 2 == 0) { allOdd = false; break; } }
+                    if (allOdd) bonus += 3f;
+                }
             }
             case RAINBOW -> {
                 if (isAttacking) {
-                    int sum = selectedValues.stream().mapToInt(Integer::intValue).sum();
+                    int sum = 0;
+                    for (int v : selectedValues) sum += v;
                     if (sum <= 10) bonus += 8f;
                 }
             }
             case LUNISOLAR_LUMINANCE -> {
                 if (isAttacking) {
                     int hp = forPlayer ? state.getPlayerHp() : state.getOpponentHp();
-                    if (hp <= 3) bonus += selectedValues.stream().mapToInt(Integer::intValue).sum();
+                    if (hp <= 3) {
+                        int sum = 0;
+                        for (int v : selectedValues) sum += v;
+                        bonus += sum;
+                    }
                 }
             }
             case HEAVY_SNOW -> {
@@ -286,7 +296,22 @@ public final class SelectionOptimizer {
             diceValues, diceTypes, state, forPlayer, isAttacking, requiredCount, forcedIndices, freeSlots);
 
         SelectionResult bestResult = null;
-        float bestScore = Float.MIN_VALUE;
+        float bestScore = -Float.MAX_VALUE;
+
+        float[] prismaticBonusPerIndex = new float[diceValues.size()];
+        if (state != null) {
+            for (int i = 0; i < diceValues.size(); i++) {
+                if (diceTypes.get(i) == DiceType.PRISMATIC) {
+                    PrismaticDiceInstance pd = state.getPrismaticDiceAt(i, forPlayer);
+                    if (pd != null && pd.isSpecialFace) {
+                        prismaticBonusPerIndex[i] = getEffectBonusForSelection(pd.type.getEffect(), isAttacking, state, forPlayer);
+                    }
+                }
+            }
+        }
+
+        WeatherType weather = state != null && state.getWeatherController() != null
+            ? state.getWeatherController().getCurrentWeather() : null;
 
         for (Set<Integer> selection : candidateSelections) {
             List<Integer> selectedValues = new ArrayList<>();
@@ -298,19 +323,12 @@ public final class SelectionOptimizer {
                 selectedValues.add(diceValues.get(idx));
                 selectedTypes.add(diceTypes.get(idx));
                 sum += diceValues.get(idx);
-                if (diceTypes.get(idx) == DiceType.PRISMATIC && state != null) {
-                    PrismaticDiceInstance pd = state.getPrismaticDiceAt(idx, forPlayer);
-                    if (pd != null && pd.isSpecialFace) {
-                        prismaticBonus += getEffectBonusForSelection(pd.type.getEffect(), isAttacking, state, forPlayer);
-                    }
-                }
+                prismaticBonus += prismaticBonusPerIndex[idx];
             }
 
             CharacterAIProfile.PassiveEvaluation eval = profile.evaluatePassiveTrigger(selectedValues, selectedTypes, isAttacking, state, forPlayer);
 
             float passiveScore = profile.getPassiveBonusValue(selectedValues, isAttacking, state, forPlayer);
-            WeatherType weather = state != null && state.getWeatherController() != null
-                ? state.getWeatherController().getCurrentWeather() : null;
             float weatherBonus = getWeatherSelectionBonus(weather, selectedValues, isAttacking, state, forPlayer);
             float score = sum + passiveScore + prismaticBonus + weatherBonus;
             if (eval.triggered()) {
@@ -430,7 +448,7 @@ public final class SelectionOptimizer {
     }
 
     public static SelectionResult selectForPairs(List<Integer> diceValues, List<DiceType> diceTypes, int requiredCount) {
-        Map<Integer, List<Integer>> valueToIndices = new HashMap<>();
+        Map<Integer, List<Integer>> valueToIndices = new LinkedHashMap<>();
         for (int i = 0; i < diceValues.size(); i++) {
             valueToIndices.computeIfAbsent(diceValues.get(i), k -> new ArrayList<>()).add(i);
         }
@@ -439,6 +457,7 @@ public final class SelectionOptimizer {
         List<Integer> selectedValues = new ArrayList<>();
         List<DiceType> selectedTypes = new ArrayList<>();
         int pairsFound = 0;
+        int sum = 0;
 
         for (Map.Entry<Integer, List<Integer>> entry : valueToIndices.entrySet()) {
             List<Integer> indices = entry.getValue();
@@ -449,6 +468,7 @@ public final class SelectionOptimizer {
                 selectedValues.add(entry.getKey());
                 selectedTypes.add(diceTypes.get(indices.get(0)));
                 selectedTypes.add(diceTypes.get(indices.get(1)));
+                sum += entry.getKey() * 2;
                 pairsFound++;
             }
         }
@@ -466,10 +486,9 @@ public final class SelectionOptimizer {
             selectedIndices.add(dv.index());
             selectedValues.add(diceValues.get(dv.index()));
             selectedTypes.add(dv.type());
+            sum += diceValues.get(dv.index());
         }
 
-        int sum = 0;
-        for (int v : selectedValues) sum += v;
         float bonus = pairsFound * 3;
 
         return new SelectionResult(selectedIndices, sum, selectedValues, selectedTypes, 

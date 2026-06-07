@@ -1,8 +1,7 @@
 package data.scripts.cosmicon.tutorial;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.BattleState;
@@ -12,6 +11,19 @@ import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.state.CosmiconStats;
 
 public class TutorialController {
+
+    private static final Map<TutorialStep, TutorialStep> SELECT_TO_CONFIRM = Map.ofEntries(
+        Map.entry(TutorialStep.G1_T1_ATTACK_SELECT, TutorialStep.G1_T1_ATTACK_CONFIRM),
+        Map.entry(TutorialStep.G1_T1_DEFENSE_SELECT, TutorialStep.G1_T1_DEFENSE_CONFIRM),
+        Map.entry(TutorialStep.G1_T2_ATTACK_SELECT, TutorialStep.G1_T2_ATTACK_CONFIRM),
+        Map.entry(TutorialStep.G2_T1_DEFENSE_SELECT, TutorialStep.G2_T1_DEFENSE_CONFIRM),
+        Map.entry(TutorialStep.G2_T2_ATTACK_PRISMATIC, TutorialStep.G2_T2_ATTACK_CONFIRM),
+        Map.entry(TutorialStep.G2_T2_ATTACK_SELECT, TutorialStep.G2_T2_ATTACK_CONFIRM),
+        Map.entry(TutorialStep.G2_T2_DEFENSE_SELECT, TutorialStep.G2_T2_DEFENSE_CONFIRM),
+        Map.entry(TutorialStep.G2_T3_ATTACK_SELECT, TutorialStep.G2_T3_ATTACK_CONFIRM),
+        Map.entry(TutorialStep.G2_T3_DEFENSE_SELECT, TutorialStep.G2_T3_DEFENSE_CONFIRM),
+        Map.entry(TutorialStep.G2_T4_ATTACK_SELECT, TutorialStep.G2_T4_ATTACK_CONFIRM)
+    );
 
     public enum TutorialGame {
         GAME_1_SPARXIE,
@@ -115,7 +127,7 @@ public class TutorialController {
         String key = "tutorial." + currentStep.name().toLowerCase();
         try {
             return Strings.get(key);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             return "";
         }
     }
@@ -209,24 +221,25 @@ public class TutorialController {
 
     private boolean isAmongHighest(int index, List<Integer> values, int count) {
         if (values == null || values.isEmpty() || index < 0 || index >= values.size()) return false;
-        List<Integer> sorted = new ArrayList<>(values);
-        sorted.sort(Collections.reverseOrder());
-        int threshold = sorted.get(Math.min(count - 1, sorted.size() - 1));
-        return values.get(index) >= threshold;
+        int val = values.get(index);
+        int higherCount = 0;
+        for (int v : values) {
+            if (v > val) higherCount++;
+        }
+        return higherCount < count;
     }
 
     private boolean isAmongHighestNonPrismatic(int index, List<Integer> values, List<DiceType> types, int count) {
         if (values == null || values.isEmpty() || index < 0 || index >= values.size()) return false;
-        List<Integer> nonPrismaticValues = new ArrayList<>();
+        if (types.get(index) == DiceType.PRISMATIC) return false;
+        int val = values.get(index);
+        int higherCount = 0;
         for (int i = 0; i < values.size(); i++) {
-            if (types.get(i) != DiceType.PRISMATIC) {
-                nonPrismaticValues.add(values.get(i));
+            if (types.get(i) != DiceType.PRISMATIC && values.get(i) > val) {
+                higherCount++;
             }
         }
-        if (nonPrismaticValues.isEmpty()) return false;
-        nonPrismaticValues.sort(Collections.reverseOrder());
-        int threshold = nonPrismaticValues.get(Math.min(count - 1, nonPrismaticValues.size() - 1));
-        return values.get(index) >= threshold && types.get(index) != DiceType.PRISMATIC;
+        return higherCount < count;
     }
 
     private boolean isPrismaticDiceSelected() {
@@ -309,66 +322,21 @@ public class TutorialController {
     public boolean isContinueAllowed() {
         if (complete) return true;
 
-        return !switch (currentStep)
-        {
+        return switch (currentStep) {
             case G1_T1_ATTACK_RESOLVE, G1_T1_DEFENSE_RESOLVE,
                  G2_T1_DEFENSE_RESOLVE,
                  G2_T2_ATTACK_RESOLVE, G2_T2_DEFENSE_RESOLVE,
-                 G2_T3_ATTACK_RESOLVE, G2_T3_DEFENSE_RESOLVE -> true;
-            default -> false;
+                 G2_T3_ATTACK_RESOLVE, G2_T3_DEFENSE_RESOLVE -> false;
+            default -> true;
         };
     }
 
     public void onDiceSelected() {
         if (complete) return;
 
-        switch (currentStep) {
-            case G1_T1_ATTACK_SELECT -> {
-                if (battleState.countSelectedDice(true) == battleState.getRequiredDiceCount(true)) {
-                    currentStep = TutorialStep.G1_T1_ATTACK_CONFIRM;
-                }
-            }
-            case G1_T1_DEFENSE_SELECT -> {
-                if (battleState.countSelectedDice(true) == battleState.getRequiredDiceCount(true)) {
-                    currentStep = TutorialStep.G1_T1_DEFENSE_CONFIRM;
-                }
-            }
-            case G1_T2_ATTACK_SELECT -> {
-                if (battleState.countSelectedDice(true) == battleState.getRequiredDiceCount(true)) {
-                    currentStep = TutorialStep.G1_T2_ATTACK_CONFIRM;
-                }
-            }
-            case G2_T1_DEFENSE_SELECT -> {
-                if (battleState.countSelectedDice(true) == battleState.getRequiredDiceCount(true)) {
-                    currentStep = TutorialStep.G2_T1_DEFENSE_CONFIRM;
-                }
-            }
-            case G2_T2_ATTACK_PRISMATIC, G2_T2_ATTACK_SELECT -> {
-                if (battleState.countSelectedDice(true) == battleState.getRequiredDiceCount(true)) {
-                    currentStep = TutorialStep.G2_T2_ATTACK_CONFIRM;
-                }
-            }
-            case G2_T2_DEFENSE_SELECT -> {
-                if (battleState.countSelectedDice(true) == battleState.getRequiredDiceCount(true)) {
-                    currentStep = TutorialStep.G2_T2_DEFENSE_CONFIRM;
-                }
-            }
-            case G2_T3_ATTACK_SELECT -> {
-                if (battleState.countSelectedDice(true) == battleState.getRequiredDiceCount(true)) {
-                    currentStep = TutorialStep.G2_T3_ATTACK_CONFIRM;
-                }
-            }
-            case G2_T3_DEFENSE_SELECT -> {
-                if (battleState.countSelectedDice(true) == battleState.getRequiredDiceCount(true)) {
-                    currentStep = TutorialStep.G2_T3_DEFENSE_CONFIRM;
-                }
-            }
-            case G2_T4_ATTACK_SELECT -> {
-                if (battleState.countSelectedDice(true) == battleState.getRequiredDiceCount(true)) {
-                    currentStep = TutorialStep.G2_T4_ATTACK_CONFIRM;
-                }
-            }
-            default -> {}
+        TutorialStep confirmStep = SELECT_TO_CONFIRM.get(currentStep);
+        if (confirmStep != null && battleState.countSelectedDice(true) == battleState.getRequiredDiceCount(true)) {
+            currentStep = confirmStep;
         }
     }
 
@@ -431,13 +399,7 @@ public class TutorialController {
     }
 
     public void onPrismaticPopupClosed() {
-        if (complete) return;
-
-        if (currentStep == TutorialStep.G2_T2_ATTACK_PRISMATIC) {
-            currentStep = TutorialStep.G2_T2_ATTACK_SELECT;
-        } else if (currentStep == TutorialStep.G2_T3_ATTACK_PRISMATIC) {
-            currentStep = TutorialStep.G2_T3_ATTACK_REROLL;
-        }
+        onPrismaticUsed();
     }
 
     public void onContinueClicked() {

@@ -112,8 +112,8 @@ public class BattleUIButtons implements ActionListenerDelegate {
         TooltipMakerAPI abilityTp = UIComponentFactory.createTooltipForButtons(panel, this, 
             PASSIVE_BTN_WIDTH, PASSIVE_BTN_HEIGHT, 0f, 0f);
 
-        float opponentCardUiX = BattleRenderingUtils.getOpponentCardX();
-        float opponentCardUiY = BattleRenderingUtils.getOpponentCardY();
+        float opponentCardUiX = BattleRenderingUtils.OPPONENT_CARD_X;
+        float opponentCardUiY = BattleRenderingUtils.OPPONENT_CARD_Y;
         float opponentAbilityY = opponentCardUiY + BattleRenderingUtils.CARD_HEIGHT + 15f;
 
         ButtonAPI opponentAbilityButton = abilityTp.addButton(Strings.get("battle.ability_btn"), "opponent_ability",
@@ -134,8 +134,8 @@ public class BattleUIButtons implements ActionListenerDelegate {
             }
         }, TooltipLocation.RIGHT, false);
 
-        float playerCardUiX = BattleRenderingUtils.getPlayerCardX();
-        float playerCardUiY = BattleRenderingUtils.getPlayerCardY();
+        float playerCardUiX = BattleRenderingUtils.PLAYER_CARD_X;
+        float playerCardUiY = BattleRenderingUtils.PLAYER_CARD_Y;
         float playerAbilityY = playerCardUiY - PASSIVE_BTN_HEIGHT - 5f;
 
         ButtonAPI playerAbilityButton = abilityTp.addButton(Strings.get("battle.ability_btn"), "player_ability",
@@ -174,8 +174,8 @@ public class BattleUIButtons implements ActionListenerDelegate {
         float btnHeight = BattleUILabels.STATUS_LABEL_HEIGHT;
         float spacing = BattleUILabels.STATUS_LABEL_SPACING;
 
-        float opponentCardX = BattleRenderingUtils.getOpponentCardX();
-        float opponentCardY = BattleRenderingUtils.getOpponentCardY();
+        float opponentCardX = BattleRenderingUtils.OPPONENT_CARD_X;
+        float opponentCardY = BattleRenderingUtils.OPPONENT_CARD_Y;
         float opponentBoxX = opponentCardX + BattleRenderingUtils.CARD_WIDTH + 20f;
         float opponentBtnX = opponentBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
 
@@ -216,8 +216,8 @@ public class BattleUIButtons implements ActionListenerDelegate {
             }, TooltipLocation.LEFT, false);
         }
 
-        float playerCardX = BattleRenderingUtils.getPlayerCardX();
-        float playerCardY = BattleRenderingUtils.getPlayerCardY();
+        float playerCardX = BattleRenderingUtils.PLAYER_CARD_X;
+        float playerCardY = BattleRenderingUtils.PLAYER_CARD_Y;
         float playerBoxX = playerCardX - BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
         float playerBtnX = playerBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
 
@@ -264,7 +264,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
         float descBoxHeight = 55f;
         float descBoxPadding = 10f;
         float titleHeight = 18f;
-        float playerCardY = BattleRenderingUtils.getPlayerCardY();
+        float playerCardY = BattleRenderingUtils.PLAYER_CARD_Y;
 
         float weatherX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.MARGIN - boxWidth;
         float titleY = playerCardY - PASSIVE_BTN_HEIGHT - titleHeight - descBoxHeight - 15f;
@@ -290,13 +290,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
     public void updateWeatherLabel() {
         if (weatherTitleLabel == null || battleState == null) return;
         WeatherController wc = battleState.getWeatherController();
-        if (wc == null) {
-            weatherTitleLabel.setText(Strings.get("battle.weather_effects") + ": " + Strings.get("battle.weather_none"));
-            weatherTitleLabel.setColor(java.awt.Color.LIGHT_GRAY);
-            if (weatherDescLabel != null) weatherDescLabel.setText("");
-            return;
-        }
-        WeatherType weather = wc.getCurrentWeather();
+        WeatherType weather = (wc != null) ? wc.getCurrentWeather() : null;
         if (weather == null) {
             weatherTitleLabel.setText(Strings.get("battle.weather_effects") + ": " + Strings.get("battle.weather_none"));
             weatherTitleLabel.setColor(java.awt.Color.LIGHT_GRAY);
@@ -304,9 +298,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
         } else {
             weatherTitleLabel.setText(Strings.get("battle.weather_effects") + ": " + Strings.get("weather." + weather.name().toLowerCase()));
             weatherTitleLabel.setColor(weather.getColor());
-            if (weatherDescLabel != null) {
-                weatherDescLabel.setText(weather.getDescription());
-            }
+            if (weatherDescLabel != null) weatherDescLabel.setText(weather.getDescription());
         }
     }
 
@@ -326,16 +318,26 @@ public class BattleUIButtons implements ActionListenerDelegate {
     }
 
     public void updateStatusTooltipButtons() {
-        if (opponentStatusButtons != null) {
-            for (int i = 0; i < opponentStatusButtons.size(); i++) {
-                opponentStatusButtons.get(i).setOpacity(getEffectAtIndex(i, false) != null ? 0.01f : 0f);
-            }
+        updateSideStatusButtons(opponentStatusButtons, false);
+        updateSideStatusButtons(playerStatusButtons, true);
+    }
+
+    private void updateSideStatusButtons(List<ButtonAPI> buttons, boolean forPlayer) {
+        if (buttons == null) return;
+        List<StatusEffect> active = getActiveEffects(forPlayer);
+        for (int i = 0; i < buttons.size(); i++) {
+            buttons.get(i).setOpacity(i < active.size() ? 0.01f : 0f);
         }
-        if (playerStatusButtons != null) {
-            for (int i = 0; i < playerStatusButtons.size(); i++) {
-                playerStatusButtons.get(i).setOpacity(getEffectAtIndex(i, true) != null ? 0.01f : 0f);
-            }
+    }
+
+    private List<StatusEffect> getActiveEffects(boolean forPlayer) {
+        if (battleState == null) return new ArrayList<>();
+        StatusEffectProcessor effects = battleState.getEffects(forPlayer);
+        List<StatusEffect> active = new ArrayList<>();
+        for (StatusEffect e : StatusEffect.values()) {
+            if (effects.getLayers(e) > 0) active.add(e);
         }
+        return active;
     }
 
     @Override
@@ -368,7 +370,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
                 }
                 case ACTION_CONTINUE -> {
                     if (battleController != null) {
-                        if (tutorialController != null && tutorialController.isContinueAllowed()) {
+                        if (tutorialController != null && !tutorialController.isContinueAllowed()) {
                             break;
                         }
                         if (tutorialController != null) {
@@ -421,7 +423,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
             canConfirm = canConfirm && tutorialController.isConfirmAllowed();
         }
         boolean canContinue = phase == Phase.WAITING_NEXT_TURN || phase == Phase.ENDED;
-        if (tutorialController != null && tutorialController.isContinueAllowed()) {
+        if (tutorialController != null && !tutorialController.isContinueAllowed()) {
             canContinue = false;
         }
         confirmButton.setEnabled(canConfirm || canContinue);
@@ -484,6 +486,8 @@ public class BattleUIButtons implements ActionListenerDelegate {
             prismaticPopup = null;
         }
         prismaticPopupActive = false;
+        inputHandler = null;
+        tutorialController = null;
         panel = null;
         callbacks = null;
         battleController = null;

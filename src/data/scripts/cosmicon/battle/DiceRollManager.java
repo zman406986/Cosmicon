@@ -66,10 +66,8 @@ public class DiceRollManager {
     }
 
     private void advanceRestAnimators(DiceSide side, float amount) {
-        if (!side.restAnimators.isEmpty()) {
-            for (DiceAnimator animator : side.restAnimators) {
-                animator.advance(amount);
-            }
+        for (DiceAnimator animator : side.restAnimators) {
+            animator.advance(amount);
         }
     }
 
@@ -218,13 +216,7 @@ public class DiceRollManager {
             }
 
             DiceAnimator restAnimator = new DiceAnimator();
-            int displayValue = values.get(i);
-            if (battleState.isPrismaticDiceAt(i, forPlayer)) {
-                PrismaticDiceInstance prismatic = battleState.getPrismaticDiceAt(i, forPlayer);
-                if (prismatic != null) {
-                    displayValue = prismatic.faceIndex;
-                }
-            }
+            int displayValue = resolveDisplayValue(battleState, i, forPlayer, values.get(i));
             restAnimator.startTravelToRestFrom(sourceAnimator, types.get(i), displayValue,
                 targetX, startY);
             restAnimator.setReserve(isReserve);
@@ -281,30 +273,31 @@ public class DiceRollManager {
         }
 
         if (hasActive) {
-            float uiLeft = activeMinX - padding;
-            float uiTop = activeMinY - padding;
-            float uiRight = activeMaxX + padding;
-            float uiBottom = activeMaxY + padding;
-            float glX = panelX + uiLeft;
-            float glY = panelY + panelHeight - uiBottom;
-            float glW = uiRight - uiLeft;
-            float glH = uiBottom - uiTop;
-            BattleRenderingUtils.renderRestGroupBox(glX, glY, glW, glH,
-                ColorHelper.REST_ACTIVE_BG, ColorHelper.REST_ACTIVE_BORDER, alphaMult);
+            drawGroupBox(activeMinX, activeMinY, activeMaxX, activeMaxY,
+                panelX, panelY, panelHeight, padding, alphaMult,
+                ColorHelper.REST_ACTIVE_BG, ColorHelper.REST_ACTIVE_BORDER);
         }
 
         if (hasReserve) {
-            float uiLeft = reserveMinX - padding;
-            float uiTop = reserveMinY - padding;
-            float uiRight = reserveMaxX + padding;
-            float uiBottom = reserveMaxY + padding;
-            float glX = panelX + uiLeft;
-            float glY = panelY + panelHeight - uiBottom;
-            float glW = uiRight - uiLeft;
-            float glH = uiBottom - uiTop;
-            BattleRenderingUtils.renderRestGroupBox(glX, glY, glW, glH,
-                ColorHelper.REST_RESERVE_BG, ColorHelper.REST_RESERVE_BORDER, alphaMult);
+            drawGroupBox(reserveMinX, reserveMinY, reserveMaxX, reserveMaxY,
+                panelX, panelY, panelHeight, padding, alphaMult,
+                ColorHelper.REST_RESERVE_BG, ColorHelper.REST_RESERVE_BORDER);
         }
+    }
+
+    private static void drawGroupBox(float minX, float minY, float maxX, float maxY,
+                                      float panelX, float panelY, float panelHeight,
+                                      float padding, float alphaMult,
+                                      Color bg, Color border) {
+        float uiLeft = minX - padding;
+        float uiTop = minY - padding;
+        float uiRight = maxX + padding;
+        float uiBottom = maxY + padding;
+        float glX = panelX + uiLeft;
+        float glY = panelY + panelHeight - uiBottom;
+        float glW = uiRight - uiLeft;
+        float glH = uiBottom - uiTop;
+        BattleRenderingUtils.renderRestGroupBox(glX, glY, glW, glH, bg, border, alphaMult);
     }
 
     public boolean isRestTravelComplete(boolean forPlayer) {
@@ -319,13 +312,7 @@ public class DiceRollManager {
     public void updateRestDiceValue(int index, int newValue, boolean forPlayer) {
         DiceSide side = forPlayer ? playerSide : opponentSide;
         if (index >= 0 && index < side.restAnimators.size()) {
-            int displayValue = newValue;
-            if (battleState.isPrismaticDiceAt(index, forPlayer)) {
-                PrismaticDiceInstance prismatic = battleState.getPrismaticDiceAt(index, forPlayer);
-                if (prismatic != null) {
-                    displayValue = prismatic.faceIndex;
-                }
-            }
+            int displayValue = resolveDisplayValue(battleState, index, forPlayer, newValue);
             CosmiconLogger.info("[DICE-REST] updateRestDiceValue: forPlayer=%s idx=%d newVal=%d displayVal=%d restCount=%d",
                     forPlayer, index, newValue, displayValue, side.restAnimators.size());
             side.restAnimators.get(index).animateValueChange(displayValue);
@@ -382,11 +369,11 @@ public class DiceRollManager {
     }
 
     public List<DiceAnimator> getOpponentAnimators() {
-        return new ArrayList<>(opponentSide.animators);
+        return opponentSide.animators;
     }
 
     public List<DiceAnimator> getAnimators() {
-        return new ArrayList<>(playerSide.animators);
+        return playerSide.animators;
     }
 
     public float getAnimatorVisualX(int index) {
@@ -411,6 +398,11 @@ public class DiceRollManager {
     public float getAnimatorTargetSlotY(int index) {
         if (index < 0 || index >= playerSide.animators.size()) return -1f;
         return playerSide.animators.get(index).getTargetSlotY();
+    }
+
+    private static int resolveDisplayValue(BattleState state, int index, boolean forPlayer, int fallbackValue) {
+        PrismaticDiceInstance prismatic = state.getPrismaticDiceAt(index, forPlayer);
+        return prismatic != null ? prismatic.faceIndex : fallbackValue;
     }
 
     private static class DiceSide {
@@ -595,14 +587,7 @@ public class DiceRollManager {
                 if (path == null) continue;
 
                 DiceAnimator animator = animators.get(animatorIndex);
-                int rerollValue = newValues.get(animatorIndex);
-
-                if (battleState != null && battleState.isPrismaticDiceAt(animatorIndex, forPlayer)) {
-                    PrismaticDiceInstance prismatic = battleState.getPrismaticDiceAt(animatorIndex, forPlayer);
-                    if (prismatic != null) {
-                        rerollValue = prismatic.faceIndex;
-                    }
-                }
+                int rerollValue = resolveDisplayValue(battleState, animatorIndex, forPlayer, newValues.get(animatorIndex));
 
                 float dropX = scatters[i][0];
                 float dropY = scatters[i][1];
@@ -641,13 +626,7 @@ public class DiceRollManager {
             for (int i = 0; i < count; i++) {
                 DiceAnimator animator = new DiceAnimator();
                 PlannedPath path = travelPaths.get(i);
-                int displayValue = allValues.get(i);
-                if (battleState.isPrismaticDiceAt(i, forPlayer)) {
-                    PrismaticDiceInstance prismatic = battleState.getPrismaticDiceAt(i, forPlayer);
-                    if (prismatic != null) {
-                        displayValue = prismatic.faceIndex;
-                    }
-                }
+                int displayValue = resolveDisplayValue(battleState, i, forPlayer, allValues.get(i));
 
                 if (i < restCount) {
                     DiceAnimator restAnimator = restAnimators.get(i);
@@ -675,10 +654,8 @@ public class DiceRollManager {
         }
 
         void advanceAnimators(float amount) {
-            if (!animators.isEmpty()) {
-                for (DiceAnimator animator : animators) {
-                    animator.advance(amount);
-                }
+            for (DiceAnimator animator : animators) {
+                animator.advance(amount);
             }
         }
 

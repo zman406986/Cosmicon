@@ -3,7 +3,7 @@ package data.scripts.cosmicon.battle;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.lwjgl.opengl.GL11;
 
@@ -51,7 +51,7 @@ public class FlyingNumber {
     private boolean shatterOnImpact;
     private float cachedLabelWidth = -1f;
     private final List<Particle> particles;
-    private final Random random;
+    private final float[] colorBuf = new float[4];
     
     private LabelAPI label;
     private CustomPanelAPI labelPanel;
@@ -88,7 +88,6 @@ public class FlyingNumber {
         flyDuration = 0.6f;
         shatterOnImpact = false;
         particles = new ArrayList<>();
-        random = new Random();
         labelCreated = false;
         displayText = "";
     }
@@ -207,15 +206,16 @@ public class FlyingNumber {
     
     private void spawnShatterParticles() {
         particles.clear();
-        int count = SHATTER_MIN_PARTICLES + random.nextInt(SHATTER_MAX_PARTICLES - SHATTER_MIN_PARTICLES + 1);
+        ThreadLocalRandom rng = ThreadLocalRandom.current();
+        int count = SHATTER_MIN_PARTICLES + rng.nextInt(SHATTER_MAX_PARTICLES - SHATTER_MIN_PARTICLES + 1);
         
         for (int i = 0; i < count; i++) {
-            float angle = (float) (random.nextFloat() * 2 * Math.PI);
-            float speed = SHATTER_SPEED * (0.5f + random.nextFloat() * 0.5f);
+            float angle = (float) (rng.nextFloat() * 2 * Math.PI);
+            float speed = SHATTER_SPEED * (0.5f + rng.nextFloat() * 0.5f);
             float vx = (float) Math.cos(angle) * speed;
             float vy = (float) Math.sin(angle) * speed;
-            float pScale = 0.3f + random.nextFloat() * 0.4f;
-            float lifetime = SHATTER_DURATION * (0.7f + random.nextFloat() * 0.3f);
+            float pScale = 0.3f + rng.nextFloat() * 0.4f;
+            float lifetime = SHATTER_DURATION * (0.7f + rng.nextFloat() * 0.3f);
             
             particles.add(new Particle(currentX, currentY, vx, vy, pScale, lifetime));
         }
@@ -303,10 +303,10 @@ public class FlyingNumber {
     }
     
     private void renderShatterParticles(float alphaMult) {
+        GLStateUtil.resetBlendState();
+        GL11.glBegin(GL11.GL_QUADS);
         for (Particle particle : particles)
         {
-            GLStateUtil.resetBlendState();
-
             UnifiedCoord pos = new UnifiedCoord(particle.x, particle.y);
             float glX = pos.glX();
             float glY = pos.glY();
@@ -314,16 +314,14 @@ public class FlyingNumber {
             float size = 8f * particle.scale;
             float halfSize = size / 2f;
 
-            float[] c = ColorHelper.toGLComponents(color, alphaMult * particle.alpha);
+            float[] c = ColorHelper.toGLComponents(color, alphaMult * particle.alpha, colorBuf);
             GL11.glColor4f(c[0], c[1], c[2], c[3]);
-            GL11.glBegin(GL11.GL_QUADS);
             GL11.glVertex2f(glX - halfSize, glY - halfSize);
             GL11.glVertex2f(glX + halfSize, glY - halfSize);
             GL11.glVertex2f(glX + halfSize, glY + halfSize);
             GL11.glVertex2f(glX - halfSize, glY + halfSize);
-            GL11.glEnd();
         }
-        
+        GL11.glEnd();
         GLStateUtil.resetColor();
     }
     

@@ -155,19 +155,25 @@ public class BattleState {
 
         this.playerFaceSelectionHistory = new HashMap<>();
         this.opponentFaceSelectionHistory = new HashMap<>();
-        this.playerCumulativeAtkDef = 0;
-        this.opponentCumulativeAtkDef = 0;
-        this.playerCyreneThresholdMet = false;
-        this.opponentCyreneThresholdMet = false;
         this.aiSelectionVisualizer = new AISelectionVisualizer();
-        this.playerPendingDefLevelBoost = 0;
-        this.opponentPendingDefLevelBoost = 0;
-        this.playerPendingDefLevelBoostWithCounter = false;
-        this.opponentPendingDefLevelBoostWithCounter = false;
-        this.playerOriginalDefLevel = 0;
-        this.opponentOriginalDefLevel = 0;
-        this.phainonUnyieldingConsumed = false;
-        this.opponentPhainonUnyieldingConsumed = false;
+        resetPrimitiveFields();
+    }
+
+    private void resetPrimitiveFields() {
+        playerCumulativeAtkDef = 0;
+        opponentCumulativeAtkDef = 0;
+        playerCyreneThresholdMet = false;
+        opponentCyreneThresholdMet = false;
+        playerPendingDefLevelBoost = 0;
+        opponentPendingDefLevelBoost = 0;
+        playerPendingDefLevelBoostWithCounter = false;
+        opponentPendingDefLevelBoostWithCounter = false;
+        playerOriginalDefLevel = 0;
+        opponentOriginalDefLevel = 0;
+        playerPendingStrength = 0;
+        opponentPendingStrength = 0;
+        phainonUnyieldingConsumed = false;
+        opponentPhainonUnyieldingConsumed = false;
     }
 
     
@@ -230,8 +236,7 @@ public class BattleState {
         TurnState.Phase phase = turnState.getCurrentPhase();
         if (phase != TurnState.Phase.SELECTING_ATTACK && phase != TurnState.Phase.SELECTING_DEFENSE) return;
         List<Boolean> selected = diceState.getPlayerDiceSelected();
-        List<Integer> values = diceState.getPlayerDiceValues();
-        if (index < 0 || index >= values.size()) return;
+        if (index < 0 || index >= selected.size()) return;
         selected.set(index, !selected.get(index));
     }
 
@@ -278,8 +283,8 @@ public class BattleState {
         }
 
         if (types != null) {
-            context.setDiceTypes(new ArrayList<>(types));
-            List<Integer> maxFaces = new ArrayList<>();
+            context.setDiceTypes(types);
+            List<Integer> maxFaces = new ArrayList<>(types.size());
             for (DiceType type : types) {
                 maxFaces.add(type.getMaxFace());
             }
@@ -565,22 +570,16 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
     
     public void addPrismaticUse(int amount) {
-        for (int i = 0; i < amount; i++) {
-            prismaticManager.addPrismaticUse(null, true);
-            prismaticManager.addPrismaticUse(null, false);
-        }
+        prismaticManager.addPrismaticUse(null, true, amount);
+        prismaticManager.addPrismaticUse(null, false, amount);
     }
 
     public void addPrismaticUse(boolean isPlayer, int amount) {
-        for (int i = 0; i < amount; i++) {
-            prismaticManager.addPrismaticUse(null, isPlayer);
-        }
+        prismaticManager.addPrismaticUse(null, isPlayer, amount);
     }
-    
+
     public void addPrismaticUseByType(PrismaticDiceType type, boolean isPlayer, int amount) {
-        for (int i = 0; i < amount; i++) {
-            prismaticManager.addPrismaticUse(type, isPlayer);
-        }
+        prismaticManager.addPrismaticUse(type, isPlayer, amount);
     }
 
     
@@ -678,9 +677,10 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     
     private int calculateSelectedSumExcludingPrismatic(List<Integer> values, List<Boolean> selected, boolean forPlayer) {
         if (values == null || selected == null) return 0;
+        Map<Integer, PrismaticDiceInstance> prismaticMap = prismaticState.getPrismaticDiceMap(forPlayer);
         int sum = 0;
         for (int i = 0; i < values.size(); i++) {
-            if (selected.get(i) && !prismaticState.isPrismaticDiceAt(i, forPlayer)) {
+            if (selected.get(i) && !prismaticMap.containsKey(i)) {
                 sum += values.get(i);
             }
         }
@@ -704,11 +704,12 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         List<Boolean> selected = diceState.getDiceSelected(forPlayer);
         if (values == null || selected == null) return "";
 
-        StringBuilder sb = new StringBuilder();
+        Map<Integer, PrismaticDiceInstance> prismaticMap = prismaticState.getPrismaticDiceMap(forPlayer);
+        StringBuilder sb = new StringBuilder(selected.size() * 5);
         for (int i = 0; i < values.size(); i++) {
             if (selected.get(i)) {
                 if (!sb.isEmpty()) sb.append("+");
-                if (prismaticState.isPrismaticDiceAt(i, forPlayer)) {
+                if (prismaticMap.containsKey(i)) {
                     sb.append("*").append(values.get(i));
                 } else {
                     sb.append(values.get(i));
@@ -949,19 +950,8 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         
         playerFaceSelectionHistory.clear();
         opponentFaceSelectionHistory.clear();
-        playerCumulativeAtkDef = 0;
-        opponentCumulativeAtkDef = 0;
-        playerCyreneThresholdMet = false;
-        opponentCyreneThresholdMet = false;
+        resetPrimitiveFields();
         hpManager.cleanup();
-        playerPendingDefLevelBoost = 0;
-        opponentPendingDefLevelBoost = 0;
-        playerPendingDefLevelBoostWithCounter = false;
-        opponentPendingDefLevelBoostWithCounter = false;
-        playerOriginalDefLevel = 0;
-        opponentOriginalDefLevel = 0;
-        phainonUnyieldingConsumed = false;
-        opponentPhainonUnyieldingConsumed = false;
         aiSelectionVisualizer.reset();
         
         turnState.cleanup();

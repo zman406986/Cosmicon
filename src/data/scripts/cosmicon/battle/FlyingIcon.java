@@ -13,7 +13,6 @@ import com.fs.starfarer.api.ui.Fonts;
 import com.fs.starfarer.api.ui.LabelAPI;
 import com.fs.starfarer.api.ui.UIComponentAPI;
 
-import data.scripts.cosmicon.util.UnifiedCoord;
 import data.scripts.cosmicon.util.EasingUtil;
 import data.scripts.cosmicon.util.GLStateUtil;
 
@@ -22,6 +21,7 @@ public class FlyingIcon {
     private static final float DEFAULT_PULLBACK_DURATION = 0.4f;
     private static final float LABEL_HEIGHT = 35f;
     private static final float ROTATION_DURATION = 0.25f;
+    private static final float ROTATION_THRESHOLD = 0.5f;
     
     private enum FlyPhase { IDLE, ROTATING, PULLBACK, READY, FLYING, COMPLETE }
     
@@ -33,9 +33,11 @@ public class FlyingIcon {
     private float pullbackDuration = DEFAULT_PULLBACK_DURATION;
     private float elapsed;
     private final float size;
+    private final float halfSize;
     private FlyPhase flyPhase;
     private final SpriteAPI sprite;
     private int value;
+    private String valueText;
     private final Color color;
     private boolean usePullback;
     private boolean useLinearFlight;
@@ -54,6 +56,7 @@ public class FlyingIcon {
     public FlyingIcon(SpriteAPI sprite, float size, Color color, float startX, float startY) {
         this.sprite = sprite;
         this.size = size;
+        this.halfSize = size / 2f;
         this.color = color;
         this.flyPhase = FlyPhase.IDLE;
         this.elapsed = 0f;
@@ -64,6 +67,7 @@ public class FlyingIcon {
         this.startY = startY;
         this.currentX = startX;
         this.currentY = startY;
+        this.valueText = String.valueOf(value);
     }
     
     public void setTargetRotation(float rotation) {
@@ -99,7 +103,7 @@ public class FlyingIcon {
     }
 
     public void startRotation(float targetRotation) {
-        if (Math.abs(targetRotation - currentRotation) > 0.5f) {
+        if (Math.abs(targetRotation - currentRotation) > ROTATION_THRESHOLD) {
             this.originalRotation = currentRotation;
             this.targetRotation = targetRotation;
             this.rotationElapsed = 0f;
@@ -137,7 +141,7 @@ public class FlyingIcon {
         this.usePullback = !skipPullback;
         this.useLinearFlight = useLinear;
         
-        if (Math.abs(targetRotation - currentRotation) > 0.5f) {
+        if (Math.abs(targetRotation - currentRotation) > ROTATION_THRESHOLD) {
             this.originalRotation = currentRotation;
             flyPhase = FlyPhase.ROTATING;
         } else if (skipPullback) {
@@ -165,7 +169,7 @@ public class FlyingIcon {
         this.usePullback = false;
         this.useLinearFlight = useLinear;
         
-        if (Math.abs(targetRotation - currentRotation) > 0.5f) {
+        if (Math.abs(targetRotation - currentRotation) > ROTATION_THRESHOLD) {
             this.originalRotation = currentRotation;
             flyPhase = FlyPhase.ROTATING;
         } else {
@@ -199,13 +203,14 @@ public class FlyingIcon {
     
     public void setValue(int value) {
         this.value = value;
+        this.valueText = String.valueOf(value);
         this.cachedLabelWidth = -1f;
         updateLabelText();
     }
     
     private void updateLabelText() {
         if (valueLabel != null) {
-            valueLabel.setText(String.valueOf(value));
+            valueLabel.setText(valueText);
         }
     }
     
@@ -224,7 +229,9 @@ public class FlyingIcon {
             }
         }
         
-        updateLabelPosition();
+        if (labelCreated) {
+            updateLabelPosition();
+        }
     }
     
     private void advanceRotation(float amount) {
@@ -281,8 +288,6 @@ public class FlyingIcon {
         if (elapsed >= flyDuration) {
             currentX = targetX;
             currentY = targetY;
-            startX = targetX;
-            startY = targetY;
             flyPhase = FlyPhase.COMPLETE;
             return;
         }
@@ -307,12 +312,11 @@ public class FlyingIcon {
         if (labelCreated || panel == null) return;
         
         SettingsAPI settings = Global.getSettings();
-        String text = String.valueOf(value);
-        valueLabel = settings.createLabel(text, Fonts.INSIGNIA_VERY_LARGE);
+        valueLabel = settings.createLabel(valueText, Fonts.INSIGNIA_VERY_LARGE);
         valueLabel.setColor(color);
         valueLabel.setAlignment(Alignment.MID);
         
-        float labelWidth = valueLabel.computeTextWidth(text) + 10f;
+        float labelWidth = valueLabel.computeTextWidth(valueText) + 10f;
         this.cachedLabelWidth = labelWidth;
         panel.addComponent((UIComponentAPI) valueLabel)
             .setSize(labelWidth, LABEL_HEIGHT)
@@ -325,7 +329,7 @@ public class FlyingIcon {
     private void updateLabelPosition() {
         if (valueLabel != null && labelCreated) {
             if (cachedLabelWidth < 0f) {
-                cachedLabelWidth = valueLabel.computeTextWidth(String.valueOf(value)) + 10f;
+                cachedLabelWidth = valueLabel.computeTextWidth(valueText) + 10f;
             }
             float labelWidth = cachedLabelWidth;
             ((UIComponentAPI) valueLabel).getPosition()
@@ -352,55 +356,38 @@ public class FlyingIcon {
     public void render(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
         if (sprite == null) return;
         
-        UnifiedCoord.PanelContext existingCtx = UnifiedCoord.getCurrentOrNull();
-        boolean needsContextCleanup = existingCtx == null;
+        GLStateUtil.enableTexturingWithBlend();
         
-        if (needsContextCleanup) {
-            UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(panelX, panelY, panelWidth, panelHeight));
+        float glX = panelX + currentX - halfSize;
+        float glY = panelY + panelHeight - currentY - halfSize;
+        
+        sprite.setSize(size, size);
+        sprite.setAlphaMult(alphaMult);
+        
+        if (Math.abs(currentRotation) > ROTATION_THRESHOLD) {
+            GL11.glPushMatrix();
+            GL11.glTranslatef(glX + halfSize, glY + halfSize, 0f);
+            GL11.glRotatef(currentRotation, 0f, 0f, 1f);
+            GL11.glTranslatef(-halfSize, -halfSize, 0f);
+            sprite.bindTexture();
+            GL11.glColor4f(1f, 1f, 1f, alphaMult);
+            
+            GL11.glBegin(GL11.GL_QUADS);
+            GL11.glTexCoord2f(0f, 0f);
+            GL11.glVertex2f(0f, 0f);
+            GL11.glTexCoord2f(1f, 0f);
+            GL11.glVertex2f(size, 0f);
+            GL11.glTexCoord2f(1f, 1f);
+            GL11.glVertex2f(size, size);
+            GL11.glTexCoord2f(0f, 1f);
+            GL11.glVertex2f(0f, size);
+            GL11.glEnd();
+            
+            GL11.glPopMatrix();
+        } else {
+            sprite.render(glX, glY);
         }
         
-        try {
-            GLStateUtil.enableTexturingWithBlend();
-            
-            float uiX = currentX - size / 2f;
-            float uiY = currentY - size / 2f;
-            UnifiedCoord pos = new UnifiedCoord(uiX, uiY);
-            float glX = pos.glX();
-            float glY = pos.glSpriteY(size);
-            
-            sprite.setSize(size, size);
-            sprite.setAlphaMult(alphaMult);
-            
-            if (Math.abs(currentRotation) > 0.5f) {
-                float halfSize = size / 2f;
-                GL11.glPushMatrix();
-                GL11.glTranslatef(glX + halfSize, glY + halfSize, 0f);
-                GL11.glRotatef(currentRotation, 0f, 0f, 1f);
-                GL11.glTranslatef(-halfSize, -halfSize, 0f);
-                sprite.bindTexture();
-                GL11.glColor4f(1f, 1f, 1f, alphaMult);
-                
-                GL11.glBegin(GL11.GL_QUADS);
-                GL11.glTexCoord2f(0f, 0f);
-                GL11.glVertex2f(0f, 0f);
-                GL11.glTexCoord2f(1f, 0f);
-                GL11.glVertex2f(size, 0f);
-                GL11.glTexCoord2f(1f, 1f);
-                GL11.glVertex2f(size, size);
-                GL11.glTexCoord2f(0f, 1f);
-                GL11.glVertex2f(0f, size);
-                GL11.glEnd();
-                
-                GL11.glPopMatrix();
-            } else {
-                sprite.render(glX, glY);
-            }
-            
-            GLStateUtil.disableTexturing();
-        } finally {
-            if (needsContextCleanup) {
-                UnifiedCoord.clearCurrent();
-            }
-        }
+        GLStateUtil.disableTexturing();
     }
 }

@@ -36,6 +36,16 @@ public final class BattleRenderingUtils {
     private static final float INDICATOR_ARROW_HEIGHT = 16f;
     private static final Color COLOR_ARROW_UP = new Color(100, 220, 100);
     private static final Color COLOR_ARROW_DOWN = new Color(220, 80, 80);
+    private static final Color COLOR_ARROW_UP_DARK = COLOR_ARROW_UP.darker();
+    private static final Color COLOR_ARROW_DOWN_DARK = COLOR_ARROW_DOWN.darker();
+
+    private static final List<DiceType> DICE_POOL_ORDER = Arrays.asList(
+        DiceType.ORANGE_D8, DiceType.PURPLE_D6, DiceType.BLUE_D4, DiceType.PRISMATIC
+    );
+
+    private static final Color COLOR_OPPONENT_DICE_BORDER = new Color(120, 80, 80, 150);
+
+    private static final float[] GL_BUF = new float[4];
 
     public static final float PORTRAIT_DISPLAY_W = CARD_WIDTH * PORTRAIT_SCALE;
     public static final float PORTRAIT_DISPLAY_H = CARD_HEIGHT * PORTRAIT_SCALE;
@@ -72,21 +82,10 @@ public final class BattleRenderingUtils {
     private static final Color COLOR_HP_ORANGE = new Color(255, 140, 0, 220);
     private static final Color COLOR_HP_RED = new Color(220, 50, 50, 220);
 
-    public static float getPlayerCardX() {
-        return PANEL_WIDTH - CARD_WIDTH - MARGIN;
-    }
-
-    public static float getPlayerCardY() {
-        return PANEL_HEIGHT - CARD_HEIGHT - MARGIN;
-    }
-
-    public static float getOpponentCardX() {
-        return MARGIN;
-    }
-
-    public static float getOpponentCardY() {
-        return MARGIN;
-    }
+    public static final float PLAYER_CARD_X = PANEL_WIDTH - CARD_WIDTH - MARGIN;
+    public static final float PLAYER_CARD_Y = PANEL_HEIGHT - CARD_HEIGHT - MARGIN;
+    public static final float OPPONENT_CARD_X = MARGIN;
+    public static final float OPPONENT_CARD_Y = MARGIN;
 
     public static final Color COLOR_ATTACK_SIDE = new Color(255, 120, 120, 40);
     public static final Color COLOR_DEFENSE_SIDE = new Color(120, 180, 255, 40);

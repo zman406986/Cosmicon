@@ -10,7 +10,6 @@ import data.scripts.CosmiconConfig;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.util.DiceEvaluator;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public abstract class AttackRerollAI implements CharacterAIProfile {
 
@@ -119,7 +118,11 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         } else {
             Set<Integer> guaranteedCandidate = null;
             for (Set<Integer> c : candidates) {
-                if (c.stream().allMatch(i -> pool.getValue(i) == 1)) {
+                boolean allOnes = true;
+                for (int i : c) {
+                    if (pool.getValue(i) != 1) { allOnes = false; break; }
+                }
+                if (allOnes) {
                     guaranteedCandidate = c;
                     break;
                 }
@@ -181,7 +184,6 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
                                             int rerollsLeft, int requiredCount,
                                             boolean isAttacking, BattleState state, boolean forPlayer) {
         List<Outcome> outcomes = generateOutcomes(pool, diceToReroll);
-        double totalProb = 0;
         double weightedUtility = 0;
 
         for (Outcome outcome : outcomes) {
@@ -189,10 +191,9 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             newPool.applyOutcome(diceToReroll, outcome);
             double util = evaluateStateWithRerolls(newPool, rerollsLeft - 1, requiredCount, isAttacking, state, forPlayer);
             weightedUtility += outcome.probability * util;
-            totalProb += outcome.probability;
         }
 
-        return totalProb > 0 ? weightedUtility / totalProb : Double.NEGATIVE_INFINITY;
+        return outcomes.isEmpty() ? Double.NEGATIVE_INFINITY : weightedUtility;
     }
 
     // ==================== Future value estimator ====================
@@ -232,8 +233,9 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         // Cache lookup (after split, using reduced pool)
         long cacheKey = (long) pool.fingerprint() * 31L
                       + (long) rerollsLeft * 1_000_003L
-                      + (long) (frozenSum + doomedSum) * 1_000_033L
-                      + (long) requiredCount * 1_000_037L;
+                      + (long) frozenSum * 1_000_033L
+                      + (long) doomedSum * 1_000_037L
+                      + (long) requiredCount * 1_000_039L;
         Double cached = stateCache.get(cacheKey);
         if (cached != null) {
             if (savedDestined != null) {
@@ -334,6 +336,19 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             return frozenSum;
         }
 
+        float rerollDamage = 0f;
+        if (rerollsUsed > 2) {
+            float penaltyPerReroll = getThornsPenaltyPerReroll();
+            if (state != null && state.getWeatherController() != null
+                && state.getWeatherController().getCurrentWeather() == WeatherType.PARHELION) {
+                penaltyPerReroll += 2f;
+            }
+            rerollDamage = (rerollsUsed - 2) * penaltyPerReroll;
+        }
+        boolean fineSnowBonus = rerollsUsed == 0 && isAttacking && state != null
+            && state.getWeatherController() != null
+            && state.getWeatherController().getCurrentWeather() == WeatherType.FINE_SNOW;
+
         double bestUtil = Double.NEGATIVE_INFINITY;
         for (Set<Integer> subset : choices) {
             List<Integer> selectedValues = new ArrayList<>();
@@ -343,11 +358,8 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
                 selectedTypes.add(pool.getType(idx));
             }
             double util = evaluator.evaluateSelection(selectedValues, selectedTypes, isAttacking, state, forPlayer);
-            util -= calculateRerollSelfDamage(rerollsUsed, state);
-            if (rerollsUsed == 0 && isAttacking && state != null && state.getWeatherController() != null
-                && state.getWeatherController().getCurrentWeather() == WeatherType.FINE_SNOW) {
-                util += 3f;
-            }
+            util -= rerollDamage;
+            if (fineSnowBonus) util += 3f;
             if (util > bestUtil) bestUtil = util;
         }
         double result = bestUtil + frozenSum;
@@ -452,14 +464,14 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             if (!neverReroll[i] && !thresholdSet.contains(i)) {
                 int key = symmetryKey(pool, i);
                 if (aboveThresholdSeen.add(key)) {
-                    candidates.add(new HashSet<>(Collections.singletonList(i)));
+                    candidates.add(Set.of(i));
                 }
             }
         }
 
         candidates.addAll(generateComboCandidates(pool, rerollsLeft, requiredCount, isAttacking, state, forPlayer));
 
-        return candidates.stream().distinct().collect(Collectors.toList());
+        return new ArrayList<>(new LinkedHashSet<>(candidates));
     }
 
     private int symmetryKey(SimPool pool, int index) {
@@ -484,7 +496,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             generateCanonicalSubsets(groupList, 0, new HashSet<>(), result);
         } else {
             for (List<Integer> g : groupList) {
-                result.add(new HashSet<>(Collections.singletonList(g.get(0))));
+                result.add(Set.of(g.get(0)));
             }
             for (int i = 0; i < groupList.size(); i++) {
                 for (int j = i; j < groupList.size(); j++) {
@@ -492,16 +504,10 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
                     List<Integer> gj = groupList.get(j);
                     if (i == j) {
                         if (gi.size() >= 2) {
-                            Set<Integer> pair = new HashSet<>();
-                            pair.add(gi.get(0));
-                            pair.add(gi.get(1));
-                            result.add(pair);
+                            result.add(Set.of(gi.get(0), gi.get(1)));
                         }
                     } else {
-                        Set<Integer> pair = new HashSet<>();
-                        pair.add(gi.get(0));
-                        pair.add(gj.get(0));
-                        result.add(pair);
+                        result.add(Set.of(gi.get(0), gj.get(0)));
                     }
                 }
             }
@@ -844,7 +850,8 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             }
         }
         if (keep.isEmpty()) return null;
-        int[] remap = keep.stream().mapToInt(Integer::intValue).toArray();
+        int[] remap = new int[keep.size()];
+        for (int i = 0; i < keep.size(); i++) remap[i] = keep.get(i);
         Map<Integer, Integer> reverse = new HashMap<>();
         for (int i = 0; i < remap.length; i++) {
             reverse.put(remap[i], i);
@@ -920,10 +927,12 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
         if (doomedEntries.isEmpty()) {
             if (active.isEmpty()) return null;
-            SplitPool frozen = splitFrozenDice(pool, isAttacking);
-            if (frozen == null) return null;
-            return new ThreeTierSplit(frozen.reduced(), frozen.frozenSum(), 0, 0,
-                frozen.indexRemap(), frozen.reverseRemap());
+            Collections.sort(active);
+            int[] remap = new int[active.size()];
+            for (int i = 0; i < active.size(); i++) remap[i] = active.get(i);
+            Map<Integer, Integer> reverse = new HashMap<>();
+            for (int i = 0; i < remap.length; i++) reverse.put(remap[i], i);
+            return new ThreeTierSplit(pool.subset(remap), frozenSum, 0, 0, remap, reverse);
         }
 
         int doomedToRemove = Math.min(doomedEntries.size(), rerollsLeft);
@@ -943,7 +952,8 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         }
 
         Collections.sort(active);
-        int[] remap = active.stream().mapToInt(Integer::intValue).toArray();
+        int[] remap = new int[active.size()];
+        for (int i = 0; i < active.size(); i++) remap[i] = active.get(i);
         Map<Integer, Integer> reverse = new HashMap<>();
         for (int i = 0; i < remap.length; i++) {
             reverse.put(remap[i], i);

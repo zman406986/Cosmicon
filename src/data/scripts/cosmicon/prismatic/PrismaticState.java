@@ -21,6 +21,7 @@ public class PrismaticState {
     public void setUses(int uses) { this.uses = uses; }
     public void decrementUses() { this.uses = Math.max(0, uses - 1); }
     public void incrementUses() { this.uses++; }
+    public void addUses(int amount) { this.uses += amount; }
     
     public int getUsesByType(PrismaticDiceType type) { 
         return usesByType.getOrDefault(type, 0); 
@@ -34,6 +35,9 @@ public class PrismaticState {
     }
     public void incrementUsesByType(PrismaticDiceType type) {
         usesByType.merge(type, 1, Integer::sum);
+    }
+    public void incrementUsesByType(PrismaticDiceType type, int amount) {
+        if (amount > 0) usesByType.merge(type, amount, Integer::sum);
     }
     
     public boolean isDoubleValueActive() { return doubleValueActive; }

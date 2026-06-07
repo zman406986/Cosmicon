@@ -477,12 +477,12 @@ public class TurnProcessor {
         }
         
         applyPostSelectionProcessing(forPlayer);
-        
-        if (aiIsAttacker && state.getCurrentPhase() == TurnState.Phase.SELECTING_ATTACK) {
+
+        if (aiIsAttacker && isAttackPhase) {
             state.setAttackerConfirmedSelection(state.getSelectedDiceValuesFormatted(false));
             state.getAiSelectionVisualizer().reset();
             advanceToDiceDisplayAttack();
-        } else if (!aiIsAttacker && state.getCurrentPhase() == TurnState.Phase.SELECTING_DEFENSE) {
+        } else if (!aiIsAttacker && !isAttackPhase) {
             state.setDefenderConfirmedSelection(state.getSelectedDiceValuesFormatted(false));
             weatherController.applyDefenderSelectionPhase(state, false);
             advanceToDiceDisplayDefense();
@@ -508,10 +508,10 @@ public class TurnProcessor {
         
         aiSelectionComplete = true;
         
-        if (aiIsAttacker && state.getCurrentPhase() == TurnState.Phase.SELECTING_ATTACK) {
+        if (aiIsAttacker && isAttackPhase) {
             state.setAttackerConfirmedSelection(state.getSelectedDiceValuesFormatted(false));
             advanceToDiceDisplayAttack();
-        } else if (!aiIsAttacker && state.getCurrentPhase() == TurnState.Phase.SELECTING_DEFENSE) {
+        } else if (!aiIsAttacker && !isAttackPhase) {
             state.setDefenderConfirmedSelection(state.getSelectedDiceValuesFormatted(false));
             weatherController.applyDefenderSelectionPhase(state, false);
             advanceToDiceDisplayDefense();
@@ -638,16 +638,13 @@ public class TurnProcessor {
 
                 CosmiconLogger.info("[HACK] RESULT: target=%s hackIdx=%d preSum=%d postSum=%d postValues=%s",
                         targetIsPlayer ? "player" : "opponent",
-                        hackDiceIndex, oldTargetSum,
-                        state.calculateSelectedSum(targetIsPlayer),
+                        hackDiceIndex, oldTargetSum, hackNewSum,
                         postHackValues);
 
-                int newTargetSum = state.calculateSelectedSum(targetIsPlayer);
-                if (newTargetSum != oldTargetSum) {
-                    int delta = newTargetSum - oldTargetSum;
+                if (hackDelta != 0) {
                     String changeType = targetIsAttacker ? "ATTACK_LEVEL_UP" : "DEFENSE_LEVEL_UP";
-                    state.queueValueChange(targetIsPlayer, changeType, delta);
-                    state.notifyValueChange(targetIsPlayer, "HACK", oldTargetSum, newTargetSum, delta);
+                    state.queueValueChange(targetIsPlayer, changeType, hackDelta);
+                    state.notifyValueChange(targetIsPlayer, "HACK", oldTargetSum, hackNewSum, hackDelta);
                 }
 
                 effects.removeLayersFromSource(StatusEffect.HACK, "effect_system", 1);
@@ -661,27 +658,28 @@ public class TurnProcessor {
         if (state.getCurrentPhase() != TurnState.Phase.RESOLVING_PRE_CLASH &&
             state.getCurrentPhase() != TurnState.Phase.RESOLVING_MODIFICATION) return;
 
-        StatusEffectProcessor.BattleContext attackerContext = createBattleContext(state.isPlayerAttacker());
-        StatusEffectProcessor.BattleContext defenderContext = createBattleContext(!state.isPlayerAttacker());
-        
+        boolean playerIsAttacker = state.isPlayerAttacker();
+        StatusEffectProcessor.BattleContext attackerContext = createBattleContext(playerIsAttacker);
+        StatusEffectProcessor.BattleContext defenderContext = createBattleContext(!playerIsAttacker);
+
         TurnType attackerTurnType = TurnType.ATTACK;
         TurnType defenderTurnType = TurnType.DEFENSE;
-        
-        int playerThornsDamage = state.getPlayerEffects().processPhase(Phase.BEFORE_RESOLUTION, 
-            state.isPlayerAttacker() ? attackerTurnType : defenderTurnType, 
-            state.isPlayerAttacker() ? attackerContext : defenderContext);
+
+        int playerThornsDamage = state.getPlayerEffects().processPhase(Phase.BEFORE_RESOLUTION,
+            playerIsAttacker ? attackerTurnType : defenderTurnType,
+            playerIsAttacker ? attackerContext : defenderContext);
         int opponentThornsDamage = state.getOpponentEffects().processPhase(Phase.BEFORE_RESOLUTION,
-            state.isPlayerAttacker() ? defenderTurnType : attackerTurnType,
-            state.isPlayerAttacker() ? defenderContext : attackerContext);
-        
+            playerIsAttacker ? defenderTurnType : attackerTurnType,
+            playerIsAttacker ? defenderContext : attackerContext);
+
         int attackerInstantDamage = attackerContext.getInstantDamageToOpponent();
         int defenderInstantDamage = defenderContext.getInstantDamageToOpponent();
-        
+
         int attackerHolderDamage = attackerContext.getInstantDamageFromHolder();
         int defenderHolderDamage = defenderContext.getInstantDamageFromHolder();
-        
+
         if (attackerInstantDamage > 0) {
-            if (state.isPlayerAttacker()) {
+            if (playerIsAttacker) {
                 state.setOpponentHp(Math.max(0, state.getOpponentHp() - attackerInstantDamage));
                 state.notifySecondaryDamage(false, attackerInstantDamage, "INSTANT_DAMAGE");
             } else {
@@ -689,9 +687,9 @@ public class TurnProcessor {
                 state.notifySecondaryDamage(true, attackerInstantDamage, "INSTANT_DAMAGE");
             }
         }
-        
+
         if (defenderInstantDamage > 0) {
-            if (state.isPlayerAttacker()) {
+            if (playerIsAttacker) {
                 state.setPlayerHp(Math.max(0, state.getPlayerHp() - defenderInstantDamage));
                 state.notifySecondaryDamage(true, defenderInstantDamage, "INSTANT_DAMAGE");
             } else {
@@ -699,9 +697,9 @@ public class TurnProcessor {
                 state.notifySecondaryDamage(false, defenderInstantDamage, "INSTANT_DAMAGE");
             }
         }
-        
+
         if (attackerHolderDamage > 0) {
-            if (state.isPlayerAttacker()) {
+            if (playerIsAttacker) {
                 state.applyDamageTo(false, attackerHolderDamage);
                 state.notifySecondaryDamage(false, attackerHolderDamage, "INSTANT_DAMAGE");
             } else {
@@ -709,9 +707,9 @@ public class TurnProcessor {
                 state.notifySecondaryDamage(true, attackerHolderDamage, "INSTANT_DAMAGE");
             }
         }
-        
+
         if (defenderHolderDamage > 0) {
-            if (state.isPlayerAttacker()) {
+            if (playerIsAttacker) {
                 state.applyDamageTo(true, defenderHolderDamage);
                 state.notifySecondaryDamage(true, defenderHolderDamage, "INSTANT_DAMAGE");
             } else {
@@ -720,8 +718,8 @@ public class TurnProcessor {
             }
         }
 
-        PassiveEventSystem.onAttackResolution(state, state.isPlayerAttacker());
-        PassiveEventSystem.onAttackResolution(state, !state.isPlayerAttacker());
+        PassiveEventSystem.onAttackResolution(state, playerIsAttacker);
+        PassiveEventSystem.onAttackResolution(state, !playerIsAttacker);
 
         if (playerThornsDamage > 0 && state.getPlayerEffects().hasEffect(StatusEffectProcessor.StatusEffect.THORNS)) {
             state.applyDamageTo(true, playerThornsDamage);
@@ -898,17 +896,19 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
     
     public void advanceToNextTurn() {
         if (state.getCurrentPhase() != TurnState.Phase.WAITING_NEXT_TURN) return;
-        
+
+        boolean playerIsAttacker = state.isPlayerAttacker();
+
         StatusEffectProcessor.BattleContext playerContext = createBattleContext(true);
         StatusEffectProcessor.BattleContext opponentContext = createBattleContext(false);
-        
+
         int playerPoisonDamage = state.getPlayerEffects().processPhase(
             Phase.END_OF_TURN,
-            state.isPlayerAttacker() ? TurnType.ATTACK : TurnType.DEFENSE,
+            playerIsAttacker ? TurnType.ATTACK : TurnType.DEFENSE,
             playerContext);
         int opponentPoisonDamage = state.getOpponentEffects().processPhase(
             Phase.END_OF_TURN,
-            state.isPlayerAttacker() ? TurnType.DEFENSE : TurnType.ATTACK,
+            playerIsAttacker ? TurnType.DEFENSE : TurnType.ATTACK,
             opponentContext);
         
         state.applyDamageTo(true, playerPoisonDamage);
@@ -993,35 +993,37 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
     }
     
     public void confirmPlayerSelection() {
-        if (state.getCurrentPhase() != TurnState.Phase.SELECTING_ATTACK && 
-            state.getCurrentPhase() != TurnState.Phase.SELECTING_DEFENSE) return;
-        
+        TurnState.Phase currentPhase = state.getCurrentPhase();
+        if (currentPhase != TurnState.Phase.SELECTING_ATTACK &&
+            currentPhase != TurnState.Phase.SELECTING_DEFENSE) return;
+
         int requiredCount = state.getRequiredDiceCount(true);
         int selectedCount = state.countSelectedDice(true);
-        
+
         if (selectedCount != requiredCount) {
             CosmiconLogger.debug("Cannot confirm: need %d dice selected, have %d", requiredCount, selectedCount);
             return;
         }
-        
+
         if (!state.canConfirmPrismaticSelection(true)) return;
-        
+
         state.recordSelectedFaces(true);
-        
-        boolean isAttackPhase = state.getCurrentPhase() == TurnState.Phase.SELECTING_ATTACK;
-        
+
+        boolean isAttackPhase = currentPhase == TurnState.Phase.SELECTING_ATTACK;
+
         if (isAttackPhase) {
             state.setAttackValue(state.calculateSelectedSum(true));
         } else {
             state.setDefenseValue(state.calculateSelectedSum(true));
         }
-        
+
         applyPostSelectionProcessing(true);
-        
-        if (state.isPlayerAttacker() && state.getCurrentPhase() == TurnState.Phase.SELECTING_ATTACK) {
+
+        boolean playerIsAttacker = state.isPlayerAttacker();
+        if (playerIsAttacker && currentPhase == TurnState.Phase.SELECTING_ATTACK) {
             state.setAttackerConfirmedSelection(state.getSelectedDiceValuesFormatted(true));
             advanceToDiceDisplayAttack();
-        } else if (!state.isPlayerAttacker() && state.getCurrentPhase() == TurnState.Phase.SELECTING_DEFENSE) {
+        } else if (!playerIsAttacker && currentPhase == TurnState.Phase.SELECTING_DEFENSE) {
             state.setDefenderConfirmedSelection(state.getSelectedDiceValuesFormatted(true));
             weatherController.applyDefenderSelectionPhase(state, true);
             advanceToDiceDisplayDefense();
@@ -1047,12 +1049,11 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         int oldValue = isAttackPhase ? state.getAttackValue() : state.getDefenseValue();
         List<Integer> preSelectValues = new ArrayList<>(state.getDiceValues(forPlayer));
         List<DiceType> preSelectTypes = state.getDiceTypes(forPlayer) != null ? new ArrayList<>(state.getDiceTypes(forPlayer)) : null;
-        List<Boolean> preSelectFlags = state.getDiceSelected(forPlayer) != null ? new ArrayList<>(state.getDiceSelected(forPlayer)) : null;
         CosmiconLogger.info("[POST_SELECT] %s before effects | types=%s | values=%s | selected=%s",
             forPlayer ? "Player" : "Opponent",
             preSelectTypes,
             preSelectValues,
-            preSelectFlags);
+            state.getDiceSelected(forPlayer));
         state.getEffects(forPlayer).processPhase(Phase.AFTER_SELECT, turnType, context);
         state.setDiceValues(forPlayer, context.getDiceValues());
         state.setDiceTypes(forPlayer, context.getDiceTypes());

@@ -282,12 +282,12 @@ public class BattleUILabels {
         playerStatusLabels = new ArrayList<>();
         opponentStatusLabels = new ArrayList<>();
 
-        float playerCardX = BattleRenderingUtils.getPlayerCardX();
-        float playerCardY = BattleRenderingUtils.getPlayerCardY();
+        float playerCardX = BattleRenderingUtils.PLAYER_CARD_X;
+        float playerCardY = BattleRenderingUtils.PLAYER_CARD_Y;
         float playerBoxX = playerCardX - BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
 
-        float opponentCardX = BattleRenderingUtils.getOpponentCardX();
-        float opponentCardY = BattleRenderingUtils.getOpponentCardY();
+        float opponentCardX = BattleRenderingUtils.OPPONENT_CARD_X;
+        float opponentCardY = BattleRenderingUtils.OPPONENT_CARD_Y;
         float opponentBoxX = opponentCardX + BattleRenderingUtils.CARD_WIDTH + 20f;
 
         for (int i = 0; i < MAX_STATUS_EFFECTS; i++) {
@@ -307,8 +307,8 @@ public class BattleUILabels {
     }
 
     private void createAtkDefLabels() {
-        float playerCardX = BattleRenderingUtils.getPlayerCardX();
-        float playerCardY = BattleRenderingUtils.getPlayerCardY();
+        float playerCardX = BattleRenderingUtils.PLAYER_CARD_X;
+        float playerCardY = BattleRenderingUtils.PLAYER_CARD_Y;
 
         float labelCenterY = playerCardY + BattleRenderingUtils.CARD_HEIGHT
             - BattleRenderingUtils.ATK_DEF_BOTTOM_MARGIN
@@ -324,8 +324,8 @@ public class BattleUILabels {
             playerCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DEF_RIGHT_MARGIN - (BattleRenderingUtils.ATK_DEF_ICON_SIZE + 30f) / 2f,
             labelCenterY);
 
-        float opponentCardX = BattleRenderingUtils.getOpponentCardX();
-        float opponentCardY = BattleRenderingUtils.getOpponentCardY();
+        float opponentCardX = BattleRenderingUtils.OPPONENT_CARD_X;
+        float opponentCardY = BattleRenderingUtils.OPPONENT_CARD_Y;
 
         float opponentLabelCenterY = opponentCardY + BattleRenderingUtils.CARD_HEIGHT
             - BattleRenderingUtils.ATK_DEF_BOTTOM_MARGIN
@@ -343,8 +343,8 @@ public class BattleUILabels {
     }
 
     private void createDiceCountLabels() {
-        float playerCardX = BattleRenderingUtils.getPlayerCardX();
-        float playerCardY = BattleRenderingUtils.getPlayerCardY();
+        float playerCardX = BattleRenderingUtils.PLAYER_CARD_X;
+        float playerCardY = BattleRenderingUtils.PLAYER_CARD_Y;
 
         float diceX = playerCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DICE_POOL_RIGHT_MARGIN - BattleRenderingUtils.DICE_ICON_SIZE / 2f - 11f;
         float diceStartY = playerCardY + BattleRenderingUtils.DICE_POOL_TOP_MARGIN + 3f;
@@ -354,8 +354,8 @@ public class BattleUILabels {
         playerBlueLabel = createCountLabel(diceX, diceStartY + 42);
         playerPrismaticLabel = createCountLabel(diceX, diceStartY + 63);
 
-        float opponentCardX = BattleRenderingUtils.getOpponentCardX();
-        float opponentCardY = BattleRenderingUtils.getOpponentCardY();
+        float opponentCardX = BattleRenderingUtils.OPPONENT_CARD_X;
+        float opponentCardY = BattleRenderingUtils.OPPONENT_CARD_Y;
 
         diceX = opponentCardX + BattleRenderingUtils.CARD_WIDTH - BattleRenderingUtils.DICE_POOL_RIGHT_MARGIN - BattleRenderingUtils.DICE_ICON_SIZE / 2f - 11f;
         diceStartY = opponentCardY + BattleRenderingUtils.DICE_POOL_TOP_MARGIN + 3f;
@@ -506,63 +506,59 @@ public class BattleUILabels {
         opponentEffectDisplayIndex.clear();
 
         int playerIdx = 0;
+        Map<EffectInstanceKey, Integer> newPlayerLayers = new HashMap<>();
         for (StatusEffectProcessor.StatusEffectInstance inst : playerEffects.getActiveEffects()) {
-            if (playerIdx >= playerStatusLabels.size()) break;
             EffectInstanceKey key = new EffectInstanceKey(inst.effect(), inst.source());
-            playerEffectDisplayIndex.put(key, playerIdx);
+            if (playerIdx < playerStatusLabels.size()) {
+                playerEffectDisplayIndex.put(key, playerIdx);
 
-            float[] pos = getPlayerStatusLabelPosition(playerIdx);
-            lastKnownEffectPositions.put("player_" + inst.effect().name(), pos);
+                float[] pos = getPlayerStatusLabelPosition(playerIdx);
+                lastKnownEffectPositions.put("player_" + inst.effect().name(), pos);
 
-            int previousLayers = previousPlayerInstanceLayers.getOrDefault(key, 0);
-            if (inst.layers() > previousLayers) {
-                statusEffectAnimator.triggerAddAnimation(pos[0], pos[1], pos[2], pos[3]);
+                int previousLayers = previousPlayerInstanceLayers.getOrDefault(key, 0);
+                if (inst.layers() > previousLayers) {
+                    statusEffectAnimator.triggerAddAnimation(pos[0], pos[1], pos[2], pos[3]);
+                }
+
+                LabelAPI label = playerStatusLabels.get(playerIdx);
+                String text = formatInstanceText(inst, true);
+                label.setText(text);
+                label.setOpacity(1f);
+                playerIdx++;
             }
-
-            LabelAPI label = playerStatusLabels.get(playerIdx);
-            String text = formatInstanceText(inst, true);
-            label.setText(text);
-            label.setOpacity(1f);
-            playerIdx++;
+            newPlayerLayers.put(key, inst.layers());
         }
+        previousPlayerInstanceLayers = newPlayerLayers;
         for (int i = playerIdx; i < playerStatusLabels.size(); i++) {
             playerStatusLabels.get(i).setOpacity(0f);
         }
 
-        previousPlayerInstanceLayers.clear();
-        for (StatusEffectProcessor.StatusEffectInstance inst : playerEffects.getActiveEffects()) {
-            EffectInstanceKey key = new EffectInstanceKey(inst.effect(), inst.source());
-            previousPlayerInstanceLayers.put(key, inst.layers());
-        }
-
         int opponentIdx = 0;
+        Map<EffectInstanceKey, Integer> newOpponentLayers = new HashMap<>();
         for (StatusEffectProcessor.StatusEffectInstance inst : opponentEffects.getActiveEffects()) {
-            if (opponentIdx >= opponentStatusLabels.size()) break;
             EffectInstanceKey key = new EffectInstanceKey(inst.effect(), inst.source());
-            opponentEffectDisplayIndex.put(key, opponentIdx);
+            if (opponentIdx < opponentStatusLabels.size()) {
+                opponentEffectDisplayIndex.put(key, opponentIdx);
 
-            float[] pos = getOpponentStatusLabelPosition(opponentIdx);
-            lastKnownEffectPositions.put("opponent_" + inst.effect().name(), pos);
+                float[] pos = getOpponentStatusLabelPosition(opponentIdx);
+                lastKnownEffectPositions.put("opponent_" + inst.effect().name(), pos);
 
-            int previousLayers = previousOpponentInstanceLayers.getOrDefault(key, 0);
-            if (inst.layers() > previousLayers) {
-                statusEffectAnimator.triggerAddAnimation(pos[0], pos[1], pos[2], pos[3]);
+                int previousLayers = previousOpponentInstanceLayers.getOrDefault(key, 0);
+                if (inst.layers() > previousLayers) {
+                    statusEffectAnimator.triggerAddAnimation(pos[0], pos[1], pos[2], pos[3]);
+                }
+
+                LabelAPI label = opponentStatusLabels.get(opponentIdx);
+                String text = formatInstanceText(inst, false);
+                label.setText(text);
+                label.setOpacity(1f);
+                opponentIdx++;
             }
-
-            LabelAPI label = opponentStatusLabels.get(opponentIdx);
-            String text = formatInstanceText(inst, false);
-            label.setText(text);
-            label.setOpacity(1f);
-            opponentIdx++;
+            newOpponentLayers.put(key, inst.layers());
         }
+        previousOpponentInstanceLayers = newOpponentLayers;
         for (int i = opponentIdx; i < opponentStatusLabels.size(); i++) {
             opponentStatusLabels.get(i).setOpacity(0f);
-        }
-
-        previousOpponentInstanceLayers.clear();
-        for (StatusEffectProcessor.StatusEffectInstance inst : opponentEffects.getActiveEffects()) {
-            EffectInstanceKey key = new EffectInstanceKey(inst.effect(), inst.source());
-            previousOpponentInstanceLayers.put(key, inst.layers());
         }
 
         lastStatusEffectStateHash = stateHash;
@@ -587,8 +583,8 @@ public class BattleUILabels {
     }
 
     private float[] getPlayerStatusLabelPosition(int displayIndex) {
-        float playerCardX = BattleRenderingUtils.getPlayerCardX();
-        float playerCardY = BattleRenderingUtils.getPlayerCardY();
+        float playerCardX = BattleRenderingUtils.PLAYER_CARD_X;
+        float playerCardY = BattleRenderingUtils.PLAYER_CARD_Y;
         float playerBoxX = playerCardX - BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
         float x = playerBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
         float y = playerCardY + BattleRenderingUtils.STATUS_BOX_PADDING + displayIndex * STATUS_LABEL_SPACING;
@@ -597,8 +593,8 @@ public class BattleUILabels {
     }
 
     private float[] getOpponentStatusLabelPosition(int displayIndex) {
-        float opponentCardX = BattleRenderingUtils.getOpponentCardX();
-        float opponentCardY = BattleRenderingUtils.getOpponentCardY();
+        float opponentCardX = BattleRenderingUtils.OPPONENT_CARD_X;
+        float opponentCardY = BattleRenderingUtils.OPPONENT_CARD_Y;
         float opponentBoxX = opponentCardX + BattleRenderingUtils.CARD_WIDTH + 20f;
         float x = opponentBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
         float y = opponentCardY + BattleRenderingUtils.STATUS_BOX_PADDING + displayIndex * STATUS_LABEL_SPACING;
