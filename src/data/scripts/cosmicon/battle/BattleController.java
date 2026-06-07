@@ -92,17 +92,6 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
                 opponentCard = CharacterRegistry.getRandomOpponent();
             }
             CosmiconEventState.setOpponentCharacter(Objects.requireNonNull(opponentCard).getId());
-        } else if (CosmiconEventState.isBarEvent()) {
-            String oppCharId = CosmiconEventState.getOpponentCharacter();
-            if (oppCharId != null) {
-                opponentCard = CharacterRegistry.getCharacterById(oppCharId);
-            } else {
-                opponentCard = CharacterRegistry.getRandomOpponent();
-                if (opponentCard != null) {
-                    CosmiconEventState.setOpponentCharacter(opponentCard.getId());
-                    configureOpponentPrismaticDefaults(opponentCard);
-                }
-            }
         } else {
             String oppCharId = CosmiconEventState.getOpponentCharacter();
             if (oppCharId != null) {
@@ -305,10 +294,6 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
 
     public void proceedFromModificationPause() {
         turnProcessor.proceedFromModificationPause();
-    }
-
-    public void proceedToClash() {
-        turnProcessor.proceedToModificationPause();
     }
 
     public void advanceFromDiceDisplayAttack() {

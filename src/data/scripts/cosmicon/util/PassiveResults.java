@@ -2,6 +2,7 @@ package data.scripts.cosmicon.util;
 
 import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class PassiveResults {
@@ -61,7 +62,7 @@ public class PassiveResults {
         }
 
         public List<GrantedEffect> getGrantedEffects() {
-            return new ArrayList<>(grantedEffects);
+            return Collections.unmodifiableList(grantedEffects);
         }
 
         public int getHealAmount() {

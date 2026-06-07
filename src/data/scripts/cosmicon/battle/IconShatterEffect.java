@@ -87,40 +87,33 @@ public class IconShatterEffect {
         }
         try {
             GLStateUtil.resetBlendState();
-            
+
+            UnifiedCoord.PanelContext ctx = UnifiedCoord.getCurrent();
+            float ctxX = ctx.panelX();
+            float ctxY = ctx.panelY();
+            float ctxH = ctx.panelHeight();
+            float[] colorBuf = new float[4];
+
+            GL11.glBegin(GL11.GL_QUADS);
             for (ShatterParticle p : particles) {
-                GLStateUtil.resetBlendState();
-                
-                UnifiedCoord pos = new UnifiedCoord(p.x, p.y);
-                float glX = pos.glX();
-                float glY = pos.glY();
-                
-                float[] c = ColorHelper.toGLComponents(p.color, p.alpha * alphaMult);
+                float glX = ctxX + p.x;
+                float glY = ctxY + ctxH - p.y;
+
+                float[] c = ColorHelper.toGLComponents(p.color, p.alpha * alphaMult, colorBuf);
                 GL11.glColor4f(c[0], c[1], c[2], c[3]);
-                
+
                 float halfSize = p.scale / 2f;
                 float radians = (float)Math.toRadians(p.rotation);
                 float cos = (float)Math.cos(radians);
                 float sin = (float)Math.sin(radians);
-                
-                float[] corners = {
-                    -halfSize, -halfSize,
-                    halfSize, -halfSize,
-                    halfSize, halfSize,
-                    -halfSize, halfSize
-                };
-                
-                GL11.glBegin(GL11.GL_QUADS);
-                for (int i = 0; i < 4; i++) {
-                    float localX = corners[i * 2];
-                    float localY = corners[i * 2 + 1];
-                    float rotatedX = localX * cos - localY * sin;
-                    float rotatedY = localX * sin + localY * cos;
-                    GL11.glVertex2f(glX + rotatedX, glY + rotatedY);
-                }
-                GL11.glEnd();
+
+                GL11.glVertex2f(glX + (-halfSize * cos - -halfSize * sin), glY + (-halfSize * sin + -halfSize * cos));
+                GL11.glVertex2f(glX + (halfSize * cos - -halfSize * sin), glY + (halfSize * sin + -halfSize * cos));
+                GL11.glVertex2f(glX + (halfSize * cos - halfSize * sin), glY + (halfSize * sin + halfSize * cos));
+                GL11.glVertex2f(glX + (-halfSize * cos - halfSize * sin), glY + (-halfSize * sin + halfSize * cos));
             }
-            
+            GL11.glEnd();
+
             GLStateUtil.resetColor();
         } finally {
             if (needsContextCleanup) {

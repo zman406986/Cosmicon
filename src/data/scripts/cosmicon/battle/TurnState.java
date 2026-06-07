@@ -35,19 +35,7 @@ public class TurnState {
     private String defenderConfirmedSelectionText;
 
     public TurnState() {
-        this.turnNumber = 1;
-        this.playerIsAttacker = true;
-        this.currentPhase = Phase.WAITING_NEXT_TURN;
-        this.isDefenderRolling = false;
-        this.attackValue = 0;
-        this.defenseValue = 0;
-        this.winner = null;
-        this.playerWeatherAtkMod = 0;
-        this.opponentWeatherAtkMod = 0;
-        this.playerWeatherDefMod = 0;
-        this.opponentWeatherDefMod = 0;
-        this.attackerConfirmedSelectionText = null;
-        this.defenderConfirmedSelectionText = null;
+        cleanup();
     }
 
     public int getTurnNumber() {

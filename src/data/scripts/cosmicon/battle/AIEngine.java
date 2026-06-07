@@ -62,7 +62,7 @@ public class AIEngine {
         CharacterCard card = state.getCard(forPlayer);
         
         if (diceValues == null || diceTypes == null || card == null) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
         
         boolean isAttacking = state.isAttacker(forPlayer);
@@ -90,7 +90,7 @@ public class AIEngine {
         int rerollsAvailable = state.getRemainingRerolls(forPlayer);
         
         if (diceValues == null || diceTypes == null || rerollsAvailable <= 0) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
         
         boolean isAttacking = state.isAttacker(forPlayer);

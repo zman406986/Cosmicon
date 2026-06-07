@@ -135,12 +135,11 @@ public class StatusEffectAnimator {
         float w = width + expand * 2f;
         float h = height + expand * 2f;
 
-        UnifiedCoord topLeft = new UnifiedCoord(x, y);
-        UnifiedCoord bottomRight = new UnifiedCoord(x + w, y + h);
-        float glX1 = topLeft.glX();
-        float glY1 = topLeft.glY();
-        float glX2 = bottomRight.glX();
-        float glY2 = bottomRight.glY();
+        UnifiedCoord.PanelContext ctx = UnifiedCoord.getCurrent();
+        float glX1 = ctx.panelX() + x;
+        float glY1 = ctx.panelY() + ctx.panelHeight() - y;
+        float glX2 = ctx.panelX() + x + w;
+        float glY2 = ctx.panelY() + ctx.panelHeight() - (y + h);
 
         float[] c = ColorHelper.toGLComponents(color, alpha);
         GL11.glColor4f(c[0], c[1], c[2], c[3]);

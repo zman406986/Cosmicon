@@ -210,7 +210,6 @@ public class ValueChangeAnimator {
         deltaLabel.setText(next.deltaText);
         deltaLabel.setColor(next.color);
         
-        cachedDeltaLabelWidth = -1f;
         float deltaWidth = deltaLabel.computeTextWidth(next.deltaText) + 20f;
         cachedDeltaLabelWidth = deltaWidth;
         ((UIComponentAPI) deltaLabel).getPosition().setSize(deltaWidth, LABEL_HEIGHT);

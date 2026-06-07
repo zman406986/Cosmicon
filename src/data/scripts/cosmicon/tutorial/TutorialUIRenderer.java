@@ -27,6 +27,8 @@ public class TutorialUIRenderer {
     private CustomPanelAPI panel;
     private float pulseTimer;
     private String lastStepText;
+    private float cachedGlX, cachedGlY;
+    private boolean coordCached;
 
     public void init(TutorialController controller, CustomPanelAPI panel) {
         this.controller = controller;
@@ -84,12 +86,17 @@ public class TutorialUIRenderer {
 
         float boxW = TEXT_BOX_WIDTH;
         float boxH = TEXT_BOX_HEIGHT;
-        float boxUiX = (BattleRenderingUtils.PANEL_WIDTH - boxW) / 2f;
-        float boxUiY = 35f;
 
-        UnifiedCoord boxPos = new UnifiedCoord(boxUiX, boxUiY);
-        float glX = boxPos.glX();
-        float glY = boxPos.glSpriteY(boxH);
+        if (!coordCached) {
+            float boxUiX = (BattleRenderingUtils.PANEL_WIDTH - boxW) / 2f;
+            float boxUiY = 35f;
+            UnifiedCoord boxPos = new UnifiedCoord(boxUiX, boxUiY);
+            cachedGlX = boxPos.glX();
+            cachedGlY = boxPos.glSpriteY(boxH);
+            coordCached = true;
+        }
+        float glX = cachedGlX;
+        float glY = cachedGlY;
 
         float bgAlpha = 0.75f * alphaMult;
         GL11.glColor4f(0.05f, 0.05f, 0.15f, bgAlpha);

@@ -5,13 +5,17 @@ import data.scripts.CosmiconConfig;
 import org.apache.log4j.Logger;
 
 public final class CosmiconLogger {
-    
+
+    private static final Logger LOG = Global.getLogger(CosmiconLogger.class);
+
     public static boolean isDebugEnabled() {
         return CosmiconConfig.DEBUG_ENABLED;
     }
-    
-    private static final Logger LOG = Global.getLogger(CosmiconLogger.class);
-    
+
+    public static boolean isInfoEnabled() {
+        return LOG.isInfoEnabled();
+    }
+
     private CosmiconLogger() {}
     
     public static void info(String message) {

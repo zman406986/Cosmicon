@@ -14,13 +14,8 @@ public class CosmiconPlayerState {
     private static final String KEY_EQUIPPED_PRISMATIC = "$cos_equipped_prismatic";
     private static final String KEY_EQUIPPED_PRISMATIC_TRUE = "$cos_equipped_prismatic_true";
 
-    private static MemoryAPI memory;
-
     private static MemoryAPI getMemory() {
-        if (memory == null) {
-            memory = Global.getSector().getMemory();
-        }
-        return memory;
+        return Global.getSector().getMemory();
     }
 
     public static void saveCharacter(String charId) {

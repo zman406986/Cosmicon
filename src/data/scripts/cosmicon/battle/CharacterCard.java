@@ -15,8 +15,10 @@ public class CharacterCard {
     private final int defaultAtkLevel;
     private final int defaultDefLevel;
     private final List<DiceType> dicePool;
+    private final List<DiceType> dicePoolView;
     private final String passiveDescription;
     private final Map<String, Integer> prismaticDiceIds;
+    private final Map<String, Integer> prismaticDiceIdsView;
     private final boolean useTruePrismatic;
 
     public CharacterCard(String id, String name, int maxHp, int atkLevel, int defLevel,
@@ -43,8 +45,10 @@ public class CharacterCard {
         this.defaultAtkLevel = defaultAtkLevel;
         this.defaultDefLevel = defaultDefLevel;
         this.dicePool = new ArrayList<>(dicePool);
+        this.dicePoolView = Collections.unmodifiableList(this.dicePool);
         this.passiveDescription = passiveDescription;
         this.prismaticDiceIds = prismaticDiceIds != null ? prismaticDiceIds : Collections.emptyMap();
+        this.prismaticDiceIdsView = Collections.unmodifiableMap(this.prismaticDiceIds);
         this.useTruePrismatic = useTruePrismatic;
     }
 
@@ -85,7 +89,7 @@ public class CharacterCard {
     }
 
     public List<DiceType> getDicePool() {
-        return Collections.unmodifiableList(dicePool);
+        return dicePoolView;
     }
 
     public String getPassiveDescription() {
@@ -93,7 +97,7 @@ public class CharacterCard {
     }
 
     public Map<String, Integer> getPrismaticDiceIds() {
-        return Collections.unmodifiableMap(prismaticDiceIds);
+        return prismaticDiceIdsView;
     }
 
     public boolean isUseTruePrismatic() {
@@ -101,9 +105,7 @@ public class CharacterCard {
     }
 
     public CharacterCard withPrismaticDice(String diceId, int uses, boolean useTruePrismatic) {
-        Map<String, Integer> newPrismatic = new java.util.HashMap<>();
-        newPrismatic.put(diceId, uses);
-        return new CharacterCard(id, name, maxHp, atkLevel, defLevel, defaultAtkLevel, defaultDefLevel, dicePool, passiveDescription, newPrismatic, useTruePrismatic);
+        return new CharacterCard(id, name, maxHp, atkLevel, defLevel, defaultAtkLevel, defaultDefLevel, dicePool, passiveDescription, Map.of(diceId, uses), useTruePrismatic);
     }
 
     public CharacterCard withPrismaticDice(String diceId, int uses) {

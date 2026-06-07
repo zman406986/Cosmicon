@@ -117,20 +117,26 @@ public class TutorialDiceRoller {
         return PrismaticDiceInstance.roll(type, isTrueVersion);
     }
 
+    private static List<Integer> toList(int[] arr) {
+        List<Integer> list = new ArrayList<>(arr.length);
+        for (int v : arr) list.add(v);
+        return list;
+    }
+
     public List<Integer> planOpponentReroll() {
         if (controller.getGame() == TutorialController.TutorialGame.GAME_2_ACHERON) {
             if (opponentRerollCount < GAME2_OPPONENT_REROLL_INDICES.length) {
                 int[] indices = GAME2_OPPONENT_REROLL_INDICES[opponentRerollCount];
                 CosmiconLogger.debug("TutorialDiceRoller: predetermined opponent reroll #%d - indices: %s",
                     opponentRerollCount + 1, Arrays.toString(indices));
-                return new ArrayList<>(Arrays.stream(indices).boxed().toList());
+                return toList(indices);
             }
         } else {
             if (opponentRerollCount < GAME1_OPPONENT_REROLL_INDICES.length) {
                 int[] indices = GAME1_OPPONENT_REROLL_INDICES[opponentRerollCount];
                 CosmiconLogger.debug("TutorialDiceRoller: predetermined Game 1 opponent reroll #%d - indices: %s",
                     opponentRerollCount + 1, Arrays.toString(indices));
-                return new ArrayList<>(Arrays.stream(indices).boxed().toList());
+                return toList(indices);
             }
         }
         return new ArrayList<>();
@@ -152,7 +158,7 @@ public class TutorialDiceRoller {
             opponentSelectionCount++;
             CosmiconLogger.debug("TutorialDiceRoller: predetermined opponent selection #%d - indices: %s",
                 idx + 1, Arrays.toString(selections));
-            return new ArrayList<>(Arrays.stream(selections).boxed().toList());
+            return toList(selections);
         }
         int required = state.getRequiredDiceCount(false);
         List<Integer> fallback = new ArrayList<>();
@@ -380,17 +386,18 @@ public class TutorialDiceRoller {
             CharacterCard card = state.getCard(forPlayer);
             cardTypes = card.getDicePool();
         }
-        cardTypes = new ArrayList<>(cardTypes);
-        cardTypes.removeIf(t -> t == DiceType.PRISMATIC);
         List<DiceType> typeList = new ArrayList<>();
         List<Integer> valueList = new ArrayList<>();
         List<Boolean> selectedList = new ArrayList<>();
-
-        for (int i = 0; i < cardTypes.size(); i++) {
-            typeList.add(cardTypes.get(i));
-            int maxFace = cardTypes.get(i).getMaxFace();
-            valueList.add(i < values.length ? Math.min(values[i], maxFace) : 1);
+        int valueIdx = 0;
+        for (DiceType cardType : cardTypes)
+        {
+            if (cardType == DiceType.PRISMATIC) continue;
+            typeList.add(cardType);
+            int maxFace = cardType.getMaxFace();
+            valueList.add(valueIdx < values.length ? Math.min(values[valueIdx], maxFace) : 1);
             selectedList.add(false);
+            valueIdx++;
         }
 
         state.setDiceValues(forPlayer, valueList);

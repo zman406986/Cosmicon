@@ -12,9 +12,6 @@ public class DicePoolCounts {
     
     public static DicePoolCounts fromPool(List<DiceType> pool) {
         EnumMap<DiceType, Integer> map = new EnumMap<>(DiceType.class);
-        for (DiceType type : DiceType.values()) {
-            map.put(type, 0);
-        }
         if (pool != null) {
             for (DiceType d : pool) {
                 map.merge(d, 1, Integer::sum);

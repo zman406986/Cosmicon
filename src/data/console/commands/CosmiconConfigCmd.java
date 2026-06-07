@@ -8,6 +8,19 @@ import org.lazywizard.console.Console;
 
 public class CosmiconConfigCmd implements BaseCommand {
 
+    @FunctionalInterface
+    private interface IntSetter { void set(int v); }
+
+    private void setInt(String key, String value, IntSetter setter) {
+        try {
+            int v = Integer.parseInt(value);
+            setter.set(v);
+            Console.showMessage("Set " + key + " = " + v);
+        } catch (NumberFormatException e) {
+            Console.showMessage("Error: value must be an integer.");
+        }
+    }
+
     @Override
     public CommandResult runCommand(@NotNull String args, CommandContext context) {
         if (!context.isInCampaign()) {
@@ -56,30 +69,9 @@ public class CosmiconConfigCmd implements BaseCommand {
                 CosmiconConfig.COSMICON_ENABLED = Boolean.parseBoolean(value);
                 Console.showMessage("Set cosmiconDiceEnabled = " + CosmiconConfig.COSMICON_ENABLED);
             }
-            case "marketsizemin" -> {
-                try {
-                    CosmiconConfig.MARKET_SIZE_MIN = Integer.parseInt(value);
-                    Console.showMessage("Set marketSizeMin = " + CosmiconConfig.MARKET_SIZE_MIN);
-                } catch (NumberFormatException e) {
-                    Console.showMessage("Error: value must be an integer.");
-                }
-            }
-            case "defaulthp" -> {
-                try {
-                    CosmiconConfig.DEFAULT_HP = Integer.parseInt(value);
-                    Console.showMessage("Set defaultHP = " + CosmiconConfig.DEFAULT_HP);
-                } catch (NumberFormatException e) {
-                    Console.showMessage("Error: value must be an integer.");
-                }
-            }
-            case "defaultrerolls" -> {
-                try {
-                    CosmiconConfig.DEFAULT_REROLLS = Integer.parseInt(value);
-                    Console.showMessage("Set defaultRerolls = " + CosmiconConfig.DEFAULT_REROLLS);
-                } catch (NumberFormatException e) {
-                    Console.showMessage("Error: value must be an integer.");
-                }
-            }
+            case "marketsizemin" -> setInt("marketSizeMin", value, v -> CosmiconConfig.MARKET_SIZE_MIN = v);
+            case "defaulthp" -> setInt("defaultHP", value, v -> CosmiconConfig.DEFAULT_HP = v);
+            case "defaultrerolls" -> setInt("defaultRerolls", value, v -> CosmiconConfig.DEFAULT_REROLLS = v);
             case "debugenabled" -> {
                 CosmiconConfig.DEBUG_ENABLED = Boolean.parseBoolean(value);
                 Console.showMessage("Set debugEnabled = " + CosmiconConfig.DEBUG_ENABLED);

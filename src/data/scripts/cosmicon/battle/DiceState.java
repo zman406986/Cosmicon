@@ -17,6 +17,9 @@ public class DiceState {
     private List<DiceType> playerUpgradedDicePool;
     private List<DiceType> opponentUpgradedDicePool;
 
+    private DicePoolCounts playerUpgradedDicePoolCounts;
+    private DicePoolCounts opponentUpgradedDicePoolCounts;
+
     private DicePoolCounts playerDicePoolCounts;
     private DicePoolCounts opponentDicePoolCounts;
 
@@ -94,12 +97,12 @@ public class DiceState {
     }
 
     public DicePoolCounts getPlayerDicePoolCounts() {
-        if (playerUpgradedDicePool != null) return DicePoolCounts.fromPool(playerUpgradedDicePool);
+        if (playerUpgradedDicePoolCounts != null) return playerUpgradedDicePoolCounts;
         return playerDicePoolCounts;
     }
 
     public DicePoolCounts getOpponentDicePoolCounts() {
-        if (opponentUpgradedDicePool != null) return DicePoolCounts.fromPool(opponentUpgradedDicePool);
+        if (opponentUpgradedDicePoolCounts != null) return opponentUpgradedDicePoolCounts;
         return opponentDicePoolCounts;
     }
 
@@ -108,13 +111,18 @@ public class DiceState {
     }
 
     public void setUpgradedDicePool(boolean forPlayer, List<DiceType> pool) {
-        if (forPlayer) playerUpgradedDicePool = pool;
-        else opponentUpgradedDicePool = pool;
+        if (forPlayer) {
+            playerUpgradedDicePool = pool;
+            playerUpgradedDicePoolCounts = pool != null ? DicePoolCounts.fromPool(pool) : null;
+        } else {
+            opponentUpgradedDicePool = pool;
+            opponentUpgradedDicePoolCounts = pool != null ? DicePoolCounts.fromPool(pool) : null;
+        }
     }
 
     public void clearUpgradedDicePool(boolean forPlayer) {
-        if (forPlayer) playerUpgradedDicePool = null;
-        else opponentUpgradedDicePool = null;
+        if (forPlayer) { playerUpgradedDicePool = null; playerUpgradedDicePoolCounts = null; }
+        else { opponentUpgradedDicePool = null; opponentUpgradedDicePoolCounts = null; }
     }
 
     public void clearDiceSelection(boolean forPlayer) {
@@ -131,9 +139,8 @@ public class DiceState {
     public int countSelected(List<Boolean> selected) {
         if (selected == null) return 0;
         int count = 0;
-        for (Boolean aBoolean : selected)
-        {
-            if (aBoolean) count++;
+        for (int i = 0, size = selected.size(); i < size; i++) {
+            if (selected.get(i)) count++;
         }
         return count;
     }
@@ -162,6 +169,8 @@ public class DiceState {
         opponentDiceTypes = null;
         opponentDiceValues = null;
         opponentDiceSelected = null;
+        playerUpgradedDicePoolCounts = null;
+        opponentUpgradedDicePoolCounts = null;
         clearUpgradedDicePool(true);
         clearUpgradedDicePool(false);
     }

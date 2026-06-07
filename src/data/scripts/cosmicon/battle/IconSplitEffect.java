@@ -130,7 +130,6 @@ public class IconSplitEffect {
             GL11.glPushMatrix();
             GL11.glTranslatef(glCenterX, pivotY, 0f);
             GL11.glRotatef(-rightRotation, 0f, 0f, 1f);
-            GL11.glTranslatef(0f, 0f, 0f);
             
             GL11.glBegin(GL11.GL_QUADS);
             GL11.glTexCoord2f(0.5f, 1f);

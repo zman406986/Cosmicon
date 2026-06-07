@@ -4,6 +4,7 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import data.scripts.CosmiconConfig;
 import data.scripts.cosmicon.util.CharacterIds;
+import data.scripts.cosmicon.util.CosmiconRandom;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -23,33 +24,24 @@ public class CosmiconStats {
     private static final int TUTORIAL_GAMES = 2;
     private static final String REPEATER_ID = "repeater";
 
-    private static MemoryAPI memory;
-
     private static MemoryAPI getMemory() {
-        if (memory == null) {
-            memory = Global.getSector().getPlayerMemoryWithoutUpdate();
-        }
-        return memory;
+        return Global.getSector().getPlayerMemoryWithoutUpdate();
     }
 
     public static int getGamesPlayed() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_GAMES_PLAYED)) return 0;
-        return (int) mem.getFloat(KEY_GAMES_PLAYED);
+        return (int) getMemory().getFloat(KEY_GAMES_PLAYED);
     }
 
     public static void incrementGamesPlayed() {
-        MemoryAPI mem = getMemory();
-        mem.set(KEY_GAMES_PLAYED, getGamesPlayed() + 1);
-        if (getGamesPlayed() >= TUTORIAL_GAMES && isPrismaticFeatureUnlocked()) {
+        int newCount = getGamesPlayed() + 1;
+        getMemory().set(KEY_GAMES_PLAYED, newCount);
+        if (newCount >= TUTORIAL_GAMES && !isPrismaticFeatureUnlocked()) {
             setPrismaticFeatureUnlocked();
         }
     }
 
     public static int getGamesWon() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_GAMES_WON)) return 0;
-        return (int) mem.getFloat(KEY_GAMES_WON);
+        return (int) getMemory().getFloat(KEY_GAMES_WON);
     }
 
     public static void incrementGamesWon() {
@@ -68,7 +60,7 @@ public class CosmiconStats {
     public static void skipTutorial() {
         MemoryAPI mem = getMemory();
         mem.set(KEY_GAMES_PLAYED, TUTORIAL_GAMES);
-        if (isPrismaticFeatureUnlocked()) {
+        if (!isPrismaticFeatureUnlocked()) {
             setPrismaticFeatureUnlocked();
         }
     }
@@ -148,7 +140,7 @@ public class CosmiconStats {
     public static void completeTutorialGame2() {
         unlockCharacter(CharacterIds.ACHERON);
         unlockPrismaticDice(REPEATER_ID);
-        if (isPrismaticFeatureUnlocked()) {
+        if (!isPrismaticFeatureUnlocked()) {
             setPrismaticFeatureUnlocked();
         }
         CosmiconPlayerState.saveCharacter(CharacterIds.ACHERON);
@@ -157,9 +149,7 @@ public class CosmiconStats {
     }
 
     public static boolean isTournamentUnlocked() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_TOURNAMENT_UNLOCKED)) return false;
-        return mem.getBoolean(KEY_TOURNAMENT_UNLOCKED);
+        return getMemory().getBoolean(KEY_TOURNAMENT_UNLOCKED);
     }
 
     public static void setTournamentUnlocked(boolean unlocked) {
@@ -167,9 +157,7 @@ public class CosmiconStats {
     }
 
     public static boolean isGatekeeper999Unlocked() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_GATEKEEPER_999_UNLOCKED)) return false;
-        return mem.getBoolean(KEY_GATEKEEPER_999_UNLOCKED);
+        return getMemory().getBoolean(KEY_GATEKEEPER_999_UNLOCKED);
     }
 
     public static void setGatekeeper999Unlocked(boolean unlocked) {
@@ -177,9 +165,7 @@ public class CosmiconStats {
     }
 
     public static boolean isLegendTitleInherited() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_LEGEND_TITLE_INHERITED)) return false;
-        return mem.getBoolean(KEY_LEGEND_TITLE_INHERITED);
+        return getMemory().getBoolean(KEY_LEGEND_TITLE_INHERITED);
     }
 
     public static void setLegendTitleInherited(boolean inherited) {
@@ -192,7 +178,7 @@ public class CosmiconStats {
 
     public static int calculateNormalEncounterCreditReward(int playerLevel) {
         int base = CosmiconConfig.NORMAL_ENCOUNTER_CREDIT_PER_LEVEL * Math.max(1, playerLevel);
-        float factor = CosmiconConfig.CREDIT_RANDOM_FACTOR_MIN + (float) Math.random() * (CosmiconConfig.CREDIT_RANDOM_FACTOR_MAX - CosmiconConfig.CREDIT_RANDOM_FACTOR_MIN);
+        float factor = CosmiconConfig.CREDIT_RANDOM_FACTOR_MIN + CosmiconRandom.nextFloat() * (CosmiconConfig.CREDIT_RANDOM_FACTOR_MAX - CosmiconConfig.CREDIT_RANDOM_FACTOR_MIN);
         return Math.round(base * factor);
     }
 
@@ -216,7 +202,7 @@ public class CosmiconStats {
             if (!isPrismaticDiceUnlocked(REPEATER_ID)) {
                 unlockPrismaticDice(REPEATER_ID);
             }
-            if (isPrismaticFeatureUnlocked()) {
+            if (!isPrismaticFeatureUnlocked()) {
                 setPrismaticFeatureUnlocked();
             }
         }

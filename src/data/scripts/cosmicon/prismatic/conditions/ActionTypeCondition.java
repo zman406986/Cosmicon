@@ -5,19 +5,22 @@ import data.scripts.cosmicon.battle.TurnState.TurnType;
 import data.scripts.cosmicon.prismatic.AvailabilityCondition;
 
 public class ActionTypeCondition implements AvailabilityCondition {
-    
+
+    private static final ActionTypeCondition DEFENSE = new ActionTypeCondition(TurnType.DEFENSE);
+    private static final ActionTypeCondition ATTACK = new ActionTypeCondition(TurnType.ATTACK);
+
     private final TurnType requiredType;
-    
-    public ActionTypeCondition(TurnType requiredType) {
+
+    private ActionTypeCondition(TurnType requiredType) {
         this.requiredType = requiredType;
     }
-    
+
     public static ActionTypeCondition defenseOnly() {
-        return new ActionTypeCondition(TurnType.DEFENSE);
+        return DEFENSE;
     }
-    
+
     public static ActionTypeCondition attackOnly() {
-        return new ActionTypeCondition(TurnType.ATTACK);
+        return ATTACK;
     }
     
     @Override

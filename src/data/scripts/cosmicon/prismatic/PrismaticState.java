@@ -11,7 +11,7 @@ public class PrismaticState {
     private int instantDamage;
     
     public PrismaticState() {
-        this.uses = 2;
+        this.uses = 0;
         this.usesByType = new HashMap<>();
         this.doubleValueActive = false;
         this.instantDamage = 0;
@@ -50,6 +50,8 @@ public class PrismaticState {
     public void addInstantDamage(int amount) { this.instantDamage += amount; }
     
     public void clear() {
+        usesByType.clear();
+        uses = 0;
         doubleValueActive = false;
         instantDamage = 0;
     }

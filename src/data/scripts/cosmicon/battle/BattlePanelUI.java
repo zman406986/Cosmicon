@@ -77,9 +77,6 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     // Refreshed each frame in updateRoleTransition(); do not cache across frames
     private float cachedRotationAngle;
 
-    private float opponentPrismaticBtnX;
-    private float opponentPrismaticBtnY;
-
     private UnifiedCoord playerCardCoord;
     private UnifiedCoord opponentCardCoord;
     private UnifiedCoord playerHpCircleCoord;
@@ -276,8 +273,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         labels = new BattleUILabels();
         buttons = new BattleUIButtons();
 
-        opponentPrismaticBtnX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.MARGIN - PRISMATIC_BTN_SIZE - 10f;
-        opponentPrismaticBtnY = BattleRenderingUtils.MARGIN + 22f;
+        float opponentPrismaticBtnX = BattleRenderingUtils.PANEL_WIDTH - BattleRenderingUtils.MARGIN - PRISMATIC_BTN_SIZE - 10f;
+        float opponentPrismaticBtnY = BattleRenderingUtils.MARGIN + 22f;
 
         playerCardCoord = new UnifiedCoord(BattleRenderingUtils.PLAYER_CARD_X, BattleRenderingUtils.PLAYER_CARD_Y);
         opponentCardCoord = new UnifiedCoord(BattleRenderingUtils.OPPONENT_CARD_X, BattleRenderingUtils.OPPONENT_CARD_Y);
@@ -298,7 +295,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             (BattleRenderingUtils.PANEL_WIDTH - 500f) / 2f,
             (BattleRenderingUtils.PANEL_HEIGHT - 100f) / 2f);
         labels.init(panel, battleState, diceRollManager,
-            opponentPrismaticBtnX, opponentPrismaticBtnY,
+                opponentPrismaticBtnX, opponentPrismaticBtnY,
             BattleRenderingUtils.MARGIN + 60f, BattleRenderingUtils.PANEL_HEIGHT - 100f);
         buttons.init(panel, callbacks, battleController, battleState, diceRollManager, labels,
             inputHandler, diceZoneCenterX, diceZoneCenterY);

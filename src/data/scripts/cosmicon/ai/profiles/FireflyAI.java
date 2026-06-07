@@ -43,7 +43,7 @@ public class FireflyAI extends SimplePassiveAI {
         }
 
         int pairCount = 0;
-        List<Integer> pairedIndices = new ArrayList<>();
+        Set<Integer> pairedIndices = new HashSet<>();
         for (List<Integer> indices : valueToIndices.values()) {
             if (indices.size() >= 2) {
                 pairCount++;

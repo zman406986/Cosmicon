@@ -78,14 +78,10 @@ public class March7thAI extends AttackRerollAI {
 
         for (Map.Entry<Integer, List<Integer>> entry : valueToIndices.entrySet()) {
             if (entry.getValue().size() == 1) {
-                List<Integer> nonMatching = new ArrayList<>();
                 for (int i = 0; i < pool.size(); i++) {
                     if (pool.getValue(i) != entry.getKey()) {
-                        nonMatching.add(i);
+                        return Collections.singletonList(Collections.singleton(i));
                     }
-                }
-                if (!nonMatching.isEmpty()) {
-                    return Collections.singletonList(new HashSet<>(nonMatching.subList(0, 1)));
                 }
             }
         }

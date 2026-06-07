@@ -4,13 +4,14 @@ import data.scripts.cosmicon.battle.StatusEffectProcessor.StatusEffect;
 import data.scripts.cosmicon.prismatic.conditions.*;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 public final class PrismaticDiceRegistry {
-    
+
     private static final Map<String, PrismaticDiceType> REGISTRY = new HashMap<>();
+    private static final Map<String, PrismaticDiceType> UNMODIFIABLE_VIEW = Collections.unmodifiableMap(REGISTRY);
+    private static final Set<Integer> ALL_INDICES = Set.of(0, 1, 2, 3, 4, 5);
     
     static {
         registerAllDice();
@@ -53,19 +54,13 @@ public final class PrismaticDiceRegistry {
     }
     
     public static Map<String, PrismaticDiceType> getAll() {
-        return Collections.unmodifiableMap(REGISTRY);
+        return UNMODIFIABLE_VIEW;
     }
-    
+
     private static Set<Integer> indices(int... indices) {
-        Set<Integer> set = new HashSet<>();
-        for (int i : indices) set.add(i);
-        return set;
-    }
-    
-    private static Set<Integer> allIndices() {
-        Set<Integer> set = new HashSet<>();
-        for (int i = 0; i < 6; i++) set.add(i);
-        return set;
+        Integer[] boxed = new Integer[indices.length];
+        for (int i = 0; i < indices.length; i++) boxed[i] = indices[i];
+        return Set.of(boxed);
     }
     
     private static PrismaticDiceType createEvolution() {
@@ -92,7 +87,7 @@ public final class PrismaticDiceRegistry {
             "destiny",
             new int[]{1, 3, 3, 6, 6, 12},
             new int[]{1, 3, 3, 12, 12, 16},
-            allIndices(),
+            ALL_INDICES,
             PrismaticEffect.grantStatus(StatusEffect.DESTINED, 1),
             AlwaysAvailableCondition.INSTANCE
         );
@@ -111,11 +106,12 @@ public final class PrismaticDiceRegistry {
     }
     
     private static PrismaticDiceType createDoctorsAdvice() {
+        int[] faces = {1, 2, 3, 4, 6, 6};
         return PrismaticDiceType.createWithVersionsAndCondition(
             "doctors_advice",
-            new int[]{1, 2, 3, 4, 6, 6},
-            new int[]{1, 2, 3, 4, 6, 6},
-            allIndices(),
+            faces,
+            faces,
+            ALL_INDICES,
             PrismaticEffect.HEAL_HP,
             HpThresholdCondition.atOrBelow(10),
             AlwaysAvailableCondition.INSTANCE
@@ -150,7 +146,7 @@ public final class PrismaticDiceRegistry {
         return PrismaticDiceType.createWithSpecialFaces(
             "cactus",
             new int[]{4, 5, 6, 7, 8, 9},
-            allIndices(),
+            ALL_INDICES,
             PrismaticEffect.grantStatus(StatusEffect.COUNTER, 1),
             ActionTypeCondition.defenseOnly()
         );
@@ -169,7 +165,7 @@ public final class PrismaticDiceRegistry {
         return PrismaticDiceType.createWithSpecialFaces(
             "loan",
             new int[]{2, 2, 3, 3, 4, 4},
-            allIndices(),
+            ALL_INDICES,
             PrismaticEffect.grantStatus(StatusEffect.OVERLOAD, 0, true),
             AlwaysAvailableCondition.INSTANCE
         );
@@ -203,7 +199,7 @@ public final class PrismaticDiceRegistry {
             "prime_number",
             new int[]{3, 3, 5, 5, 7, 7},
             new int[]{5, 5, 5, 7, 7, 7},
-            new HashSet<>(),
+            Set.of(),
             PrismaticEffect.NONE,
             AlwaysAvailableCondition.INSTANCE
         );
@@ -213,7 +209,7 @@ public final class PrismaticDiceRegistry {
         return PrismaticDiceType.createWithSpecialFaces(
             "big_red_button",
             new int[]{6, 6, 6, 8, 8, 8},
-            allIndices(),
+            ALL_INDICES,
             PrismaticEffect.grantStatus(StatusEffect.LAST_STAND, 1),
             new CompositeCondition(
                 TurnCountCondition.fromTurn(5),

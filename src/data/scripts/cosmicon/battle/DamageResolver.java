@@ -9,9 +9,10 @@ public class DamageResolver {
     }
     
     public DamageResult resolve(BattleState state) {
-        StatusEffectProcessor attackerEffects = state.isPlayerAttacker() ? 
+        boolean playerIsAttacker = state.isPlayerAttacker();
+        StatusEffectProcessor attackerEffects = playerIsAttacker ?
             state.getPlayerEffects() : state.getOpponentEffects();
-        StatusEffectProcessor defenderEffects = state.isPlayerAttacker() ? 
+        StatusEffectProcessor defenderEffects = playerIsAttacker ?
             state.getOpponentEffects() : state.getPlayerEffects();
         
         int attackValue = state.getAttackValue();
@@ -22,8 +23,8 @@ public class DamageResolver {
         int modifiedAttack = attackValue + atkBonus;
         int modifiedDefense = defenseValue + defBonus;
         
-        int attackerPrismaticValue = state.getPrismaticDiceTotalValue(state.isPlayerAttacker());
-        int defenderPrismaticValue = state.getPrismaticDiceTotalValue(!state.isPlayerAttacker());
+        int attackerPrismaticValue = state.getPrismaticDiceTotalValue(playerIsAttacker);
+        int defenderPrismaticValue = state.getPrismaticDiceTotalValue(!playerIsAttacker);
         modifiedAttack += attackerPrismaticValue;
         modifiedDefense += defenderPrismaticValue;
         
@@ -51,7 +52,7 @@ public class DamageResolver {
         int counterDamage = defenderEffects.calculateCounterDamage(modifiedAttack, prePerforationDefense);
         
         CosmiconLogger.info("[DMG_DIAG] resolve: attacker=%s, atkValue=%d, defValue=%d, atkBonus=%d, defBonus=%d, prismAtk=%d, prismDef=%d, perf=%s, damage=%d, counter=%d (modAtk=%d vs prePerfDef=%d)",
-            state.isPlayerAttacker() ? "Player" : "Opponent",
+            playerIsAttacker ? "Player" : "Opponent",
             attackValue, defenseValue, atkBonus, defBonus,
             attackerPrismaticValue, defenderPrismaticValue,
             hasPerforation, damage, counterDamage, modifiedAttack, prePerforationDefense);
@@ -68,7 +69,7 @@ public class DamageResolver {
             weatherSiphon = (int)(damage * siphonMultiplier);
         }
         
-        int instantDamage = state.getPrismaticInstantDamage(!state.isPlayerAttacker());
+        int instantDamage = state.getPrismaticInstantDamage(!playerIsAttacker);
         
         DamageResult result = new DamageResult(
             damage,
@@ -82,8 +83,10 @@ public class DamageResolver {
             forcefieldUsed
         );
         
-        logDamageResolution(state, attackValue, defenseValue, modifiedAttack, modifiedDefense,
-            attackerPrismaticValue, defenderPrismaticValue, damage, result);
+        if (CosmiconLogger.isInfoEnabled()) {
+            logDamageResolution(state, attackValue, defenseValue, modifiedAttack, modifiedDefense,
+                attackerPrismaticValue, defenderPrismaticValue, damage, result);
+        }
         
         return result;
     }

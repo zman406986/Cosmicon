@@ -193,8 +193,7 @@ public class CoinFlipAnimator {
 
         GLStateUtil.resetBlendState();
 
-        float[] c = new float[] { 0f, 0f, 0f, shadowAlpha * alphaMult * 0.5f };
-        GL11.glColor4f(c[0], c[1], c[2], c[3]);
+        GL11.glColor4f(0f, 0f, 0f, shadowAlpha * alphaMult * 0.5f);
 
         drawEllipse(centerX - shadowW / 2f, shadowY - shadowH / 2f, shadowW, shadowH);
 
@@ -234,13 +233,12 @@ public class CoinFlipAnimator {
     private void renderCoinBorder(float centerX, float centerY, float size, float absSquash, float alphaMult) {
         GLStateUtil.resetBlendState();
 
-        float[] c = new float[] { 0.9f, 0.85f, 0.6f, 0.8f * alphaMult };
-        GL11.glColor4f(c[0], c[1], c[2], c[3]);
+        GL11.glColor4f(0.9f, 0.85f, 0.6f, 0.8f * alphaMult);
         GL11.glLineWidth(3f);
 
         int segments = 32;
         GL11.glBegin(GL11.GL_LINE_LOOP);
-        for (int i = 0; i <= segments; i++) {
+        for (int i = 0; i < segments; i++) {
             float angle = 2f * (float) Math.PI * i / segments;
             float x = centerX + (float) Math.cos(angle) * size / 2f * absSquash;
             float y = centerY + (float) Math.sin(angle) * size / 2f;
@@ -255,7 +253,7 @@ public class CoinFlipAnimator {
         int segments = 16;
         GL11.glBegin(GL11.GL_TRIANGLE_FAN);
         GL11.glVertex2f(x + w / 2f, y + h / 2f);
-        for (int i = 0; i <= segments; i++) {
+        for (int i = 0; i < segments; i++) {
             float angle = 2f * (float) Math.PI * i / segments;
             GL11.glVertex2f(x + w / 2f + (float) Math.cos(angle) * w / 2f,
                             y + h / 2f + (float) Math.sin(angle) * h / 2f);

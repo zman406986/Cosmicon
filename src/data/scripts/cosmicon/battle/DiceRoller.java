@@ -58,16 +58,16 @@ public class DiceRoller {
         CharacterCard card = state.getCard(forPlayer);
         boolean isAttacker = state.isAttacker(forPlayer);
 
-        List<DiceType> types = state.getUpgradedDicePool(forPlayer);
-        if (types == null) {
+        List<DiceType> rawTypes = state.getUpgradedDicePool(forPlayer);
+        if (rawTypes == null) {
             CosmiconLogger.info("[DICE_ROLL] %s using BASE pool: %s",
                 card.getName(), card.getDicePool());
-            types = new ArrayList<>(card.getDicePool());
+            rawTypes = card.getDicePool();
         } else {
             CosmiconLogger.info("[DICE_ROLL] %s using UPGRADED pool: %s | base=%s",
-                card.getName(), types, card.getDicePool());
+                card.getName(), rawTypes, card.getDicePool());
         }
-        types = new ArrayList<>(types);
+        List<DiceType> types = new ArrayList<>(rawTypes);
         types.removeIf(t -> t == DiceType.PRISMATIC);
         List<Integer> values = new ArrayList<>();
         List<Boolean> selected = new ArrayList<>();
@@ -188,9 +188,8 @@ public class DiceRoller {
             sb.append(type.name()).append("(").append(value).append(")");
         }
         int total = 0;
-        for (Integer value : values)
-        {
-            total += value;
+        for (int i = 0; i < values.size(); i++) {
+            total += values.get(i);
         }
         sb.append(" | New total: ").append(total);
         CosmiconLogger.debug(sb.toString());

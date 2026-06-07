@@ -38,8 +38,10 @@ public final class ColorHelper {
     public static final Color OVERLOAD_DAMAGE = new Color(255, 80, 50);
     public static final Color HEAL = new Color(80, 255, 120);
 
+    private static final float[] SCRATCH = new float[4];
+
     public static float[] toGLComponents(Color color, float alphaMult) {
-        return toGLComponents(color, alphaMult, new float[4]);
+        return toGLComponents(color, alphaMult, SCRATCH);
     }
 
     public static float[] toGLComponents(Color color, float alphaMult, float[] out) {

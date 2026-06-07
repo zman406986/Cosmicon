@@ -33,23 +33,24 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements Intera
         boolean isTutorial = CosmiconStats.isInTutorialMode();
         String npcMarketId = null;
 
+        MemoryAPI personMem = memoryMap.get("person");
+        String npcCharId = (personMem != null && personMem.contains("$cos_npc_char"))
+            ? personMem.getString("$cos_npc_char") : null;
+
         if (isTutorial) {
-            MemoryAPI personMem = memoryMap.get("person");
-            if (personMem != null && personMem.contains("$cos_npc_char")) {
-                CosmiconEventState.setOriginalNpcCharId(personMem.getString("$cos_npc_char"));
+            if (npcCharId != null) {
+                CosmiconEventState.setOriginalNpcCharId(npcCharId);
             }
             int gamesPlayed = CosmiconStats.getGamesPlayed();
             String opponentId = gamesPlayed == 0 ? "trashcan" : "robin";
             CosmiconEventState.setOpponentCharacter(opponentId);
             CosmiconEventState.setIsTutorialMode(true);
         } else {
-            MemoryAPI personMem = memoryMap.get("person");
-            if (personMem != null && personMem.contains("$cos_npc_char")) {
-                String characterId = personMem.getString("$cos_npc_char");
-                CosmiconEventState.setOpponentCharacter(characterId);
-                CosmiconEventState.setOriginalNpcCharId(characterId);
+            if (npcCharId != null) {
+                CosmiconEventState.setOpponentCharacter(npcCharId);
+                CosmiconEventState.setOriginalNpcCharId(npcCharId);
 
-                CharacterCard opponentCard = CharacterRegistry.getCharacterById(characterId);
+                CharacterCard opponentCard = CharacterRegistry.getCharacterById(npcCharId);
                 if (opponentCard != null) {
                     configureOpponentPrismaticDefaults(opponentCard);
                 }

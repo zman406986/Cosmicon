@@ -3,7 +3,6 @@ package data.console.commands;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import data.scripts.cosmicon.state.CosmiconStats;
-import java.util.Arrays;
 import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
@@ -40,31 +39,23 @@ public class CosmiconReset implements BaseCommand {
         }
 
         if (resetUnlocks) {
-            List<String> charKeys = Arrays.asList("$cos_unlocked_characters", "$cos_has_gallery_characters");
+            List<String> charKeys = List.of("$cos_unlocked_characters", "$cos_has_gallery_characters");
             for (String key : charKeys) {
-                if (mem.contains(key)) {
-                    mem.unset(key);
-                }
+                mem.unset(key);
             }
 
-            if (mem.contains("$cos_unlocked_prismatic")) {
-                mem.unset("$cos_unlocked_prismatic");
-            }
-            if (mem.contains("$cos_prismatic_feature_unlocked")) {
-                mem.unset("$cos_prismatic_feature_unlocked");
-            }
+            mem.unset("$cos_unlocked_prismatic");
+            mem.unset("$cos_prismatic_feature_unlocked");
 
             Console.showMessage("Reset: character & prismatic dice unlocks");
         }
 
         if (resetPlayer) {
-            List<String> playerKeys = Arrays.asList(
+            List<String> playerKeys = List.of(
                 "$cos_selected_character", "$cos_equipped_prismatic", "$cos_equipped_prismatic_true"
             );
             for (String key : playerKeys) {
-                if (mem.contains(key)) {
-                    mem.unset(key);
-                }
+                mem.unset(key);
             }
 
             Console.showMessage("Reset: selected character & prismatic dice");

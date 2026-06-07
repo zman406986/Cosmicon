@@ -367,8 +367,9 @@ public class WeatherController {
     
     private int countSelected(List<Boolean> selected) {
         int count = 0;
-        for (int i = 0; i < selected.size(); i++) {
-            if (selected.get(i)) count++;
+        for (Boolean aBoolean : selected)
+        {
+            if (aBoolean) count++;
         }
         return count;
     }

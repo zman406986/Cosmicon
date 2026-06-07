@@ -61,11 +61,8 @@ public class AISelectionVisualizer {
      * Returns indices that have been visually revealed so far.
      */
     public List<Integer> getVisibleIndices() {
-        List<Integer> visible = new ArrayList<>();
-        for (int i = 0; i < currentRevealIndex && i < plannedIndices.size(); i++) {
-            visible.add(plannedIndices.get(i));
-        }
-        return visible;
+        int limit = Math.min(currentRevealIndex, plannedIndices.size());
+        return plannedIndices.subList(0, limit);
     }
     
     public boolean isComplete() {

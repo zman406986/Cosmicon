@@ -26,10 +26,6 @@ public class PrismaticManager {
     }
     
     private void initializePrismaticUses() {
-        for (PrismaticDiceType type : PrismaticDiceRegistry.getAll().values()) {
-            playerPrismatic.setUsesByType(type, 0);
-            opponentPrismatic.setUsesByType(type, 0);
-        }
         playerPrismatic.setUses(0);
         opponentPrismatic.setUses(0);
     }
@@ -67,11 +63,11 @@ public class PrismaticManager {
     
     public List<PrismaticDiceType> getAvailable(boolean forPlayer, BattleState state) {
         PrismaticState ps = getState(forPlayer);
-        ConditionContext context = createConditionContext(state, forPlayer);
         CharacterCard card = state.getCard(forPlayer);
+        ConditionContext context = createConditionContext(state, forPlayer, card);
         boolean useTrueVersion = card != null && card.isUseTruePrismatic();
-        
-        List<PrismaticDiceType> available = new ArrayList<>();
+
+        List<PrismaticDiceType> available = new ArrayList<>(PrismaticDiceRegistry.getAll().size());
         for (PrismaticDiceType type : PrismaticDiceRegistry.getAll().values()) {
             if (ps.getUsesByType(type) > 0 && type.isAvailable(context, useTrueVersion)) {
                 available.add(type);
@@ -184,9 +180,8 @@ public class PrismaticManager {
         return forPlayer ? playerPrismatic : opponentPrismatic;
     }
     
-    private ConditionContext createConditionContext(BattleState state, boolean forPlayer) {
+    private ConditionContext createConditionContext(BattleState state, boolean forPlayer, CharacterCard card) {
         int hp = forPlayer ? state.getPlayerHp() : state.getOpponentHp();
-        CharacterCard card = forPlayer ? state.getPlayerCard() : state.getOpponentCard();
         int maxHp = card != null ? card.getMaxHp() : hp;
         int turnNumber = state.getTurnNumber();
         TurnState.TurnType turnType = state.isPlayerAttacker() 

@@ -11,7 +11,6 @@ import data.scripts.cosmicon.util.PassiveResults.PassiveResult;
 import data.scripts.cosmicon.util.PassiveResults.PostDamageResult;
 
 import java.util.List;
-import java.util.Map;
 
 import static data.scripts.cosmicon.util.CharacterIds.*;
 import static data.scripts.cosmicon.util.DiceEvaluator.*;
@@ -48,17 +47,17 @@ public class CharacterPassives {
 
     public static boolean isDieIndicativeForPassive(String characterId, int dieValue,
                                                      List<Integer> allPoolValues, boolean isAttacking) {
-        Map<Integer, Integer> freq = computeFrequencyMap(allPoolValues);
+        int[] freq = frequencyArray(allPoolValues);
 
         return switch (characterId) {
             case ACHERON -> isAttacking && dieValue == 4;
-            case FIREFLY -> isAttacking && freq.getOrDefault(dieValue, 0) >= 2;
+            case FIREFLY -> isAttacking && freq[dieValue] >= 2;
             case ROBIN -> isAttacking && dieValue % 2 == 0;
             case AVENTURINE -> isAttacking && dieValue % 2 != 0;
             case KAFKA, DAN_HENG -> isAttacking;
-            case MARCH_7TH, SPARXIE -> freq.getOrDefault(dieValue, 0) >= 2;
+            case MARCH_7TH, SPARXIE -> freq[dieValue] >= 2;
             case HYACINE -> isAttacking && dieValue == 6;
-            case PHAINON -> isAttacking || freq.getOrDefault(dieValue, 0) >= 2;
+            case PHAINON -> isAttacking || freq[dieValue] >= 2;
             default -> false;
         };
     }

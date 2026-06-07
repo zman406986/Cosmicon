@@ -82,9 +82,8 @@ public final class CosmiconSprites {
     public static SpriteAPI getPortrait(String cardId) {
         if (!loaded) load();
         
-        SpriteAPI cached = portraitCache.get(cardId);
         if (portraitCache.containsKey(cardId)) {
-            return cached;
+            return portraitCache.get(cardId);
         }
 
         String portraitKey = PORTRAIT_KEYS.get(cardId);

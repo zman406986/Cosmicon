@@ -91,7 +91,13 @@ public class DiceEvaluator {
     }
 
     public static boolean sumAtLeast(List<Integer> values, int threshold) {
-        return sumOfValues(values) >= threshold;
+        if (values == null) return threshold <= 0;
+        int sum = 0;
+        for (int v : values) {
+            sum += v;
+            if (sum >= threshold) return true;
+        }
+        return false;
     }
 
     public static boolean hasIdenticalNumbers(List<Integer> values) {
@@ -101,6 +107,10 @@ public class DiceEvaluator {
             if (f >= 2) return true;
         }
         return false;
+    }
+
+    public static int[] frequencyArray(List<Integer> values) {
+        return frequencies(values);
     }
 
     public static Map<Integer, Integer> computeFrequencyMap(List<Integer> values) {

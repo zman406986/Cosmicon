@@ -204,7 +204,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         ThreeTierSplit split = splitThreeTiers(pool, rerollsLeft, isAttacking, currentDestinedIndices);
         int frozenSum = 0;
         int doomedSum = 0;
-        int doomedRerollsUsed = 0;
+        int doomedRerollsUsed;
         Set<Integer> savedDestined = null;
         String savedDestinedKey = null;
         if (split != null) {
@@ -607,7 +607,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
     }
 
     public static DieStoppingPolicy getStoppingPolicy(DiceType type) {
-        return policyCache.computeIfAbsent(type, k -> computePolicyStatic(k));
+        return policyCache.computeIfAbsent(type, AttackRerollAI::computePolicyStatic);
     }
 
     private static DieStoppingPolicy computePolicyStatic(DiceType type) {
@@ -638,7 +638,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         if (product <= maxExactOutcomeEnumeration) {
             return enumerateOutcomes(diceFaces);
         } else {
-            return sampleOutcomes(diceFaces, (int) Math.min(maxExactOutcomeEnumeration, product));
+            return sampleOutcomes(diceFaces);
         }
     }
 
@@ -664,12 +664,8 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         }
     }
 
-    private int computeSampleCount(int faceProduct) {
-        return Math.max(16, Math.min(maxExactOutcomeEnumeration, faceProduct * 4));
-    }
-
-    private List<Outcome> sampleOutcomes(List<int[]> diceFaces, int faceProduct) {
-        int sampleCount = computeSampleCount(faceProduct);
+    private List<Outcome> sampleOutcomes(List<int[]> diceFaces) {
+        int sampleCount = maxExactOutcomeEnumeration;
         List<Outcome> result = new ArrayList<>();
         for (int s = 0; s < sampleCount; s++) {
             int[] faces = new int[diceFaces.size()];
@@ -857,17 +853,6 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
             reverse.put(remap[i], i);
         }
         return new SplitPool(pool.subset(remap), frozenSum, remap, reverse);
-    }
-
-    private Set<Integer> remapDestinedIndices(Set<Integer> original, SplitPool split) {
-        Set<Integer> remapped = new HashSet<>();
-        for (int idx : original) {
-            Integer newIdx = split.reverseRemap().get(idx);
-            if (newIdx != null) {
-                remapped.add(newIdx);
-            }
-        }
-        return remapped;
     }
 
     private Set<Integer> remapDestinedIndices(Set<Integer> original, ThreeTierSplit split) {

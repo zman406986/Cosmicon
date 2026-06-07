@@ -26,6 +26,7 @@ public class CoinFlipPanelUI extends BaseCustomUIPanelPlugin {
     private static final float FLIP_HINT_Y_OFFSET = 210f;
     private static final float RESULT_TEXT_Y_OFFSET = 180f;
     private static final float CLICK_HINT_Y_OFFSET = 220f;
+    private static final Color CLICK_HINT_COLOR = new Color(180, 180, 180);
 
     private CustomPanelAPI panel;
     private DialogCallbacks callbacks;
@@ -36,6 +37,7 @@ public class CoinFlipPanelUI extends BaseCustomUIPanelPlugin {
     private LabelAPI clickHintLabel;
 
     private boolean dismissed;
+    private boolean resultTextSet;
     private int lastMouseButtonState;
     private float postRevealTimer;
     private static final float POST_REVEAL_DELAY = 1.0f;
@@ -80,7 +82,7 @@ public class CoinFlipPanelUI extends BaseCustomUIPanelPlugin {
 
         clickHintLabel = UIComponentFactory.createLabel(
             panel, Strings.get("coinflip.click_to_skip"), Fonts.DEFAULT_SMALL,
-            new Color(180, 180, 180), Alignment.MID, w, 20f, 0f, h / 2f - CLICK_HINT_Y_OFFSET);
+            CLICK_HINT_COLOR, Alignment.MID, w, 20f, 0f, h / 2f - CLICK_HINT_Y_OFFSET);
         clickHintLabel.setOpacity(0.6f);
     }
 
@@ -104,16 +106,17 @@ public class CoinFlipPanelUI extends BaseCustomUIPanelPlugin {
         if (animator == null) return;
 
         float resultAlpha = animator.getResultTextAlpha();
-        if (resultAlpha > 0f && resultLabel != null) {
+        if (resultAlpha > 0f && resultLabel != null && !resultTextSet) {
             boolean playerIsAttacker = animator.isPlayerAttacker();
             String text = playerIsAttacker
                 ? Strings.get("coinflip.you_attack_first")
                 : Strings.get("coinflip.opponent_attacks_first");
             resultLabel.setText(text);
+            resultLabel.setColor(playerIsAttacker ? ColorHelper.ATTACK_VALUE : ColorHelper.DEFENSE_VALUE);
+            resultTextSet = true;
+        }
+        if (resultAlpha > 0f && resultLabel != null) {
             resultLabel.setOpacity(resultAlpha);
-
-            Color textColor = playerIsAttacker ? ColorHelper.ATTACK_VALUE : ColorHelper.DEFENSE_VALUE;
-            resultLabel.setColor(textColor);
         }
 
         if (animator.isComplete() && clickHintLabel != null) {

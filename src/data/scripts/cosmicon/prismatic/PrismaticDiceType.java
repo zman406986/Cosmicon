@@ -1,7 +1,7 @@
 package data.scripts.cosmicon.prismatic;
 
 import data.scripts.cosmicon.prismatic.AvailabilityCondition.ConditionContext;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 
 public class PrismaticDiceType {
@@ -31,7 +31,7 @@ public class PrismaticDiceType {
     
     public static PrismaticDiceType create(String id, int[] faces,
                                            PrismaticEffect effect, AvailabilityCondition condition) {
-        return new PrismaticDiceType(id, faces, null, new HashSet<>(), null, effect, condition, null);
+        return new PrismaticDiceType(id, faces, null, Collections.emptySet(), null, effect, condition, null);
     }
     
     public static PrismaticDiceType createWithSpecialFaces(String id,
@@ -83,7 +83,7 @@ public class PrismaticDiceType {
     }
     
     public boolean isSpecialFace(int index, boolean useTrueVersion) {
-        Set<Integer> indices = useTrueVersion && trueSpecialIndices != null ? trueSpecialIndices : defaultSpecialIndices;
+        Set<Integer> indices = useTrueVersion ? trueSpecialIndices : defaultSpecialIndices;
         return indices.contains(index);
     }
     
@@ -103,7 +103,7 @@ public class PrismaticDiceType {
     }
     
     public int roll(boolean useTrueVersion, java.util.Random random) {
-        int[] faces = useTrueVersion && trueFaces != null ? trueFaces : defaultFaces;
+        int[] faces = getFaces(useTrueVersion);
         int index = random.nextInt(faces.length);
         return faces[index];
     }

@@ -33,11 +33,15 @@ public class PrismaticState {
         }
     }
 
+    private Map<Integer, PrismaticDiceInstance> diceMap(boolean forPlayer) {
+        return forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
+    }
+
     public void addPrismaticDiceToPool(PrismaticDiceInstance dice, boolean forPlayer, DiceState diceState) {
         List<DiceType> types = diceState.getDiceTypesDirect(forPlayer);
         List<Integer> values = diceState.getDiceValuesDirect(forPlayer);
         List<Boolean> selected = diceState.getDiceSelectedDirect(forPlayer);
-        Map<Integer, PrismaticDiceInstance> map = forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
+        Map<Integer, PrismaticDiceInstance> map = diceMap(forPlayer);
 
         types.add(DiceType.PRISMATIC);
         values.add(dice.rolledFace);
@@ -46,29 +50,27 @@ public class PrismaticState {
     }
 
     public PrismaticDiceInstance getPrismaticDiceAt(int index, boolean forPlayer) {
-        Map<Integer, PrismaticDiceInstance> map = forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
-        return map.get(index);
+        return diceMap(forPlayer).get(index);
     }
 
     public boolean isPrismaticDiceAt(int index, boolean forPlayer) {
-        Map<Integer, PrismaticDiceInstance> map = forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
-        return map.containsKey(index);
+        return diceMap(forPlayer).containsKey(index);
     }
 
     public void updatePrismaticDiceAt(int index, PrismaticDiceInstance newInstance, boolean forPlayer) {
-        Map<Integer, PrismaticDiceInstance> map = forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
+        Map<Integer, PrismaticDiceInstance> map = diceMap(forPlayer);
         if (map.containsKey(index)) {
             map.put(index, newInstance);
         }
     }
 
     public Map<Integer, PrismaticDiceInstance> getPrismaticDiceMap(boolean forPlayer) {
-        return forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
+        return diceMap(forPlayer);
     }
 
     public List<PrismaticDiceInstance> getSelectedPrismaticDice(boolean forPlayer, DiceState diceState) {
         List<PrismaticDiceInstance> result = new ArrayList<>();
-        Map<Integer, PrismaticDiceInstance> map = forPlayer ? playerPrismaticDiceByIndex : opponentPrismaticDiceByIndex;
+        Map<Integer, PrismaticDiceInstance> map = diceMap(forPlayer);
         List<Boolean> selected = diceState.getDiceSelected(forPlayer);
 
         for (Map.Entry<Integer, PrismaticDiceInstance> entry : map.entrySet()) {

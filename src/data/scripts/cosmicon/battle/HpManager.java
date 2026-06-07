@@ -56,26 +56,17 @@ public class HpManager {
 
     public void applyDamageTo(boolean isPlayer, int damage, StatusEffectProcessor effects,
                               CharacterCard card, UnyieldingCheck unyieldingCheck) {
-        int oldHp = isPlayer ? playerHp : opponentHp;
-        String characterName = card != null ? card.getName() :
-            (isPlayer ? Strings.get("battle.player") : Strings.get("battle.opponent"));
+        int oldHp = getHp(isPlayer);
+        String characterName = getCharacterName(card, isPlayer);
 
-        if (isPlayer) {
-            playerHp = Math.max(0, playerHp - damage);
-        } else {
-            opponentHp = Math.max(0, opponentHp - damage);
-        }
+        setHp(isPlayer, Math.max(0, oldHp - damage));
         recordDamageTaken(damage, isPlayer);
 
-        int newHp = isPlayer ? playerHp : opponentHp;
+        int newHp = getHp(isPlayer);
 
         if (newHp <= 0 && effects.hasEffect(StatusEffectProcessor.StatusEffect.UNYIELDING)) {
             newHp = 1;
-            if (isPlayer) {
-                playerHp = 1;
-            } else {
-                opponentHp = 1;
-            }
+            setHp(isPlayer, 1);
             effects.removeEffect(StatusEffectProcessor.StatusEffect.UNYIELDING);
             CosmiconLogger.info("%s: UNYIELDING prevented death (HP: 1)", characterName);
 
@@ -94,20 +85,28 @@ public class HpManager {
 
     public void applyHealTo(boolean isPlayer, int heal, CharacterCard card) {
         int maxHp = card != null ? card.getMaxHp() : Integer.MAX_VALUE;
-        int oldHp = isPlayer ? playerHp : opponentHp;
-        String characterName = card != null ? card.getName() :
-            (isPlayer ? Strings.get("battle.player") : Strings.get("battle.opponent"));
+        int oldHp = getHp(isPlayer);
+        String characterName = getCharacterName(card, isPlayer);
 
-        if (isPlayer) {
-            playerHp = Math.min(playerHp + heal, maxHp);
-        } else {
-            opponentHp = Math.min(opponentHp + heal, maxHp);
-        }
+        setHp(isPlayer, Math.min(oldHp + heal, maxHp));
 
         if (heal > 0) {
             CosmiconLogger.debug("%s healed %d (HP: %d -> %d/%d)", characterName, heal, oldHp,
-                isPlayer ? playerHp : opponentHp, maxHp);
+                getHp(isPlayer), maxHp);
         }
+    }
+
+    private int getHp(boolean isPlayer) {
+        return isPlayer ? playerHp : opponentHp;
+    }
+
+    private void setHp(boolean isPlayer, int value) {
+        if (isPlayer) playerHp = value; else opponentHp = value;
+    }
+
+    private String getCharacterName(CharacterCard card, boolean isPlayer) {
+        return card != null ? card.getName() :
+            (isPlayer ? Strings.get("battle.player") : Strings.get("battle.opponent"));
     }
 
     public void cleanup() {

@@ -15,6 +15,9 @@ public class ImpactEffect {
     private static final float PARTICLE_LIFETIME = 0.55f;
     private static final float SHOCKWAVE_DURATION = 0.4f;
     private static final float SHOCKWAVE_MAX_RADIUS = 120f;
+
+    private static final Color COLOR_FLASH_WHITE = new Color(255, 255, 220);
+    private static final Color COLOR_WHITE = new Color(255, 255, 255);
     
     private boolean flashActive;
     private float flashX;
@@ -76,7 +79,7 @@ public class ImpactEffect {
     }
     
     public void triggerHeavyImpact(float x, float y, Color color) {
-        triggerFlash(x, y, 120f, new Color(255, 255, 220));
+        triggerFlash(x, y, 120f, COLOR_FLASH_WHITE);
         triggerShockwave(x, y);
         
         for (int i = 0; i < 24; i++) {
@@ -107,7 +110,7 @@ public class ImpactEffect {
             p.alpha = 1f;
             p.lifetime = 0.3f + (float)(Math.random() * 0.2f);
             p.elapsed = 0f;
-            p.color = new Color(255, 255, 255);
+            p.color = COLOR_WHITE;
             particles.add(p);
         }
     }
@@ -201,8 +204,6 @@ public class ImpactEffect {
         GLStateUtil.resetBlendState();
         
         for (Particle p : particles) {
-            GLStateUtil.resetBlendState();
-            
             UnifiedCoord pos = new UnifiedCoord(p.x, p.y);
             float glX = pos.glX();
             float glY = pos.glY();
@@ -237,7 +238,7 @@ public class ImpactEffect {
         float glY = pos.glY();
         
         GL11.glLineWidth(3f);
-        float[] c = ColorHelper.toGLComponents(new Color(255, 255, 255), alpha);
+        float[] c = ColorHelper.toGLComponents(COLOR_WHITE, alpha);
         GL11.glColor4f(c[0], c[1], c[2], c[3]);
         
         int segments = 32;

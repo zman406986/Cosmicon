@@ -110,12 +110,12 @@ public class BattleInputHandler {
 
                 UnifiedCoord mousePos = UnifiedCoord.fromMouse();
 
-                if (!buttons.isPrismaticPopupActive()) {
-                    boolean playerShouldSelect = (battleState.isAttacker(true) &&
-                        battleState.getCurrentPhase() == Phase.SELECTING_ATTACK) ||
-                        (battleState.isDefender(true) &&
-                        battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE);
+                boolean playerShouldSelect = (battleState.isAttacker(true) &&
+                    battleState.getCurrentPhase() == Phase.SELECTING_ATTACK) ||
+                    (battleState.isDefender(true) &&
+                    battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE);
 
+                if (!buttons.isPrismaticPopupActive()) {
                     int uses = battleState.getPlayerPrismaticUses();
 
                     if (playerShouldSelect && uses > 0) {
@@ -224,11 +224,6 @@ public class BattleInputHandler {
                     lastMouseButtonState = currentButton;
                     return;
                 }
-
-                boolean playerShouldSelect = (battleState.isAttacker(true) &&
-                                               battleState.getCurrentPhase() == Phase.SELECTING_ATTACK) ||
-                                              (battleState.isDefender(true) &&
-                                               battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE);
 
                 if (!playerShouldSelect) {
                     lastMouseButtonState = currentButton;

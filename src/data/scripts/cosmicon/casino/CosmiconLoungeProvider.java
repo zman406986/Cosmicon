@@ -14,6 +14,8 @@ import data.scripts.casino.interaction.LoungeProvider;
 
 public class CosmiconLoungeProvider implements LoungeProvider {
 
+    private List<String> cachedHelpLines;
+
     @Override
     public String getString(String key) {
         return Strings.get("lounge." + key);
@@ -31,12 +33,15 @@ public class CosmiconLoungeProvider implements LoungeProvider {
 
     @Override
     public List<String> getHelpLines() {
-        List<String> lines = new ArrayList<>();
-        lines.add(getString("help_title"));
-        lines.add(getString("help_1"));
-        lines.add(getString("help_2"));
-        lines.add(getString("help_3"));
-        return lines;
+        if (cachedHelpLines == null) {
+            cachedHelpLines = List.of(
+                getString("help_title"),
+                getString("help_1"),
+                getString("help_2"),
+                getString("help_3")
+            );
+        }
+        return cachedHelpLines;
     }
 
     @Override

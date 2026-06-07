@@ -43,13 +43,8 @@ public class DiceSpriteRegistry {
     private static void loadD4PerResult() {
         for (int result = 1; result <= 4; result++) {
             String cycleKey = "d4_" + result;
-            SpriteAPI[] frames = new SpriteAPI[FRAME_COUNT];
-            for (int frame = 0; frame < FRAME_COUNT; frame++) {
-                String spriteKey = cycleKey + "_f" + String.format("%02d", frame);
-                frames[frame] = Global.getSettings().getSprite("cosmicon_dice_frames", spriteKey);
-            }
-            cache.put(cycleKey, frames);
-            resultToCycle.put("d4_" + result, new CycleMapping(cycleKey, 0));
+            loadCycleSheet(cycleKey);
+            resultToCycle.put(cycleKey, new CycleMapping(cycleKey, 0));
         }
     }
 
@@ -118,32 +113,22 @@ public class DiceSpriteRegistry {
         loaded = false;
     }
 
-    public static SpriteAPI getFrame(DiceType type, int result, int frameIndex) {
-        String resultKey = type.getSpritePrefix() + "_" + result;
-        CycleMapping mapping = resultToCycle.get(resultKey);
+    private static SpriteAPI lookupFrame(Map<String, CycleMapping> map, String key, int frameIndex) {
+        CycleMapping mapping = map.get(key);
         if (mapping == null) return null;
 
         SpriteAPI[] frames = cache.get(mapping.cycleKey);
-        if (frames == null || frameIndex < 0 || frameIndex >= FRAME_COUNT) {
-            return null;
-        }
+        if (frames == null || frameIndex < 0 || frameIndex >= FRAME_COUNT) return null;
 
-        int actualFrame = (mapping.startFrame + 1 + frameIndex) % FRAME_COUNT;
-        return frames[actualFrame];
+        return frames[(mapping.startFrame + 1 + frameIndex) % FRAME_COUNT];
+    }
+
+    public static SpriteAPI getFrame(DiceType type, int result, int frameIndex) {
+        return lookupFrame(resultToCycle, type.getSpritePrefix() + "_" + result, frameIndex);
     }
 
     public static SpriteAPI getPrismaticFrame(int faceIndex, int frameIndex) {
         if (faceIndex < 0 || faceIndex >= 6) return null;
-        String prismKey = "prismatic_" + faceIndex;
-        CycleMapping mapping = prismaticToCycle.get(prismKey);
-        if (mapping == null) return null;
-
-        SpriteAPI[] frames = cache.get(mapping.cycleKey);
-        if (frames == null || frameIndex < 0 || frameIndex >= FRAME_COUNT) {
-            return null;
-        }
-
-        int actualFrame = (mapping.startFrame + 1 + frameIndex) % FRAME_COUNT;
-        return frames[actualFrame];
+        return lookupFrame(prismaticToCycle, "prismatic_" + faceIndex, frameIndex);
     }
 }

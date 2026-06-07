@@ -7,6 +7,8 @@ public class DicePathPlanner {
     private static final Random rand = new Random();
     private static final float COLLISION_BUFFER = 15f;
     private static final float DICE_SIZE = AnimationConstants.DICE_SIZE;
+    private static final float MIN_COLLISION_DIST_SQ =
+        (AnimationConstants.DICE_SIZE + COLLISION_BUFFER) * (AnimationConstants.DICE_SIZE + COLLISION_BUFFER);
     private static final int SCATTER_MAX_RETRIES = 8;
     private static final int SCATTER_FULL_RESET_LIMIT = 4;
     private static final float SCATTER_MARGIN = AnimationConstants.SCATTER_PANEL_EDGE_MARGIN;
@@ -43,14 +45,13 @@ public class DicePathPlanner {
     }
 
     private static int findCollisionCheckpoint(float[][] newCheckpoints, List<float[][]> existingCheckpoints) {
-        float minDistSq = (DICE_SIZE + COLLISION_BUFFER) * (DICE_SIZE + COLLISION_BUFFER);
         for (int cpIdx = 0; cpIdx < CHECKPOINT_COUNT; cpIdx++) {
             float[] newCp = newCheckpoints[cpIdx];
             for (float[][] existing : existingCheckpoints) {
                 float[] exCp = existing[cpIdx];
                 float dx = newCp[0] - exCp[0];
                 float dy = newCp[1] - exCp[1];
-                if (dx * dx + dy * dy < minDistSq) {
+                if (dx * dx + dy * dy < MIN_COLLISION_DIST_SQ) {
                     return cpIdx;
                 }
             }
@@ -176,10 +177,8 @@ public class DicePathPlanner {
         }
 
         if (!foundValid) {
-            float dx2 = targetCenterX - currentStartX;
-            float dy2 = targetCenterY - currentStartY;
-            bestRotation = (float)Math.toDegrees(Math.atan2(dy2, dx2));
-            bestTravelDistance = (float)Math.sqrt(dx2 * dx2 + dy2 * dy2);
+            bestRotation = (float)Math.toDegrees(Math.atan2(dy, dx));
+            bestTravelDistance = (float)Math.sqrt(dx * dx + dy * dy);
 
             float rawEndX = currentStartX + (float)Math.cos(Math.toRadians(bestRotation)) * bestTravelDistance;
             float rawEndY = currentStartY + (float)Math.sin(Math.toRadians(bestRotation)) * bestTravelDistance;
@@ -204,11 +203,10 @@ public class DicePathPlanner {
     }
 
     private static boolean isClearFromEndpoints(float x, float y, List<float[]> endpoints) {
-        float minDistSq = (DICE_SIZE + COLLISION_BUFFER) * (DICE_SIZE + COLLISION_BUFFER);
         for (float[] endpoint : endpoints) {
             float dx = x - endpoint[0];
             float dy = y - endpoint[1];
-            if (dx * dx + dy * dy < minDistSq) {
+            if (dx * dx + dy * dy < MIN_COLLISION_DIST_SQ) {
                 return false;
             }
         }

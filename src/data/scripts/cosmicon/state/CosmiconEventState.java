@@ -57,13 +57,8 @@ public class CosmiconEventState {
         KEY_TOURNAMENT_PENDING_REWARDS
     );
 
-    private static MemoryAPI memory;
-
     private static MemoryAPI getMemory() {
-        if (memory == null) {
-            memory = Global.getSector().getMemory();
-        }
-        return memory;
+        return Global.getSector().getMemory();
     }
 
     public static void setOpponentCharacter(String charId) {
@@ -99,9 +94,7 @@ public class CosmiconEventState {
     }
 
     public static boolean isBarEvent() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_IS_BAR_EVENT)) return false;
-        return mem.getBoolean(KEY_IS_BAR_EVENT);
+        return getMemory().getBoolean(KEY_IS_BAR_EVENT);
     }
 
     public static void setIsEmbeddedEntry(boolean isEmbedded) {
@@ -119,9 +112,7 @@ public class CosmiconEventState {
     }
 
     public static boolean isSessionWon() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_SESSION_WON)) return false;
-        return mem.getBoolean(KEY_SESSION_WON);
+        return getMemory().getBoolean(KEY_SESSION_WON);
     }
 
     public static void setIsTutorialMode(boolean isTutorial) {
@@ -129,9 +120,7 @@ public class CosmiconEventState {
     }
 
     public static boolean isTutorialMode() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_IS_TUTORIAL)) return false;
-        return mem.getBoolean(KEY_IS_TUTORIAL);
+        return getMemory().getBoolean(KEY_IS_TUTORIAL);
     }
 
     public static void clearBattleState() {
@@ -165,9 +154,7 @@ public class CosmiconEventState {
     }
 
     public static boolean getOpponentUsesTrue() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_OPPONENT_USES_TRUE)) return false;
-        return mem.getBoolean(KEY_OPPONENT_USES_TRUE);
+        return getMemory().getBoolean(KEY_OPPONENT_USES_TRUE);
     }
 
     public static void setCasinoBattleMode(boolean enabled) {
@@ -175,9 +162,7 @@ public class CosmiconEventState {
     }
 
     public static boolean isCasinoBattleMode() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_CASINO_BATTLE_MODE)) return false;
-        return mem.getBoolean(KEY_CASINO_BATTLE_MODE);
+        return getMemory().getBoolean(KEY_CASINO_BATTLE_MODE);
     }
 
     public static void setCasinoBattleIsBoss(boolean isBoss) {
@@ -185,9 +170,7 @@ public class CosmiconEventState {
     }
 
     public static boolean isCasinoBattleBoss() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_CASINO_BATTLE_IS_BOSS)) return false;
-        return mem.getBoolean(KEY_CASINO_BATTLE_IS_BOSS);
+        return getMemory().getBoolean(KEY_CASINO_BATTLE_IS_BOSS);
     }
 
     public static void setCasinoBattleOpponent(String charId) {
@@ -205,9 +188,7 @@ public class CosmiconEventState {
     }
 
     public static int getCasinoBattleBonusHp() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_CASINO_BATTLE_BONUS_HP)) return 0;
-        return mem.getInt(KEY_CASINO_BATTLE_BONUS_HP);
+        return getMemory().getInt(KEY_CASINO_BATTLE_BONUS_HP);
     }
 
     public static void setCasinoBattleUseTrue(boolean useTrue) {
@@ -215,9 +196,7 @@ public class CosmiconEventState {
     }
 
     public static boolean getCasinoBattleUseTrue() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_CASINO_BATTLE_USE_TRUE)) return false;
-        return mem.getBoolean(KEY_CASINO_BATTLE_USE_TRUE);
+        return getMemory().getBoolean(KEY_CASINO_BATTLE_USE_TRUE);
     }
 
     public static void setCasinoBattleResultDamage(int damage) {
@@ -225,9 +204,7 @@ public class CosmiconEventState {
     }
 
     public static int getCasinoBattleResultDamage() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_CASINO_BATTLE_RESULT_DAMAGE)) return 0;
-        return mem.getInt(KEY_CASINO_BATTLE_RESULT_DAMAGE);
+        return getMemory().getInt(KEY_CASINO_BATTLE_RESULT_DAMAGE);
     }
 
     public static void setCasinoBattleOpponentKilled(boolean killed) {
@@ -235,9 +212,7 @@ public class CosmiconEventState {
     }
 
     public static boolean isCasinoBattleOpponentKilled() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_CASINO_BATTLE_OPPONENT_KILLED)) return false;
-        return mem.getBoolean(KEY_CASINO_BATTLE_OPPONENT_KILLED);
+        return getMemory().getBoolean(KEY_CASINO_BATTLE_OPPONENT_KILLED);
     }
 
     public static void setLegendSkipEnabled(boolean enabled) {
@@ -245,9 +220,7 @@ public class CosmiconEventState {
     }
 
     public static boolean isLegendSkipEnabled() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_LEGEND_SKIP_ENABLED)) return false;
-        return mem.getBoolean(KEY_LEGEND_SKIP_ENABLED);
+        return getMemory().getBoolean(KEY_LEGEND_SKIP_ENABLED);
     }
 
     public static void setTrashcanHunterLevel(int level) {
@@ -255,9 +228,7 @@ public class CosmiconEventState {
     }
 
     public static int getTrashcanHunterLevel() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_TRASHCAN_HUNTER_LEVEL)) return 0;
-        return mem.getInt(KEY_TRASHCAN_HUNTER_LEVEL);
+        return getMemory().getInt(KEY_TRASHCAN_HUNTER_LEVEL);
     }
 
     public static void setOriginalNpcCharId(String charId) {
@@ -279,9 +250,7 @@ public class CosmiconEventState {
     }
 
     public static int getTournamentWins() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_TOURNAMENT_WINS)) return 0;
-        return mem.getInt(KEY_TOURNAMENT_WINS);
+        return getMemory().getInt(KEY_TOURNAMENT_WINS);
     }
 
     public static void setTournamentLosses(int losses) {
@@ -289,9 +258,7 @@ public class CosmiconEventState {
     }
 
     public static int getTournamentLosses() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_TOURNAMENT_LOSSES)) return 0;
-        return mem.getInt(KEY_TOURNAMENT_LOSSES);
+        return getMemory().getInt(KEY_TOURNAMENT_LOSSES);
     }
 
     public static void setTournamentInLoserBracket(boolean inLoserBracket) {
@@ -299,9 +266,7 @@ public class CosmiconEventState {
     }
 
     public static boolean isTournamentInLoserBracket() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_TOURNAMENT_IN_LOSER_BRACKET)) return false;
-        return mem.getBoolean(KEY_TOURNAMENT_IN_LOSER_BRACKET);
+        return getMemory().getBoolean(KEY_TOURNAMENT_IN_LOSER_BRACKET);
     }
 
     public static void setTournamentGrandFinal(boolean grandFinal) {
@@ -309,9 +274,7 @@ public class CosmiconEventState {
     }
 
     public static boolean isTournamentGrandFinal() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_TOURNAMENT_GRAND_FINAL)) return false;
-        return mem.getBoolean(KEY_TOURNAMENT_GRAND_FINAL);
+        return getMemory().getBoolean(KEY_TOURNAMENT_GRAND_FINAL);
     }
 
     public static void setTournamentSeriesScore(String score) {
@@ -345,9 +308,7 @@ public class CosmiconEventState {
     }
 
     public static int getTournamentPendingRewards() {
-        MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_TOURNAMENT_PENDING_REWARDS)) return 0;
-        return mem.getInt(KEY_TOURNAMENT_PENDING_REWARDS);
+        return getMemory().getInt(KEY_TOURNAMENT_PENDING_REWARDS);
     }
 
     public static void clearTournamentState() {
@@ -358,10 +319,7 @@ public class CosmiconEventState {
     }
 
     public static void clearTournamentAll() {
-        MemoryAPI mem = getMemory();
-        for (String key : TOURNAMENT_KEYS) {
-            mem.unset(key);
-        }
+        clearTournamentState();
     }
 
     public static void clearCasinoBattleState() {

@@ -814,7 +814,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             if (i == 0) {
                 displayNames[i] = Global.getSector().getPlayerPerson().getNameString();
             } else {
-                var card = CharacterRegistry.getCharacterById(bd.playerNames[i]);
+                CharacterCard card = CharacterRegistry.getCharacterById(bd.playerNames[i]);
                 displayNames[i] = card != null ? card.getName() : bd.playerNames[i];
             }
         }
@@ -1086,7 +1086,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         };
     }
 
-    private static com.fs.starfarer.api.campaign.econ.MutableCredits getCredits() {
+    private static CargoAPI getCredits() {
         return Global.getSector().getPlayerFleet().getCargo().getCredits();
     }
 

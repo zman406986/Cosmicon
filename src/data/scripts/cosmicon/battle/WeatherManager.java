@@ -14,6 +14,8 @@ public class WeatherManager {
     
     private static final List<Integer> WEATHER_TURN_SCHEDULE = Arrays.asList(2, 4, 6, 8);
     
+    private static final Map<Integer, List<WeatherType>> WEATHERS_FOR_TURN_CACHE = new HashMap<>();
+    
     private WeatherType currentWeather;
     private int currentTurn;
     private int halfTurnCount;
@@ -86,7 +88,7 @@ public class WeatherManager {
         for (int i = 0; i < weatherSchedule.size(); i++) {
             if (weatherSchedule.get(i) == excluded) {
                 int turn = WEATHER_TURN_SCHEDULE.get(i);
-                List<WeatherType> candidates = getWeathersForTurn(turn);
+                List<WeatherType> candidates = new ArrayList<>(getWeathersForTurn(turn));
                 candidates.remove(excluded);
                 if (!candidates.isEmpty()) {
                     Collections.shuffle(candidates, ThreadLocalRandom.current());
@@ -113,7 +115,7 @@ public class WeatherManager {
     
     private void generateRandomWeatherSchedule() {
         for (int turn : WEATHER_TURN_SCHEDULE) {
-            List<WeatherType> candidates = getWeathersForTurn(turn);
+            List<WeatherType> candidates = new ArrayList<>(getWeathersForTurn(turn));
             if (!candidates.isEmpty()) {
                 Collections.shuffle(candidates, ThreadLocalRandom.current());
                 weatherSchedule.add(candidates.get(0));
@@ -122,13 +124,15 @@ public class WeatherManager {
     }
     
     private List<WeatherType> getWeathersForTurn(int turn) {
-        List<WeatherType> result = new ArrayList<>();
-        for (WeatherType weather : WeatherType.values()) {
-            if (weather.getDefaultTurn() == turn) {
-                result.add(weather);
+        return WEATHERS_FOR_TURN_CACHE.computeIfAbsent(turn, t -> {
+            List<WeatherType> result = new ArrayList<>();
+            for (WeatherType weather : WeatherType.values()) {
+                if (weather.getDefaultTurn() == t) {
+                    result.add(weather);
+                }
             }
-        }
-        return result;
+            return Collections.unmodifiableList(result);
+        });
     }
     
     private List<WeatherType> getWeathersForTurn(int turn, boolean allowSafeguard, boolean allowAttack) {

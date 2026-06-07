@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 import com.fs.starfarer.api.campaign.BaseCustomUIPanelPlugin;
 import com.fs.starfarer.api.ui.Alignment;
@@ -63,6 +63,7 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
     private PrismaticDiceType selectedType;
     private PrismaticDiceInstance rolledInstance;
     private boolean showingConfirmation;
+    private boolean mustSelectDestined;
 
     private float panelX;
     private float panelY;
@@ -269,7 +270,7 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
         if (tutorialRoller != null && tutorialRoller.shouldInterceptPrismaticRoll()) {
             rolledInstance = tutorialRoller.getFixedPrismaticRoll(type, useTrueVersion);
         } else {
-            rolledInstance = PrismaticDiceInstance.roll(type, useTrueVersion, new Random());
+            rolledInstance = PrismaticDiceInstance.roll(type, useTrueVersion, ThreadLocalRandom.current());
         }
 
         String diceName = PrismaticDisplayHelper.getDiceDisplayName(type);
@@ -278,7 +279,8 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
         String effectText = Strings.get("prismatic.popup.effect_header") + " " + PrismaticDisplayHelper.getEffectDescription(type);
         confirmEffectLabel.setText(effectText);
 
-        if (shouldShowDestinedWarning()) {
+        mustSelectDestined = shouldShowDestinedWarning();
+        if (mustSelectDestined) {
             warningLabel.setText(Strings.get("prismatic.popup.warning_destined"));
             warningLabel.setOpacity(1f);
         } else {
@@ -291,7 +293,7 @@ public class PrismaticDiceSelectionPopup extends BaseCustomUIPanelPlugin impleme
     private void confirmRoll() {
         if (selectedType == null || rolledInstance == null) return;
 
-        rolledInstance.setMustSelect(shouldShowDestinedWarning());
+        rolledInstance.setMustSelect(mustSelectDestined);
 
         selectionCallback.onPrismaticDiceSelected(selectedType, rolledInstance);
     }

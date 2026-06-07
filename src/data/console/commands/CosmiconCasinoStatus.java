@@ -102,13 +102,11 @@ public class CosmiconCasinoStatus implements BaseCommand {
         return CommandResult.SUCCESS;
     }
 
+    private static final String[] TIER_NAMES = {
+        "Unknown", "Character Unlock", "True Prismatic Unlock", "Prismatic Unlock", "Credits Only"
+    };
+
     private static String tierName(int tier) {
-        switch (tier) {
-            case 1 -> { return "Character Unlock"; }
-            case 2 -> { return "True Prismatic Unlock"; }
-            case 3 -> { return "Prismatic Unlock"; }
-            case 4 -> { return "Credits Only"; }
-            default -> { return "Unknown"; }
-        }
+        return (tier >= 1 && tier < TIER_NAMES.length) ? TIER_NAMES[tier] : "Unknown";
     }
 }

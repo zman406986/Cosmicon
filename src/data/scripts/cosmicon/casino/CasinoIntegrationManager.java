@@ -201,18 +201,30 @@ public class CasinoIntegrationManager {
     }
 
     public static int getBossRewardTier() {
-        List<String> lockedChars = getLockedCharacterIds();
-        if (!lockedChars.isEmpty()) return 1;
+        if (!getLockedCharacterIds().isEmpty()) return 1;
 
-        List<String> lockedTrueVersion = getLockedPrismaticTrueVersion();
-        if (!lockedTrueVersion.isEmpty()) return 2;
+        Set<String> unlocked = CosmiconStats.getUnlockedPrismaticDice();
+        Set<String> trueUnlocked = CosmiconStats.getUnlockedPrismaticTrueDice();
 
-        List<String> lockedTrueVersionPrismatic = getLockedPrismaticWithTrueVersion();
-        if (!lockedTrueVersionPrismatic.isEmpty()) return 3;
+        boolean hasLockedTrueUnlock = false;
+        boolean hasLockedWithTrue = false;
+        boolean hasLockedWithoutTrue = false;
 
-        List<String> lockedOtherPrismatic = getLockedPrismaticWithoutTrueVersion();
-        if (!lockedOtherPrismatic.isEmpty()) return 4;
-
+        for (PrismaticDiceType type : PrismaticDiceRegistry.getAll().values()) {
+            boolean isUnlocked = unlocked.contains(type.getId());
+            if (type.hasTrueVersion()) {
+                if (isUnlocked && !trueUnlocked.contains(type.getId())) {
+                    hasLockedTrueUnlock = true;
+                } else if (!isUnlocked) {
+                    hasLockedWithTrue = true;
+                }
+            } else if (!isUnlocked) {
+                hasLockedWithoutTrue = true;
+            }
+        }
+        if (hasLockedTrueUnlock) return 2;
+        if (hasLockedWithTrue) return 3;
+        if (hasLockedWithoutTrue) return 4;
         return 5;
     }
 
