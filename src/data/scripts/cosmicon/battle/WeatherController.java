@@ -45,7 +45,7 @@ public class WeatherController {
                 state.getPlayerEffects().addEffect(StatusEffect.STRENGTH, src, 5, DurationType.PERMANENT);
                 state.getOpponentEffects().addEffect(StatusEffect.STRENGTH, src, 5, DurationType.PERMANENT);
             }
-            case VENOCLLOUD -> {
+            case VENOCLOUD -> {
                 String src = weather.name();
                 state.getPlayerEffects().addEffect(StatusEffect.VENOM, src, 1, DurationType.PERMANENT);
                 state.getOpponentEffects().addEffect(StatusEffect.VENOM, src, 1, DurationType.PERMANENT);

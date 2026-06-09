@@ -5,6 +5,7 @@ import java.awt.Color;
 import com.fs.starfarer.api.graphics.SpriteAPI;
 import com.fs.starfarer.api.ui.CustomPanelAPI;
 
+import data.scripts.cosmicon.CosmiconSFX;
 import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.EasingUtil;
 
@@ -481,6 +482,7 @@ public class DamageResolutionAnimator {
             impactEffect.triggerHeavyImpact(defenderTargetX, defenderTargetY, DAMAGE_RESULT_COLOR);
 
             damageImpacted = true;
+            CosmiconSFX.playImpact();
 
             if (callback != null) {
                 if (perforation && originalDefenseValue > 0) {
@@ -705,6 +707,7 @@ public class DamageResolutionAnimator {
 
         if (phaseElapsed >= COMBO_WINNER_IMPACT_DURATION || atkDone) {
             impactEffect.triggerHeavyImpact(defenderTargetX, defenderTargetY, DAMAGE_RESULT_COLOR);
+            CosmiconSFX.playImpact();
 
             if (callback != null) {
                 if (perforation && originalDefenseValue > 0) {

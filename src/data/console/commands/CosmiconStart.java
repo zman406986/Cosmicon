@@ -7,6 +7,7 @@ import data.scripts.cosmicon.battle.CharacterRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.state.CosmiconStats;
+import data.scripts.cosmicon.util.CharacterIds;
 import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +61,7 @@ public class CosmiconStart implements BaseCommand {
             CosmiconEventState.setReplayTutorialGame(tutorialGame);
             CosmiconEventState.setIsTutorialMode(true);
 
-            String tutOpponent = tutorialGame == 1 ? "trashcan" : "robin";
+            String tutOpponent = tutorialGame == 1 ? CharacterIds.FURBO_JOURNALIST : "robin";
             CosmiconEventState.setOpponentCharacter(tutOpponent);
 
             Console.showMessage("Starting Cosmicon Tutorial Game " + tutorialGame + " vs " + tutOpponent + "...");

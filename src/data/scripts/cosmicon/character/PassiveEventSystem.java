@@ -104,6 +104,15 @@ public final class PassiveEventSystem {
             }
         }
 
+        if (CharacterIds.BANANADVISOR.equals(characterId)) {
+            CharacterCard card = state.getCard(forPlayer);
+            int hp = forPlayer ? state.getPlayerHp() : state.getOpponentHp();
+            if (card != null && hp > 0 && hp <= 5 && !state.hasBananadvisorDefBoostTriggered(forPlayer)) {
+                card.setDefLevel(card.getDefLevel() + 1);
+                state.markBananadvisorDefBoostTriggered(forPlayer);
+            }
+        }
+
         if (result.hasEffects()) {
             if (result.getPrismaticUseBonus() > 0) {
                 CharacterCard card = state.getCard(forPlayer);

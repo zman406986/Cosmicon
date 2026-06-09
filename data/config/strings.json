@@ -16,7 +16,10 @@
         "session_won": "You've won this round! Find another bar encounter to play again.",
         "replay_tutorial_1": "Replay Tutorial Game 1",
         "replay_tutorial_2": "Replay Tutorial Game 2",
-        "replay_unrecorded": "(Replay tutorial - stats not recorded)"
+        "replay_unrecorded": "(Replay tutorial - stats not recorded)",
+        "start_tutorial_2": "Start Tutorial 2",
+        "easy_mode_status": "Easy Mode — {0}/7 two-star characters collected",
+        "migrated_tutorial_prompt": "New 2-star characters have been discovered! Play a game to learn the basics."
     },
     "bar_event": {
         "tutorial_prompt": "A cloaked figure approaches you in the bar, dice clicking in their palms. 'Care for a game, rookie? I'll go easy on you.'",
@@ -26,7 +29,8 @@
         "declined": "You politely decline and return to your drink.",
         "approach": "Approach the Cosmicon player",
         "trashcan_hunter_prompt": "The Cosmicon regulars immediately recognize you. 'It's the Master Dicer! Level {0}!' One of them eagerly offers you a seat at their table.",
-        "trashcan_hunter_prompt_legend": "The Cosmicon regulars immediately recognize you. 'It's the Legend!' One of them eagerly offers you a seat at their table."
+        "trashcan_hunter_prompt_legend": "The Cosmicon regulars immediately recognize you. 'It's the Legend!' One of them eagerly offers you a seat at their table.",
+        "easy_mode_prompt": "A 2-star Cosmicon player waves at you. 'New to this? Let's practice with the basic cards!'"
     },
     "help": {
         "title": "=== How to Play Cosmicon ===",
@@ -330,6 +334,58 @@
             "passive_desc_even": "All even: 4 Strength",
             "passive_desc_odd": "2 Strength"
         },
+        "trashcan_2star": {
+            "name": "Trashcan",
+            "title": "Trashcan",
+            "open": "...",
+            "passive": "After attacking: Gains 2 stack(s) of Strength. If all the selected dice show even numbers, gains 4 stack(s) of Strength instead. Strength: When attacking, provides an ATK bonus based on the number of stacks.",
+            "passive_desc_even": "All even: 4 Strength",
+            "passive_desc_odd": "2 Strength"
+        },
+        "chimera": {
+            "name": "Chimera",
+            "title": "Chimera",
+            "open": "...",
+            "passive": "When attacking: If the selected dice show the same number, increases Attack by 3. If that number is 4, increases Attack by 7 instead.",
+            "passive_desc": "Match: +3 ATK (4s: +7)"
+        },
+        "dromas": {
+            "name": "Dromas",
+            "title": "Dromas",
+            "open": "...",
+            "passive": "When attacking: If all the selected dice show even numbers, inflicts 2 stacks of Poison. This effect can stack.",
+            "passive_desc": "All even: 2 Poison"
+        },
+        "automaton_beetle": {
+            "name": "Automaton Beetle",
+            "title": "Automaton Beetle",
+            "open": "...",
+            "passive": "When defending: Gains 1 reroll. If dice have 3 consecutive numbers, gains Forcefield and 8 Strength for next turn.",
+            "passive_desc": "3 consecutive: Forcefield + 8 Strength"
+        },
+        "furbo_journalist": {
+            "name": "Furbo Journalist",
+            "title": "Furbo Journalist",
+            "open": "...",
+            "passive": "When defending: Takes 2 Instant Damage when hit. If all defense dice are odd, deals 4 instead.",
+            "passive_desc_all_odd": "All odd: 4 Instant Damage",
+            "passive_desc_damage": "2 Instant Damage"
+        },
+        "bananadvisor": {
+            "name": "BananAdvisor",
+            "title": "Fortune BananAdvisor",
+            "open": "...",
+            "passive": "When defending: Gains 1 reroll. If no DMG taken, heal 5 HP. Once only: If HP <= 5 at end of turn, DEF Level +1.",
+            "passive_desc_heal": "No DMG: Heal 5 HP",
+            "passive_desc_def": "HP <= 5: DEF Level +1"
+        },
+        "senior_staff": {
+            "name": "Senior Staff",
+            "title": "Team Leader",
+            "open": "...",
+            "passive": "When attacking: ATK +1 per different number. When defending: DEF +1 per different number.",
+            "passive_desc": "Distinct dice: +1 ATK/DEF each"
+        },
         "default": {
             "name": "Default",
             "title": "Cosmicon Player",
@@ -520,25 +576,26 @@
     "tutorial": {
         "no_prismatic_allowed": "Tutorial mode: Prismatic dice are disabled for this game.",
         "games_remaining": "Tutorial mode - {0} games remaining",
-        "g1_reward": "You unlocked the character [Sparxie]! Play the next tutorial game to unlock more.",
-        "g2_reward": "You unlocked [Acheron] and the [Repeater] prismatic dice! You can now play random encounters via comm directories.",
+        "g1_reward": "You unlocked [Chimera] (2-star)! You are now in Easy Mode. Win random encounters to collect all 7 two-star characters.",
+        "g2_reward": "You unlocked [Acheron] and the [Repeater] prismatic dice! The full game is now available. Visit bars to find random encounters!",
         "g2_unlock_option": "Unlock character [Acheron] and prismatic dice [Repeater]",
-        "g1_t1_attack_roll": "You are the attacker! Roll the dice by clicking anywhere.",
-        "g1_t1_attack_select": "Select your highest dice to deal more damage. Your attack level is 4, so you can select the 4 highest numbers.",
-        "g1_t1_attack_confirm": "Click 'Confirm Attack' when you're ready!",
-        "g1_t1_attack_wait": "Wait for the opponent to select their defending dice...",
-        "g1_t1_attack_resolve": "The difference between attack and defense is dealt as damage. Click 'Continue' to resolve the turn and switch roles.",
-        "g1_t1_defense_roll": "Now you are defending! The opponent will roll first and select a number of dice equal to their attack level",
-        "g1_t1_defense_select": "You rolled matching numbers! Select the pair to trigger Sparxie's Hack ability. (3 dice in total since your defense level is 3.)",
-        "g1_t1_defense_confirm": "Click 'Confirm Defense' to block the attack. Once you confirm, try mouse-over [Hack] to view its effects.",
-        "g1_t1_defense_wait": "Click anywhere to watch the modification, your Hack ability will lower the opponent's dice value.",
-        "g1_t1_defense_resolve": "That reduced some damage! Click 'Continue' to start your next attack.",
-        "g1_t2_attack_roll": "Your turn to attack again! Wait for the initial dice roll.",
-        "g1_t2_attack_reroll": "These rolls are low. Select the D8 and the two D6 dice (the 1, 1, 2), then click 'Reroll Selected' for better numbers!",
-        "g1_t2_attack_select": "Much better! Now select your 4 best dice and confirm!",
-        "g1_t2_attack_confirm": "Hack will be triggered again since you selected 2 identical numbers. Each character has a different ability with varying trigger.",
-        "g1_t2_attack_wait": "You've mastered the basics of rolling, selecting, rerolling and character ability! Now watch the resolution play out...",
-        "g1_victory": "Victory! You unlocked the character [Sparxie]. Play the next tutorial game to unlock Acheron and the Repeater prismatic dice!",
+
+        "g1_t1_attack_roll": "You play as [Chimera], attacking first! Roll the dice by clicking anywhere.",
+        "g1_t1_attack_select": "Select your 3 highest dice to maximize damage. (Attack Level: 3)",
+        "g1_t1_attack_confirm": "Click 'Confirm Attack'. Your dice have matching 6s — Chimera's passive gives +3 Attack for matching numbers!",
+        "g1_t1_attack_wait": "Waiting for the opponent (Furbo Journalist) to defend...",
+        "g1_t1_attack_resolve": "Chimera's passive triggered: matching numbers = +3 Attack! If the matching number were 4, you'd get +7 instead. Click 'Continue' to switch to defense.",
+        "g1_t1_defense_roll": "Now defending against Furbo Journalist! Roll your dice.",
+        "g1_t1_defense_select": "Select your 2 highest dice to block damage. (Defense Level: 2)",
+        "g1_t1_defense_confirm": "Click 'Confirm Defense'. Watch out — Furbo Journalist's passive deals [Instant Damage] when hit!",
+        "g1_t1_defense_wait": "Waiting for attack resolution...",
+        "g1_t1_defense_resolve": "Furbo Journalist dealt Instant Damage! Each character has a unique passive. Click 'Continue' to attack again.",
+        "g1_t2_attack_roll": "Your turn to attack! Roll the dice — these look low...",
+        "g1_t2_attack_reroll": "No matching pairs! Select the 2 lowest dice and click 'Reroll Selected' for better numbers.",
+        "g1_t2_attack_select": "Matching 4s! Select your 3 best dice. Chimera's passive gives +7 Attack when matching dice show 4!",
+        "g1_t2_attack_confirm": "Matching 4s = +7 Attack — the premium bonus! Confirm to finish the match with a powerful attack.",
+        "g1_t2_attack_wait": "You've mastered rolling, selecting, rerolling, and character passives! Final resolution...",
+        "g1_victory": "Victory! You unlocked [Chimera] (2-star). Entering Easy Mode — play bar encounters to collect all 7 two-star characters and unlock Tutorial 2!",
         "g2_t1_defense_roll": "You now play as [Acheron]! Her ability triggers when she selects all 4s on attack. For now, defend first - roll the dice!",
         "g2_t1_defense_select": "You rolled two 4s! Select them - You'll get to use a special dice next turn!",
         "g2_t1_defense_confirm": "Confirm your defense selection.",
@@ -572,6 +629,11 @@
         "g2_t4_attack_select": "Three 4s! Select them all to trigger Acheron's ability - finish it!",
         "g2_t4_attack_confirm": "Confirm to claim victory. You've mastered prismatic dice and weather tactics and unlocked Acheron and the Repeater prismatic dice.",
         "g2_victory": "Victory! Visit bars to find random encounters and unlock more characters and dice!"
+    },
+    "easy_mode": {
+        "collection_progress": "Collection: {0}/{1} two-star characters collected",
+        "all_collected": "All 7 two-star characters collected! Start Tutorial 2 from the main menu.",
+        "migrated_complete": "All 2-star characters collected! You're ready for the full game."
     },
     "gallery": {
         "no_prismatic_unlocked": "No prismatic dice unlocked yet. Win random encounters to unlock more dice!"
@@ -692,5 +754,24 @@
         "help_2": "- Challenge the Legend to earn rewards and unlock the Tournament",
         "help_3": "- Tournament: 8-player double elimination bracket",
         "help_enter": "Enter Cosmicon Dice Lounge"
+    },
+    "bonus": {
+        "title": "Bonus",
+        "none": "No Bonus",
+        "hp_9": "+9 HP",
+        "atk_1": "+1 ATK",
+        "def_1": "+1 DEF",
+        "none_desc": "No stat bonus - earn 50% more credits on victory",
+        "hp_9_desc": "Gain +9 maximum HP for this battle",
+        "atk_1_desc": "Gain +1 Attack Level (max 5)",
+        "def_1_desc": "Gain +1 Defense Level (max 5)",
+        "locked": "Locked",
+        "locked_desc": "Collect more 2-star characters to unlock this bonus",
+        "atk_capped": "ATK Level already at maximum (5)",
+        "def_capped": "DEF Level already at maximum (5)",
+        "credit_bonus_active": "Credit bonus: +50% credits!",
+        "unlocked_hp": "Bonus Unlocked: +9 HP option now available in Character Setup!",
+        "unlocked_atk": "Bonus Unlocked: +1 ATK Level option now available!",
+        "unlocked_def": "Bonus Unlocked: +1 DEF Level option now available!"
     }
 }

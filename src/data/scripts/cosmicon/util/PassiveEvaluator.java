@@ -52,17 +52,30 @@ public class PassiveEvaluator {
     }
 
     public static void applyPassiveEffects(PassiveResult result, BattleState state, boolean forPlayer, String characterId) {
+        applyPassiveEffects(result, state, forPlayer, characterId, 0);
+    }
+
+    public static void applyPassiveEffects(PassiveResult result, BattleState state, boolean forPlayer, String characterId, int actualDamageTaken) {
         if (result == null || result.isEmpty()) return;
-        
+
         StatusEffectProcessor effects = state.getEffects(forPlayer);
         String source = "passive." + characterId;
-        
+
         for (GrantedEffect ge : result.getGrantedEffects()) {
             if (ge.effect() == StatusEffect.POISON) {
                 boolean opponent = !forPlayer;
                 state.getEffects(opponent).addEffect(ge.effect(), source, ge.layers(), DurationType.PERMANENT);
             } else if (ge.effect() == StatusEffect.INSTANT_DAMAGE) {
-                effects.addEffect(ge.effect(), source, ge.layers(), DurationType.PERMANENT);
+                int damage = ge.layers();
+                boolean opponent = !forPlayer;
+                int targetHp = opponent ? state.getOpponentHp() : state.getPlayerHp();
+                int newHp = Math.max(0, targetHp - damage);
+                if (opponent) {
+                    state.setOpponentHp(newHp);
+                } else {
+                    state.setPlayerHp(newHp);
+                }
+                state.notifySecondaryDamage(opponent, damage, "INSTANT_DAMAGE");
             } else if (ge.effect() == StatusEffect.HACK || ge.effect() == StatusEffect.ARISE) {
                 state.applyEffect(ge.effect(), ge.layers(), forPlayer);
             } else if (ge.effect() == StatusEffect.UNYIELDING) {
@@ -73,31 +86,45 @@ public class PassiveEvaluator {
                 effects.addEffect(ge.effect(), source, ge.layers(), DurationType.PERMANENT);
             }
         }
-        
+
         if (result.shouldTriggerToughnessInstantDamage()) {
             int currentToughness = effects.getLayers(StatusEffect.TOUGHNESS);
             int newToughness = Math.max(0, currentToughness - result.getToughnessToRemove());
             effects.setEffectFromSource(StatusEffect.TOUGHNESS, source, newToughness);
-            
+
             effects.addEffect(StatusEffect.INSTANT_DAMAGE, source, result.getInstantDamageToOpponent(), DurationType.PERMANENT);
         }
-        
-        if (result.getHealAmount() > 0) {
-            state.applyHealTo(forPlayer, result.getHealAmount());
-            state.notifyHeal(forPlayer, result.getHealAmount());
+
+        if (result.getHealAmount() > 0 && actualDamageTaken <= 0) {
+            if (data.scripts.cosmicon.util.CharacterIds.BANANADVISOR.equals(characterId)) {
+                state.setPendingConditionalHeal(forPlayer, result.getHealAmount());
+            } else {
+                state.applyHealTo(forPlayer, result.getHealAmount());
+                state.notifyHeal(forPlayer, result.getHealAmount());
+            }
         }
-        
+
         if (result.hasPerforation()) {
             effects.addEffect(StatusEffect.PERFORATION, source, 1, DurationType.PERMANENT);
         }
-        
+
         if (result.getPendingDefLevelBoost() > 0) {
             state.setPendingDefLevelBoost(forPlayer, result.getPendingDefLevelBoost());
             state.setPendingDefLevelBoostWithCounter(forPlayer, true);
         }
-        
+
         if (result.getPendingStrength() > 0) {
-            state.setPendingStrength(forPlayer, result.getPendingStrength());
+            String strengthSource = "passive." + characterId;
+            state.setPendingStrength(forPlayer, result.getPendingStrength(), strengthSource);
+        }
+
+        if (result.getDefenseBonus() > 0) {
+            int currentDefense = state.getDefenseValue();
+            state.setDefenseValue(currentDefense + result.getDefenseBonus());
+        }
+
+        if (result.getPendingInstantDamageOnHit() > 0) {
+            state.setPendingInstantDamageOnHit(forPlayer, result.getPendingInstantDamageOnHit());
         }
     }
 }

@@ -1,4 +1,11 @@
 Version 0.3.0
+- Added six 2-star characters: Chimera (burst attacker), Dromas (DoT/poison), Automaton Beetle (defensive tank), Furbo Journalist (reactive defender), BananAdvisor (sustain defender), Senior Staff (versatile all-rounder); includes full AI profiles, passive evaluation, card art, and portraits.
+- Added Easy Mode progression: after Tutorial 1, players collect 2-star characters one by one from random encounters; Tutorial 2 unlocks after collecting all 7 (6 + Trashcan).
+- Added Bonus Selection system in Character Setup: +9 HP (unlocked at 3 characters), +1 ATK Level (5 characters), +1 DEF Level (7 characters), or No Bonus (+50% credit reward).
+- Added sound effects system (CosmiconSFX): UI beep, impact (7 pitch variants), dice select/unselect, dice roll (4 variants), swoosh, clash, win/lose; integrated into battle UI and setup panel.
+- Added save migration (V0 to V1): detects pre-rework saves and guides migrated players through new tutorial/easy-mode progression.
+- Added version tracking file for auto-update support (data/config/version/).
+- Reworked Tutorial Game 1 to use Chimera vs Furbo Journalist with scripted dice rolls.
 - Added NPC opponent titles, opening dialogue lines, and greeting rules (EN/CN); NPCs display assigned title and character-specific opening line.
 - Fixed tournament bracket position strings not localized; fixed playerLosses not incrementing on loser bracket elimination.
 - Fixed tournament reward bugs: tier 2 unlocking wrong prismatic dice, tier 4 skipping dice selection, pending rewards lost on ESC dismiss.
@@ -19,6 +26,7 @@ Version 0.3.0
 - Externalized hardcoded values to CosmiconConfig and settings.json (HP, costs, credit multipliers).
 - Added three-tier logging system: Tier 1 (always on: startup, battle lifecycle, errors), Tier 2 (debug: battle flow, damage, status effects, AI decisions), Tier 3 (verbose: AI internals, dice rest, animations, weather details); default changed from all-on to off; added `cosmicon_debug` console command with off/debug/verbose/reroll levels.
 - Overhauled CN localization: eliminated translationese across ~43 strings (passive/causative structures, word order, unnatural phrasing); unified terminology (虹吸→吸取, 治愈等同于→回复等于, 转变为→变成, 一定比例→50%); distinguished Master Dicer (赌神), The Legend NPC (老赌神), and inherited Legend title (真 赌神); added Legend-specific dialogue variants for welcome/prompt/greeting strings in both EN and CN.
+- Updated CosmiconReset console command to clear bonus state, data version, and migration flags.
 
 Version 0.2.0
 - Changed entry point from bars to comms (Custom NPCs generated for playing against).

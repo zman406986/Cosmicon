@@ -116,6 +116,18 @@ public class CharacterCard {
         return new CharacterCard(id, name, newMaxHp, atkLevel, defLevel, defaultAtkLevel, defaultDefLevel, dicePool, passiveDescription, prismaticDiceIds, useTruePrismatic);
     }
 
+    public CharacterCard withAtkLevel(int atkLevel) {
+        CharacterCard copy = this.copy();
+        copy.setAtkLevel(atkLevel);
+        return copy;
+    }
+
+    public CharacterCard withDefLevel(int defLevel) {
+        CharacterCard copy = this.copy();
+        copy.setDefLevel(defLevel);
+        return copy;
+    }
+
     public CharacterCard copy() {
         return new CharacterCard(id, name, maxHp, atkLevel, defLevel, defaultAtkLevel, defaultDefLevel, dicePool, passiveDescription, prismaticDiceIds, useTruePrismatic);
     }

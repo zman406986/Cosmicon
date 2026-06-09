@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import data.scripts.cosmicon.CosmiconSFX;
 import data.scripts.cosmicon.battle.DicePathPlanner.PlannedPath;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.util.ColorHelper;
@@ -451,6 +452,8 @@ public class DiceRollManager {
             if (!waitingForRollTrigger) return;
             if (pendingRollPaths == null || pendingRollPaths.isEmpty()) return;
             if (pendingScatterDestinations == null) return;
+
+            CosmiconSFX.playDiceRoll(animators.size());
 
             int count = Math.min(animators.size(), Math.min(pendingRollPaths.size(), pendingScatterDestinations.length));
             for (int i = 0; i < count; i++) {

@@ -45,7 +45,7 @@ public class WeatherManager {
         STORY_BATTLE_WEATHERS.put("hook_true", Arrays.asList(
             WeatherType.RAINBOW, WeatherType.SEA_OF_CLOUDS, WeatherType.LUNISOLAR_LUMINANCE, WeatherType.DRY_THUNDERSTORM));
         STORY_BATTLE_WEATHERS.put(CharacterIds.SPARXIE, Arrays.asList(
-            WeatherType.ACID_RAIN, WeatherType.VENOCLLOUD, WeatherType.DRIZZLE, WeatherType.TOXIC_FOG));
+            WeatherType.ACID_RAIN, WeatherType.VENOCLOUD, WeatherType.DRIZZLE, WeatherType.TOXIC_FOG));
         STORY_BATTLE_WEATHERS.put("rappa", Arrays.asList(
             WeatherType.SCORCHING_SUN, WeatherType.RAINBOW, WeatherType.DROUGHT, WeatherType.DRY_THUNDERSTORM));
         STORY_BATTLE_WEATHERS.put(CharacterIds.YAO_GUANG, Arrays.asList(

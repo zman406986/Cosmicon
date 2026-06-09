@@ -113,6 +113,15 @@ public class DiceEvaluator {
         return frequencies(values);
     }
 
+    public static boolean hasThreeConsecutive(List<Integer> values) {
+        if (values == null || values.size() < 3) return false;
+        java.util.Set<Integer> set = new java.util.HashSet<>(values);
+        for (int v : set) {
+            if (set.contains(v + 1) && set.contains(v + 2)) return true;
+        }
+        return false;
+    }
+
     public static Map<Integer, Integer> computeFrequencyMap(List<Integer> values) {
         if (values == null || values.isEmpty()) return Collections.emptyMap();
         int[] freq = frequencies(values);

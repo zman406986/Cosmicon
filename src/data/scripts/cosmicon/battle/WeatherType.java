@@ -32,7 +32,7 @@ public enum WeatherType {
     DRY_THUNDERSTORM(WeatherCategory.REVERSAL, 8),
     TOXIC_FOG(WeatherCategory.REVERSAL, 8),
     THE_DECISIVE_MOMENT(WeatherCategory.ATTACK, -1),
-    VENOCLLOUD(WeatherCategory.ATTACK, -2),
+    VENOCLOUD(WeatherCategory.ATTACK, -2),
     DRIZZLE(WeatherCategory.HELP, -2);
 
     private final WeatherCategory category;

@@ -40,6 +40,12 @@ public class CharacterPassives {
             case DAN_HENG -> evaluateDanHengPT(result, diceValues, isAttacking);
             case PHAINON -> evaluatePhainon(result, diceValues, isAttacking);
             case TRASHCAN -> evaluateTrashcan(result, diceValues, isAttacking);
+            case CHIMERA -> evaluateChimera(result, diceValues, isAttacking);
+            case DROMAS -> evaluateDromas(result, diceValues, isAttacking);
+            case AUTOMATON_BEETLE -> evaluateAutomatonBeetle(result, diceValues, isAttacking);
+            case FURBO_JOURNALIST -> evaluateFurboJournalist(result, diceValues, isAttacking);
+            case BANANADVISOR -> evaluateBananadvisor(result, diceValues, isAttacking);
+            case SENIOR_STAFF -> evaluateSeniorStaff(result, diceValues, isAttacking);
             case THE_HERTA, CYRENE, CASTORICE, YAO_GUANG -> {}
             case SPARXIE -> evaluateSparxie(result, diceValues);
         }
@@ -58,6 +64,12 @@ public class CharacterPassives {
             case MARCH_7TH, SPARXIE -> freq[dieValue] >= 2;
             case HYACINE -> isAttacking && dieValue == 6;
             case PHAINON -> isAttacking || freq[dieValue] >= 2;
+            case CHIMERA -> isAttacking && freq[dieValue] >= 2;
+            case DROMAS -> isAttacking && dieValue % 2 == 0;
+            case AUTOMATON_BEETLE -> !isAttacking;
+            case FURBO_JOURNALIST -> !isAttacking && dieValue % 2 != 0;
+            case BANANADVISOR -> !isAttacking;
+            case SENIOR_STAFF -> true;
             default -> false;
         };
     }
@@ -153,6 +165,59 @@ public class CharacterPassives {
         if (values == null || values.isEmpty()) return;
         if (hasIdenticalNumbers(values)) {
             result.addGrantedEffect(StatusEffect.HACK, 1);
+        }
+    }
+
+    private static void evaluateChimera(PassiveResult result, List<Integer> values, boolean isAttacking) {
+        if (!isAttacking || values == null || values.isEmpty()) return;
+        if (!hasIdenticalNumbers(values)) return;
+        int[] freq = frequencyArray(values);
+        int bonus = 3;
+        for (int v = 1; v <= 12; v++) {
+            if (freq[v] >= 2 && v == 4) {
+                bonus = 7;
+                break;
+            }
+        }
+        result.addAttackBonus(bonus);
+    }
+
+    private static void evaluateDromas(PassiveResult result, List<Integer> values, boolean isAttacking) {
+        if (!isAttacking || values == null || values.isEmpty()) return;
+        if (allEven(values)) {
+            result.addGrantedEffect(StatusEffect.POISON, 2);
+        }
+    }
+
+    private static void evaluateAutomatonBeetle(PassiveResult result, List<Integer> values, boolean isAttacking) {
+        if (isAttacking || values == null || values.isEmpty()) return;
+        if (hasThreeConsecutive(values)) {
+            result.addGrantedEffect(StatusEffect.FORCEFIELD, 1);
+            result.setPendingStrength(8);
+        }
+    }
+
+    private static void evaluateFurboJournalist(PassiveResult result, List<Integer> values, boolean isAttacking) {
+        if (isAttacking || values == null || values.isEmpty()) return;
+        boolean allOdd = true;
+        for (int v : values) {
+            if (v % 2 == 0) { allOdd = false; break; }
+        }
+        result.setPendingInstantDamageOnHit(allOdd ? 4 : 2);
+    }
+
+    private static void evaluateBananadvisor(PassiveResult result, List<Integer> values, boolean isAttacking) {
+        if (isAttacking || values == null || values.isEmpty()) return;
+        result.setHealAmount(5);
+    }
+
+    private static void evaluateSeniorStaff(PassiveResult result, List<Integer> values, boolean isAttacking) {
+        if (values == null || values.isEmpty()) return;
+        int distinct = countDistinctValues(values);
+        if (isAttacking) {
+            result.addAttackBonus(distinct);
+        } else {
+            result.addDefenseBonus(distinct);
         }
     }
 
@@ -252,7 +317,7 @@ public class CharacterPassives {
 
     public static void onStartOfDefenseTurn(String characterId, BattleState state, boolean forPlayer) {
         if (characterId == null) return;
-        
+
         int pendingBoost = state.getPendingDefLevelBoost(forPlayer);
         if (pendingBoost > 0) {
             var card = state.getCard(forPlayer);
@@ -265,6 +330,10 @@ public class CharacterPassives {
                 state.getEffects(forPlayer).addEffect(StatusEffect.COUNTER, characterId, 1, DurationType.USAGE_BASED);
             }
             state.clearPendingDefLevelBoost(forPlayer);
+        }
+
+        if (AUTOMATON_BEETLE.equals(characterId) || BANANADVISOR.equals(characterId)) {
+            state.getEffects(forPlayer).addEffect(StatusEffect.YAO_GUANG_REROLLS, characterId, 1, DurationType.USAGE_BASED);
         }
     }
 

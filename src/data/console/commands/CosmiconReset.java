@@ -3,6 +3,7 @@ package data.console.commands;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import data.scripts.cosmicon.state.CosmiconStats;
+import data.scripts.cosmicon.util.CharacterIds;
 import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,7 @@ public class CosmiconReset implements BaseCommand {
         }
 
         MemoryAPI mem = Global.getSector().getPlayerMemoryWithoutUpdate();
+        MemoryAPI sectorMem = Global.getSector().getMemory();
 
         boolean resetStats = mode.equals("all") || mode.equals("stats");
         boolean resetUnlocks = mode.equals("all") || mode.equals("unlocks");
@@ -39,15 +41,26 @@ public class CosmiconReset implements BaseCommand {
         }
 
         if (resetUnlocks) {
-            List<String> charKeys = List.of("$cos_unlocked_characters", "$cos_has_gallery_characters");
+            List<String> charKeys = List.of("$cos_unlocked_characters");
             for (String key : charKeys) {
                 mem.unset(key);
             }
 
             mem.unset("$cos_unlocked_prismatic");
+            mem.unset("$cos_unlocked_prismatic_true");
             mem.unset("$cos_prismatic_feature_unlocked");
+            mem.unset("$cos_tutorial_1_completed");
+            mem.unset("$cos_tutorial_2_completed");
+            mem.unset("$cos_bonus_hp_unlocked");
+            mem.unset("$cos_bonus_atk_unlocked");
+            mem.unset("$cos_bonus_def_unlocked");
+            mem.unset("$cos_tournament_unlocked");
+            mem.unset("$cos_gatekeeper_999_unlocked");
+            mem.unset("$cos_legend_title_inherited");
+            mem.unset("$cos_data_version");
+            mem.unset("$cos_migrated_from_prerework");
 
-            Console.showMessage("Reset: character & prismatic dice unlocks");
+            Console.showMessage("Reset: character & prismatic dice unlocks, bonuses, progression flags");
         }
 
         if (resetPlayer) {
@@ -55,10 +68,15 @@ public class CosmiconReset implements BaseCommand {
                 "$cos_selected_character", "$cos_equipped_prismatic", "$cos_equipped_prismatic_true"
             );
             for (String key : playerKeys) {
-                mem.unset(key);
+                sectorMem.unset(key);
             }
 
-            Console.showMessage("Reset: selected character & prismatic dice");
+            sectorMem.unset("$cos_credit_bonus_active");
+            for (String charId : CharacterIds.getAllIds()) {
+                sectorMem.unset("$cos_bonus_" + charId);
+            }
+
+            Console.showMessage("Reset: selected character, prismatic dice, bonus selections");
         }
 
         Console.showMessage("");

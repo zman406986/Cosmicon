@@ -10,5 +10,35 @@
         "randomStart": false
       }
     ]
-  }
+  },
+  "cos_ui_beep": [
+    {"file":"sounds/SFX/UI_beep.ogg","pitch":1,"volume":0.6}
+  ],
+  "cos_impact": [
+    {"file":"sounds/SFX/impact1.ogg","pitch":0.9,"volume":0.7},
+    {"file":"sounds/SFX/impact2.ogg","pitch":0.95,"volume":0.7},
+    {"file":"sounds/SFX/impact3.ogg","pitch":1.0,"volume":0.7},
+    {"file":"sounds/SFX/impact4.ogg","pitch":1.05,"volume":0.7},
+    {"file":"sounds/SFX/impact5.ogg","pitch":1.1,"volume":0.7},
+    {"file":"sounds/SFX/impact6.ogg","pitch":1.0,"volume":0.7},
+    {"file":"sounds/SFX/impact7.ogg","pitch":1.05,"volume":0.7}
+  ],
+  "cos_dice_select": [
+    {"file":"sounds/SFX/select.ogg","pitch":1,"volume":0.6}
+  ],
+  "cos_dice_unselect": [
+    {"file":"sounds/SFX/unselect.ogg","pitch":1,"volume":0.6}
+  ],
+  "cos_dice_roll_1": [
+    {"file":"sounds/SFX/diceroll_1.ogg","pitch":1,"volume":0.6}
+  ],
+  "cos_dice_roll_2": [
+    {"file":"sounds/SFX/diceroll_2.ogg","pitch":1,"volume":0.6}
+  ],
+  "cos_dice_roll_3": [
+    {"file":"sounds/SFX/diceroll_3.ogg","pitch":1,"volume":0.6}
+  ],
+  "cos_dice_roll_4": [
+    {"file":"sounds/SFX/diceroll_4.ogg","pitch":1,"volume":0.6}
+  ]
 }

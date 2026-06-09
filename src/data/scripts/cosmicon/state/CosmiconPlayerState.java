@@ -13,6 +13,8 @@ public class CosmiconPlayerState {
     private static final String KEY_SELECTED_CHARACTER = "$cos_selected_character";
     private static final String KEY_EQUIPPED_PRISMATIC = "$cos_equipped_prismatic";
     private static final String KEY_EQUIPPED_PRISMATIC_TRUE = "$cos_equipped_prismatic_true";
+    private static final String KEY_BONUS_SELECTION_PREFIX = "$cos_bonus_";
+    private static final String KEY_CREDIT_BONUS_ACTIVE = "$cos_credit_bonus_active";
 
     private static MemoryAPI getMemory() {
         return Global.getSector().getMemory();
@@ -45,6 +47,30 @@ public class CosmiconPlayerState {
 
     public static boolean loadPrismaticDiceTrueVersion() {
         return getMemory().getBoolean(KEY_EQUIPPED_PRISMATIC_TRUE);
+    }
+
+    public static void saveBonusSelection(String charId, BonusState bonus) {
+        if (charId == null || charId.isEmpty()) return;
+        getMemory().set(KEY_BONUS_SELECTION_PREFIX + charId, bonus.name());
+    }
+
+    public static BonusState loadBonusSelection(String charId) {
+        if (charId == null || charId.isEmpty()) return BonusState.NONE;
+        String val = getMemory().getString(KEY_BONUS_SELECTION_PREFIX + charId);
+        if (val == null || val.isEmpty()) return BonusState.NONE;
+        try {
+            return BonusState.valueOf(val);
+        } catch (IllegalArgumentException e) {
+            return BonusState.NONE;
+        }
+    }
+
+    public static void setCreditBonusActive(boolean active) {
+        getMemory().set(KEY_CREDIT_BONUS_ACTIVE, active);
+    }
+
+    public static boolean isCreditBonusActive() {
+        return getMemory().getBoolean(KEY_CREDIT_BONUS_ACTIVE);
     }
 
     public static String getDefaultPrismaticForCharacter(String charId) {

@@ -21,6 +21,7 @@ import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.state.CosmiconEventState;
 import data.scripts.cosmicon.state.CosmiconStats;
+import data.scripts.cosmicon.util.CharacterIds;
 
 @SuppressWarnings("unused")
 public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements InteractionDialogPlugin {
@@ -46,7 +47,8 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements Intera
                 CosmiconEventState.setOriginalNpcCharId(npcCharId);
             }
             int gamesPlayed = CosmiconStats.getGamesPlayed();
-            String opponentId = gamesPlayed == 0 ? "trashcan" : "robin";
+            String opponentId = !CosmiconStats.isTutorial1Completed()
+                ? CharacterIds.FURBO_JOURNALIST : "robin";
             CosmiconEventState.setOpponentCharacter(opponentId);
             CosmiconEventState.setIsTutorialMode(true);
         } else {

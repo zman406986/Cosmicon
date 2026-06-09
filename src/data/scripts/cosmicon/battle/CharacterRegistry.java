@@ -19,11 +19,13 @@ public class CharacterRegistry {
 
     private static final String CARDS_PATH = "data/config/cards.json";
     private static List<CharacterCard> threeStarCards;
+    private static List<CharacterCard> twoStarCards;
     private static Map<String, Integer> cardIndex;
     private static List<CharacterCard> eligibleOpponents;
 
-    static { 
+    static {
         threeStarCards = new ArrayList<>();
+        twoStarCards = new ArrayList<>();
         cardIndex = new HashMap<>();
         eligibleOpponents = new ArrayList<>();
     }
@@ -31,12 +33,21 @@ public class CharacterRegistry {
     public static void loadCards() {
         try {
             JSONObject cardsJson = Global.getSettings().loadJSON(CARDS_PATH, CosmiconConfig.MOD_ID);
-            
+
             threeStarCards = parseCardArray(cardsJson.getJSONArray("threeStar"));
-            
+
+            if (cardsJson.has("twoStar")) {
+                twoStarCards = parseCardArray(cardsJson.getJSONArray("twoStar"));
+            } else {
+                twoStarCards = new ArrayList<>();
+            }
+
             cardIndex = new HashMap<>();
             for (int i = 0; i < threeStarCards.size(); i++) {
                 cardIndex.put(threeStarCards.get(i).getId(), i);
+            }
+            for (int i = 0; i < twoStarCards.size(); i++) {
+                cardIndex.put(twoStarCards.get(i).getId(), threeStarCards.size() + i);
             }
 
             eligibleOpponents = new ArrayList<>();
@@ -45,12 +56,18 @@ public class CharacterRegistry {
                     eligibleOpponents.add(card);
                 }
             }
-            
+            for (CharacterCard card : twoStarCards) {
+                if (!"trashcan".equals(card.getId())) {
+                    eligibleOpponents.add(card);
+                }
+            }
+
             Global.getLogger(CharacterRegistry.class).info(
-                "Loaded " + threeStarCards.size() + " threeStar cards from " + CARDS_PATH);
+                "Loaded " + threeStarCards.size() + " threeStar and " + twoStarCards.size() + " twoStar cards from " + CARDS_PATH);
         } catch (IOException | JSONException e) {
             Global.getLogger(CharacterRegistry.class).error("Error loading cards from " + CARDS_PATH, e);
             threeStarCards = new ArrayList<>();
+            twoStarCards = new ArrayList<>();
             cardIndex = new HashMap<>();
             eligibleOpponents = new ArrayList<>();
         }
@@ -190,13 +207,27 @@ public class CharacterRegistry {
 
     public static CharacterCard getCharacterById(String id) {
         Integer index = cardIndex.get(id);
-        if (index != null) return threeStarCards.get(index).copy();
-        return getRandomCharacter();
+        if (index == null) return getRandomCharacter();
+        if (index < threeStarCards.size()) {
+            return threeStarCards.get(index).copy();
+        }
+        return twoStarCards.get(index - threeStarCards.size()).copy();
     }
 
     public static List<CharacterCard> getAllCards() {
         List<CharacterCard> copies = new ArrayList<>();
         for (CharacterCard card : threeStarCards) {
+            copies.add(card.copy());
+        }
+        for (CharacterCard card : twoStarCards) {
+            copies.add(card.copy());
+        }
+        return copies;
+    }
+
+    public static List<CharacterCard> getTwoStarCards() {
+        List<CharacterCard> copies = new ArrayList<>();
+        for (CharacterCard card : twoStarCards) {
             copies.add(card.copy());
         }
         return copies;

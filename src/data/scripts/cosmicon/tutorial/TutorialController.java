@@ -26,7 +26,7 @@ public class TutorialController {
     );
 
     public enum TutorialGame {
-        GAME_1_SPARXIE,
+        GAME_1_CHIMERA,
         GAME_2_ACHERON
     }
 
@@ -96,7 +96,7 @@ public class TutorialController {
         this.battleState = battleState;
         this.complete = false;
         this.rerollPending = false;
-        this.currentStep = game == TutorialGame.GAME_1_SPARXIE
+        this.currentStep = game == TutorialGame.GAME_1_CHIMERA
             ? TutorialStep.G1_T1_ATTACK_ROLL
             : TutorialStep.G2_T1_DEFENSE_ROLL;
     }
@@ -104,10 +104,12 @@ public class TutorialController {
     public static TutorialGame determineTutorialGame() {
         int replayGame = CosmiconEventState.getReplayTutorialGame();
         if (replayGame >= 0) {
-            return replayGame == 1 ? TutorialGame.GAME_1_SPARXIE : TutorialGame.GAME_2_ACHERON;
+            return replayGame == 1 ? TutorialGame.GAME_1_CHIMERA : TutorialGame.GAME_2_ACHERON;
         }
-        int gamesPlayed = CosmiconStats.getGamesPlayed();
-        return gamesPlayed == 0 ? TutorialGame.GAME_1_SPARXIE : TutorialGame.GAME_2_ACHERON;
+        if (!CosmiconStats.isTutorial1Completed()) {
+            return TutorialGame.GAME_1_CHIMERA;
+        }
+        return TutorialGame.GAME_2_ACHERON;
     }
 
     public static boolean shouldActivateTutorial() {
@@ -420,7 +422,7 @@ public class TutorialController {
     public void onPhaseChange(Phase newPhase) {
         if (complete) return;
 
-        if (game == TutorialGame.GAME_1_SPARXIE) {
+        if (game == TutorialGame.GAME_1_CHIMERA) {
             onGame1PhaseChange(newPhase);
         } else {
             onGame2PhaseChange(newPhase);
@@ -430,7 +432,7 @@ public class TutorialController {
     public void onBattleEnd(String winner) {
         if (complete) return;
 
-        if (game == TutorialGame.GAME_1_SPARXIE
+        if (game == TutorialGame.GAME_1_CHIMERA
                 && currentStep == TutorialStep.G1_T2_ATTACK_WAIT
                 && "player".equals(winner)) {
             currentStep = TutorialStep.G1_VICTORY;

@@ -22,19 +22,37 @@ public class TutorialDiceRoller {
     private int opponentRerollCount;
     private int opponentSelectionCount;
 
+    // Tutorial Game 1: Chimera (player) vs Furbo Journalist (opponent)
+    // Player dice: 2d6 + 2d4 (4 total), ATK Lv 3, DEF Lv 2
+    // Opponent dice: 1d6 + 4d4 (5 total), ATK Lv 4, DEF Lv 3
+    // T1: Player attacks [6,6,3,1] pair of 6s → +3 ATK, Opponent defends [3,2,1,1,1] → DEF 6, DMG 12
+    // T1: Opponent attacks [4,3,2,1,1] → ATK 10, Player defends [5,3,2,1] → DEF 8, DMG 2 + 2 instant
+    // T2: Player attacks [5,2,4,1] no pair → reroll [2,1] → [4,3] → [5,4,4,3] pair of 4s → +7 ATK
+    //     Opponent defends [2,1,1,1,1] → DEF 4, DMG 16. Total 28 = exact kill
     private static final int[][] GAME1_PLAYER_ROLLS = {
-        {7, 6, 4, 3, 2},
-        {4, 4, 3, 2, 1},
-        {1, 1, 2, 4, 3}
+        {6, 6, 3, 1},   // T1 Attack
+        {5, 3, 2, 1},   // T1 Defense
+        {5, 2, 4, 1}    // T2 Attack (before reroll)
     };
 
     private static final int[][] GAME1_OPPONENT_ROLLS = {
-        {3, 2, 2, 1, 1},
-        {6, 5, 3, 2, 1},
-        {3, 2, 2, 1, 1}
+        {4, 3, 2, 1, 1}, // T1 Attack
+        {3, 2, 1, 1, 1}, // T1 Defense
+        {2, 1, 1, 1, 1}  // T2 Defense
     };
 
-    private static final int[] GAME1_REROLL_RESULT = {4, 4, 4, 0, 0};
+    // T2 Attack reroll: player rerolls 2 lowest dice (2 and 1), gets [4, 3]
+    private static final int[] GAME1_REROLL_RESULT = {4, 3};
+
+    // Opponent selections: which dice indices the opponent selects
+    // T1 Defense (DEF Lv 3): from [3,2,1,1,1] select [0,1,2] → DEF=6
+    // T1 Attack (ATK Lv 4): from [4,3,2,1,1] select [0,1,2,3] → ATK=10
+    // T2 Defense (DEF Lv 3): from [2,1,1,1,1] select [0,1,2] → DEF=4
+    private static final int[][] GAME1_OPPONENT_SELECTIONS = {
+        {0, 1, 2},       // T1 Defense
+        {0, 1, 2, 3},    // T1 Attack
+        {0, 1, 2}        // T2 Defense
+    };
 
     private static final int[][] GAME2_PLAYER_ROLLS = {
         {4, 4, 3, 2, 1, 1, 1},
@@ -67,26 +85,10 @@ public class TutorialDiceRoller {
         {0, 1, 4}
     };
 
-    private static final int[][] GAME1_OPPONENT_REROLL_INDICES = {
-        {3, 4},
-        {}
-    };
-
-    private static final int[][] GAME1_OPPONENT_REROLL_RESULTS = {
-        {4, 4},
-        {}
-    };
-
     private static final int[][] GAME2_OPPONENT_SELECTIONS = {
         {0, 1, 2, 3},
         {0, 1, 2},
         {0, 1, 2}
-    };
-
-    private static final int[][] GAME1_OPPONENT_SELECTIONS = {
-        {0, 1},
-        {0, 1, 3},
-        {0, 1}
     };
 
     private static final int GAME2_PRISMATIC_FACE = 4;
@@ -131,14 +133,8 @@ public class TutorialDiceRoller {
                     opponentRerollCount + 1, Arrays.toString(indices));
                 return toList(indices);
             }
-        } else {
-            if (opponentRerollCount < GAME1_OPPONENT_REROLL_INDICES.length) {
-                int[] indices = GAME1_OPPONENT_REROLL_INDICES[opponentRerollCount];
-                CosmiconLogger.verbose("TutorialDiceRoller: predetermined Game 1 opponent reroll #%d - indices: %s",
-                    opponentRerollCount + 1, Arrays.toString(indices));
-                return toList(indices);
-            }
         }
+        // Game 1 (Chimera vs Furbo Journalist): opponent has no rerolls
         return new ArrayList<>();
     }
 
@@ -171,7 +167,7 @@ public class TutorialDiceRoller {
 
     // Returning null delegates to aiEngine.planPrismaticUse(). This is correct
     // because neither tutorial opponent has prismatic dice: Game 1 opponent
-    // (Trashcan) has none, Game 2 opponent (Robin) cannot equip them.
+    // (Furbo Journalist) has none, Game 2 opponent (Robin) cannot equip them.
     public Object planOpponentPrismatic() {
         return null;
     }
@@ -194,7 +190,7 @@ public class TutorialDiceRoller {
     }
 
     private String getPlayerRerollKey() {
-        if (controller.getGame() == TutorialController.TutorialGame.GAME_1_SPARXIE) {
+        if (controller.getGame() == TutorialController.TutorialGame.GAME_1_CHIMERA) {
             if (controller.getCurrentStep() == TutorialController.TutorialStep.G1_T2_ATTACK_REROLL) {
                 return "G1_T2_PLAYER";
             }
@@ -211,7 +207,7 @@ public class TutorialDiceRoller {
     }
 
     public void rollForParticipant(BattleState state, boolean forPlayer) {
-        if (controller.getGame() == TutorialController.TutorialGame.GAME_1_SPARXIE) {
+        if (controller.getGame() == TutorialController.TutorialGame.GAME_1_CHIMERA) {
             rollGame1(state, forPlayer);
         } else {
             rollGame2(state, forPlayer);
@@ -233,10 +229,9 @@ public class TutorialDiceRoller {
         } else {
             if (controller.getGame() == TutorialController.TutorialGame.GAME_2_ACHERON) {
                 rerollGame2Opponent(state);
-            } else {
-                rerollGame1Opponent(state);
+                opponentRerollCount++;
             }
-            opponentRerollCount++;
+            // Game 1 opponent (Furbo Journalist) has no rerolls — nothing to do
         }
     }
 
@@ -272,30 +267,6 @@ public class TutorialDiceRoller {
         state.incrementRerollsUsed(true);
 
         CosmiconLogger.verbose("TutorialDiceRoller: Game 1 Turn 3 reroll - indices: %s", rerolledIndices);
-    }
-
-    private void rerollGame1Opponent(BattleState state) {
-        List<Integer> values = state.getDiceValues(false);
-        List<Boolean> selected = state.getDiceSelected(false);
-        List<Integer> rerolledIndices = new ArrayList<>();
-
-        int[] results = GAME1_OPPONENT_REROLL_RESULTS[opponentRerollCount % GAME1_OPPONENT_REROLL_RESULTS.length];
-        int resultIdx = 0;
-        for (int i = 0; i < selected.size(); i++) {
-            if (selected.get(i)) {
-                if (resultIdx < results.length) {
-                    values.set(i, results[resultIdx++]);
-                }
-                rerolledIndices.add(i);
-            }
-        }
-
-        state.setDiceValues(false, values);
-        state.decrementRerolls(false);
-        state.incrementRerollsUsed(false);
-
-        CosmiconLogger.verbose("TutorialDiceRoller: Game 1 opponent reroll #%d - indices: %s",
-            opponentRerollCount + 1, rerolledIndices);
     }
 
     private void rollGame2(BattleState state, boolean forPlayer) {

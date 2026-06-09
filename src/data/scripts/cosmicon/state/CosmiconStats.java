@@ -4,6 +4,7 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import data.scripts.CosmiconConfig;
 import data.scripts.cosmicon.util.CharacterIds;
+import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.util.CosmiconRandom;
 
 import java.util.HashSet;
@@ -20,8 +21,17 @@ public class CosmiconStats {
     private static final String KEY_TOURNAMENT_UNLOCKED = "$cos_tournament_unlocked";
     private static final String KEY_GATEKEEPER_999_UNLOCKED = "$cos_gatekeeper_999_unlocked";
     private static final String KEY_LEGEND_TITLE_INHERITED = "$cos_legend_title_inherited";
+    private static final String KEY_TUTORIAL_1_COMPLETED = "$cos_tutorial_1_completed";
+    private static final String KEY_TUTORIAL_2_COMPLETED = "$cos_tutorial_2_completed";
+    private static final String KEY_BONUS_HP_UNLOCKED = "$cos_bonus_hp_unlocked";
+    private static final String KEY_BONUS_ATK_UNLOCKED = "$cos_bonus_atk_unlocked";
+    private static final String KEY_BONUS_DEF_UNLOCKED = "$cos_bonus_def_unlocked";
+    private static final String KEY_DATA_VERSION = "$cos_data_version";
+    private static final String KEY_MIGRATED_FROM_PREREWORK = "$cos_migrated_from_prerework";
 
-    private static final int TUTORIAL_GAMES = 2;
+    private static final int CURRENT_DATA_VERSION = 1;
+
+    private static final int TUTORIAL_GAMES = 1;
     private static final String REPEATER_ID = "repeater";
 
     private static MemoryAPI getMemory() {
@@ -35,9 +45,6 @@ public class CosmiconStats {
     public static void incrementGamesPlayed() {
         int newCount = getGamesPlayed() + 1;
         getMemory().set(KEY_GAMES_PLAYED, newCount);
-        if (newCount >= TUTORIAL_GAMES && !isPrismaticFeatureUnlocked()) {
-            setPrismaticFeatureUnlocked();
-        }
     }
 
     public static int getGamesWon() {
@@ -50,25 +57,40 @@ public class CosmiconStats {
     }
 
     public static boolean isInTutorialMode() {
-        return getGamesPlayed() < TUTORIAL_GAMES;
+        return !getMemory().getBoolean(KEY_TUTORIAL_1_COMPLETED);
     }
 
     public static int getRemainingTutorialGames() {
-        return Math.max(0, TUTORIAL_GAMES - getGamesPlayed());
+        return isTutorial1Completed() ? 0 : 1;
+    }
+
+    public static boolean isTutorial1Completed() {
+        return getMemory().getBoolean(KEY_TUTORIAL_1_COMPLETED);
+    }
+
+    public static boolean isTutorial2Completed() {
+        return getMemory().getBoolean(KEY_TUTORIAL_2_COMPLETED);
+    }
+
+    public static boolean isInEasyMode() {
+        return isTutorial1Completed() && !isTutorial2Completed();
+    }
+
+    public static boolean isMigratedFromPrerework() {
+        return getMemory().getBoolean(KEY_MIGRATED_FROM_PREREWORK);
     }
 
     public static void skipTutorial() {
         MemoryAPI mem = getMemory();
-        mem.set(KEY_GAMES_PLAYED, TUTORIAL_GAMES);
-        if (!isPrismaticFeatureUnlocked()) {
-            setPrismaticFeatureUnlocked();
-        }
+        mem.set(KEY_GAMES_PLAYED, 1);
+        mem.set(KEY_TUTORIAL_1_COMPLETED, true);
     }
 
     public static void forceCompleteTutorial() {
-        skipTutorial();
-        completeTutorialGame1();
-        completeTutorialGame2();
+        completeTutorial1();
+        completeTutorial2();
+        getMemory().set(KEY_GAMES_PLAYED, 1);
+        getMemory().set(KEY_MIGRATED_FROM_PREREWORK, false);
     }
 
     public static boolean isPrismaticFeatureUnlocked() {
@@ -132,12 +154,14 @@ public class CosmiconStats {
         getUnlockedPrismaticTrueDice().add(diceId);
     }
 
-    public static void completeTutorialGame1() {
-        unlockCharacter(CharacterIds.SPARXIE);
-        CosmiconPlayerState.saveCharacter(CharacterIds.SPARXIE);
+    public static void completeTutorial1() {
+        getMemory().set(KEY_TUTORIAL_1_COMPLETED, true);
+        unlockCharacter(CharacterIds.TUTORIAL_1_DEFAULT_CHARACTER);
+        CosmiconPlayerState.saveCharacter(CharacterIds.TUTORIAL_1_DEFAULT_CHARACTER);
     }
 
-    public static void completeTutorialGame2() {
+    public static void completeTutorial2() {
+        getMemory().set(KEY_TUTORIAL_2_COMPLETED, true);
         unlockCharacter(CharacterIds.ACHERON);
         unlockPrismaticDice(REPEATER_ID);
         if (!isPrismaticFeatureUnlocked()) {
@@ -146,6 +170,22 @@ public class CosmiconStats {
         CosmiconPlayerState.saveCharacter(CharacterIds.ACHERON);
         CosmiconPlayerState.savePrismaticDice(REPEATER_ID);
         CosmiconPlayerState.savePrismaticDiceTrueVersion(false);
+    }
+
+    public static void completeTutorial2ForMigration() {
+        MemoryAPI mem = getMemory();
+        mem.set(KEY_TUTORIAL_2_COMPLETED, true);
+        mem.set(KEY_MIGRATED_FROM_PREREWORK, false);
+
+        if (!isCharacterUnlocked(CharacterIds.ACHERON)) {
+            unlockCharacter(CharacterIds.ACHERON);
+        }
+        if (!isPrismaticDiceUnlocked(REPEATER_ID)) {
+            unlockPrismaticDice(REPEATER_ID);
+        }
+        if (!isPrismaticFeatureUnlocked()) {
+            setPrismaticFeatureUnlocked();
+        }
     }
 
     public static boolean isTournamentUnlocked() {
@@ -172,6 +212,66 @@ public class CosmiconStats {
         getMemory().set(KEY_LEGEND_TITLE_INHERITED, inherited);
     }
 
+    public static int countUnlockedEasyModeCharacters() {
+        int count = 0;
+        Set<String> unlocked = getUnlockedCharacters();
+        for (String id : CharacterIds.EASY_MODE_CHARACTERS) {
+            if (unlocked.contains(id)) count++;
+        }
+        return count;
+    }
+
+    public static boolean isEasyModeComplete() {
+        return countUnlockedEasyModeCharacters() >= CharacterIds.EASY_MODE_CHARACTERS.size();
+    }
+
+    public static String unlockRandomEasyModeCharacter() {
+        Set<String> unlocked = getUnlockedCharacters();
+        java.util.List<String> unowned = new java.util.ArrayList<>();
+        for (String id : CharacterIds.EASY_MODE_CHARACTERS) {
+            if (!unlocked.contains(id)) unowned.add(id);
+        }
+        if (unowned.isEmpty()) return null;
+        String chosen = unowned.get(CosmiconRandom.nextInt(unowned.size()));
+        unlockCharacter(chosen);
+        return chosen;
+    }
+
+    public static boolean isHpBonusUnlocked() {
+        return getMemory().getBoolean(KEY_BONUS_HP_UNLOCKED);
+    }
+
+    public static boolean isAtkBonusUnlocked() {
+        return getMemory().getBoolean(KEY_BONUS_ATK_UNLOCKED);
+    }
+
+    public static boolean isDefBonusUnlocked() {
+        return getMemory().getBoolean(KEY_BONUS_DEF_UNLOCKED);
+    }
+
+    public static int countUnlockedBonuses() {
+        int count = 0;
+        if (isHpBonusUnlocked()) count++;
+        if (isAtkBonusUnlocked()) count++;
+        if (isDefBonusUnlocked()) count++;
+        return count;
+    }
+
+    public static void checkAndUnlockBonuses() {
+        int afterTutorial = Math.max(0, countUnlockedEasyModeCharacters() - 1);
+        MemoryAPI mem = getMemory();
+
+        if (afterTutorial >= 2 && !isHpBonusUnlocked()) {
+            mem.set(KEY_BONUS_HP_UNLOCKED, true);
+        }
+        if (afterTutorial >= 4 && !isAtkBonusUnlocked()) {
+            mem.set(KEY_BONUS_ATK_UNLOCKED, true);
+        }
+        if (afterTutorial >= 6 && !isDefBonusUnlocked()) {
+            mem.set(KEY_BONUS_DEF_UNLOCKED, true);
+        }
+    }
+
     public static int calculateCreditReward(int playerLevel) {
         return CosmiconConfig.BASE_CREDIT_REWARD_PER_LEVEL * Math.max(1, playerLevel);
     }
@@ -192,10 +292,23 @@ public class CosmiconStats {
             mem.set(KEY_GAMES_WON, 0);
         }
 
-        if (getGamesPlayed() >= TUTORIAL_GAMES) {
-            if (!isCharacterUnlocked(CharacterIds.SPARXIE)) {
-                unlockCharacter(CharacterIds.SPARXIE);
+        int dataVersion = 0;
+        if (mem.contains(KEY_DATA_VERSION)) {
+            dataVersion = (int) mem.getFloat(KEY_DATA_VERSION);
+        }
+
+        if (dataVersion < CURRENT_DATA_VERSION) {
+            migrate(dataVersion, mem);
+            mem.set(KEY_DATA_VERSION, CURRENT_DATA_VERSION);
+        }
+
+        if (!isMigratedFromPrerework()) {
+            if (getGamesPlayed() >= TUTORIAL_GAMES && !isTutorial1Completed()) {
+                completeTutorial1();
             }
+        }
+
+        if (isTutorial2Completed()) {
             if (!isCharacterUnlocked(CharacterIds.ACHERON)) {
                 unlockCharacter(CharacterIds.ACHERON);
             }
@@ -205,6 +318,39 @@ public class CosmiconStats {
             if (!isPrismaticFeatureUnlocked()) {
                 setPrismaticFeatureUnlocked();
             }
+        }
+
+        checkAndUnlockBonuses();
+    }
+
+    private static void migrate(int fromVersion, MemoryAPI mem) {
+        if (fromVersion < 1) {
+            migrateV0toV1(mem);
+        }
+    }
+
+    private static void migrateV0toV1(MemoryAPI mem) {
+        if (getGamesPlayed() == 0 && getUnlockedCharacters().isEmpty()) {
+            return;
+        }
+
+        if (mem.contains(KEY_TUTORIAL_1_COMPLETED)) {
+            return;
+        }
+
+        boolean hasThreeStarChars = false;
+        Set<String> unlocked = getUnlockedCharacters();
+        for (String id : unlocked) {
+            if (!CharacterIds.EASY_MODE_CHARACTERS.contains(id)) {
+                hasThreeStarChars = true;
+                break;
+            }
+        }
+
+        if (hasThreeStarChars) {
+            mem.set(KEY_MIGRATED_FROM_PREREWORK, true);
+            CosmiconLogger.info("Migration V0→V1: Pre-rework save with 3-star characters. "
+                + "Player will play Tutorial 1 next encounter.");
         }
     }
 }

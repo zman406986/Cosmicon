@@ -7,6 +7,9 @@ import com.fs.starfarer.api.impl.campaign.intel.bar.events.BaseBarEventCreator;
 import data.scripts.CosmiconConfig;
 import data.scripts.cosmicon.util.CosmiconRandom;
 
+// DO NOT DELETE — serialized into old saves via BarEventManager.creators,
+// BarEventManager.timeout (TimeoutTracker), and BarEventManager.barEventCreators map.
+// CosmiconBarEvent.java has the same constraint. Both must remain for backward compatibility.
 public class CosmiconBarEventCreator extends BaseBarEventCreator {
 
     @Override

@@ -1,11 +1,13 @@
 {
-    "masterVersionFile": "",
+    "masterVersionFile": "https://raw.githubusercontent.com/zman406986/Cosmicon/master/cosmicon_dice.version",
     "modName": "Cosmicon Dice",
-    "modThreadId": 0,
+    "modThreadId": 35382,
     "modVersion": {
         "major": 0,
         "minor": 2,
         "patch": 0
     },
-    "starsectorVersion": "0.98a-RC8"
+    "starsectorVersion": "0.98a-RC8",
+    "directDownloadURL": "https://github.com/zman406986/Cosmicon/releases/latest/download/Cosmicon.Dice.zip",
+    "changelogURL": "https://raw.githubusercontent.com/zman406986/Cosmicon/master/CHANGELOG.txt"
 }

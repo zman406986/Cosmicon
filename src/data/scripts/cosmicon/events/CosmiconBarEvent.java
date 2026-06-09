@@ -25,6 +25,9 @@ import data.scripts.CosmiconConfig;
 // Retained for stale save compatibility: bar events from older saves may still reference this class.
 // New bar events are no longer generated (creator registration removed from CosmiconModPlugin).
 // NPC dialogue (CosmiconNPCDialogPlugin) is now the standalone entry point.
+// NOTE: CosmiconBarEventCreator.java must also remain — both classes are serialized into old
+// saves via BarEventManager.non-transient fields (creators list, timeout tracker, event--creator map)
+// and deleting either causes ClassNotFoundException on load.
 public class CosmiconBarEvent extends BaseBarEvent {
 
     public enum OptionId {
@@ -73,6 +76,7 @@ public class CosmiconBarEvent extends BaseBarEvent {
         }
 
         boolean isTutorial = CosmiconStats.isInTutorialMode();
+        boolean isEasyMode = CosmiconStats.isInEasyMode();
         TextPanelAPI textPanel = dialog.getTextPanel();
 
         if (CasinoIntegrationManager.isCasinoLoaded()) {
@@ -90,6 +94,8 @@ public class CosmiconBarEvent extends BaseBarEvent {
 
         if (isTutorial) {
             textPanel.addPara(Strings.get("bar_event.tutorial_prompt"));
+        } else if (isEasyMode) {
+            textPanel.addPara(Strings.get("bar_event.easy_mode_prompt"));
         } else {
             textPanel.addPara(Strings.get("bar_event.standard_prompt"));
         }
@@ -126,17 +132,29 @@ public class CosmiconBarEvent extends BaseBarEvent {
 
                 case PLAY:
                     boolean isTutorial = CosmiconStats.isInTutorialMode();
+                    boolean isEasyMode = CosmiconStats.isInEasyMode();
 
                     if (isTutorial) {
-                        int gamesPlayed = CosmiconStats.getGamesPlayed();
                         String opponentId;
-                        if (gamesPlayed == 0) {
-                            opponentId = CharacterIds.TRASHCAN;
+                        if (!CosmiconStats.isTutorial1Completed()) {
+                            opponentId = CharacterIds.FURBO_JOURNALIST;
                         } else {
                             opponentId = CharacterIds.ROBIN;
                         }
                         CosmiconEventState.setOpponentCharacter(opponentId);
                         CosmiconEventState.setIsTutorialMode(true);
+                    } else if (isEasyMode) {
+                        java.util.Set<String> unlocked = CosmiconStats.getUnlockedCharacters();
+                        java.util.List<String> candidates = new java.util.ArrayList<>();
+                        for (String id : CharacterIds.EASY_MODE_CHARACTERS) {
+                            if (unlocked.contains(id)) candidates.add(id);
+                        }
+                        if (candidates.isEmpty()) {
+                            candidates.add(CharacterIds.CHIMERA);
+                        }
+                        String opponentId = candidates.get(
+                            data.scripts.cosmicon.util.CosmiconRandom.nextInt(candidates.size()));
+                        CosmiconEventState.setOpponentCharacter(opponentId);
                     } else {
                         CharacterCard opponentCard = CharacterRegistry.getRandomOpponent();
                         if (opponentCard != null) {

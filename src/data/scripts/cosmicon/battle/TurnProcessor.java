@@ -103,6 +103,7 @@ public class TurnProcessor {
         state.setAttackValue(0);
         state.setDefenseValue(0);
         state.setDefenderRolling(false);
+        state.resetDamageTakenThisTurn();
         
         boolean playerIsAttacker = state.isPlayerAttacker();
         state.clearPendingDefLevelBoost(playerIsAttacker);
@@ -790,6 +791,12 @@ private void applyImpactDamage(DamageResolver.DamageResult result) {
                 state.notifySecondaryDamage(playerIsAttacker, instantDamageToAttacker, "INSTANT_DAMAGE");
             }
 
+            int pendingOnHit = state.consumePendingInstantDamageOnHit(defenderIsPlayer);
+            if (pendingOnHit > 0) {
+                state.applyDamageTo(playerIsAttacker, pendingOnHit);
+                state.notifySecondaryDamage(playerIsAttacker, pendingOnHit, "INSTANT_DAMAGE");
+            }
+
             PassiveEventSystem.onDefenseFail(state, defenderIsPlayer);
         }
     }
@@ -927,7 +934,9 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
         }
         
         state.clearTemporaryEffects();
-        
+
+        applyPendingConditionalHeals();
+
         processEndOfTurnPassives(true);
         processEndOfTurnPassives(false);
         
@@ -1185,13 +1194,25 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
     private void processEndOfTurnPassives(boolean forPlayer) {
         PassiveEventSystem.onEndOfTurn(state, forPlayer);
     }
+
+    private void applyPendingConditionalHeals() {
+        for (boolean forPlayer : new boolean[]{true, false}) {
+            int heal = state.consumePendingConditionalHeal(forPlayer);
+            if (heal > 0 && state.getDamageTakenThisTurn(forPlayer) <= 0) {
+                state.applyHealTo(forPlayer, heal);
+                state.notifyHeal(forPlayer, heal);
+            }
+        }
+    }
     
     private void applyPendingStrength(boolean forPlayer) {
         int pending = state.consumePendingStrength(forPlayer);
         if (pending > 0) {
+            String source = state.consumePendingStrengthSource(forPlayer);
+            if (source == null) source = "passive.hyacine";
             StatusEffectProcessor effects = state.getEffects(forPlayer);
-            effects.removeFromSource(StatusEffectProcessor.StatusEffect.STRENGTH, "passive.hyacine");
-            effects.addEffect(StatusEffectProcessor.StatusEffect.STRENGTH, "passive.hyacine", pending, DurationType.PERMANENT);
+            effects.removeFromSource(StatusEffectProcessor.StatusEffect.STRENGTH, source);
+            effects.addEffect(StatusEffectProcessor.StatusEffect.STRENGTH, source, pending, DurationType.PERMANENT);
         }
     }
     

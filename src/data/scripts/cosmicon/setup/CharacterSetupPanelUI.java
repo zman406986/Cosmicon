@@ -22,6 +22,7 @@ import com.fs.starfarer.api.ui.TooltipMakerAPI.ActionListenerDelegate;
 import com.fs.starfarer.api.util.Misc;
 
 import data.scripts.Strings;
+import data.scripts.cosmicon.CosmiconSFX;
 import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.CharacterRegistry;
 import data.scripts.cosmicon.battle.DiceType;
@@ -34,6 +35,7 @@ import data.scripts.cosmicon.util.PrismaticDisplayHelper;
 import data.scripts.cosmicon.util.UnifiedCoord;
 import data.scripts.cosmicon.util.GLStateUtil;
 import data.scripts.cosmicon.util.UIComponentFactory;
+import data.scripts.cosmicon.state.BonusState;
 import data.scripts.cosmicon.state.CosmiconPlayerState;
 import data.scripts.cosmicon.state.CosmiconStats;
 
@@ -102,9 +104,17 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private static final String ACTION_CONFIRM = "setup_confirm";
     private static final String ACTION_CANCEL = "setup_cancel";
     private static final String ACTION_BACK = "setup_back";
+    private static final String ACTION_BONUS_NONE = "bonus_none";
+    private static final String ACTION_BONUS_HP = "bonus_hp";
+    private static final String ACTION_BONUS_ATK = "bonus_atk";
+    private static final String ACTION_BONUS_DEF = "bonus_def";
+
+    private static final float BONUS_BUTTON_WIDTH = 80f;
+    private static final float BONUS_BUTTON_HEIGHT = 24f;
 
     private int selectedIndex = -1;
     private String selectedPrismaticDiceId = null;
+    private BonusState selectedBonus = BonusState.NONE;
     private final List<CharacterCard> characters;
 
     private CustomPanelAPI panel;
@@ -112,6 +122,8 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
     private LabelAPI selectedNameLabel;
     private LabelAPI passiveLabel;
+    private LabelAPI bonusDescLabel;
+    private final Map<String, ButtonAPI> bonusButtons = new java.util.LinkedHashMap<>();
 
     private boolean buttonsCreated = false;
     private boolean wasMousePressed = false;
@@ -173,7 +185,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                                    int orange, int purple, int blue, int prismatic) {}
 
     public interface CharacterSetupCallback {
-        void onConfirm(String charId, String prismaticDiceId, boolean useTrueVersion);
+        void onConfirm(String charId, String prismaticDiceId, boolean useTrueVersion, BonusState bonus);
         void onCancel();
     }
 
@@ -245,6 +257,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         createHeaderLabels();
         createSelectionBarLabels();
+        createBonusUI();
         createPassiveLabel();
         createButtons();
         createDiceListLabels();
@@ -269,8 +282,92 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             COLOR_SELECTED, Alignment.LMID, PANEL_WIDTH - MARGIN * 2, SELECTION_BAR_HEIGHT, MARGIN, barY);
     }
 
+    private void createBonusUI() {
+        float bonusY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 5f;
+        float bonusX = MARGIN;
+
+        UIComponentFactory.createLabelSmall(panel, Strings.get("bonus.title") + ":",
+            COLOR_SECTION_HEADER, Alignment.LMID, 100f, BONUS_BUTTON_HEIGHT, bonusX, bonusY);
+
+        float btnX = bonusX + 105f;
+        bonusButtons.clear();
+
+        boolean hpUnlocked = CosmiconStats.isHpBonusUnlocked();
+        boolean atkUnlocked = CosmiconStats.isAtkBonusUnlocked();
+        boolean defUnlocked = CosmiconStats.isDefBonusUnlocked();
+
+        TooltipMakerAPI tp = panel.createUIElement(
+            BONUS_BUTTON_WIDTH * 4 + 30f, BONUS_BUTTON_HEIGHT + 20f, false);
+        tp.setActionListenerDelegate(this);
+        panel.addUIElement(tp).inTL(btnX, bonusY - 2f);
+
+        addBonusButton(tp, ACTION_BONUS_NONE, Strings.get("bonus.none"), true);
+        addBonusButton(tp, ACTION_BONUS_HP, Strings.get("bonus.hp_9"), hpUnlocked);
+        addBonusButton(tp, ACTION_BONUS_ATK, Strings.get("bonus.atk_1"), atkUnlocked);
+        addBonusButton(tp, ACTION_BONUS_DEF, Strings.get("bonus.def_1"), defUnlocked);
+
+        float descY = bonusY + BONUS_BUTTON_HEIGHT + 2f;
+        bonusDescLabel = UIComponentFactory.createLabelSmall(panel, "",
+            new Color(180, 180, 200), Alignment.LMID,
+            PANEL_WIDTH - MARGIN * 2 - 100f, 20f, bonusX + 105f, descY);
+        updateBonusDescription();
+    }
+
+    private void addBonusButton(TooltipMakerAPI tp, String action, String text, boolean unlocked) {
+        int index = bonusButtons.size();
+        ButtonAPI btn = tp.addButton(text, action, BONUS_BUTTON_WIDTH, BONUS_BUTTON_HEIGHT, 0f);
+        btn.getPosition().inTL(index * (BONUS_BUTTON_WIDTH + 5f), 0f);
+        btn.setQuickMode(true);
+        btn.setEnabled(unlocked);
+        if (!unlocked) {
+            btn.setOpacity(0.35f);
+        }
+        if (action.equals(ACTION_BONUS_NONE) && selectedBonus == BonusState.NONE) {
+            btn.setHighlightColor(COLOR_SELECTED);
+        }
+        bonusButtons.put(action, btn);
+    }
+
+    private void updateBonusDescription() {
+        String descKey;
+        if (selectedBonus == BonusState.ATK_1 && selectedIndex >= 0 && selectedIndex < characters.size()
+                && characters.get(selectedIndex).getAtkLevel() >= 5) {
+            descKey = "bonus.atk_capped";
+        } else if (selectedBonus == BonusState.DEF_1 && selectedIndex >= 0 && selectedIndex < characters.size()
+                && characters.get(selectedIndex).getDefLevel() >= 5) {
+            descKey = "bonus.def_capped";
+        } else {
+            descKey = switch (selectedBonus) {
+                case NONE -> "bonus.none_desc";
+                case HP_9 -> "bonus.hp_9_desc";
+                case ATK_1 -> "bonus.atk_1_desc";
+                case DEF_1 -> "bonus.def_1_desc";
+            };
+        }
+        if (bonusDescLabel != null) {
+            bonusDescLabel.setText(Strings.get(descKey));
+        }
+    }
+
+    private void updateBonusButtonHighlights() {
+        for (Map.Entry<String, ButtonAPI> entry : bonusButtons.entrySet()) {
+            String action = entry.getKey();
+            ButtonAPI btn = entry.getValue();
+            boolean isSelected = switch (action) {
+                case ACTION_BONUS_NONE -> selectedBonus == BonusState.NONE;
+                case ACTION_BONUS_HP -> selectedBonus == BonusState.HP_9;
+                case ACTION_BONUS_ATK -> selectedBonus == BonusState.ATK_1;
+                case ACTION_BONUS_DEF -> selectedBonus == BonusState.DEF_1;
+                default -> false;
+            };
+            if (isSelected) {
+                btn.setHighlightColor(COLOR_SELECTED);
+            }
+        }
+    }
+
     private void createPassiveLabel() {
-        float passiveY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 5f;
+        float passiveY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + BONUS_BUTTON_HEIGHT + 25f;
         passiveLabel = UIComponentFactory.createLabelSmall(panel, "",
             COLOR_TEXT, Alignment.LMID, PANEL_WIDTH - MARGIN * 2, 45f, MARGIN, passiveY);
     }
@@ -966,7 +1063,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                 for (VersionClickRegion region : versionClickRegions) {
                     if (mousePos.isInsideRect(region.x, region.y, region.width, region.height)) {
                         handleVersionToggle(region.entryIndex, region.useTrue());
-                        Global.getSoundPlayer().playUISound("ui_button_pressed", 1f, 0.5f);
+                        CosmiconSFX.playUIBeep();
                         versionClicked = true;
                         break;
                     }
@@ -978,7 +1075,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                     for (DiceClickRegion region : diceClickRegions) {
                         if (mousePos.isInsideRect(DICE_LIST_X, region.y, DICE_LIST_WIDTH, DICE_ENTRY_HEIGHT)) {
                             handleDiceSelection(region.entryIndex);
-                            Global.getSoundPlayer().playUISound("ui_button_pressed", 1f, 0.6f);
+                            CosmiconSFX.playUIBeep();
                             diceClicked = true;
                             break;
                         }
@@ -989,7 +1086,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                         for (ClickRegion region : clickRegions) {
                             if (mousePos.isInsideRect(region.boxX, region.boxY, CARD_WIDTH, CARD_HEIGHT)) {
                                 handleCardSelection(region.index);
-                                Global.getSoundPlayer().playUISound("ui_button_pressed", 1f, 0.6f);
+                                CosmiconSFX.playUIBeep();
                                 break;
                             }
                         }
@@ -1005,6 +1102,9 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private void handleCardSelection(int index) {
         if (index < 0 || index >= characters.size()) return;
         selectedIndex = index;
+        selectedBonus = CosmiconPlayerState.loadBonusSelection(characters.get(index).getId());
+        updateBonusDescription();
+        updateBonusButtonHighlights();
     }
 
     private List<PrismaticDiceType> getFilteredDiceList() {
@@ -1058,18 +1158,55 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             case ACTION_CONFIRM -> {
                 if (selectedIndex >= 0 && selectedIndex < characters.size()) {
                     CharacterCard card = characters.get(selectedIndex);
+                    CosmiconPlayerState.saveBonusSelection(card.getId(), selectedBonus);
+                    CosmiconPlayerState.setCreditBonusActive(selectedBonus == BonusState.NONE);
                     if (callback != null) {
                         String diceId = card.getPrismaticDiceIds().isEmpty() ? null : selectedPrismaticDiceId;
-                        callback.onConfirm(card.getId(), diceId, selectedUseTrueVersion);
+                        callback.onConfirm(card.getId(), diceId, selectedUseTrueVersion, selectedBonus);
                     }
                     callbacks.dismissDialog();
                 }
             }
             case ACTION_CANCEL, ACTION_BACK -> {
+                if (selectedIndex >= 0 && selectedIndex < characters.size()) {
+                    CosmiconPlayerState.saveBonusSelection(characters.get(selectedIndex).getId(), selectedBonus);
+                }
                 if (callback != null) {
                     callback.onCancel();
                 }
                 callbacks.dismissDialog();
+            }
+            case ACTION_BONUS_NONE -> {
+                selectedBonus = BonusState.NONE;
+                updateBonusDescription();
+                updateBonusButtonHighlights();
+            }
+            case ACTION_BONUS_HP -> {
+                if (CosmiconStats.isHpBonusUnlocked()) {
+                    selectedBonus = BonusState.HP_9;
+                    updateBonusDescription();
+                    updateBonusButtonHighlights();
+                }
+            }
+            case ACTION_BONUS_ATK -> {
+                if (CosmiconStats.isAtkBonusUnlocked() && selectedIndex >= 0 && selectedIndex < characters.size()) {
+                    CharacterCard card = characters.get(selectedIndex);
+                    if (card.getAtkLevel() < 5) {
+                        selectedBonus = BonusState.ATK_1;
+                    }
+                    updateBonusDescription();
+                    updateBonusButtonHighlights();
+                }
+            }
+            case ACTION_BONUS_DEF -> {
+                if (CosmiconStats.isDefBonusUnlocked() && selectedIndex >= 0 && selectedIndex < characters.size()) {
+                    CharacterCard card = characters.get(selectedIndex);
+                    if (card.getDefLevel() < 5) {
+                        selectedBonus = BonusState.DEF_1;
+                    }
+                    updateBonusDescription();
+                    updateBonusButtonHighlights();
+                }
             }
         }
     }
@@ -1082,6 +1219,9 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         for (int i = 0; i < characters.size(); i++) {
             if (characters.get(i).getId().equals(charId)) {
                 selectedIndex = i;
+                selectedBonus = CosmiconPlayerState.loadBonusSelection(charId);
+                updateBonusDescription();
+                updateBonusButtonHighlights();
                 break;
             }
         }
@@ -1107,6 +1247,9 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         if (!characters.isEmpty()) {
             selectedIndex = 0;
             CharacterCard firstCard = characters.get(0);
+            selectedBonus = CosmiconPlayerState.loadBonusSelection(firstCard.getId());
+            updateBonusDescription();
+            updateBonusButtonHighlights();
             String defaultDice = CosmiconPlayerState.getDefaultPrismaticForCharacter(firstCard.getId());
             if (defaultDice != null) {
                 selectedPrismaticDiceId = defaultDice;
@@ -1130,7 +1273,9 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         callbacks = null;
         selectedNameLabel = null;
         passiveLabel = null;
+        bonusDescLabel = null;
         noPrismaticLabel = null;
+        bonusButtons.clear();
         clickRegions.clear();
         cardLabels.clear();
         diceClickRegions.clear();

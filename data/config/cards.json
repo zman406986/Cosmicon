@@ -150,6 +150,32 @@
       "atkLevel": 2,
       "defLevel": 2,
       "passive": "After attacking: Sets Strength stacks to 50% of this attack's value. If all selected dice numbers are 6, sets it to 100% and Heals 6 HP. Strength: When attacking, provides an ATK bonus based on the number of stacks. Heal: Restores a specified amount of HP."
+    }
+  ],
+  "twoStar": [
+    {
+      "name": "Chimera",
+      "hp": 22,
+      "dice": ["purple_d6:2", "blue_d4:2"],
+      "atkLevel": 3,
+      "defLevel": 2,
+      "passive": "When attacking: If the selected dice show the same number, increases Attack by 3. If that number is 4, increases Attack by 7 instead."
+    },
+    {
+      "name": "Dromas",
+      "hp": 26,
+      "dice": ["purple_d6:2", "blue_d4:2"],
+      "atkLevel": 3,
+      "defLevel": 2,
+      "passive": "When attacking: If all the selected dice show even numbers, inflicts 2 stacks of Poison on the opponent. This effect can stack. Poison: At the end of the turn, takes DMG based on the number of stacks, then reduce the number of stacks by 1."
+    },
+    {
+      "name": "Automaton Beetle",
+      "hp": 10,
+      "dice": ["purple_d6:1", "blue_d4:3"],
+      "atkLevel": 3,
+      "defLevel": 3,
+      "passive": "When defending: Gains 1 reroll attempt. If the selected dice include 3 consecutive numbers, also gains Forcefield this turn and 8 stacks of Strength for use next turn. Forcefield: While active, takes no DMG from general attacks. Strength: When attacking, provides an ATK bonus based on the number of stacks."
     },
     {
       "name": "Trashcan",
@@ -158,6 +184,30 @@
       "atkLevel": 3,
       "defLevel": 2,
       "passive": "After attacking: Gains 2 stack(s) of Strength. If all the selected dice show even numbers, gains 4 stack(s) of Strength instead. Strength: When attacking, provides an ATK bonus based on the number of stacks."
+    },
+    {
+      "name": "Furbo Journalist",
+      "hp": 28,
+      "dice": ["purple_d6:1", "blue_d4:4"],
+      "atkLevel": 4,
+      "defLevel": 3,
+      "passive": "When defending: When taking damage, immediately deals 2 Instant Damage. If all the dice selected for this defense show odd numbers, deals 4 Instant Damage instead. Instant Damage: Deals damage instantly, skipping the calculation of Final DMG."
+    },
+    {
+      "name": "BananAdvisor",
+      "hp": 24,
+      "dice": ["purple_d6:2", "blue_d4:3"],
+      "atkLevel": 4,
+      "defLevel": 3,
+      "passive": "When defending: Gains 1 reroll attempt(s). If no DMG is taken after finalization, heals this unit for 5 HP. Once only: If HP is 5 or less at the end of the turn, Defense Level increases by 1. Heal: Restores a specified amount of HP. Defense Level: The required number of dice that must be selected for defense."
+    },
+    {
+      "name": "Senior Staff",
+      "hp": 22,
+      "dice": ["orange_d8:1", "purple_d6:1", "blue_d4:3"],
+      "atkLevel": 3,
+      "defLevel": 2,
+      "passive": "When attacking: For each different number on selected dice, increases Attack by 1. When defending: For each different number on selected dice, increases Defense by 1."
     }
   ]
 }

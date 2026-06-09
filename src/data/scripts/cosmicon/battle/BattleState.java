@@ -45,9 +45,20 @@ public class BattleState {
     private int opponentOriginalDefLevel;
     private int playerPendingStrength;
     private int opponentPendingStrength;
+    private String playerPendingStrengthSource;
+    private String opponentPendingStrengthSource;
 
     private boolean phainonUnyieldingConsumed;
     private boolean opponentPhainonUnyieldingConsumed;
+
+    private int playerPendingConditionalHeal;
+    private int opponentPendingConditionalHeal;
+    private boolean playerBananadvisorDefBoostTriggered;
+    private boolean opponentBananadvisorDefBoostTriggered;
+    private int playerDamageTakenThisTurn;
+    private int opponentDamageTakenThisTurn;
+    private int playerPendingInstantDamageOnHit;
+    private int opponentPendingInstantDamageOnHit;
 
     final BattleEventBus eventBus = new BattleEventBus();
     final RerollState rerollState = new RerollState();
@@ -172,8 +183,18 @@ public class BattleState {
         opponentOriginalDefLevel = 0;
         playerPendingStrength = 0;
         opponentPendingStrength = 0;
+        playerPendingStrengthSource = null;
+        opponentPendingStrengthSource = null;
         phainonUnyieldingConsumed = false;
         opponentPhainonUnyieldingConsumed = false;
+        playerPendingConditionalHeal = 0;
+        opponentPendingConditionalHeal = 0;
+        playerBananadvisorDefBoostTriggered = false;
+        opponentBananadvisorDefBoostTriggered = false;
+        playerDamageTakenThisTurn = 0;
+        opponentDamageTakenThisTurn = 0;
+        playerPendingInstantDamageOnHit = 0;
+        opponentPendingInstantDamageOnHit = 0;
     }
 
     
@@ -486,6 +507,9 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     public void applyDamageTo(boolean isPlayer, int damage) {
         hpManager.applyDamageTo(isPlayer, damage, getEffects(isPlayer),
             isPlayer ? playerCard : opponentCard, this::consumeUnyieldingCheck);
+        if (damage > 0) {
+            addDamageTakenThisTurn(isPlayer, damage);
+        }
     }
 
     private void consumeUnyieldingCheck(boolean isPlayer) {
@@ -869,8 +893,20 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     public void setPendingStrength(boolean forPlayer, int strength) {
         if (forPlayer) {
             playerPendingStrength = strength;
+            playerPendingStrengthSource = null;
         } else {
             opponentPendingStrength = strength;
+            opponentPendingStrengthSource = null;
+        }
+    }
+
+    public void setPendingStrength(boolean forPlayer, int strength, String source) {
+        if (forPlayer) {
+            playerPendingStrength = strength;
+            playerPendingStrengthSource = source;
+        } else {
+            opponentPendingStrength = strength;
+            opponentPendingStrengthSource = source;
         }
     }
 
@@ -886,6 +922,18 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         return val;
     }
 
+    public String consumePendingStrengthSource(boolean forPlayer) {
+        String src;
+        if (forPlayer) {
+            src = playerPendingStrengthSource;
+            playerPendingStrengthSource = null;
+        } else {
+            src = opponentPendingStrengthSource;
+            opponentPendingStrengthSource = null;
+        }
+        return src;
+    }
+
     public boolean isPhainonUnyieldingAvailable(boolean forPlayer) {
         return forPlayer ? !phainonUnyieldingConsumed : !opponentPhainonUnyieldingConsumed;
     }
@@ -896,6 +944,66 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         } else {
             opponentPhainonUnyieldingConsumed = true;
         }
+    }
+
+    public void setPendingConditionalHeal(boolean forPlayer, int amount) {
+        if (forPlayer) {
+            playerPendingConditionalHeal = amount;
+        } else {
+            opponentPendingConditionalHeal = amount;
+        }
+    }
+
+    public int consumePendingConditionalHeal(boolean forPlayer) {
+        int val;
+        if (forPlayer) {
+            val = playerPendingConditionalHeal;
+            playerPendingConditionalHeal = 0;
+        } else {
+            val = opponentPendingConditionalHeal;
+            opponentPendingConditionalHeal = 0;
+        }
+        return val;
+    }
+
+    public boolean hasBananadvisorDefBoostTriggered(boolean forPlayer) {
+        return forPlayer ? playerBananadvisorDefBoostTriggered : opponentBananadvisorDefBoostTriggered;
+    }
+
+    public void markBananadvisorDefBoostTriggered(boolean forPlayer) {
+        if (forPlayer) playerBananadvisorDefBoostTriggered = true;
+        else opponentBananadvisorDefBoostTriggered = true;
+    }
+
+    public int getDamageTakenThisTurn(boolean forPlayer) {
+        return forPlayer ? playerDamageTakenThisTurn : opponentDamageTakenThisTurn;
+    }
+
+    public void addDamageTakenThisTurn(boolean forPlayer, int damage) {
+        if (forPlayer) playerDamageTakenThisTurn += damage;
+        else opponentDamageTakenThisTurn += damage;
+    }
+
+    public void resetDamageTakenThisTurn() {
+        playerDamageTakenThisTurn = 0;
+        opponentDamageTakenThisTurn = 0;
+    }
+
+    public void setPendingInstantDamageOnHit(boolean forPlayer, int damage) {
+        if (forPlayer) playerPendingInstantDamageOnHit = damage;
+        else opponentPendingInstantDamageOnHit = damage;
+    }
+
+    public int consumePendingInstantDamageOnHit(boolean forPlayer) {
+        int val;
+        if (forPlayer) {
+            val = playerPendingInstantDamageOnHit;
+            playerPendingInstantDamageOnHit = 0;
+        } else {
+            val = opponentPendingInstantDamageOnHit;
+            opponentPendingInstantDamageOnHit = 0;
+        }
+        return val;
     }
 
     public void recordTurnAtkDef(boolean forPlayer) {
