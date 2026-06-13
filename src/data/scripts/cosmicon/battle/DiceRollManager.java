@@ -412,6 +412,7 @@ public class DiceRollManager {
         final List<DiceAnimator> animators = new ArrayList<>();
         final List<DiceAnimator> restAnimators = new ArrayList<>();
         boolean waitingForRollTrigger = false;
+        boolean rollSoundPlayed = false;
         List<PlannedPath> pendingRollPaths;
         float[][] pendingScatterDestinations;
 
@@ -420,6 +421,7 @@ public class DiceRollManager {
             clearRestAnimatorsForceComplete();
             pendingRollPaths = null;
             pendingScatterDestinations = null;
+            rollSoundPlayed = false;
 
             int count = Math.min(types.size(), results.size());
             float[][] gridTargets = DicePathPlanner.planGridTargets(count, centerX, centerY, DICE_SPACING);
@@ -453,8 +455,6 @@ public class DiceRollManager {
             if (pendingRollPaths == null || pendingRollPaths.isEmpty()) return;
             if (pendingScatterDestinations == null) return;
 
-            CosmiconSFX.playDiceRoll(animators.size());
-
             int count = Math.min(animators.size(), Math.min(pendingRollPaths.size(), pendingScatterDestinations.length));
             for (int i = 0; i < count; i++) {
                 DiceAnimator animator = animators.get(i);
@@ -483,6 +483,7 @@ public class DiceRollManager {
             }
             animators.clear();
             waitingForRollTrigger = false;
+            rollSoundPlayed = false;
             pendingRollPaths = null;
             pendingScatterDestinations = null;
         }
@@ -532,6 +533,7 @@ public class DiceRollManager {
         }
 
         void appendInstantDice(DiceType type, int value, float centerX, float centerY) {
+            rollSoundPlayed = false;
             List<float[]> existingPositions = collectAllDicePositions();
             PlannedPath prismaticPath = DicePathPlanner.planSinglePrismaticPath(
                 animators.size(), centerX, centerY, DICE_SPACING, existingPositions,
@@ -561,6 +563,8 @@ public class DiceRollManager {
 
         void reroll(List<Integer> indices, List<Integer> newValues, BattleState battleState, boolean forPlayer) {
             if (indices == null || indices.isEmpty() || newValues == null) return;
+
+            rollSoundPlayed = false;
 
             float panelW = BattleRenderingUtils.PANEL_WIDTH;
             float panelH = BattleRenderingUtils.PANEL_HEIGHT;
@@ -606,6 +610,7 @@ public class DiceRollManager {
         void startRollFromRest(List<DiceType> allTypes, List<Integer> allValues,
                                 float centerX, float centerY, BattleState battleState, boolean forPlayer) {
             clearMain();
+            rollSoundPlayed = false;
 
             int count = allTypes.size();
             float panelW = BattleRenderingUtils.PANEL_WIDTH;
@@ -660,6 +665,15 @@ public class DiceRollManager {
         void advanceAnimators(float amount) {
             for (DiceAnimator animator : animators) {
                 animator.advance(amount);
+            }
+            if (!rollSoundPlayed && !animators.isEmpty()) {
+                for (DiceAnimator animator : animators) {
+                    if (animator.isTraveling()) {
+                        CosmiconSFX.playDiceRoll(animators.size());
+                        rollSoundPlayed = true;
+                        break;
+                    }
+                }
             }
         }
 

@@ -4,6 +4,7 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.CharacterRegistry;
+import data.scripts.cosmicon.util.CharacterIds;
 
 import java.util.List;
 import java.util.Map;
@@ -71,6 +72,19 @@ public class CosmiconPlayerState {
 
     public static boolean isCreditBonusActive() {
         return getMemory().getBoolean(KEY_CREDIT_BONUS_ACTIVE);
+    }
+
+    public static boolean isBasicCharacter() {
+        String charId = loadCharacter();
+        return charId != null && CharacterIds.EASY_MODE_CHARACTERS.contains(charId);
+    }
+
+    public static int getCreditBonusPercent() {
+        boolean basic = isBasicCharacter();
+        boolean noBonus = isCreditBonusActive();
+        if (basic && noBonus) return 100;
+        if (basic || noBonus) return 50;
+        return 0;
     }
 
     public static String getDefaultPrismaticForCharacter(String charId) {

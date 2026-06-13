@@ -188,8 +188,9 @@ public class DiceRoller {
             sb.append(type.name()).append("(").append(value).append(")");
         }
         int total = 0;
-        for (int i = 0; i < values.size(); i++) {
-            total += values.get(i);
+        for (Integer value : values)
+        {
+            total += value;
         }
         sb.append(" | New total: ").append(total);
         CosmiconLogger.verbose(sb.toString());

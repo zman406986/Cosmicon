@@ -60,6 +60,9 @@ public class BattleUIButtons implements ActionListenerDelegate {
     private float playerPrismaticBtnY;
     private TutorialController tutorialController;
 
+    private float confirmBtnX, confirmBtnY, confirmBtnW, confirmBtnH;
+    private float rerollBtnX, rerollBtnY, rerollBtnW, rerollBtnH;
+
     private List<ButtonAPI> opponentStatusButtons;
     private List<ButtonAPI> playerStatusButtons;
 
@@ -99,10 +102,20 @@ public class BattleUIButtons implements ActionListenerDelegate {
         confirmButton.setShortcut(Keyboard.KEY_SPACE, false);
         confirmButton.getPosition().inTL(20f, 10f);
 
+        confirmBtnX = btnTpX + 20f;
+        confirmBtnY = btnTpY + 10f;
+        confirmBtnW = btnWidth;
+        confirmBtnH = btnHeight;
+
         rerollButton = btnTp.addButton(Strings.get("phase.reroll_selected"), ACTION_REROLL,
             btnWidth, btnHeight, 0f);
         rerollButton.setQuickMode(true);
         rerollButton.getPosition().inTL(btnWidth + 60f, 10f);
+
+        rerollBtnX = btnTpX + btnWidth + 60f;
+        rerollBtnY = btnTpY + 10f;
+        rerollBtnW = btnWidth;
+        rerollBtnH = btnHeight;
 
         TooltipMakerAPI exitTp = UIComponentFactory.createTooltipForButtons(panel, this, btnWidth, btnHeight, 
             BattleRenderingUtils.PANEL_WIDTH - btnWidth - 10f, 10f);
@@ -536,6 +549,15 @@ public class BattleUIButtons implements ActionListenerDelegate {
     public float getPlayerPrismaticBtnY() {
         return playerPrismaticBtnY;
     }
+
+    public float getConfirmBtnX() { return confirmBtnX; }
+    public float getConfirmBtnY() { return confirmBtnY; }
+    public float getConfirmBtnW() { return confirmBtnW; }
+    public float getConfirmBtnH() { return confirmBtnH; }
+    public float getRerollBtnX() { return rerollBtnX; }
+    public float getRerollBtnY() { return rerollBtnY; }
+    public float getRerollBtnW() { return rerollBtnW; }
+    public float getRerollBtnH() { return rerollBtnH; }
 
     public float getWeatherDescBoxX() { return weatherDescBoxX; }
     public float getWeatherDescBoxY() { return weatherDescBoxY; }

@@ -39,8 +39,13 @@ public class PrismaticManager {
                 PrismaticDiceType type = PrismaticDiceRegistry.get(entry.getKey());
                 if (type != null) {
                     int uses = entry.getValue();
+                    if (uses <= 0) {
+                        CosmiconLogger.warn("Player prismatic dice '%s' has invalid usage count: %d", entry.getKey(), uses);
+                    }
                     playerPrismatic.setUsesByType(type, uses);
                     playerPrismatic.setUses(playerPrismatic.getUses() + uses);
+                } else {
+                    CosmiconLogger.warn("Player prismatic dice '%s' not found in registry", entry.getKey());
                 }
             }
         }
@@ -51,8 +56,13 @@ public class PrismaticManager {
                 PrismaticDiceType type = PrismaticDiceRegistry.get(entry.getKey());
                 if (type != null) {
                     int uses = entry.getValue();
+                    if (uses <= 0) {
+                        CosmiconLogger.warn("Opponent prismatic dice '%s' has invalid usage count: %d", entry.getKey(), uses);
+                    }
                     opponentPrismatic.setUsesByType(type, uses);
                     opponentPrismatic.setUses(opponentPrismatic.getUses() + uses);
+                } else {
+                    CosmiconLogger.warn("Opponent prismatic dice '%s' not found in registry", entry.getKey());
                 }
             }
         }

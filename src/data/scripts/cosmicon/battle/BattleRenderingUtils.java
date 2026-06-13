@@ -317,9 +317,14 @@ public final class BattleRenderingUtils {
 
         SpriteAPI portrait = CosmiconSprites.getPortrait(card.getId());
         if (portrait != null) {
-            float portraitX = x + (CARD_WIDTH - PORTRAIT_DISPLAY_W) / 2f;
-            float portraitY = y + (CARD_HEIGHT - PORTRAIT_DISPLAY_H) / 2f;
-            portrait.setSize(PORTRAIT_DISPLAY_W, PORTRAIT_DISPLAY_H);
+            float scaleW = PORTRAIT_DISPLAY_W / portrait.getWidth();
+            float scaleH = PORTRAIT_DISPLAY_H / portrait.getHeight();
+            float scale = Math.min(scaleW, scaleH);
+            float displayW = portrait.getWidth() * scale;
+            float displayH = portrait.getHeight() * scale;
+            float portraitX = x + (CARD_WIDTH - displayW) / 2f;
+            float portraitY = y + (CARD_HEIGHT - displayH) / 2f;
+            portrait.setSize(displayW, displayH);
             portrait.setAlphaMult(alphaMult);
             portrait.render(portraitX, portraitY);
         } else {

@@ -7,6 +7,7 @@ import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.state.CosmiconPlayerState;
 import data.scripts.cosmicon.state.CosmiconStats;
+import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.PrismaticDisplayHelper;
 import java.util.Set;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +28,6 @@ public class CosmiconStatus implements BaseCommand {
 
         int gamesPlayed = CosmiconStats.getGamesPlayed();
         int gamesWon = CosmiconStats.getGamesWon();
-        boolean inTutorial = CosmiconStats.isInTutorialMode();
-        int remaining = CosmiconStats.getRemainingTutorialGames();
 
         Set<String> unlockedChars = CosmiconStats.getUnlockedCharacters();
         Set<String> unlockedPrismatic = CosmiconStats.getUnlockedPrismaticDice();
@@ -42,9 +41,26 @@ public class CosmiconStatus implements BaseCommand {
 
         Console.showMessage("=== Cosmicon Status ===");
         Console.showMessage("Games: " + gamesPlayed + " played, " + gamesWon + " won");
-        Console.showMessage("Tutorial: " + (inTutorial ? "IN PROGRESS (" + remaining + " remaining)" : "COMPLETE"));
+
+        String mode;
+        if (CosmiconStats.isInTutorialMode()) {
+            mode = "TUTORIAL";
+        } else if (CosmiconStats.isInEasyMode()) {
+            mode = "EASY MODE (" + CosmiconStats.countUnlockedEasyModeCharacters() + "/" + CharacterIds.EASY_MODE_CHARACTERS.size() + " chars)";
+        } else {
+            mode = "FULL GAME";
+        }
+        Console.showMessage("Mode: " + mode);
+        Console.showMessage("Tutorial 1: " + (CosmiconStats.isTutorial1Completed() ? "COMPLETE" : "NOT DONE"));
+        Console.showMessage("Tutorial 2: " + (CosmiconStats.isTutorial2Completed() ? "COMPLETE" : "NOT DONE"));
+        if (CosmiconStats.isMigratedFromPrerework()) {
+            Console.showMessage("Migrated from pre-rework: YES");
+        }
         Console.showMessage("Characters: " + unlockedChars.size() + "/" + totalChars + " unlocked");
         Console.showMessage("Prismatic Dice: " + unlockedPrismatic.size() + "/" + totalPrismatic + " unlocked");
+        Console.showMessage("Bonuses: HP=" + (CosmiconStats.isHpBonusUnlocked() ? "YES" : "no")
+            + " ATK=" + (CosmiconStats.isAtkBonusUnlocked() ? "YES" : "no")
+            + " DEF=" + (CosmiconStats.isDefBonusUnlocked() ? "YES" : "no"));
 
         if (selectedChar != null && !selectedChar.isEmpty()) {
             CharacterCard card = CharacterRegistry.getCharacterById(selectedChar);

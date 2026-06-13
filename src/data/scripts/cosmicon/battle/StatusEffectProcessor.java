@@ -27,7 +27,7 @@ public class StatusEffectProcessor {
         DESTINED,
         VENOM,
         INSTANT_DAMAGE,
-        YAO_GUANG_REROLLS,
+        EXTRA_REROLLS,
         CYRENE_TALLY
     }
 
@@ -226,11 +226,11 @@ public class StatusEffectProcessor {
 
     private void processBeforeRoll(TurnType turnType, BattleContext context) {
         if (turnType == TurnType.ATTACK) {
-            int yaoGuangRerolls = getLayers(StatusEffect.YAO_GUANG_REROLLS);
-            if (yaoGuangRerolls > 0) {
-                context.addRerolls(yaoGuangRerolls);
-                processedEffects.add(new ProcessedEffect(StatusEffect.YAO_GUANG_REROLLS, yaoGuangRerolls));
-                CosmiconLogger.debug("[STATUS] YAO_GUANG_REROLLS: +%d rerolls", yaoGuangRerolls);
+            int extraRerolls = getLayers(StatusEffect.EXTRA_REROLLS);
+            if (extraRerolls > 0) {
+                context.addRerolls(extraRerolls);
+                processedEffects.add(new ProcessedEffect(StatusEffect.EXTRA_REROLLS, extraRerolls));
+                CosmiconLogger.debug("[STATUS] EXTRA_REROLLS: +%d rerolls", extraRerolls);
             }
         }
     }

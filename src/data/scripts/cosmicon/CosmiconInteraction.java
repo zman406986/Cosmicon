@@ -50,6 +50,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
     private int pendingCasinoRewardTier = 0;
     private List<String> pendingCasinoRewardCandidates = null;
+    private int pendingBaseCredits = 0;
 
     private TournamentManager tournamentManager;
     private int tournamentPendingRewards = 0;
@@ -136,7 +137,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             }
         }
 
-        boolean sessionWon = CosmiconEventState.isBarEvent() && CosmiconEventState.isSessionWon();
+        boolean sessionWon = CosmiconEventState.isSessionWon();
         boolean isTutorial = CosmiconStats.isInTutorialMode();
         if (sessionWon && !isTutorial) {
             textPanel.addPara(Strings.get("menu.session_won"));
@@ -145,7 +146,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         }
 
         options.addOption(Strings.get("menu.character_setup"), "character_setup");
-        if (CosmiconStats.getGamesPlayed() >= 1 && !CosmiconStats.isInTutorialMode()) {
+        if (CosmiconStats.isTutorial1Completed() && !CosmiconStats.isInTutorialMode()) {
             options.addOption(Strings.get("menu.replay_tutorial_1"), "replay_tutorial_1");
         }
         if (CosmiconStats.isTutorial2Completed() && !CosmiconStats.isInTutorialMode()) {
@@ -379,20 +380,20 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             return;
         }
 
-        markSessionWonIfBarEvent();
+        markSessionWon();
 
         CosmiconStats.incrementGamesPlayed();
         CosmiconStats.incrementGamesWon();
 
-        int gamesPlayed = CosmiconStats.getGamesPlayed();
-        boolean tutorialGame1 = gamesPlayed == 1;
-        boolean tutorialGame2 = CosmiconEventState.isTutorialMode();
+        boolean tutorialGame1 = !CosmiconStats.isTutorial1Completed();
+        boolean tutorialGame2 = CosmiconStats.isTutorial1Completed() && CosmiconEventState.isTutorialMode();
 
         pendingRewardCharId = CosmiconEventState.getOpponentCharacter();
         pendingRewardPrismaticId = CosmiconEventState.getOpponentPrismatic();
 
         if (tutorialGame1) {
             CosmiconStats.completeTutorial1();
+            CosmiconEventState.setIsTutorialMode(false);
             showTutorialReward();
             return;
         } else if (tutorialGame2) {
@@ -436,15 +437,14 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         options.clearOptions();
         textPanel.addPara(Strings.get("battle.you_won"));
 
-        int gamesPlayed = CosmiconStats.getGamesPlayed();
-        if (gamesPlayed == 1) {
+        if (CosmiconStats.isTutorial1Completed() && !CosmiconStats.isTutorial2Completed()) {
             textPanel.addPara(Strings.get("tutorial.g1_reward"));
             int remaining = CosmiconStats.getRemainingTutorialGames();
             if (remaining > 0) {
                 textPanel.addPara(Strings.format("tutorial.games_remaining", remaining));
             }
             options.addOption(Strings.get("menu.back"), "back");
-        } else if (gamesPlayed >= 2) {
+        } else if (CosmiconStats.isTutorial2Completed()) {
             textPanel.addPara(Strings.get("tutorial.g2_reward"));
             options.addOption(Strings.get("menu.back"), "back");
         }
@@ -458,6 +458,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         boolean hasCharReward = false;
         boolean hasPrismaticReward = false;
+        boolean hasPrismaticTrueReward = false;
 
         if (pendingRewardCharId != null && !CosmiconStats.isCharacterUnlocked(pendingRewardCharId)) {
             options.addOption(Strings.format("reward.unlock_character",
@@ -473,17 +474,38 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             hasPrismaticReward = true;
         }
 
-        if (!hasCharReward && !hasPrismaticReward) {
-            int playerLevel = Global.getSector().getPlayerStats().getLevel();
-            int credits = CosmiconStats.calculateNormalEncounterCreditReward(playerLevel);
-            if (CosmiconPlayerState.isCreditBonusActive()) {
-                credits = (int)(credits * 1.5f);
-                textPanel.addPara(Strings.get("bonus.credit_bonus_active"), Color.GREEN);
+        if (pendingRewardPrismaticId != null && CosmiconStats.isPrismaticDiceUnlocked(pendingRewardPrismaticId)
+            && !CosmiconStats.isPrismaticTrueUnlocked(pendingRewardPrismaticId)) {
+            PrismaticDiceType diceType = PrismaticDiceRegistry.get(pendingRewardPrismaticId);
+            if (diceType != null && diceType.hasTrueVersion()) {
+                options.addOption(Strings.format("reward.unlock_prismatic_true",
+                    data.scripts.cosmicon.util.PrismaticDisplayHelper.getDiceDisplayName(pendingRewardPrismaticId)),
+                    "unlock_prismatic_true");
+                hasPrismaticTrueReward = true;
             }
-            getCredits().add(credits);
-            AddRemoveCommodity.addCreditsGainText(credits, textPanel);
+        }
+
+        int playerLevel = Global.getSector().getPlayerStats().getLevel();
+        int baseCredits = CosmiconStats.calculateNormalEncounterCreditReward(playerLevel);
+        pendingBaseCredits = baseCredits;
+        int bonusPercent = CosmiconPlayerState.getCreditBonusPercent();
+        if (!hasCharReward && !hasPrismaticReward && !hasPrismaticTrueReward) {
+            if (bonusPercent > 0) {
+                textPanel.addPara(Strings.format("bonus.credit_bonus_tier", bonusPercent), Color.GREEN);
+                int bonusCredits = baseCredits * bonusPercent / 100;
+                getCredits().add(bonusCredits);
+                AddRemoveCommodity.addCreditsGainText(bonusCredits, textPanel);
+            }
+            getCredits().add(baseCredits);
+            AddRemoveCommodity.addCreditsGainText(baseCredits, textPanel);
             options.addOption(Strings.get("menu.back"), "back");
         } else {
+            if (bonusPercent > 0) {
+                textPanel.addPara(Strings.format("bonus.credit_bonus_tier", bonusPercent), Color.GREEN);
+                int bonusCredits = baseCredits * bonusPercent / 100;
+                getCredits().add(bonusCredits);
+                AddRemoveCommodity.addCreditsGainText(bonusCredits, textPanel);
+            }
             options.addOption(Strings.get("reward.take_credits"), "take_credits");
         }
 
@@ -508,6 +530,11 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         int total = CharacterIds.EASY_MODE_CHARACTERS.size();
         textPanel.addPara(Strings.format("easy_mode.collection_progress", collected, total), Color.CYAN);
 
+        int winsUntilNext = CosmiconStats.getWinsUntilNextBonus();
+        if (winsUntilNext > 0) {
+            textPanel.addPara(Strings.format("easy_mode.wins_until_next_bonus", winsUntilNext), Color.CYAN);
+        }
+
         CosmiconStats.checkAndUnlockBonuses();
         if (!hadHp && CosmiconStats.isHpBonusUnlocked()) {
             textPanel.addPara(Strings.get("bonus.unlocked_hp"), Color.CYAN);
@@ -520,14 +547,19 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         }
 
         int playerLevel = Global.getSector().getPlayerStats().getLevel();
-        int credits = CosmiconStats.calculateNormalEncounterCreditReward(playerLevel);
-        if (CosmiconPlayerState.isCreditBonusActive()) {
-            credits = (int)(credits * 1.5f);
-            textPanel.addPara(Strings.get("bonus.credit_bonus_active"), Color.GREEN);
+        int baseCredits = CosmiconStats.calculateNormalEncounterCreditReward(playerLevel);
+        pendingBaseCredits = baseCredits;
+        int bonusPercent = CosmiconPlayerState.getCreditBonusPercent();
+        if (bonusPercent > 0) {
+            textPanel.addPara(Strings.format("bonus.credit_bonus_tier", bonusPercent), Color.GREEN);
+            int bonusCredits = baseCredits * bonusPercent / 100;
+            getCredits().add(bonusCredits);
+            AddRemoveCommodity.addCreditsGainText(bonusCredits, textPanel);
         }
         pendingRewardCharId = null;
         pendingRewardPrismaticId = null;
-        options.addOption(Strings.get("reward.take_credits"), "take_credits");
+        getCredits().add(baseCredits);
+        AddRemoveCommodity.addCreditsGainText(baseCredits, textPanel);
 
         if (CosmiconStats.isEasyModeComplete()) {
             if (CosmiconStats.isMigratedFromPrerework()) {
@@ -546,7 +578,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         options.clearOptions();
         textPanel.addPara(Strings.get("battle.you_lost"));
 
-        if (!CosmiconStats.isInTutorialMode()) {
+        if (!CosmiconStats.isInTutorialMode() && !CosmiconStats.isInEasyMode() && !CosmiconEventState.isTutorialMode()) {
             int playerLevel = Global.getSector().getPlayerStats().getLevel();
             int creditLoss = CosmiconStats.calculateNormalEncounterCreditReward(playerLevel);
             long currentCredits = (long) getCredits().get();
@@ -617,15 +649,17 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 }
                 finishReward();
             }
-            case "take_credits" -> {
-                int playerLevel = Global.getSector().getPlayerStats().getLevel();
-                int credits = CosmiconStats.calculateNormalEncounterCreditReward(playerLevel);
-                if (CosmiconPlayerState.isCreditBonusActive()) {
-                    credits = (int)(credits * 1.5f);
-                    textPanel.addPara(Strings.get("bonus.credit_bonus_active"), Color.GREEN);
+            case "unlock_prismatic_true" -> {
+                if (pendingRewardPrismaticId != null) {
+                    CosmiconStats.unlockPrismaticTrue(pendingRewardPrismaticId);
+                    String diceName = PrismaticDisplayHelper.getDiceDisplayName(pendingRewardPrismaticId);
+                    textPanel.addPara(Strings.format("reward.prismatic_true_unlocked", diceName));
                 }
-                getCredits().add(credits);
-                AddRemoveCommodity.addCreditsGainText(credits, textPanel);
+                finishReward();
+            }
+            case "take_credits" -> {
+                getCredits().add(pendingBaseCredits);
+                AddRemoveCommodity.addCreditsGainText(pendingBaseCredits, textPanel);
                 finishReward();
             }
             default -> finishReward();
@@ -1192,10 +1226,8 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         return Global.getSector().getPlayerFleet().getCargo().getCredits();
     }
 
-    private void markSessionWonIfBarEvent() {
-        if (CosmiconEventState.isBarEvent()) {
-            CosmiconEventState.setSessionWon(true);
-        }
+    private void markSessionWon() {
+        CosmiconEventState.setSessionWon(true);
     }
 
     private void finishReward() {

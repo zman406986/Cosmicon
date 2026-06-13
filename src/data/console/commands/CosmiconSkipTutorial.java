@@ -17,8 +17,8 @@ public class CosmiconSkipTutorial implements BaseCommand {
 
         CosmiconStats.forceCompleteTutorial();
 
-        Console.showMessage("Tutorial skipped! Games played: " + CosmiconStats.getGamesPlayed());
-        Console.showMessage("Unlocked: Chimera, Acheron, Repeater (non-true).");
+        Console.showMessage("Tutorial skipped! Unlocked: Chimera, Acheron, Repeater.");
+        Console.showMessage("Mode: " + (CosmiconStats.isInEasyMode() ? "Easy Mode" : "Full Game"));
 
         return CommandResult.SUCCESS;
     }

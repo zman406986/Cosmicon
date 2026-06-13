@@ -57,6 +57,7 @@ public class AventurineAI extends AttackRerollAI {
     @Override
     protected List<Set<Integer>> generateComboCandidates(SimPool pool, int rerollsLeft, int requiredCount,
                                                           boolean isAttacking, BattleState state, boolean forPlayer) {
+        if (!isAttacking) return Collections.emptyList();
         List<Integer> evenIndices = new ArrayList<>();
         int oddCount = 0;
         for (int i = 0; i < pool.size(); i++) {

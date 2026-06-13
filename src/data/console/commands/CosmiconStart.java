@@ -61,7 +61,7 @@ public class CosmiconStart implements BaseCommand {
             CosmiconEventState.setReplayTutorialGame(tutorialGame);
             CosmiconEventState.setIsTutorialMode(true);
 
-            String tutOpponent = tutorialGame == 1 ? CharacterIds.FURBO_JOURNALIST : "robin";
+            String tutOpponent = tutorialGame == 1 ? CharacterIds.TRASHCAN : "robin";
             CosmiconEventState.setOpponentCharacter(tutOpponent);
 
             Console.showMessage("Starting Cosmicon Tutorial Game " + tutorialGame + " vs " + tutOpponent + "...");

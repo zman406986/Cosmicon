@@ -28,10 +28,9 @@ public class CosmiconStats {
     private static final String KEY_BONUS_DEF_UNLOCKED = "$cos_bonus_def_unlocked";
     private static final String KEY_DATA_VERSION = "$cos_data_version";
     private static final String KEY_MIGRATED_FROM_PREREWORK = "$cos_migrated_from_prerework";
+    private static final String KEY_EASY_MODE_UPDATE_MSG_SHOWN = "$cos_easy_mode_update_msg_shown";
 
     private static final int CURRENT_DATA_VERSION = 1;
-
-    private static final int TUTORIAL_GAMES = 1;
     private static final String REPEATER_ID = "repeater";
 
     private static MemoryAPI getMemory() {
@@ -81,15 +80,12 @@ public class CosmiconStats {
     }
 
     public static void skipTutorial() {
-        MemoryAPI mem = getMemory();
-        mem.set(KEY_GAMES_PLAYED, 1);
-        mem.set(KEY_TUTORIAL_1_COMPLETED, true);
+        getMemory().set(KEY_TUTORIAL_1_COMPLETED, true);
     }
 
     public static void forceCompleteTutorial() {
         completeTutorial1();
         completeTutorial2();
-        getMemory().set(KEY_GAMES_PLAYED, 1);
         getMemory().set(KEY_MIGRATED_FROM_PREREWORK, false);
     }
 
@@ -249,12 +245,12 @@ public class CosmiconStats {
         return getMemory().getBoolean(KEY_BONUS_DEF_UNLOCKED);
     }
 
-    public static int countUnlockedBonuses() {
-        int count = 0;
-        if (isHpBonusUnlocked()) count++;
-        if (isAtkBonusUnlocked()) count++;
-        if (isDefBonusUnlocked()) count++;
-        return count;
+    public static int getWinsUntilNextBonus() {
+        int count = countUnlockedEasyModeCharacters();
+        if (isDefBonusUnlocked()) return 0;
+        if (isAtkBonusUnlocked()) return 7 - count;
+        if (isHpBonusUnlocked()) return 5 - count;
+        return 3 - count;
     }
 
     public static void checkAndUnlockBonuses() {
@@ -270,6 +266,25 @@ public class CosmiconStats {
         if (afterTutorial >= 6 && !isDefBonusUnlocked()) {
             mem.set(KEY_BONUS_DEF_UNLOCKED, true);
         }
+    }
+
+    public static boolean hasThreeStarCharacters() {
+        Set<String> unlocked = getUnlockedCharacters();
+        for (String id : unlocked) {
+            if (!CharacterIds.EASY_MODE_CHARACTERS.contains(id)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean shouldShowEasyModeUpdateMessage() {
+        if (getMemory().getBoolean(KEY_EASY_MODE_UPDATE_MSG_SHOWN)) return false;
+        return !isEasyModeComplete() && hasThreeStarCharacters();
+    }
+
+    public static void setEasyModeUpdateMessageShown() {
+        getMemory().set(KEY_EASY_MODE_UPDATE_MSG_SHOWN, true);
     }
 
     public static int calculateCreditReward(int playerLevel) {
@@ -302,10 +317,14 @@ public class CosmiconStats {
             mem.set(KEY_DATA_VERSION, CURRENT_DATA_VERSION);
         }
 
-        if (!isMigratedFromPrerework()) {
-            if (getGamesPlayed() >= TUTORIAL_GAMES && !isTutorial1Completed()) {
-                completeTutorial1();
+        if (isTutorial1Completed()) {
+            if (!isCharacterUnlocked(CharacterIds.CHIMERA)) {
+                unlockCharacter(CharacterIds.CHIMERA);
             }
+        }
+
+        if (isCharacterUnlocked(CharacterIds.TRASHCAN) && !isCharacterUnlocked(CharacterIds.TRASHCAN_2STAR)) {
+            unlockCharacter(CharacterIds.TRASHCAN_2STAR);
         }
 
         if (isTutorial2Completed()) {
@@ -330,7 +349,7 @@ public class CosmiconStats {
     }
 
     private static void migrateV0toV1(MemoryAPI mem) {
-        if (getGamesPlayed() == 0 && getUnlockedCharacters().isEmpty()) {
+        if (getUnlockedCharacters().isEmpty()) {
             return;
         }
 
@@ -351,6 +370,10 @@ public class CosmiconStats {
             mem.set(KEY_MIGRATED_FROM_PREREWORK, true);
             CosmiconLogger.info("Migration V0→V1: Pre-rework save with 3-star characters. "
                 + "Player will play Tutorial 1 next encounter.");
+        } else {
+            completeTutorial1();
+            CosmiconLogger.info("Migration V0→V1: Pre-rework save with only 2-star characters. "
+                + "Auto-completed Tutorial 1, entering Easy Mode.");
         }
     }
 }

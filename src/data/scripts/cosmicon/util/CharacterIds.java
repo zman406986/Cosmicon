@@ -1,9 +1,9 @@
 package data.scripts.cosmicon.util;
 
-/**
- * Centralized character ID constants for Cosmicon Dice.
- * Use these constants instead of string literals for type safety and maintainability.
- * All IDs are lowercase with underscores separating words.
+/*
+  Centralized character ID constants for Cosmicon Dice.
+  Use these constants instead of string literals for type safety and maintainability.
+  All IDs are lowercase with underscores separating words.
  */
 import java.util.List;
 

@@ -35,10 +35,33 @@ public class CosmiconNPCManager {
                 market.getMemory().unset(SPAWN_TIME_KEY);
                 market.getMemory().unset(STORED_CHAR_KEY);
             }
+            person.getMemory().unset("$cos_npc_char");
+            person.getMemory().unset("$cos_npc_market_id");
+            person.getMemory().unset("$cos_npc_open");
+            person.getMemory().unset("$cos_npc_greeted");
             ip.removePerson(person);
         }
         Global.getSector().getPersistentData().remove(PERSISTENT_DATA_KEY);
         Global.getLogger(CosmiconNPCManager.class).info(
             "Cosmicon: Cleaned up " + toRemove.size() + " persistent NPCs");
+    }
+
+    public static void cleanupStaleMemoryKeys() {
+        ImportantPeopleAPI ip = Global.getSector().getImportantPeople();
+        int cleaned = 0;
+        for (PersonDataAPI data : ip.getPeopleCopy()) {
+            PersonAPI person = data.getPerson();
+            if (person != null && !person.hasTag(NPC_TAG) && person.getMemory().contains("$cos_npc_char")) {
+                person.getMemory().unset("$cos_npc_char");
+                person.getMemory().unset("$cos_npc_market_id");
+                person.getMemory().unset("$cos_npc_open");
+                person.getMemory().unset("$cos_npc_greeted");
+                cleaned++;
+            }
+        }
+        if (cleaned > 0) {
+            Global.getLogger(CosmiconNPCManager.class).info(
+                "Cosmicon: Cleaned stale memory keys from " + cleaned + " non-mod NPCs");
+        }
     }
 }

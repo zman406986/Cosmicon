@@ -26,7 +26,7 @@ public class CosmiconConfig {
     public static float NPC_MIN_LIFETIME_DAYS = 30f;
     public static float NPC_MAX_LIFETIME_DAYS = 60f;
 
-    public static int NORMAL_ENCOUNTER_CREDIT_PER_LEVEL = 1500;
+    public static int NORMAL_ENCOUNTER_CREDIT_PER_LEVEL = 1000;
     public static int BASE_CREDIT_REWARD_PER_LEVEL = 3000;
     public static float CREDIT_RANDOM_FACTOR_MIN = 0.9f;
     public static float CREDIT_RANDOM_FACTOR_MAX = 1.1f;
@@ -72,7 +72,7 @@ public class CosmiconConfig {
 
             JSONObject creditsSettings = settings.optJSONObject("credits");
             if (creditsSettings != null) {
-                NORMAL_ENCOUNTER_CREDIT_PER_LEVEL = creditsSettings.optInt("normalEncounterPerLevel", 1500);
+                NORMAL_ENCOUNTER_CREDIT_PER_LEVEL = creditsSettings.optInt("normalEncounterPerLevel", 1000);
                 BASE_CREDIT_REWARD_PER_LEVEL = creditsSettings.optInt("baseRewardPerLevel", 3000);
                 CREDIT_RANDOM_FACTOR_MIN = (float) creditsSettings.optDouble("randomFactorMin", 0.9);
                 CREDIT_RANDOM_FACTOR_MAX = (float) creditsSettings.optDouble("randomFactorMax", 1.1);

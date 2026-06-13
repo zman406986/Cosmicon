@@ -355,7 +355,7 @@ public class FlyingIcon {
         labelCreated = false;
     }
     
-    public void render(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
+    public void render(float panelX, float panelY, float panelHeight, float alphaMult) {
         if (sprite == null) return;
         
         GLStateUtil.enableTexturingWithBlend();

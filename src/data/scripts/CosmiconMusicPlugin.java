@@ -47,4 +47,13 @@ public class CosmiconMusicPlugin {
     public static boolean isMusicPlaying() {
         return Global.getSector().getMemory().getBoolean(COSMICON_MUSIC_MEMORY_KEY);
     }
+
+    public static void resetStaleState() {
+        MemoryAPI globalMemory = Global.getSector().getMemory();
+        if (globalMemory.getBoolean(COSMICON_MUSIC_MEMORY_KEY)) {
+            globalMemory.unset(COSMICON_MUSIC_MEMORY_KEY);
+            originalMusicId = null;
+            wasMusicPlaying = false;
+        }
+    }
 }

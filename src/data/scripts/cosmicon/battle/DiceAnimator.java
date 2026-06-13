@@ -569,6 +569,10 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         return vr;
     }
 
+    public boolean isTraveling() {
+        return phase == Phase.TRAVEL;
+    }
+
     public boolean isRunning() {
         return !complete;
     }

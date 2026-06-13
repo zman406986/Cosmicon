@@ -91,6 +91,7 @@ public class DamageResolutionAnimator {
     private boolean perforation;
     private boolean combo;
     private boolean attackWins;
+    private boolean comboAttackWins;
     private boolean isDraw;
     private int counterDamage;
 
@@ -115,6 +116,7 @@ public class DamageResolutionAnimator {
     private boolean damageImpacted;
 
     private boolean forcefieldUsed;
+    private boolean comboForcefieldUsed;
     private int siphonPercentage;
 
     private DamageAnimationCallback callback;
@@ -193,11 +195,15 @@ public class DamageResolutionAnimator {
         this.combo = hasCombo(state);
         if (combo) {
             this.comboDamage = Math.max(0, attackValue - defenseValue);
-            if (defenderEffects.isForcefieldActive() && this.comboDamage > 0) {
+            this.comboForcefieldUsed = defenderEffects.isForcefieldActive() && this.comboDamage > 0;
+            if (comboForcefieldUsed) {
                 this.comboDamage = 0;
             }
+            this.comboAttackWins = attackValue > defenseValue && !comboForcefieldUsed;
         } else {
             this.comboDamage = 0;
+            this.comboAttackWins = false;
+            this.comboForcefieldUsed = false;
         }
 
         this.counterDamage = defenderEffects.calculateCounterDamage(attackValue, defenseValue);
@@ -402,6 +408,12 @@ public class DamageResolutionAnimator {
     private void triggerIconImpact() {
         impactEffect.triggerFlash(centerX, centerY, 100f, CLASH_FLASH_COLOR);
 
+        if (attackWins) {
+            CosmiconSFX.playClashAtkWin();
+        } else {
+            CosmiconSFX.playClashDefWin();
+        }
+
         if (!perforation) {
             impactEffect.triggerParticles(centerX, centerY, 18, CLASH_PARTICLE_COLOR);
         }
@@ -452,6 +464,7 @@ public class DamageResolutionAnimator {
         boolean atkLaunched = atkFlyingIcon == null || atkFlyingIcon.isFlying();
 
         if (phaseElapsed >= WINNER_DRAWBACK_DURATION || atkLaunched) {
+            CosmiconSFX.playFlyingSwoosh();
             phase = Phase.WINNER_IMPACT;
             phaseElapsed = 0f;
         }
@@ -604,7 +617,7 @@ public class DamageResolutionAnimator {
     }
 
     private void advanceComboPause() {
-        if (attackWins && atkFlyingIcon != null) {
+        if (comboAttackWins && atkFlyingIcon != null) {
             float rotationTarget = playerAttacker ? ATK_ROTATION_TO_BOTTOM_RIGHT : ATK_ROTATION_TO_TOP_LEFT;
             float progress = Math.min(1f, phaseElapsed / 0.25f);
             float eased = EasingUtil.easeOutQuad(progress);
@@ -640,11 +653,17 @@ public class DamageResolutionAnimator {
                 impactEffect.triggerParticles(centerX, centerY, 14, CLASH_PARTICLE_COLOR);
             }
 
-            if (callback != null) {
-                callback.onClashImpact(perforation, forcefieldUsed && !perforation, counterDamage);
+            if (comboAttackWins) {
+                CosmiconSFX.playClashAtkWin();
+            } else {
+                CosmiconSFX.playClashDefWin();
             }
 
-            if (attackWins) {
+            if (callback != null) {
+                callback.onClashImpact(perforation, comboForcefieldUsed && !perforation, counterDamage);
+            }
+
+            if (comboAttackWins) {
                 atkFlyingIcon.setValue(comboDamage);
                 shatterEffect.trigger(centerX, centerY,
                     ColorHelper.DEFENSE_VALUE, iconSize);
@@ -675,7 +694,7 @@ public class DamageResolutionAnimator {
 
     private void advanceComboSecondImpact() {
         if (phaseElapsed >= ICON_IMPACT_DURATION) {
-            if (attackWins) {
+            if (comboAttackWins) {
                 atkFlyingIcon.drawbackThenLaunchTo(defenderTargetX, defenderTargetY,
                     30f, COMBO_WINNER_DRAWBACK_DURATION, COMBO_WINNER_IMPACT_DURATION, true);
                 phase = Phase.COMBO_WINNER_DRAWBACK;
@@ -697,6 +716,7 @@ public class DamageResolutionAnimator {
         boolean atkLaunched = atkFlyingIcon == null || atkFlyingIcon.isFlying();
 
         if (phaseElapsed >= COMBO_WINNER_DRAWBACK_DURATION || atkLaunched) {
+            CosmiconSFX.playFlyingSwoosh();
             phase = Phase.COMBO_WINNER_IMPACT;
             phaseElapsed = 0f;
         }
@@ -752,8 +772,6 @@ public class DamageResolutionAnimator {
     public void render(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
         if (phase == Phase.IDLE) return;
 
-        boolean isComboPhase = isComboPhase();
-
         renderNumbersOnIcons(panelX, panelY, panelWidth, panelHeight, alphaMult);
 
         if (phase != Phase.COMBO_PAUSE && phase != Phase.COMBO_ICON_RETREAT) {
@@ -786,16 +804,16 @@ public class DamageResolutionAnimator {
             boolean duringComboClash = phase == Phase.COMBO_SECOND_CLASH;
             boolean duringComboWinnerFly = phase == Phase.COMBO_WINNER_DRAWBACK ||
                 phase == Phase.COMBO_WINNER_IMPACT;
-            boolean atkHiddenBySplit = splitEffect.isActive() && !attackWins;
-            boolean defHiddenBySplit = splitEffect.isActive() && attackWins;
+            boolean atkHiddenBySplit = splitEffect.isActive() && !comboAttackWins;
+            boolean defHiddenBySplit = splitEffect.isActive() && comboAttackWins;
 
             if (atkFlyingIcon != null && !atkHiddenBySplit) {
-                atkFlyingIcon.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
+                atkFlyingIcon.render(panelX, panelY, panelHeight, alphaMult);
                 atkFlyingIcon.setLabelOpacity(
                     (duringComboClash || duringComboWinnerFly) ? alphaMult : 0f);
             }
             if (defFlyingIcon != null && !defHiddenBySplit) {
-                defFlyingIcon.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
+                defFlyingIcon.render(panelX, panelY, panelHeight, alphaMult);
                 defFlyingIcon.setLabelOpacity(duringComboClash ? alphaMult : 0f);
             }
             return;
@@ -813,11 +831,11 @@ public class DamageResolutionAnimator {
             boolean defHiddenBySplit = splitEffect.isActive() && attackWins;
 
             if (atkFlyingIcon != null && !atkHiddenBySplit) {
-                atkFlyingIcon.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
+                atkFlyingIcon.render(panelX, panelY, panelHeight, alphaMult);
                 atkFlyingIcon.setLabelOpacity(alphaMult);
             }
             if (defFlyingIcon != null && !defHiddenBySplit) {
-                defFlyingIcon.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
+                defFlyingIcon.render(panelX, panelY, panelHeight, alphaMult);
                 defFlyingIcon.setLabelOpacity(alphaMult);
             }
             return;
@@ -832,12 +850,12 @@ public class DamageResolutionAnimator {
 
         if (atkFlyingIcon != null && !atkHiddenBySplit && (!atkShattered || (restoring && splitDone))) {
             float restoreAlpha = atkShattered ? shatterRestoreAlpha : alphaMult;
-            atkFlyingIcon.render(panelX, panelY, panelWidth, panelHeight, restoreAlpha);
+            atkFlyingIcon.render(panelX, panelY, panelHeight, restoreAlpha);
             atkFlyingIcon.setLabelOpacity(restoreAlpha);
         }
         if (defFlyingIcon != null && !defHiddenBySplit && (!defShattered || (restoring && splitDone))) {
             float restoreAlpha = defShattered ? shatterRestoreAlpha : alphaMult;
-            defFlyingIcon.render(panelX, panelY, panelWidth, panelHeight, restoreAlpha);
+            defFlyingIcon.render(panelX, panelY, panelHeight, restoreAlpha);
             defFlyingIcon.setLabelOpacity(restoreAlpha);
         }
     }
@@ -988,7 +1006,11 @@ public class DamageResolutionAnimator {
         perforation = false;
         combo = false;
         attackWins = false;
+        comboAttackWins = false;
         isDraw = false;
+        forcefieldUsed = false;
+        comboForcefieldUsed = false;
+        siphonPercentage = 0;
         playerAttacker = false;
 
         centerX = 0f;

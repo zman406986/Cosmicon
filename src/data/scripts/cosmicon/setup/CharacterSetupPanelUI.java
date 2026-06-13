@@ -38,6 +38,7 @@ import data.scripts.cosmicon.util.UIComponentFactory;
 import data.scripts.cosmicon.state.BonusState;
 import data.scripts.cosmicon.state.CosmiconPlayerState;
 import data.scripts.cosmicon.state.CosmiconStats;
+import data.scripts.cosmicon.util.CharacterIds;
 
 public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements ActionListenerDelegate {
 
@@ -47,7 +48,8 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private static final float CARD_HEIGHT = BattleRenderingUtils.CARD_HEIGHT;
     private static final int COLS = 3;
     private static final float GAP_X = 10f;
-    private static final float GAP_Y = 20f;
+    private static final float GAP_Y = 15f;
+    private static final float EXTRA_SCROLL_PADDING = 10f;
     private static final float MARGIN = 15f;
     private static final float HEADER_HEIGHT = 40f;
     private static final float SELECTION_BAR_HEIGHT = 30f;
@@ -59,9 +61,9 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private static final float DICE_ENTRY_HEIGHT = 65f;
     private static final float DICE_LEFT_COL_WIDTH = 165f;
 
-    private static final float BUTTON_AREA_HEIGHT = 50f;
+    private static final float BOTTOM_BAR_HEIGHT = 35f;
+    private static final float CONTENT_START_Y = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 55f;
     private static final float BUTTON_WIDTH = 140f;
-    private static final float BUTTON_HEIGHT = 35f;
     private static final Color COLOR_SCROLLBAR_TRACK = new Color(35, 38, 48, 200);
     private static final Color COLOR_SCROLLBAR_THUMB = new Color(90, 100, 120, 180);
 
@@ -103,7 +105,6 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
     private static final String ACTION_CONFIRM = "setup_confirm";
     private static final String ACTION_CANCEL = "setup_cancel";
-    private static final String ACTION_BACK = "setup_back";
     private static final String ACTION_BONUS_NONE = "bonus_none";
     private static final String ACTION_BONUS_HP = "bonus_hp";
     private static final String ACTION_BONUS_ATK = "bonus_atk";
@@ -123,9 +124,9 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private LabelAPI selectedNameLabel;
     private LabelAPI passiveLabel;
     private LabelAPI bonusDescLabel;
+    private LabelAPI creditBonusLabel;
     private final Map<String, ButtonAPI> bonusButtons = new java.util.LinkedHashMap<>();
 
-    private boolean buttonsCreated = false;
     private boolean wasMousePressed = false;
 
     private boolean needsLabelUpdate = true;
@@ -195,14 +196,14 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         List<CharacterCard> allCards = CharacterRegistry.getAllCards();
         this.characters = new ArrayList<>();
         for (CharacterCard card : allCards) {
-            if ("trashcan".equals(card.getId())) continue;
+            if (CharacterIds.TRASHCAN.equals(card.getId())) continue;
             if (CosmiconStats.isCharacterUnlocked(card.getId())) {
                 this.characters.add(card);
             }
         }
         if (this.characters.isEmpty()) {
             for (CharacterCard card : allCards) {
-                if ("trashcan".equals(card.getId())) continue;
+                if (CharacterIds.TRASHCAN.equals(card.getId())) continue;
                 this.characters.add(card);
             }
         }
@@ -259,7 +260,6 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         createSelectionBarLabels();
         createBonusUI();
         createPassiveLabel();
-        createButtons();
         createDiceListLabels();
     }
 
@@ -268,11 +268,15 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             Strings.get("menu.play") + " - " + Strings.get("menu.character_setup"),
             COLOR_HEADER, Alignment.LMID, PANEL_WIDTH - MARGIN * 2 - BUTTON_WIDTH, HEADER_HEIGHT, MARGIN, MARGIN);
 
-        TooltipMakerAPI backTp = UIComponentFactory.createTooltipForButtons(panel, this, BUTTON_WIDTH + 20f, HEADER_HEIGHT,
-            PANEL_WIDTH - BUTTON_WIDTH - MARGIN - 20f, MARGIN);
-        ButtonAPI backButton = backTp.addButton(Strings.get("menu.back"), ACTION_BACK, BUTTON_WIDTH, HEADER_HEIGHT - 5f, 0f);
-        backButton.setQuickMode(true);
-        backButton.getPosition().inTL(0, 0);
+        TooltipMakerAPI topBtnTp = UIComponentFactory.createTooltipForButtons(panel, this, BUTTON_WIDTH * 2 + 30f, HEADER_HEIGHT,
+            PANEL_WIDTH - BUTTON_WIDTH * 2 - MARGIN - 30f, MARGIN);
+        ButtonAPI confirmButton = topBtnTp.addButton(Strings.get("setup.confirm"), ACTION_CONFIRM, BUTTON_WIDTH, HEADER_HEIGHT - 5f, 0f);
+        confirmButton.setQuickMode(true);
+        confirmButton.getPosition().inTL(0, 0);
+
+        ButtonAPI cancelButton = topBtnTp.addButton(Strings.get("setup.cancel"), ACTION_CANCEL, BUTTON_WIDTH, HEADER_HEIGHT - 5f, 0f);
+        cancelButton.setQuickMode(true);
+        cancelButton.getPosition().inTL(BUTTON_WIDTH + 10f, 0);
     }
 
     private void createSelectionBarLabels() {
@@ -283,7 +287,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     }
 
     private void createBonusUI() {
-        float bonusY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 5f;
+        float bonusY = PANEL_HEIGHT - BOTTOM_BAR_HEIGHT + 3f;
         float bonusX = MARGIN;
 
         UIComponentFactory.createLabelSmall(panel, Strings.get("bonus.title") + ":",
@@ -306,10 +310,16 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         addBonusButton(tp, ACTION_BONUS_ATK, Strings.get("bonus.atk_1"), atkUnlocked);
         addBonusButton(tp, ACTION_BONUS_DEF, Strings.get("bonus.def_1"), defUnlocked);
 
-        float descY = bonusY + BONUS_BUTTON_HEIGHT + 2f;
+        float descX = bonusX + 105f + BONUS_BUTTON_WIDTH * 4 + 35f;
+        float descWidth = PANEL_WIDTH - descX - MARGIN - 10f;
         bonusDescLabel = UIComponentFactory.createLabelSmall(panel, "",
             new Color(180, 180, 200), Alignment.LMID,
-            PANEL_WIDTH - MARGIN * 2 - 100f, 20f, bonusX + 105f, descY);
+            descWidth, BONUS_BUTTON_HEIGHT, descX, bonusY);
+
+        creditBonusLabel = UIComponentFactory.createLabelSmall(panel, "",
+            Color.GREEN, Alignment.LMID,
+            descWidth, BONUS_BUTTON_HEIGHT, descX, bonusY);
+
         updateBonusDescription();
     }
 
@@ -323,7 +333,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             btn.setOpacity(0.35f);
         }
         if (action.equals(ACTION_BONUS_NONE) && selectedBonus == BonusState.NONE) {
-            btn.setHighlightColor(COLOR_SELECTED);
+            btn.highlight();
         }
         bonusButtons.put(action, btn);
     }
@@ -344,8 +354,27 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                 case DEF_1 -> "bonus.def_1_desc";
             };
         }
+        
+        boolean isBasic = selectedIndex >= 0 && selectedIndex < characters.size()
+            && CharacterIds.EASY_MODE_CHARACTERS.contains(characters.get(selectedIndex).getId());
+        boolean noBonus = selectedBonus == BonusState.NONE;
+
+        String creditKey;
+        if (isBasic && noBonus) {
+            creditKey = "bonus.credit_red";
+        } else if (isBasic || noBonus) {
+            creditKey = "bonus.credit_orange";
+        } else {
+            creditKey = "bonus.credit_green";
+        }
+        
+        String combinedText = Strings.get(descKey) + "   " + Strings.get(creditKey);
+        
         if (bonusDescLabel != null) {
-            bonusDescLabel.setText(Strings.get(descKey));
+            bonusDescLabel.setText(combinedText);
+        }
+        if (creditBonusLabel != null) {
+            creditBonusLabel.setText("");
         }
     }
 
@@ -361,35 +390,17 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                 default -> false;
             };
             if (isSelected) {
-                btn.setHighlightColor(COLOR_SELECTED);
+                btn.highlight();
+            } else {
+                btn.unhighlight();
             }
         }
     }
 
     private void createPassiveLabel() {
-        float passiveY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + BONUS_BUTTON_HEIGHT + 25f;
+        float passiveY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 8f;
         passiveLabel = UIComponentFactory.createLabelSmall(panel, "",
             COLOR_TEXT, Alignment.LMID, PANEL_WIDTH - MARGIN * 2, 45f, MARGIN, passiveY);
-    }
-
-    private void createButtons() {
-        if (panel == null || buttonsCreated) return;
-
-        float buttonAreaY = PANEL_HEIGHT - BUTTON_AREA_HEIGHT;
-
-        TooltipMakerAPI btnTp = panel.createUIElement(PANEL_WIDTH, BUTTON_AREA_HEIGHT, false);
-        btnTp.setActionListenerDelegate(this);
-        panel.addUIElement(btnTp).inTL(0, buttonAreaY);
-
-        ButtonAPI confirmButton = btnTp.addButton(Strings.get("setup.confirm"), ACTION_CONFIRM, BUTTON_WIDTH, BUTTON_HEIGHT, 0f);
-        confirmButton.getPosition().inTL(500f, 5f);
-        confirmButton.setQuickMode(true);
-
-        ButtonAPI cancelButton = btnTp.addButton(Strings.get("setup.cancel"), ACTION_CANCEL, BUTTON_WIDTH, BUTTON_HEIGHT, 0f);
-        cancelButton.getPosition().inTL(760f, 5f);
-        cancelButton.setQuickMode(true);
-
-        buttonsCreated = true;
     }
 
     private void createDiceListLabels() {
@@ -398,7 +409,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         diceEntryLabels.clear();
         List<PrismaticDiceType> diceList = filteredDiceList;
 
-        float listStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 50f;
+        float listStartY = CONTENT_START_Y;
         float titleOffset = 20f;
 
         float labelX = DICE_LIST_X + 8f;
@@ -450,6 +461,12 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                 labels.nameLabel().setOpacity(0f);
                 labels.facesLabel().setOpacity(0f);
                 labels.descLabel().setOpacity(0f);
+            } else {
+                float entryY = CONTENT_START_Y + 20f + i * DICE_ENTRY_HEIGHT - diceScrollOffset;
+                float listHeight = PANEL_HEIGHT - CONTENT_START_Y - BOTTOM_BAR_HEIGHT - 15f;
+                labels.nameLabel().setOpacity(labelOpacity(entryY + 2f, 24f, CONTENT_START_Y, listHeight));
+                labels.facesLabel().setOpacity(labelOpacity(entryY + 28f, 16f, CONTENT_START_Y, listHeight));
+                labels.descLabel().setOpacity(labelOpacity(entryY + 2f, 48f, CONTENT_START_Y, listHeight));
             }
 
             boolean useTrue = (i == selectedDiceEntryIndex) ? selectedUseTrueVersion : !labels.hasBothVersions();
@@ -484,7 +501,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         cardLabels.clear();
 
-        float galleryStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 50f;
+        float galleryStartY = CONTENT_START_Y;
 
         for (int i = 0; i < characters.size(); i++) {
             int col = i % COLS;
@@ -619,8 +636,8 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         Misc.renderQuad(panelX, panelY, PANEL_WIDTH, PANEL_HEIGHT, COLOR_BG_DARK, alphaMult);
 
-        float galleryStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 50f;
-        float galleryHeight = PANEL_HEIGHT - galleryStartY - BUTTON_AREA_HEIGHT - 20f;
+        float galleryStartY = CONTENT_START_Y;
+        float galleryHeight = PANEL_HEIGHT - galleryStartY - BOTTOM_BAR_HEIGHT - 15f;
         float galleryWidth = GALLERY_WIDTH - MARGIN;
 
         float scale = Global.getSettings().getScreenScaleMult();
@@ -646,6 +663,8 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         renderDiceList(alphaMult, panelX, panelY, scale);
 
+        // Bonus section background removed - bonus now shares button row
+
         UnifiedCoord.clearCurrent();
 
         boolean scrollChanged = Float.compare(prevScrollOffset, scrollOffset) != 0
@@ -655,10 +674,10 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             || prevUseTrueVersion != selectedUseTrueVersion;
 
         if (needsLabelUpdate || scrollChanged || selectionChanged) {
-            if (scrollChanged || needsLabelUpdate) {
+            if (scrollChanged || needsLabelUpdate || selectionChanged) {
                 repositionCardLabels(galleryStartY, galleryHeight);
-                float diceListStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 50f;
-                float diceListHeight = PANEL_HEIGHT - diceListStartY - BUTTON_AREA_HEIGHT - 20f;
+                float diceListStartY = CONTENT_START_Y;
+                float diceListHeight = PANEL_HEIGHT - diceListStartY - BOTTOM_BAR_HEIGHT - 15f;
                 repositionDiceListLabels(diceListStartY, diceListHeight);
             }
             if (selectionChanged || needsLabelUpdate) {
@@ -682,9 +701,9 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         int totalRows = (int) Math.ceil((float) characters.size() / COLS);
         float totalContentHeight = totalRows * (CARD_HEIGHT + GAP_Y) - GAP_Y;
-        maxScroll = Math.max(0f, totalContentHeight - galleryHeight);
+        maxScroll = Math.max(0f, totalContentHeight - galleryHeight + EXTRA_SCROLL_PADDING);
         if (scrollOffset > maxScroll) scrollOffset = maxScroll;
-        if (scrollOffset < 0f) scrollOffset = 0f;
+        if (scrollOffset < -EXTRA_SCROLL_PADDING) scrollOffset = -EXTRA_SCROLL_PADDING;
 
         for (int i = 0; i < characters.size(); i++) {
             int col = i % COLS;
@@ -709,12 +728,13 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                 GLStateUtil.resetBlendState();
                 float[] c = ColorHelper.toGLComponents(COLOR_SELECTED, alphaMult, SCRATCH_COLOR);
                 GL11.glColor4f(c[0], c[1], c[2], c[3]);
-                GL11.glLineWidth(3f);
+                float hlPad = 3f;
+                GL11.glLineWidth(5f);
                 GL11.glBegin(GL11.GL_LINE_LOOP);
-                GL11.glVertex2f(cardGlX, cardGlY);
-                GL11.glVertex2f(cardGlX + CARD_WIDTH, cardGlY);
-                GL11.glVertex2f(cardGlX + CARD_WIDTH, cardGlY + CARD_HEIGHT);
-                GL11.glVertex2f(cardGlX, cardGlY + CARD_HEIGHT);
+                GL11.glVertex2f(cardGlX - hlPad, cardGlY - hlPad);
+                GL11.glVertex2f(cardGlX + CARD_WIDTH + hlPad, cardGlY - hlPad);
+                GL11.glVertex2f(cardGlX + CARD_WIDTH + hlPad, cardGlY + CARD_HEIGHT + hlPad);
+                GL11.glVertex2f(cardGlX - hlPad, cardGlY + CARD_HEIGHT + hlPad);
                 GL11.glEnd();
                 GLStateUtil.resetColor();
             }
@@ -753,8 +773,8 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     // --- Dice list rendering ---
 
     private void renderDiceList(float alphaMult, float panelX, float panelY, float scale) {
-        float listStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 50f;
-        float listHeight = PANEL_HEIGHT - listStartY - BUTTON_AREA_HEIGHT - 20f;
+        float listStartY = CONTENT_START_Y;
+        float listHeight = PANEL_HEIGHT - listStartY - BOTTOM_BAR_HEIGHT - 15f;
 
         GLStateUtil.resetBlendState();
 
@@ -962,7 +982,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                     if (diceScrollOffset > diceMaxScroll) diceScrollOffset = diceMaxScroll;
                 } else {
                     scrollOffset -= wheel / 4f;
-                    if (scrollOffset < 0f) scrollOffset = 0f;
+                    if (scrollOffset < -EXTRA_SCROLL_PADDING) scrollOffset = -EXTRA_SCROLL_PADDING;
                     if (scrollOffset > maxScroll) scrollOffset = maxScroll;
                 }
             }
@@ -982,12 +1002,12 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             pos.getX(), pos.getY(), PANEL_WIDTH, PANEL_HEIGHT));
         UnifiedCoord mousePos = UnifiedCoord.fromMouse();
 
-        float galleryStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 50f;
-        float galleryHeight = PANEL_HEIGHT - galleryStartY - BUTTON_AREA_HEIGHT - 20f;
+        float galleryStartY = CONTENT_START_Y;
+        float galleryHeight = PANEL_HEIGHT - galleryStartY - BOTTOM_BAR_HEIGHT - 15f;
         float trackX = GALLERY_WIDTH - 15f;
 
-        float diceListStartY = MARGIN + HEADER_HEIGHT + SELECTION_BAR_HEIGHT + 15f;
-        float diceListHeight = PANEL_HEIGHT - diceListStartY - BUTTON_AREA_HEIGHT - 20f;
+        float diceListStartY = CONTENT_START_Y;
+        float diceListHeight = PANEL_HEIGHT - diceListStartY - BOTTOM_BAR_HEIGHT - 15f;
         float diceTrackX = DICE_LIST_X + DICE_LIST_WIDTH + 2f;
 
         // Gallery scrollbar drag
@@ -997,7 +1017,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                 float thumbTravel = galleryHeight - scrollThumbHeight;
                 if (thumbTravel > 0f) {
                     scrollOffset = dragStartScrollOffset + deltaY / thumbTravel * maxScroll;
-                    if (scrollOffset < 0f) scrollOffset = 0f;
+                    if (scrollOffset < -EXTRA_SCROLL_PADDING) scrollOffset = -EXTRA_SCROLL_PADDING;
                     if (scrollOffset > maxScroll) scrollOffset = maxScroll;
                 }
             } else {
@@ -1167,7 +1187,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                     callbacks.dismissDialog();
                 }
             }
-            case ACTION_CANCEL, ACTION_BACK -> {
+            case ACTION_CANCEL -> {
                 if (selectedIndex >= 0 && selectedIndex < characters.size()) {
                     CosmiconPlayerState.saveBonusSelection(characters.get(selectedIndex).getId(), selectedBonus);
                 }
@@ -1274,6 +1294,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         selectedNameLabel = null;
         passiveLabel = null;
         bonusDescLabel = null;
+        creditBonusLabel = null;
         noPrismaticLabel = null;
         bonusButtons.clear();
         clickRegions.clear();

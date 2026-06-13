@@ -6,6 +6,7 @@ import data.scripts.cosmicon.battle.CharacterRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.state.CosmiconStats;
+import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.PrismaticDisplayHelper;
 import java.util.Map;
 
@@ -207,6 +208,13 @@ public class CosmiconUnlock implements BaseCommand {
             }
         }
 
+        for (String easyId : CharacterIds.EASY_MODE_CHARACTERS) {
+            if (!CosmiconStats.isCharacterUnlocked(easyId)) {
+                CosmiconStats.unlockCharacter(easyId);
+                charCount++;
+            }
+        }
+
         int diceCount = 0;
         int trueCount = 0;
         for (Map.Entry<String, PrismaticDiceType> entry : PrismaticDiceRegistry.getAll().entrySet()) {
@@ -227,6 +235,11 @@ public class CosmiconUnlock implements BaseCommand {
             CosmiconStats.forceCompleteTutorial();
         }
 
+        CosmiconStats.checkAndUnlockBonuses();
+
         Console.showMessage("Unlocked " + charCount + " characters, " + diceCount + " prismatic dice, and " + trueCount + " true versions.");
+        Console.showMessage("Bonuses: HP=" + CosmiconStats.isHpBonusUnlocked()
+            + " ATK=" + CosmiconStats.isAtkBonusUnlocked()
+            + " DEF=" + CosmiconStats.isDefBonusUnlocked());
     }
 }

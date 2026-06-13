@@ -60,9 +60,9 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
         return ctx.panelY() + ctx.panelHeight() - uiY;
     }
 
-    private static float uiToGlSpriteY(float uiY, float spriteH) {
+    private static float uiToGlMatchY(float uiY) {
         UnifiedCoord.PanelContext ctx = UnifiedCoord.getCurrentOrNull();
-        return ctx.panelY() + ctx.panelHeight() - uiY - spriteH;
+        return ctx.panelY() + ctx.panelHeight() - uiY - MATCH_H;
     }
 
     private CustomPanelAPI panel;
@@ -475,7 +475,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
                 float uiY = getWbMatchUiY(r, m);
                 boolean involvesPlayer = isPlayerInMatch(data.wbMatchups, r, m);
                 boolean isCurrent = isCurrentMatch(TournamentManager.BRACKET_WB, r, m);
-                renderMatchBox(uiToGlX(uiX), uiToGlSpriteY(uiY, MATCH_H), involvesPlayer, isCurrent, alpha);
+                renderMatchBox(uiToGlX(uiX), uiToGlMatchY(uiY), involvesPlayer, isCurrent, alpha);
             }
         }
 
@@ -485,7 +485,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
                 float uiY = getLbMatchUiY(r, m);
                 boolean involvesPlayer = isPlayerInMatch(data.lbMatchups, r, m);
                 boolean isCurrent = isCurrentMatch(TournamentManager.BRACKET_LB, r, m);
-                renderMatchBox(uiToGlX(uiX), uiToGlSpriteY(uiY, MATCH_H), involvesPlayer, isCurrent, alpha);
+                renderMatchBox(uiToGlX(uiX), uiToGlMatchY(uiY), involvesPlayer, isCurrent, alpha);
             }
         }
 
@@ -519,7 +519,7 @@ public class TournamentBracketPanel extends BaseCustomUIPanelPlugin implements A
 
         GLStateUtil.resetBlendState();
         GL11.glLineWidth(1.5f);
-        renderMatchBox(uiToGlX(gfX), uiToGlSpriteY(gfY, MATCH_H), involvesPlayer, isCurrent, alpha);
+        renderMatchBox(uiToGlX(gfX), uiToGlMatchY(gfY), involvesPlayer, isCurrent, alpha);
         GL11.glLineWidth(1f);
         GLStateUtil.resetColor();
     }

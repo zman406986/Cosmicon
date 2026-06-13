@@ -30,4 +30,16 @@ public class CosmiconSFX {
             Global.getSoundPlayer().playUISound(DICE_ROLL_IDS[i], pitch, 1f);
         }
     }
+
+    public static void playFlyingSwoosh() {
+        Global.getSoundPlayer().playUISound("cos_flying_swoosh", 1f, 1f);
+    }
+
+    public static void playClashAtkWin() {
+        Global.getSoundPlayer().playUISound("cos_clash_atk_win", 1f, 1f);
+    }
+
+    public static void playClashDefWin() {
+        Global.getSoundPlayer().playUISound("cos_clash_def_win", 1f, 1f);
+    }
 }

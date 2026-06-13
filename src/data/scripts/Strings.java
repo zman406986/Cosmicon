@@ -48,6 +48,10 @@ public class Strings {
         }
     }
 
+    public static String getOrNull(String key) {
+        return cache.get(key);
+    }
+
     public static String get(String key) {
         String value = cache.get(key);
         if (value != null) return value;

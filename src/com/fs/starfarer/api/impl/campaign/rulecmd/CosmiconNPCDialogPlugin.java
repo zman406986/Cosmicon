@@ -46,25 +46,29 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements Intera
             if (npcCharId != null) {
                 CosmiconEventState.setOriginalNpcCharId(npcCharId);
             }
-            int gamesPlayed = CosmiconStats.getGamesPlayed();
             String opponentId = !CosmiconStats.isTutorial1Completed()
-                ? CharacterIds.FURBO_JOURNALIST : "robin";
+                ? CharacterIds.TRASHCAN : CharacterIds.ROBIN;
             CosmiconEventState.setOpponentCharacter(opponentId);
             CosmiconEventState.setIsTutorialMode(true);
         } else {
-            if (npcCharId != null) {
-                CosmiconEventState.setOpponentCharacter(npcCharId);
-                CosmiconEventState.setOriginalNpcCharId(npcCharId);
-
-                CharacterCard opponentCard = CharacterRegistry.getCharacterById(npcCharId);
-                if (opponentCard != null) {
-                    configureOpponentPrismaticDefaults(opponentCard);
-                }
-                if (personMem.contains("$cos_npc_market_id")) {
-                    npcMarketId = personMem.getString("$cos_npc_market_id");
-                }
+            CosmiconEventState.setIsTutorialMode(false);
+            if (CosmiconStats.isInEasyMode()) {
+                assignRandomUnownedTwoStarOpponent();
             } else {
-                assignRandomOpponent();
+                if (npcCharId != null && !CharacterIds.EASY_MODE_CHARACTERS.contains(npcCharId)) {
+                    CosmiconEventState.setOpponentCharacter(npcCharId);
+                    CosmiconEventState.setOriginalNpcCharId(npcCharId);
+
+                    CharacterCard opponentCard = CharacterRegistry.getCharacterById(npcCharId);
+                    if (opponentCard != null) {
+                        configureOpponentPrismaticDefaults(opponentCard);
+                    }
+                    if (personMem.contains("$cos_npc_market_id")) {
+                        npcMarketId = personMem.getString("$cos_npc_market_id");
+                    }
+                } else {
+                    assignRandomThreeStarOpponent();
+                }
             }
         }
 
@@ -141,6 +145,23 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements Intera
 
     private void assignRandomOpponent() {
         CharacterCard opponentCard = CharacterRegistry.getRandomOpponent();
+        if (opponentCard != null) {
+            CosmiconEventState.setOpponentCharacter(opponentCard.getId());
+            configureOpponentPrismaticDefaults(opponentCard);
+        }
+    }
+
+    private void assignRandomUnownedTwoStarOpponent() {
+        CharacterCard opponentCard = CharacterRegistry.getRandomUnownedTwoStarOpponent(
+            CosmiconStats.getUnlockedCharacters());
+        if (opponentCard != null) {
+            CosmiconEventState.setOpponentCharacter(opponentCard.getId());
+            configureOpponentPrismaticDefaults(opponentCard);
+        }
+    }
+
+    private void assignRandomThreeStarOpponent() {
+        CharacterCard opponentCard = CharacterRegistry.getRandomThreeStarOpponent();
         if (opponentCard != null) {
             CosmiconEventState.setOpponentCharacter(opponentCard.getId());
             configureOpponentPrismaticDefaults(opponentCard);

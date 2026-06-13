@@ -1,0 +1,28 @@
+{
+	# Custom post entries for Cosmicon Dice NPC characters
+	# These map post ID keys to display names shown in the comm directory
+	"ranks":{
+		"posts":{
+			"cos_acheron":{"name":"Self-Annihilator"},
+			"cos_aventurine":{"name":"Aventurine of Stratagems"},
+			"cos_castorice":{"name":"Servant of Death"},
+			"cos_cyrene":{"name":"Ripples of Past Reverie"},
+			"cos_dan_heng":{"name":"Permansor Terrae"},
+			"cos_firefly":{"name":"Molten Knight"},
+			"cos_hyacine":{"name":"Healer of Light"},
+			"cos_kafka":{"name":"Stellaron Hunter"},
+			"cos_march_7th":{"name":"Mysterious Foreign Guest"},
+			"cos_phainon":{"name":"Prisoner of Flames"},
+			"cos_robin":{"name":"Galactic Singer"},
+			"cos_sparxie":{"name":"Masked Fool"},
+			"cos_the_herta":{"name":"Genius Society #83"},
+			"cos_yao_guang":{"name":"The Seer Strategist"},
+			"cos_chimera":{"name":"Okhema's Little Helper"},
+			"cos_dromas":{"name":"A Dromas Draped in Finery"},
+			"cos_automaton_beetle":{"name":"Old World Sentinel"},
+			"cos_furbo_journalist":{"name":"Master of Flawless Disguises"},
+			"cos_bananadvisor":{"name":"Banacademic Broadcaster"},
+			"cos_senior_staff":{"name":"Cost Reduction Specialist"},
+		},
+	},
+},

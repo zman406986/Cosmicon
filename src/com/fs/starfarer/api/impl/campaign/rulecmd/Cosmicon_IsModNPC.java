@@ -4,23 +4,20 @@ import com.fs.starfarer.api.campaign.InteractionDialogAPI;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import com.fs.starfarer.api.characters.PersonAPI;
 import com.fs.starfarer.api.util.Misc;
-import data.scripts.Strings;
 
 import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("unused")
-public class Cosmicon_AddNPCOption extends BaseCommandPlugin {
+public class Cosmicon_IsModNPC extends BaseCommandPlugin {
 
     @Override
     public boolean execute(String ruleId, InteractionDialogAPI dialog,
                            List<Misc.Token> params, Map<String, MemoryAPI> memoryMap) {
         if (dialog == null) return false;
-
+        if (dialog.getInteractionTarget() == null) return false;
         PersonAPI person = dialog.getInteractionTarget().getActivePerson();
-        if (person == null || !person.hasTag("cosmicon_npc")) return false;
-
-        dialog.getOptionPanel().addOption(Strings.get("npc.play_option"), "cosmicon_npc_play");
-        return true;
+        if (person == null) return false;
+        return person.hasTag("cosmicon_npc");
     }
 }

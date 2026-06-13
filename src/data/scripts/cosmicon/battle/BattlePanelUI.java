@@ -25,6 +25,7 @@ import data.scripts.cosmicon.battle.BattleEventBus.BattleEventListener;
 import data.scripts.cosmicon.battle.TurnState.Phase;
 import data.scripts.cosmicon.state.CosmiconStats;
 import data.scripts.cosmicon.tutorial.TutorialController;
+import data.scripts.cosmicon.tutorial.TutorialIndicationRenderer;
 import data.scripts.cosmicon.tutorial.TutorialUIRenderer;
 import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.UnifiedCoord;
@@ -50,6 +51,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
     private LabelAPI tutorialLabel;
     private TutorialUIRenderer tutorialRenderer;
+    private TutorialIndicationRenderer tutorialIndicationRenderer;
     private TutorialController tutorialController;
 
     private BattleUILabels labels;
@@ -188,6 +190,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         if (TutorialController.shouldActivateTutorial()) {
             tutorialRenderer = new TutorialUIRenderer();
             tutorialRenderer.init(tc, panel);
+            tutorialIndicationRenderer = new TutorialIndicationRenderer();
+            tutorialIndicationRenderer.init(tc, diceRollManager, buttons, battleState);
         }
         tc.onPhaseChange(battleState.getCurrentPhase());
     }
@@ -222,6 +226,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         if (tutorialRenderer != null) {
             tutorialRenderer.cleanup();
             tutorialRenderer = null;
+        }
+        if (tutorialIndicationRenderer != null) {
+            tutorialIndicationRenderer.cleanup();
+            tutorialIndicationRenderer = null;
         }
         removeGatekeeper999HintLabel();
         removeGatekeeper999StartMessageLabel();
@@ -831,6 +839,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         if (tutorialRenderer != null) {
             tutorialRenderer.advance(amount);
         }
+        if (tutorialIndicationRenderer != null) {
+            tutorialIndicationRenderer.advance(amount);
+        }
     }
 
     private boolean advancePreClash(float amount) {
@@ -1233,6 +1244,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
             if (tutorialRenderer != null) {
                 tutorialRenderer.render(alphaMult);
+            }
+
+            if (tutorialIndicationRenderer != null) {
+                tutorialIndicationRenderer.render(alphaMult);
             }
 
             if (gatekeeper999HintActive) {

@@ -7,6 +7,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import data.scripts.cosmicon.util.CharacterIds;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,12 +54,12 @@ public class CharacterRegistry {
 
             eligibleOpponents = new ArrayList<>();
             for (CharacterCard card : threeStarCards) {
-                if (!"trashcan".equals(card.getId())) {
+                if (!isExcludedFromOpponents(card.getId())) {
                     eligibleOpponents.add(card);
                 }
             }
             for (CharacterCard card : twoStarCards) {
-                if (!"trashcan".equals(card.getId())) {
+                if (!isExcludedFromOpponents(card.getId())) {
                     eligibleOpponents.add(card);
                 }
             }
@@ -225,12 +227,47 @@ public class CharacterRegistry {
         return copies;
     }
 
-    public static List<CharacterCard> getTwoStarCards() {
-        List<CharacterCard> copies = new ArrayList<>();
+    private static boolean isExcludedFromOpponents(String id) {
+        return CharacterIds.TRASHCAN.equals(id) || CharacterIds.TRASHCAN_2STAR.equals(id);
+    }
+
+    public static CharacterCard getRandomTwoStarOpponent() {
+        List<CharacterCard> candidates = new ArrayList<>();
         for (CharacterCard card : twoStarCards) {
-            copies.add(card.copy());
+            if (!isExcludedFromOpponents(card.getId())) {
+                candidates.add(card);
+            }
         }
-        return copies;
+        if (candidates.isEmpty()) {
+            throw new IllegalStateException("No eligible 2-star opponents in CharacterRegistry");
+        }
+        return candidates.get(ThreadLocalRandom.current().nextInt(candidates.size())).copy();
+    }
+
+    public static CharacterCard getRandomUnownedTwoStarOpponent(java.util.Set<String> unlockedCharacters) {
+        List<CharacterCard> candidates = new ArrayList<>();
+        for (CharacterCard card : twoStarCards) {
+            if (!isExcludedFromOpponents(card.getId()) && !unlockedCharacters.contains(card.getId())) {
+                candidates.add(card);
+            }
+        }
+        if (candidates.isEmpty()) {
+            return getRandomTwoStarOpponent();
+        }
+        return candidates.get(ThreadLocalRandom.current().nextInt(candidates.size())).copy();
+    }
+
+    public static CharacterCard getRandomThreeStarOpponent() {
+        List<CharacterCard> candidates = new ArrayList<>();
+        for (CharacterCard card : threeStarCards) {
+            if (!isExcludedFromOpponents(card.getId())) {
+                candidates.add(card);
+            }
+        }
+        if (candidates.isEmpty()) {
+            throw new IllegalStateException("No eligible 3-star opponents in CharacterRegistry");
+        }
+        return candidates.get(ThreadLocalRandom.current().nextInt(candidates.size())).copy();
     }
 
 }

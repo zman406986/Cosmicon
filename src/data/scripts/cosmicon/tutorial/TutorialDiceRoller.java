@@ -21,37 +21,69 @@ public class TutorialDiceRoller {
     private final Set<String> completedRerolls;
     private int opponentRerollCount;
     private int opponentSelectionCount;
+    private int playerRerollCount;
 
-    // Tutorial Game 1: Chimera (player) vs Furbo Journalist (opponent)
+    // Tutorial Game 1: Chimera (player) vs Trashcan (opponent)
     // Player dice: 2d6 + 2d4 (4 total), ATK Lv 3, DEF Lv 2
-    // Opponent dice: 1d6 + 4d4 (5 total), ATK Lv 4, DEF Lv 3
-    // T1: Player attacks [6,6,3,1] pair of 6s → +3 ATK, Opponent defends [3,2,1,1,1] → DEF 6, DMG 12
-    // T1: Opponent attacks [4,3,2,1,1] → ATK 10, Player defends [5,3,2,1] → DEF 8, DMG 2 + 2 instant
-    // T2: Player attacks [5,2,4,1] no pair → reroll [2,1] → [4,3] → [5,4,4,3] pair of 4s → +7 ATK
-    //     Opponent defends [2,1,1,1,1] → DEF 4, DMG 16. Total 28 = exact kill
+    // Opponent dice: 2d6 + 3d4 (5 total), ATK Lv 3, DEF Lv 2
+    //
+    // T1 Attack: Player [6,5,3,1] no matching → 12 ATK, Opponent defends [2,1,1,1,1] → DEF 3, DMG 9
+    //   (No matching dice → Chimera passive doesn't trigger; simple attack intro)
+    // T1 Defense: Opponent attacks [3,1,1,1,1] → rerolls indices {1,2,3} → results {4,3,2} → [3,4,3,2,1]
+    //   → select 3 → ATK 10. Player defends [4,3,2,1] → DEF 7, DMG 3
+    //   (Opponent reroll teaches the reroll mechanic)
+    // T2 Attack: Player [1,2,4,1] pair of 1s → +3 but too low → reroll non-4s → [6,4,4,3] pair of 4s → +7 ATK
+    //   Opponent defends [5,3,1,1,1] → DEF 8, DMG 13
+    // T2 Defense: Opponent attacks [5,3,1,1,1] + 2 Strength → ATK 11. Player defends [4,2,2,1] → DEF 6, DMG 5
+    //   (Strength status effect in action)
+    // T3 Attack: Player [5,3,2,1] no matching → reroll low dice → [5,4,4,3] pair of 4s → +7 ATK
+    //   Opponent defends [3,2,1,1,1] → DEF 5, DMG 15. Total 9+13+15=37 > 25
     private static final int[][] GAME1_PLAYER_ROLLS = {
-        {6, 6, 3, 1},   // T1 Attack
-        {5, 3, 2, 1},   // T1 Defense
-        {5, 2, 4, 1}    // T2 Attack (before reroll)
+        {6, 5, 3, 1},   // T1 Attack (no matching → Chimera passive doesn't trigger)
+        {4, 3, 2, 1},   // T1 Defense
+        {1, 2, 4, 1},   // T2 Attack (before reroll, pair of 1s → +3 but reroll for 4s)
+        {4, 2, 2, 1},   // T2 Defense
+        {5, 3, 2, 1}    // T3 Attack (before reroll, no matching)
     };
 
     private static final int[][] GAME1_OPPONENT_ROLLS = {
-        {4, 3, 2, 1, 1}, // T1 Attack
-        {3, 2, 1, 1, 1}, // T1 Defense
-        {2, 1, 1, 1, 1}  // T2 Defense
+        {3, 1, 1, 1, 1}, // T1 Attack (before reroll)
+        {2, 1, 1, 1, 1}, // T1 Defense
+        {5, 3, 1, 1, 1}, // T2 Defense
+        {5, 3, 1, 1, 1}, // T2 Attack (with 2 Strength stacks)
+        {3, 2, 1, 1, 1}  // T3 Defense
     };
 
-    // T2 Attack reroll: player rerolls 2 lowest dice (2 and 1), gets [4, 3]
-    private static final int[] GAME1_REROLL_RESULT = {4, 3};
+    // T1 Defense: opponent rerolls indices {1,2,3} (three 1s), results {4,3,2}
+    // After reroll: [3,4,3,2,1] → select 3 highest → ATK 10
+    private static final int[][] GAME1_OPPONENT_REROLL_INDICES = {
+        {1, 2, 3}
+    };
+    private static final int[][] GAME1_OPPONENT_REROLL_RESULTS = {
+        {4, 3, 2}
+    };
+
+    // T2 Attack reroll: player rerolls the 3 non-4 dice (indices 0,1,3), gets [6,4,3]
+    // After reroll: [6,4,4,3] pair of 4s → +7 ATK
+    // T3 Attack reroll: player rerolls 3 low dice (indices 1,2,3), gets [4,4,3]
+    // After reroll: [5,4,4,3] pair of 4s → +7 ATK
+    private static final int[][] GAME1_REROLL_RESULTS = {
+        {6, 4, 3},      // T2 reroll
+        {4, 4, 3}       // T3 reroll
+    };
 
     // Opponent selections: which dice indices the opponent selects
-    // T1 Defense (DEF Lv 3): from [3,2,1,1,1] select [0,1,2] → DEF=6
-    // T1 Attack (ATK Lv 4): from [4,3,2,1,1] select [0,1,2,3] → ATK=10
-    // T2 Defense (DEF Lv 3): from [2,1,1,1,1] select [0,1,2] → DEF=4
+    // T1 Defense (DEF Lv 2): from [2,1,1,1,1] select [0,1] → DEF=3
+    // T1 Attack (ATK Lv 3): from [3,4,3,2,1] (after reroll) select [0,1,2] → ATK=10
+    // T2 Defense (DEF Lv 2): from [5,3,1,1,1] select [0,1] → DEF=8
+    // T2 Attack (ATK Lv 3): from [5,3,1,1,1] select [0,1,2] → ATK=9 (+2 Strength = 11)
+    // T3 Defense (DEF Lv 2): from [3,2,1,1,1] select [0,1] → DEF=5
     private static final int[][] GAME1_OPPONENT_SELECTIONS = {
-        {0, 1, 2},       // T1 Defense
-        {0, 1, 2, 3},    // T1 Attack
-        {0, 1, 2}        // T2 Defense
+        {0, 1},          // T1 Defense
+        {0, 1, 2},       // T1 Attack (after reroll)
+        {0, 1},          // T2 Defense
+        {0, 1, 2},       // T2 Attack
+        {0, 1}           // T3 Defense
     };
 
     private static final int[][] GAME2_PLAYER_ROLLS = {
@@ -101,6 +133,7 @@ public class TutorialDiceRoller {
         this.completedRerolls = new HashSet<>();
         this.opponentRerollCount = 0;
         this.opponentSelectionCount = 0;
+        this.playerRerollCount = 0;
     }
 
     public boolean shouldInterceptPrismaticRoll() {
@@ -126,7 +159,14 @@ public class TutorialDiceRoller {
     }
 
     public List<Integer> planOpponentReroll() {
-        if (controller.getGame() == TutorialController.TutorialGame.GAME_2_ACHERON) {
+        if (controller.getGame() == TutorialController.TutorialGame.GAME_1_CHIMERA) {
+            if (opponentRerollCount < GAME1_OPPONENT_REROLL_INDICES.length) {
+                int[] indices = GAME1_OPPONENT_REROLL_INDICES[opponentRerollCount];
+                CosmiconLogger.verbose("TutorialDiceRoller: predetermined Game 1 opponent reroll #%d - indices: %s",
+                    opponentRerollCount + 1, Arrays.toString(indices));
+                return toList(indices);
+            }
+        } else if (controller.getGame() == TutorialController.TutorialGame.GAME_2_ACHERON) {
             if (opponentRerollCount < GAME2_OPPONENT_REROLL_INDICES.length) {
                 int[] indices = GAME2_OPPONENT_REROLL_INDICES[opponentRerollCount];
                 CosmiconLogger.verbose("TutorialDiceRoller: predetermined opponent reroll #%d - indices: %s",
@@ -134,7 +174,6 @@ public class TutorialDiceRoller {
                 return toList(indices);
             }
         }
-        // Game 1 (Chimera vs Furbo Journalist): opponent has no rerolls
         return new ArrayList<>();
     }
 
@@ -194,6 +233,9 @@ public class TutorialDiceRoller {
             if (controller.getCurrentStep() == TutorialController.TutorialStep.G1_T2_ATTACK_REROLL) {
                 return "G1_T2_PLAYER";
             }
+            if (controller.getCurrentStep() == TutorialController.TutorialStep.G1_T3_ATTACK_REROLL) {
+                return "G1_T3_PLAYER";
+            }
         }
         if (controller.getGame() == TutorialController.TutorialGame.GAME_2_ACHERON) {
             if (controller.getCurrentStep() == TutorialController.TutorialStep.G2_T3_ATTACK_REROLL) {
@@ -221,17 +263,20 @@ public class TutorialDiceRoller {
 
             switch (key)
             {
-                case "G1_T2_PLAYER" -> rerollGame1Turn3(state);
+                case "G1_T2_PLAYER" -> rerollGame1Player(state);
+                case "G1_T3_PLAYER" -> rerollGame1Player(state);
                 case "G2_T3_PLAYER_1" -> rerollGame2T3(state);
                 case "G2_T3_PLAYER_2" -> rerollGame2T3Second(state);
             }
             completedRerolls.add(key);
         } else {
-            if (controller.getGame() == TutorialController.TutorialGame.GAME_2_ACHERON) {
+            if (controller.getGame() == TutorialController.TutorialGame.GAME_1_CHIMERA) {
+                rerollGame1Opponent(state);
+                opponentRerollCount++;
+            } else if (controller.getGame() == TutorialController.TutorialGame.GAME_2_ACHERON) {
                 rerollGame2Opponent(state);
                 opponentRerollCount++;
             }
-            // Game 1 opponent (Furbo Journalist) has no rerolls — nothing to do
         }
     }
 
@@ -247,16 +292,17 @@ public class TutorialDiceRoller {
         }
     }
 
-    private void rerollGame1Turn3(BattleState state) {
+    private void rerollGame1Player(BattleState state) {
         List<Integer> values = state.getDiceValues(true);
         List<Boolean> selected = state.getDiceSelected(true);
         List<Integer> rerolledIndices = new ArrayList<>();
 
+        int[] results = GAME1_REROLL_RESULTS[playerRerollCount % GAME1_REROLL_RESULTS.length];
         int resultIdx = 0;
         for (int i = 0; i < selected.size(); i++) {
             if (selected.get(i)) {
-                if (resultIdx < GAME1_REROLL_RESULT.length) {
-                    values.set(i, GAME1_REROLL_RESULT[resultIdx++]);
+                if (resultIdx < results.length) {
+                    values.set(i, results[resultIdx++]);
                 }
                 rerolledIndices.add(i);
             }
@@ -265,8 +311,34 @@ public class TutorialDiceRoller {
         state.setDiceValues(true, values);
         state.decrementRerolls(true);
         state.incrementRerollsUsed(true);
+        playerRerollCount++;
 
-        CosmiconLogger.verbose("TutorialDiceRoller: Game 1 Turn 3 reroll - indices: %s", rerolledIndices);
+        CosmiconLogger.verbose("TutorialDiceRoller: Game 1 player reroll #%d - indices: %s",
+            playerRerollCount, rerolledIndices);
+    }
+
+    private void rerollGame1Opponent(BattleState state) {
+        List<Integer> values = state.getDiceValues(false);
+        List<Boolean> selected = state.getDiceSelected(false);
+        List<Integer> rerolledIndices = new ArrayList<>();
+
+        int[] results = GAME1_OPPONENT_REROLL_RESULTS[opponentRerollCount % GAME1_OPPONENT_REROLL_RESULTS.length];
+        int resultIdx = 0;
+        for (int i = 0; i < selected.size(); i++) {
+            if (selected.get(i)) {
+                if (resultIdx < results.length) {
+                    values.set(i, results[resultIdx++]);
+                }
+                rerolledIndices.add(i);
+            }
+        }
+
+        state.setDiceValues(false, values);
+        state.decrementRerolls(false);
+        state.incrementRerollsUsed(false);
+
+        CosmiconLogger.verbose("TutorialDiceRoller: Game 1 opponent reroll #%d - indices: %s",
+            opponentRerollCount + 1, rerolledIndices);
     }
 
     private void rollGame2(BattleState state, boolean forPlayer) {

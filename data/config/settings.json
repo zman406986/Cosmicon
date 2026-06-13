@@ -683,7 +683,14 @@
             "portrait_sparxie": "graphics/cosmicon/Cards/Characters/Sparxie.png",
             "portrait_the_herta": "graphics/cosmicon/Cards/Characters/The_Herta.png",
             "portrait_yao_guang": "graphics/cosmicon/Cards/Characters/Yao_Guang.png",
-            "portrait_trashcan": "graphics/cosmicon/Cards/Characters/Trashcan.png"
+            "portrait_trashcan": "graphics/cosmicon/Cards/Characters/Trashcan.png",
+            "portrait_trashcan_2star": "graphics/cosmicon/Cards/Characters/Trashcan.png",
+            "portrait_chimera": "graphics/cosmicon/Cards/Characters/Chimera.png",
+            "portrait_dromas": "graphics/cosmicon/Cards/Characters/Dromas.png",
+            "portrait_automaton_beetle": "graphics/cosmicon/Cards/Characters/Beetle.png",
+            "portrait_furbo_journalist": "graphics/cosmicon/Cards/Characters/Furbo.png",
+            "portrait_bananadvisor": "graphics/cosmicon/Cards/Characters/Bananadvisor.png",
+            "portrait_senior_staff": "graphics/cosmicon/Cards/Characters/Senior Staff.png"
         },
         "cosmicon_npc_portraits": {
             "npc_acheron": "graphics/cosmicon/portraits/Acheron.png",
@@ -699,7 +706,13 @@
             "npc_robin": "graphics/cosmicon/portraits/Robin.png",
             "npc_sparxie": "graphics/cosmicon/portraits/Sparxie.png",
             "npc_the_herta": "graphics/cosmicon/portraits/The Herta.png",
-            "npc_yao_guang": "graphics/cosmicon/portraits/Yao Guang.png"
+            "npc_yao_guang": "graphics/cosmicon/portraits/Yao Guang.png",
+            "npc_chimera": "graphics/cosmicon/portraits/Chimera.png",
+            "npc_dromas": "graphics/cosmicon/portraits/Dromas.png",
+            "npc_automaton_beetle": "graphics/cosmicon/portraits/Beetle.png",
+            "npc_furbo_journalist": "graphics/cosmicon/portraits/Furbo.png",
+            "npc_bananadvisor": "graphics/cosmicon/portraits/Bananadvisor.png",
+            "npc_senior_staff": "graphics/cosmicon/portraits/Senior Staff.png"
         }
     }
 }

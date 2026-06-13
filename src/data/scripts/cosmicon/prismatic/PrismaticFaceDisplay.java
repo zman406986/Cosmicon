@@ -1,7 +1,6 @@
 package data.scripts.cosmicon.prismatic;
 
-import java.util.Collections;
-import java.util.List;
+
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.util.PrismaticDisplayHelper;
@@ -20,20 +19,6 @@ public class PrismaticFaceDisplay {
     public static String formatRolledResult(PrismaticDiceInstance instance) {
         if (instance == null) return "";
         return formatSingleFace(instance.faceIndex, instance.rolledFace, instance.isSpecialFace);
-    }
-
-    public static List<String> formatAllFaces(PrismaticDiceType type, boolean useTrueVersion) {
-        if (type == null) return Collections.emptyList();
-
-        java.util.List<String> results = new java.util.ArrayList<>();
-        int[] faces = type.getFaces(useTrueVersion);
-
-        for (int i = 0; i < faces.length && i < FACE_LETTERS.length; i++) {
-            boolean isSpecial = type.isSpecialFace(i, useTrueVersion);
-            results.add(formatSingleFace(i, faces[i], isSpecial));
-        }
-
-        return results;
     }
 
     public static String formatFaceMappingCompact(PrismaticDiceType type, boolean useTrueVersion) {

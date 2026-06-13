@@ -137,38 +137,35 @@ public class CosmiconBarEvent extends BaseBarEvent {
                     if (isTutorial) {
                         String opponentId;
                         if (!CosmiconStats.isTutorial1Completed()) {
-                            opponentId = CharacterIds.FURBO_JOURNALIST;
+                            opponentId = CharacterIds.TRASHCAN;
                         } else {
                             opponentId = CharacterIds.ROBIN;
                         }
                         CosmiconEventState.setOpponentCharacter(opponentId);
                         CosmiconEventState.setIsTutorialMode(true);
-                    } else if (isEasyMode) {
-                        java.util.Set<String> unlocked = CosmiconStats.getUnlockedCharacters();
-                        java.util.List<String> candidates = new java.util.ArrayList<>();
-                        for (String id : CharacterIds.EASY_MODE_CHARACTERS) {
-                            if (unlocked.contains(id)) candidates.add(id);
-                        }
-                        if (candidates.isEmpty()) {
-                            candidates.add(CharacterIds.CHIMERA);
-                        }
-                        String opponentId = candidates.get(
-                            data.scripts.cosmicon.util.CosmiconRandom.nextInt(candidates.size()));
-                        CosmiconEventState.setOpponentCharacter(opponentId);
                     } else {
-                        CharacterCard opponentCard = CharacterRegistry.getRandomOpponent();
-                        if (opponentCard != null) {
-                            CosmiconEventState.setOpponentCharacter(opponentCard.getId());
+                        CosmiconEventState.setIsTutorialMode(false);
+                        if (isEasyMode) {
+                            CharacterCard opponentCard = CharacterRegistry.getRandomUnownedTwoStarOpponent(
+                                CosmiconStats.getUnlockedCharacters());
+                            if (opponentCard != null) {
+                                CosmiconEventState.setOpponentCharacter(opponentCard.getId());
+                            }
+                        } else {
+                            CharacterCard opponentCard = CharacterRegistry.getRandomThreeStarOpponent();
+                            if (opponentCard != null) {
+                                CosmiconEventState.setOpponentCharacter(opponentCard.getId());
 
-                            Map<String, Integer> oppPrismatic = opponentCard.getPrismaticDiceIds();
-                            if (!oppPrismatic.isEmpty()) {
-                                String defaultPrismaticId = oppPrismatic.keySet().iterator().next();
-                                CosmiconEventState.setOpponentPrismatic(defaultPrismaticId);
+                                Map<String, Integer> oppPrismatic = opponentCard.getPrismaticDiceIds();
+                                if (!oppPrismatic.isEmpty()) {
+                                    String defaultPrismaticId = oppPrismatic.keySet().iterator().next();
+                                    CosmiconEventState.setOpponentPrismatic(defaultPrismaticId);
 
-                                if (CosmiconStats.isPrismaticDiceUnlocked(defaultPrismaticId)) {
-                                    PrismaticDiceType diceType = PrismaticDiceRegistry.get(defaultPrismaticId);
-                                    if (diceType != null && diceType.hasTrueVersion()) {
-                                        CosmiconEventState.setOpponentUsesTrue(true);
+                                    if (CosmiconStats.isPrismaticDiceUnlocked(defaultPrismaticId)) {
+                                        PrismaticDiceType diceType = PrismaticDiceRegistry.get(defaultPrismaticId);
+                                        if (diceType != null && diceType.hasTrueVersion()) {
+                                            CosmiconEventState.setOpponentUsesTrue(true);
+                                        }
                                     }
                                 }
                             }

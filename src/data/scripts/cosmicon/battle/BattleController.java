@@ -80,19 +80,24 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
         CharacterCard opponentCard;
         int replayGame = CosmiconEventState.getReplayTutorialGame();
         if (replayGame >= 0) {
-            String opponentId = replayGame == 1 ? CharacterIds.FURBO_JOURNALIST : CharacterIds.ROBIN;
+            String opponentId = replayGame == 1 ? CharacterIds.TRASHCAN : CharacterIds.ROBIN;
             opponentCard = CharacterRegistry.getCharacterById(opponentId);
             CosmiconEventState.setOpponentCharacter(opponentCard.getId());
             CosmiconLogger.debug("Replay tutorial game %d: opponent = %s", replayGame, opponentCard.getName());
         } else if (CosmiconStats.isInTutorialMode()) {
-            opponentCard = CharacterRegistry.getCharacterById(CharacterIds.FURBO_JOURNALIST);
+            opponentCard = CharacterRegistry.getCharacterById(CharacterIds.TRASHCAN);
             CosmiconEventState.setOpponentCharacter(Objects.requireNonNull(opponentCard).getId());
         } else {
             String oppCharId = CosmiconEventState.getOpponentCharacter();
             if (oppCharId != null) {
                 opponentCard = CharacterRegistry.getCharacterById(oppCharId);
             } else {
-                opponentCard = CharacterRegistry.getRandomOpponent();
+                if (CosmiconStats.isInEasyMode()) {
+                    opponentCard = CharacterRegistry.getRandomUnownedTwoStarOpponent(
+                        CosmiconStats.getUnlockedCharacters());
+                } else {
+                    opponentCard = CharacterRegistry.getRandomThreeStarOpponent();
+                }
                 if (opponentCard != null) {
                     CosmiconEventState.setOpponentCharacter(opponentCard.getId());
                     configureOpponentPrismaticDefaults(opponentCard);
@@ -140,7 +145,7 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
             CosmiconLogger.debug("Tutorial game: forced player character = %s", playerCard.getName());
         }
 
-        if (!isTutorial && !CosmiconStats.isInEasyMode()) {
+        if (!isTutorial && (!CosmiconStats.isInEasyMode() || CosmiconEventState.isCasinoBattleMode())) {
             String savedPrismaticId = CosmiconPlayerState.loadPrismaticDice();
             String defaultPrismaticId = CosmiconPlayerState.getDefaultPrismaticForCharacter(playerCard.getId());
             boolean useTrueVersion = CosmiconPlayerState.loadPrismaticDiceTrueVersion();
@@ -190,6 +195,10 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
             if (!prismaticIds.isEmpty()) {
                 String primId = prismaticIds.keySet().iterator().next();
                 int uses = prismaticIds.get(primId);
+                if (uses <= 0) {
+                    uses = 2;
+                    CosmiconLogger.warn("Tutorial Game 2: Invalid prismatic uses (%d), defaulting to 2", prismaticIds.get(primId));
+                }
                 playerCard = playerCard.withPrismaticDice(primId, uses, false);
                 CosmiconPlayerState.savePrismaticDice(primId);
                 CosmiconPlayerState.savePrismaticDiceTrueVersion(false);
@@ -237,9 +246,7 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
                         CosmiconLogger.debug("DEF bonus skipped: already at cap 5");
                     }
                 }
-                case NONE -> {
-                    CosmiconLogger.debug("No bonus selected - credit bonus will apply on win");
-                }
+                case NONE -> CosmiconLogger.debug("No bonus selected - credit bonus will apply on win");
             }
         } else {
             CosmiconPlayerState.setCreditBonusActive(false);
@@ -265,9 +272,9 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
             }
         }
 
-        if (CosmiconStats.isInEasyMode()) {
+        if (CosmiconStats.isInEasyMode() && !CosmiconEventState.isCasinoBattleMode()) {
             state.getWeatherController().getWeatherManager().setWeatherDisabled(true);
-            CosmiconLogger.debug("Easy mode: Weather disabled");
+            CosmiconLogger.debug("Easy mode: Weather disabled (normal encounter)");
         }
 
         CosmiconLogger.verbose("Battle state initialized");

@@ -38,6 +38,12 @@ public class CosmiconCampaignListener extends BaseCampaignEventListener {
         CHARACTER_PORTRAITS.put("sparxie", "graphics/cosmicon/portraits/Sparxie.png");
         CHARACTER_PORTRAITS.put("the_herta", "graphics/cosmicon/portraits/The Herta.png");
         CHARACTER_PORTRAITS.put("yao_guang", "graphics/cosmicon/portraits/Yao Guang.png");
+        CHARACTER_PORTRAITS.put("chimera", "graphics/cosmicon/portraits/Chimera.png");
+        CHARACTER_PORTRAITS.put("dromas", "graphics/cosmicon/portraits/Dromas.png");
+        CHARACTER_PORTRAITS.put("automaton_beetle", "graphics/cosmicon/portraits/Beetle.png");
+        CHARACTER_PORTRAITS.put("furbo_journalist", "graphics/cosmicon/portraits/Furbo.png");
+        CHARACTER_PORTRAITS.put("bananadvisor", "graphics/cosmicon/portraits/Bananadvisor.png");
+        CHARACTER_PORTRAITS.put("senior_staff", "graphics/cosmicon/portraits/Senior Staff.png");
     }
 
     public CosmiconCampaignListener() {
@@ -75,7 +81,7 @@ public class CosmiconCampaignListener extends BaseCampaignEventListener {
             return;
         }
 
-        CharacterCard opponentCard = CharacterRegistry.getRandomOpponent();
+        CharacterCard opponentCard = CharacterRegistry.getRandomThreeStarOpponent();
         if (opponentCard == null) return;
         spawnTempNPC(market, opponentCard);
         marketMem.set(SPAWN_TIME_KEY, Global.getSector().getClock().getTimestamp());
@@ -113,23 +119,16 @@ public class CosmiconCampaignListener extends BaseCampaignEventListener {
         person.setPortraitSprite(portraitSprite);
         person.addTag(NPC_TAG);
 
-        String charTitle = Strings.get("character." + characterId + ".title");
-        if (charTitle != null && !charTitle.isEmpty()) {
-            person.setPostId(charTitle);
-        } else {
-            person.setPostId(Ranks.POST_ENTREPRENEUR);
-        }
+        String postId = "cos_" + characterId;
+        person.setPostId(postId);
         person.setRankId(Ranks.CITIZEN);
 
         person.getMemory().set("$cos_npc_char", characterId);
         person.getMemory().set("$cos_npc_market_id", market.getId());
 
-        String openLine = Strings.get("character." + characterId + ".open");
+        String openLine = Strings.getOrNull("character." + characterId + ".open");
         if (openLine != null && !openLine.isEmpty()) {
             person.getMemory().set("$cos_npc_open", openLine);
-        }
-        if (charTitle != null && !charTitle.isEmpty()) {
-            person.getMemory().set("$cos_npc_title", charTitle);
         }
 
         market.getCommDirectory().addPerson(person, 0);
@@ -148,6 +147,10 @@ public class CosmiconCampaignListener extends BaseCampaignEventListener {
 
         for (PersonAPI person : market.getPeopleCopy()) {
             if (person.hasTag(NPC_TAG)) {
+                person.getMemory().unset("$cos_npc_char");
+                person.getMemory().unset("$cos_npc_market_id");
+                person.getMemory().unset("$cos_npc_open");
+                person.getMemory().unset("$cos_npc_greeted");
                 market.getCommDirectory().removePerson(person);
                 market.removePerson(person);
                 ip.removePerson(person);

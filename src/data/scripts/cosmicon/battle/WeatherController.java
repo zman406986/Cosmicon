@@ -213,6 +213,31 @@ public class WeatherController {
         }
     }
     
+    public int previewSelectionBonus(BattleState state, boolean isPlayer) {
+        WeatherType weather = getCurrentWeather();
+        if (weather == null) return 0;
+
+        List<Integer> values = isPlayer ? state.getPlayerDiceValues() : state.getOpponentDiceValues();
+        List<Boolean> selected = isPlayer ? state.getPlayerDiceSelected() : state.getOpponentDiceSelected();
+        boolean isAttacker = state.isAttacker(isPlayer);
+
+        return switch (weather) {
+            case SOLAR_ECLIPSE -> {
+                if (isAttacker && checkAllDifferentValues(values, selected)) yield 4;
+                yield 0;
+            }
+            case HEAVY_SNOW -> {
+                if (checkContainsValue(values, selected, 7)) yield 4;
+                yield 0;
+            }
+            case DROUGHT -> {
+                if (isAttacker) yield state.getEffectiveDefLevel(!isPlayer) * 3;
+                yield 0;
+            }
+            default -> 0;
+        };
+    }
+
     public void applyPostModificationPhase(BattleState state) {
         WeatherType weather = getCurrentWeather();
         if (weather == null) return;

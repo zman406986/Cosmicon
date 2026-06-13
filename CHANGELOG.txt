@@ -1,32 +1,24 @@
 Version 0.3.0
-- Added six 2-star characters: Chimera (burst attacker), Dromas (DoT/poison), Automaton Beetle (defensive tank), Furbo Journalist (reactive defender), BananAdvisor (sustain defender), Senior Staff (versatile all-rounder); includes full AI profiles, passive evaluation, card art, and portraits.
-- Added Easy Mode progression: after Tutorial 1, players collect 2-star characters one by one from random encounters; Tutorial 2 unlocks after collecting all 7 (6 + Trashcan).
-- Added Bonus Selection system in Character Setup: +9 HP (unlocked at 3 characters), +1 ATK Level (5 characters), +1 DEF Level (7 characters), or No Bonus (+50% credit reward).
-- Added sound effects system (CosmiconSFX): UI beep, impact (7 pitch variants), dice select/unselect, dice roll (4 variants), swoosh, clash, win/lose; integrated into battle UI and setup panel.
-- Added save migration (V0 to V1): detects pre-rework saves and guides migrated players through new tutorial/easy-mode progression.
-- Added version tracking file for auto-update support (data/config/version/).
-- Reworked Tutorial Game 1 to use Chimera vs Furbo Journalist with scripted dice rolls.
-- Added NPC opponent titles, opening dialogue lines, and greeting rules (EN/CN); NPCs display assigned title and character-specific opening line.
-- Fixed tournament bracket position strings not localized; fixed playerLosses not incrementing on loser bracket elimination.
-- Fixed tournament reward bugs: tier 2 unlocking wrong prismatic dice, tier 4 skipping dice selection, pending rewards lost on ESC dismiss.
-- Fixed tournament progress accessible via bar/NPC without casino entry; NPC dialogue no longer destroys active tournament state.
-- Fixed AI evaluation errors: Phainon Unyielding (inverted/consumed state), YaoGuang Thorns overcounting, Aventurine passive on defense, Acheron/Hyacine combo generation, Sparxie pair scoring.
-- Fixed SelectionOptimizer discarding passive selections and not updating totalScore on forced indices.
-- Added TrashcanAI profile; added weather-aware AI dice selection for 8 weather types; AI now accounts for Parhelion Thorns, Fine Snow skip-reroll, and Frog Rain/Sunshower face adjustments.
-- Fixed Hack and Arise not stacking from multiple sources; fixed Perforation not bypassing Forcefield; fixed Revenge missing attack-only condition.
-- Fixed status effect bugs: Acid Rain targeting wrong HP, Loan Overload never triggering, March 7th hitting self on defense, Lunisolar Luminance lost with ARISE/HACK, Frost granting Counter incorrectly.
-- Fixed Sea of Clouds granting prismatic dice uses to characters without prismatic dice; TOXIC_FOG now applies poison per-turn instead of once at onset; STORM no longer grants ATK/DEF mods at onset.
-- Fixed UI layout issues: setup gallery column height/scrollbar, status effect box text alignment, true dice name label wrapping/clipping; fixed instant damage and Poison animations targeting wrong card; fixed dice roll collision only checking final checkpoints; fixed continue button showing "Continue" instead of "Close" on HP depletion.
-- Rebalanced credit rewards: normal encounters reduced to ~50%, losses now deduct credits (capped at 0) with loss message shown, tournament rewards adjusted to maintain similar total payout with participation + prize split.
-- Removed 4 hallucinated prismatic dice (Mirror, Sanctions, Strategy, Toxic) and associated status effects; added per-version availability conditions for prismatic dice.
-- Optimized AI reroll performance (EV lookup table, candidate pruning, symmetry pruning, transposition cache, Monte Carlo tuning); optimized render allocations and memory usage across codebase.
-- Renamed Gatekeeper to Legend across all strings; added Legend title inheritance tracking.
-- Fixed miscellaneous bugs: NPC opponent using random character instead of assigned, Gatekeeper 999 messages not showing, Master Dicer level not updating, integer getters using getFloat, stale MemoryAPI cache after save reload, CosmiconStats.isPrismaticFeatureUnlocked defaulting to true, opponent AI reroll timing, Yao Guang Thorns cleanse timing.
-- Fixed tutorial bugs: continue button blocked in wrong states, dice selection condition inverted, prismatic dice roller filtering misaligned values, Acheron Game 2 prismatic popup broken.
-- Externalized hardcoded values to CosmiconConfig and settings.json (HP, costs, credit multipliers).
-- Added three-tier logging system: Tier 1 (always on: startup, battle lifecycle, errors), Tier 2 (debug: battle flow, damage, status effects, AI decisions), Tier 3 (verbose: AI internals, dice rest, animations, weather details); default changed from all-on to off; added `cosmicon_debug` console command with off/debug/verbose/reroll levels.
-- Overhauled CN localization: eliminated translationese across ~43 strings (passive/causative structures, word order, unnatural phrasing); unified terminology (虹吸→吸取, 治愈等同于→回复等于, 转变为→变成, 一定比例→50%); distinguished Master Dicer (赌神), The Legend NPC (老赌神), and inherited Legend title (真 赌神); added Legend-specific dialogue variants for welcome/prompt/greeting strings in both EN and CN.
-- Updated CosmiconReset console command to clear bonus state, data version, and migration flags.
+- New content: 6 two-star characters (Chimera, Dromas, Automaton Beetle, Furbo Journalist, BananAdvisor, Senior Staff) with full AI/passives/art. Easy Mode progression: collect all 7 via random encounters, then unlock Tutorial 2. Bonus Selection: +9HP, +1ATK, +1DEF, or tiered credit bonus. Tutorial 1 opponent changed to Trashcan with revised scripted rolls and new reroll tutorial step.
+- Audio: SFX system (UI beep, impacts, select, dice roll, clash, win/lose) with new clash variants; dice roll sound properly timed to animation.
+- Bug fixes: tournament rewards/payouts/access; AI passives for 7 characters; weather-aware AI for all 8 types; status effects (Hack, Arise, Perforation, Revenge, Acid Rain, Overload, March 7th, Frost, Luminance); weather/prismatic edge cases; UI layout (scrollbar, text alignment, clipping, animations, button labels); tutorial flow (continue states, selection, prismatic filter); credit balance (encounters ~50%, loss deduction, tournament adjustment).
+- Removed 4 hallucinated prismatic dice (Mirror, Sanctions, Strategy, Toxic). Renamed Gatekeeper→Legend.
+- Optimized AI reroll performance.
+- CN localization overhaul (43 strings, terminology unified, Legend variants).
+- Console: CosmiconReset/CosmiconStatus/CosmiconUnlock improvements.
+- Battle UI now shows base+bonus breakdown with passive/weather preview. Credit bonus scales by character tier (100/50/0%). Wins-until-next-bonus shown in victory screen. Music state cleanup on load; portrait scaling fix.
+- Terminology: '2-star'→'basic character' across all strings.
+- True prismatic dice: second unlock tier after owning the base version.
+- Update notification on game load for existing players entering easy mode.
+- Tutorial: visual highlights on interactable dice and buttons during guided steps.
+- Easy mode: prismatic dice and weather now active in casino/tournament battles.
+- Save migration: pre-rework 2-star-only saves auto-complete Tutorial 1.
+- Character setup: confirm/cancel in header, bonus selection in bottom bar, credit tier labels color-coded.
+- Damage animator: new clash (ATK/DEF win) and flying swoosh SFX; combo forcefield interaction.
+- Credit rewards restructured: always awarded alongside character/prismatic unlocks; rate 1500→1000/level.
+- Easy mode and tutorial: no credit loss on defeat.
+- Extra Rerolls status effect (shared by Automaton Beetle and BananAdvisor, generalized from YaoGuang Rerolls).
+- NPC dialogue detection and memory management overhauled.
 
 Version 0.2.0
 - Changed entry point from bars to comms (Custom NPCs generated for playing against).

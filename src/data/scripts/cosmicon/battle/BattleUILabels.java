@@ -20,11 +20,14 @@ import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticFaceDisplay;
 import data.scripts.cosmicon.tutorial.TutorialController;
 import data.scripts.cosmicon.util.ColorHelper;
+import data.scripts.cosmicon.util.PassiveEvaluator;
+import data.scripts.cosmicon.util.PassiveResults.PassiveResult;
 import data.scripts.cosmicon.util.UIComponentFactory;
 
 public class BattleUILabels {
     private static final float PRISMATIC_ROLLED_LABEL_OFFSET_Y = 20f;
     private static final float PRISMATIC_BTN_SIZE = 40f;
+    private static final float BONUS_LABEL_GAP = 4f;
 
     private LabelAPI phaseLabel;
     private LabelAPI instructionLabel;
@@ -54,6 +57,8 @@ public class BattleUILabels {
     private LabelAPI attackerConfirmedEffectLabel;
     private LabelAPI attackerIconValueLabel;
     private LabelAPI defenderIconValueLabel;
+    private LabelAPI attackerBonusLabel;
+    private LabelAPI defenderBonusLabel;
     private LabelAPI playerPrismaticUsesLabel;
     private LabelAPI playerPrismaticFaceMappingLabel;
     private LabelAPI playerPrismaticEffectLabel;
@@ -186,6 +191,10 @@ public class BattleUILabels {
         attackerIconValueLabel = null;
         removeAndNullLabel(defenderIconValueLabel);
         defenderIconValueLabel = null;
+        removeAndNullLabel(attackerBonusLabel);
+        attackerBonusLabel = null;
+        removeAndNullLabel(defenderBonusLabel);
+        defenderBonusLabel = null;
         removeAndNullLabel(playerPrismaticUsesLabel);
         playerPrismaticUsesLabel = null;
         removeAndNullLabel(playerPrismaticFaceMappingLabel);
@@ -404,11 +413,17 @@ public class BattleUILabels {
             Fonts.DEFAULT_SMALL, ColorHelper.PRISMATIC_GOLD, Alignment.MID, confirmedLabelWidth, 20f,
             centerX - confirmedLabelWidth / 2f, bottomIconCenterY + iconSize / 2f + 5f, 0f);
 
-        attackerIconValueLabel = UIComponentFactory.createLabelWithOpacity(panel, "", 
+        attackerIconValueLabel = UIComponentFactory.createLabelWithOpacity(panel, "",
             Fonts.INSIGNIA_VERY_LARGE, ColorHelper.ATTACK_VALUE, Alignment.MID, 80f, 35f, 0f, 0f, 0f);
 
-        defenderIconValueLabel = UIComponentFactory.createLabelWithOpacity(panel, "", 
+        defenderIconValueLabel = UIComponentFactory.createLabelWithOpacity(panel, "",
             Fonts.INSIGNIA_VERY_LARGE, ColorHelper.DEFENSE_VALUE, Alignment.MID, 80f, 35f, 0f, 0f, 0f);
+
+        attackerBonusLabel = UIComponentFactory.createLabelWithOpacity(panel, "",
+            Fonts.INSIGNIA_LARGE, ColorHelper.BONUS_LABEL, Alignment.LMID, 60f, 28f, 0f, 0f, 0f);
+
+        defenderBonusLabel = UIComponentFactory.createLabelWithOpacity(panel, "",
+            Fonts.INSIGNIA_LARGE, ColorHelper.BONUS_LABEL, Alignment.LMID, 60f, 28f, 0f, 0f, 0f);
     }
 
     private void createPrismaticLabels() {
@@ -824,8 +839,14 @@ public class BattleUILabels {
         Phase phase = battleState.getCurrentPhase();
         attackerIconValueLabel.setOpacity(0f);
         defenderIconValueLabel.setOpacity(0f);
+        attackerBonusLabel.setOpacity(0f);
+        defenderBonusLabel.setOpacity(0f);
 
         if (phase == Phase.RESOLVING) return;
+
+        boolean valueAnimActive = (attackerValueAnimator != null && !attackerValueAnimator.isComplete())
+            || (defenderValueAnimator != null && !defenderValueAnimator.isComplete());
+        if (valueAnimActive) return;
 
         float halfH = BattleRenderingUtils.PANEL_HEIGHT / 2f;
         float centerX = BattleRenderingUtils.PANEL_WIDTH / 2f;
@@ -844,44 +865,80 @@ public class BattleUILabels {
         defenderIconValueLabel.getPosition().inTL(centerX - labelW / 2f, defenderLabelY - labelH / 2f);
 
         if (phase == Phase.SELECTING_ATTACK || phase == Phase.DICE_DISPLAY_ATTACK) {
-            int runningTotal = calculateVisibleSum(playerIsAttacker);
-            if (runningTotal > 0) {
-                attackerIconValueLabel.setText(String.valueOf(runningTotal));
+            VisibleSum vs = calculateVisibleSumBreakdown(playerIsAttacker);
+            if (vs.base > 0 || vs.bonus > 0) {
+                String baseText = String.valueOf(vs.base);
+                attackerIconValueLabel.setText(baseText);
                 attackerIconValueLabel.setOpacity(1f);
+                positionBonusLabel(attackerBonusLabel, attackerIconValueLabel, attackerLabelY, vs.bonus, baseText);
             }
-            defenderIconValueLabel.setOpacity(0f);
             return;
         }
 
         if (phase == Phase.SELECTING_DEFENSE || phase == Phase.DICE_DISPLAY_DEFENSE || (phase == Phase.ROLLING && battleState.isDefenderRolling())) {
-            int attackerValue = getAttackerTotalValue();
-            attackerIconValueLabel.setText(String.valueOf(attackerValue));
-            attackerIconValueLabel.setOpacity(attackerValue > 0 ? 1f : 0f);
+            int attackerBase = battleState.calculateSelectedSum(playerIsAttacker);
+            int attackerTotal = getAttackerTotalValue();
+            int attackerBonus = attackerTotal - attackerBase;
+            String atkBaseText = String.valueOf(attackerBase);
+            attackerIconValueLabel.setText(atkBaseText);
+            attackerIconValueLabel.setOpacity(attackerBase > 0 || attackerBonus > 0 ? 1f : 0f);
+            positionBonusLabel(attackerBonusLabel, attackerIconValueLabel, attackerLabelY, attackerBonus, atkBaseText);
 
             if (phase == Phase.SELECTING_DEFENSE || phase == Phase.DICE_DISPLAY_DEFENSE) {
-                int runningTotal = calculateVisibleSum(!playerIsAttacker);
-                if (runningTotal > 0) {
-                    defenderIconValueLabel.setText(String.valueOf(runningTotal));
+                VisibleSum vs = calculateVisibleSumBreakdown(!playerIsAttacker);
+                if (vs.base > 0 || vs.bonus > 0) {
+                    String defBaseText = String.valueOf(vs.base);
+                    defenderIconValueLabel.setText(defBaseText);
                     defenderIconValueLabel.setOpacity(1f);
+                    positionBonusLabel(defenderBonusLabel, defenderIconValueLabel, defenderLabelY, vs.bonus, defBaseText);
                 }
             }
             return;
         }
 
         if (phase == Phase.RESOLVING_PRE_CLASH || phase == Phase.RESOLVING_MODIFICATION) {
-            int attackerValue = getAttackerTotalValue();
-            int defenderValue = getDefenderTotalValue();
+            int attackerBase = battleState.calculateSelectedSum(playerIsAttacker);
+            int attackerTotal = getAttackerTotalValue();
+            int defenderBase = battleState.calculateSelectedSum(!playerIsAttacker);
+            int defenderTotal = getDefenderTotalValue();
 
-            attackerIconValueLabel.setText(String.valueOf(attackerValue));
-            attackerIconValueLabel.setOpacity(attackerValue > 0 ? 1f : 0f);
-            defenderIconValueLabel.setText(String.valueOf(defenderValue));
-            defenderIconValueLabel.setOpacity(defenderValue > 0 ? 1f : 0f);
+            String atkBaseText = String.valueOf(attackerBase);
+            attackerIconValueLabel.setText(atkBaseText);
+            attackerIconValueLabel.setOpacity(attackerBase > 0 || attackerTotal > attackerBase ? 1f : 0f);
+            positionBonusLabel(attackerBonusLabel, attackerIconValueLabel, attackerLabelY, attackerTotal - attackerBase, atkBaseText);
+
+            String defBaseText = String.valueOf(defenderBase);
+            defenderIconValueLabel.setText(defBaseText);
+            defenderIconValueLabel.setOpacity(defenderBase > 0 || defenderTotal > defenderBase ? 1f : 0f);
+            positionBonusLabel(defenderBonusLabel, defenderIconValueLabel, defenderLabelY, defenderTotal - defenderBase, defBaseText);
         }
     }
 
-    private int calculateVisibleSum(boolean forPlayer) {
+    private void positionBonusLabel(LabelAPI bonusLabel, LabelAPI mainLabel, float centerY, int bonus, String mainText) {
+        if (bonus <= 0) {
+            bonusLabel.setOpacity(0f);
+            return;
+        }
+        String bonusText = "+" + bonus;
+        bonusLabel.setText(bonusText);
+        bonusLabel.setOpacity(1f);
+
+        float mainWidth = mainLabel.computeTextWidth(mainText);
+        float mainX = mainLabel.getPosition().getX();
+        float mainCenterX = mainX + 40f;
+
+        float bonusX = mainCenterX + mainWidth / 2f + BONUS_LABEL_GAP;
+        float bonusH = 28f;
+        bonusLabel.getPosition().inTL(bonusX, centerY - bonusH / 2f);
+    }
+
+    private record VisibleSum(int base, int bonus) {}
+
+    private VisibleSum calculateVisibleSumBreakdown(boolean forPlayer) {
         AISelectionVisualizer viz = battleState.getAiSelectionVisualizer();
         Phase phase = battleState.getCurrentPhase();
+
+        int base;
         if (viz != null && viz.hasStarted() && !viz.isRerollPhase() && !forPlayer) {
             boolean vizMatchesPhase = (phase == Phase.SELECTING_ATTACK && !battleState.isPlayerAttacker()) ||
                                       (phase == Phase.SELECTING_DEFENSE && battleState.isPlayerAttacker());
@@ -895,18 +952,64 @@ public class BattleUILabels {
                             sum += values.get(idx);
                         }
                     }
-                    return sum;
+                    base = sum;
+                    int bonus = computeSelectionBonus(forPlayer);
+                    return new VisibleSum(base, bonus);
                 }
             }
         }
-        int base = battleState.calculateSelectedSum(forPlayer);
+
+        base = battleState.calculateSelectedSum(forPlayer);
+        int bonus = computeSelectionBonus(forPlayer);
+        return new VisibleSum(base, bonus);
+    }
+
+    private int computeSelectionBonus(boolean forPlayer) {
         boolean isAttacking = battleState.isAttacker(forPlayer);
         StatusEffectProcessor effects = battleState.getEffects(forPlayer);
-        int bonus = isAttacking
+        int statusBonus = isAttacking
             ? effects.calculateAttackBonus(TurnState.TurnType.ATTACK)
             : effects.calculateDefenseBonus(TurnState.TurnType.DEFENSE);
         int prismatic = battleState.getPrismaticDiceTotalValue(forPlayer);
-        return base + bonus + prismatic;
+        int passiveBonus = previewPassiveBonus(forPlayer);
+        int weatherBonus = previewWeatherBonus(forPlayer);
+        return statusBonus + prismatic + passiveBonus + weatherBonus;
+    }
+
+    private int previewPassiveBonus(boolean forPlayer) {
+        CharacterCard card = battleState.getCard(forPlayer);
+        if (card == null) return 0;
+
+        String characterId = card.getId();
+        List<Integer> allValues = battleState.getDiceValues(forPlayer);
+        List<Boolean> selectedFlags = battleState.getDiceSelected(forPlayer);
+
+        List<Integer> selectedValues = new ArrayList<>();
+        if (allValues != null && selectedFlags != null) {
+            for (int i = 0; i < allValues.size(); i++) {
+                if (selectedFlags.get(i)) {
+                    selectedValues.add(allValues.get(i));
+                }
+            }
+        }
+
+        boolean isAttacking = battleState.isAttacker(forPlayer);
+        int currentHp = forPlayer ? battleState.getPlayerHp() : battleState.getOpponentHp();
+        int maxHp = card.getMaxHp();
+        StatusEffectProcessor effects = battleState.getEffects(forPlayer);
+        int currentToughness = effects.getLayers(StatusEffectProcessor.StatusEffect.TOUGHNESS);
+        int currentStrength = effects.getLayers(StatusEffectProcessor.StatusEffect.STRENGTH);
+
+        PassiveResult result = PassiveEvaluator.evaluateForCharacter(
+            characterId, selectedValues, isAttacking, currentHp, maxHp, currentToughness, currentStrength);
+
+        return isAttacking ? result.getAttackBonus() : result.getDefenseBonus();
+    }
+
+    private int previewWeatherBonus(boolean forPlayer) {
+        WeatherController weatherController = battleState.getWeatherController();
+        if (weatherController == null) return 0;
+        return weatherController.previewSelectionBonus(battleState, forPlayer);
     }
 
     private int getAttackerTotalValue() {

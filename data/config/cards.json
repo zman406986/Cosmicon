@@ -186,6 +186,14 @@
       "passive": "After attacking: Gains 2 stack(s) of Strength. If all the selected dice show even numbers, gains 4 stack(s) of Strength instead. Strength: When attacking, provides an ATK bonus based on the number of stacks."
     },
     {
+      "name": "Trashcan 2star",
+      "hp": 25,
+      "dice": ["purple_d6:2", "blue_d4:3"],
+      "atkLevel": 3,
+      "defLevel": 2,
+      "passive": "After attacking: Gains 2 stack(s) of Strength. If all the selected dice show even numbers, gains 4 stack(s) of Strength instead. Strength: When attacking, provides an ATK bonus based on the number of stacks."
+    },
+    {
       "name": "Furbo Journalist",
       "hp": 28,
       "dice": ["purple_d6:1", "blue_d4:4"],

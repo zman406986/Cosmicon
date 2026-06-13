@@ -57,18 +57,15 @@ public class CharacterPassives {
 
         return switch (characterId) {
             case ACHERON -> isAttacking && dieValue == 4;
-            case FIREFLY -> isAttacking && freq[dieValue] >= 2;
-            case ROBIN -> isAttacking && dieValue % 2 == 0;
+            case FIREFLY, CHIMERA -> isAttacking && freq[dieValue] >= 2;
+            case ROBIN, DROMAS -> isAttacking && dieValue % 2 == 0;
             case AVENTURINE -> isAttacking && dieValue % 2 != 0;
             case KAFKA, DAN_HENG -> isAttacking;
             case MARCH_7TH, SPARXIE -> freq[dieValue] >= 2;
             case HYACINE -> isAttacking && dieValue == 6;
             case PHAINON -> isAttacking || freq[dieValue] >= 2;
-            case CHIMERA -> isAttacking && freq[dieValue] >= 2;
-            case DROMAS -> isAttacking && dieValue % 2 == 0;
-            case AUTOMATON_BEETLE -> !isAttacking;
+            case AUTOMATON_BEETLE, BANANADVISOR -> !isAttacking;
             case FURBO_JOURNALIST -> !isAttacking && dieValue % 2 != 0;
-            case BANANADVISOR -> !isAttacking;
             case SENIOR_STAFF -> true;
             default -> false;
         };
@@ -272,7 +269,7 @@ public class CharacterPassives {
         if (characterId == null) return;
         
         if (YAO_GUANG.equals(characterId)) {
-            state.getEffects(forPlayer).addEffect(StatusEffect.YAO_GUANG_REROLLS, characterId, YAO_GUANG_EXTRA_REROLLS, DurationType.USAGE_BASED);
+            state.getEffects(forPlayer).addEffect(StatusEffect.EXTRA_REROLLS, characterId, YAO_GUANG_EXTRA_REROLLS, DurationType.USAGE_BASED);
         }
     }
 
@@ -333,7 +330,7 @@ public class CharacterPassives {
         }
 
         if (AUTOMATON_BEETLE.equals(characterId) || BANANADVISOR.equals(characterId)) {
-            state.getEffects(forPlayer).addEffect(StatusEffect.YAO_GUANG_REROLLS, characterId, 1, DurationType.USAGE_BASED);
+            state.getEffects(forPlayer).setEffectFromSource(StatusEffect.EXTRA_REROLLS, characterId, 1);
         }
     }
 

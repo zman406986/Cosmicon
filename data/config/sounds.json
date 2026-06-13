@@ -40,5 +40,14 @@
   ],
   "cos_dice_roll_4": [
     {"file":"sounds/SFX/diceroll_4.ogg","pitch":1,"volume":0.6}
+  ],
+  "cos_flying_swoosh": [
+    {"file":"sounds/SFX/flying_swoosh.ogg","pitch":1,"volume":0.6}
+  ],
+  "cos_clash_atk_win": [
+    {"file":"sounds/SFX/clash_ATK_win.ogg","pitch":1,"volume":0.7}
+  ],
+  "cos_clash_def_win": [
+    {"file":"sounds/SFX/clash_DEF_win.ogg","pitch":1,"volume":0.7}
   ]
 }

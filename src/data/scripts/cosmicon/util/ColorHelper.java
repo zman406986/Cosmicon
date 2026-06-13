@@ -21,9 +21,10 @@ public final class ColorHelper {
     public static final Color ATTACK_VALUE = new Color(255, 100, 80);
     public static final Color DEFENSE_VALUE = new Color(80, 150, 255);
     public static final Color WEATHER_BONUS = new Color(100, 255, 150);
+    public static final Color BONUS_LABEL = new Color(255, 220, 80);
 
     public static final Color OPPONENT_SELECTION_HIGHLIGHT = new Color(255, 80, 80, 150);
-    public static final Color OPPONENT_REROLL_HIGHLIGHT = new Color(255, 160, 80, 150);
+    public static final Color TUTORIAL_INDICATION = new Color(255, 60, 60, 180);
     public static final Color OPPONENT_DICE_ZONE_BG = new Color(70, 50, 50, 180);
 
     public static final Color REST_ACTIVE_BG = new Color(200, 210, 230, 60);
