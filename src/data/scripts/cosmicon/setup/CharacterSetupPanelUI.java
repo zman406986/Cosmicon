@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
@@ -339,22 +340,8 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     }
 
     private void updateBonusDescription() {
-        String descKey;
-        if (selectedBonus == BonusState.ATK_1 && selectedIndex >= 0 && selectedIndex < characters.size()
-                && characters.get(selectedIndex).getAtkLevel() >= 5) {
-            descKey = "bonus.atk_capped";
-        } else if (selectedBonus == BonusState.DEF_1 && selectedIndex >= 0 && selectedIndex < characters.size()
-                && characters.get(selectedIndex).getDefLevel() >= 5) {
-            descKey = "bonus.def_capped";
-        } else {
-            descKey = switch (selectedBonus) {
-                case NONE -> "bonus.none_desc";
-                case HP_9 -> "bonus.hp_9_desc";
-                case ATK_1 -> "bonus.atk_1_desc";
-                case DEF_1 -> "bonus.def_1_desc";
-            };
-        }
-        
+        String descKey = getDescKey();
+
         boolean isBasic = selectedIndex >= 0 && selectedIndex < characters.size()
             && CharacterIds.EASY_MODE_CHARACTERS.contains(characters.get(selectedIndex).getId());
         boolean noBonus = selectedBonus == BonusState.NONE;
@@ -376,6 +363,27 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         if (creditBonusLabel != null) {
             creditBonusLabel.setText("");
         }
+    }
+
+    @NotNull
+    private String getDescKey()
+    {
+        String descKey;
+        if (selectedBonus == BonusState.ATK_1 && selectedIndex >= 0 && selectedIndex < characters.size()
+                && characters.get(selectedIndex).getAtkLevel() >= 5) {
+            descKey = "bonus.atk_capped";
+        } else if (selectedBonus == BonusState.DEF_1 && selectedIndex >= 0 && selectedIndex < characters.size()
+                && characters.get(selectedIndex).getDefLevel() >= 5) {
+            descKey = "bonus.def_capped";
+        } else {
+            descKey = switch (selectedBonus) {
+                case NONE -> "bonus.none_desc";
+                case HP_9 -> "bonus.hp_9_desc";
+                case ATK_1 -> "bonus.atk_1_desc";
+                case DEF_1 -> "bonus.def_1_desc";
+            };
+        }
+        return descKey;
     }
 
     private void updateBonusButtonHighlights() {
@@ -501,13 +509,11 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
         cardLabels.clear();
 
-        float galleryStartY = CONTENT_START_Y;
-
         for (int i = 0; i < characters.size(); i++) {
             int col = i % COLS;
             int row = i / COLS;
             float boxX = MARGIN + col * (CARD_WIDTH + GAP_X);
-            float boxY = galleryStartY + row * (CARD_HEIGHT + GAP_Y);
+            float boxY = CONTENT_START_Y + row * (CARD_HEIGHT + GAP_Y);
 
             LabelAPI nameLabel = createCardLabel(boxX, boxY + 5f, "", ColorHelper.PLAYER_NAME, CARD_WIDTH, 20f);
 
@@ -674,12 +680,11 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             || prevUseTrueVersion != selectedUseTrueVersion;
 
         if (needsLabelUpdate || scrollChanged || selectionChanged) {
-            if (scrollChanged || needsLabelUpdate || selectionChanged) {
-                repositionCardLabels(galleryStartY, galleryHeight);
-                float diceListStartY = CONTENT_START_Y;
-                float diceListHeight = PANEL_HEIGHT - diceListStartY - BOTTOM_BAR_HEIGHT - 15f;
-                repositionDiceListLabels(diceListStartY, diceListHeight);
-            }
+            repositionCardLabels(galleryStartY, galleryHeight);
+            float diceListStartY = CONTENT_START_Y;
+            float diceListHeight = PANEL_HEIGHT - diceListStartY - BOTTOM_BAR_HEIGHT - 15f;
+            repositionDiceListLabels(diceListStartY, diceListHeight);
+
             if (selectionChanged || needsLabelUpdate) {
                 updateLabels();
                 updateDiceListLabels();

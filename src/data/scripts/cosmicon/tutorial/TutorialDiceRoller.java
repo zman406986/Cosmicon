@@ -263,8 +263,7 @@ public class TutorialDiceRoller {
 
             switch (key)
             {
-                case "G1_T2_PLAYER" -> rerollGame1Player(state);
-                case "G1_T3_PLAYER" -> rerollGame1Player(state);
+                case "G1_T2_PLAYER", "G1_T3_PLAYER" -> rerollGame1Player(state);
                 case "G2_T3_PLAYER_1" -> rerollGame2T3(state);
                 case "G2_T3_PLAYER_2" -> rerollGame2T3Second(state);
             }

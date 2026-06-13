@@ -45,10 +45,12 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
     @Override
     public boolean prefersHighValues(boolean isAttacking) {
-        // Always return true because both attacking and defending benefit from higher dice values
+        // Always returns true: both attacking and defending benefit from higher dice values
         // (higher attack sum = more damage, higher defense sum = better block).
-        // The isAttacking parameter is reserved for future profiles where a passive might
+        // The isAttacking parameter is reserved for future AI profiles where a passive might
         // incentivize selecting low values (e.g. "if sum <= 5, gain bonus").
+        // All current profile implementations inherit this default; no override changes it.
+        // IDE warning "always returns true" is expected and intentional.
         return true;
     }
 

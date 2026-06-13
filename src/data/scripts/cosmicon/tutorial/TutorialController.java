@@ -194,9 +194,7 @@ public class TutorialController {
                  G2_T2_DEFENSE_SELECT,
                  G2_T3_DEFENSE_SELECT -> isAmongHighest(diceIndex, values, battleState.getRequiredDiceCount(true));
 
-            case G1_T2_ATTACK_REROLL -> !isAmongHighest(diceIndex, values, 2);
-
-            case G1_T3_ATTACK_REROLL -> !isAmongHighest(diceIndex, values, 2);
+            case G1_T2_ATTACK_REROLL, G1_T3_ATTACK_REROLL -> !isAmongHighest(diceIndex, values, 2);
 
             case G2_T3_ATTACK_REROLL, G2_T3_ATTACK_REROLL2 -> !isPrismatic;
 
@@ -515,7 +513,8 @@ public class TutorialController {
             } else if (currentStep == TutorialStep.G1_T3_ATTACK_ROLL) {
                 currentStep = TutorialStep.G1_T3_ATTACK_REROLL;
             }
-        } else if (newPhase == Phase.SELECTING_ATTACK && !playerIsAttacker) {
+        } else if (newPhase == Phase.SELECTING_ATTACK) {
+            // playerIsAttacker is false here (the true case was handled above)
             if (currentStep == TutorialStep.G1_T1_DEFENSE_ROLL) {
                 currentStep = TutorialStep.G1_T1_DEFENSE_OPPONENT_REROLL;
             } else if (currentStep == TutorialStep.G1_T2_DEFENSE_ROLL) {

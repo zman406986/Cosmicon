@@ -1,12 +1,11 @@
 package data.scripts.cosmicon.tutorial;
 
-import java.awt.Color;
+
 import java.util.List;
 
 import org.lwjgl.opengl.GL11;
 
 import data.scripts.cosmicon.battle.AnimationConstants;
-import data.scripts.cosmicon.battle.BattleState;
 import data.scripts.cosmicon.battle.BattleUIButtons;
 import data.scripts.cosmicon.battle.DiceAnimator;
 import data.scripts.cosmicon.battle.DiceRollManager;
@@ -24,15 +23,13 @@ public class TutorialIndicationRenderer {
     private TutorialController controller;
     private DiceRollManager diceRollManager;
     private BattleUIButtons buttons;
-    private BattleState battleState;
     private float pulseTimer;
 
     public void init(TutorialController controller, DiceRollManager diceRollManager,
-                     BattleUIButtons buttons, BattleState battleState) {
+                     BattleUIButtons buttons) {
         this.controller = controller;
         this.diceRollManager = diceRollManager;
         this.buttons = buttons;
-        this.battleState = battleState;
         this.pulseTimer = 0f;
     }
 
@@ -154,6 +151,5 @@ public class TutorialIndicationRenderer {
         controller = null;
         diceRollManager = null;
         buttons = null;
-        battleState = null;
     }
 }

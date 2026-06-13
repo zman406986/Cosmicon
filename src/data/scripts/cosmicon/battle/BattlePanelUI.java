@@ -191,7 +191,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             tutorialRenderer = new TutorialUIRenderer();
             tutorialRenderer.init(tc, panel);
             tutorialIndicationRenderer = new TutorialIndicationRenderer();
-            tutorialIndicationRenderer.init(tc, diceRollManager, buttons, battleState);
+            tutorialIndicationRenderer.init(tc, diceRollManager, buttons);
         }
         tc.onPhaseChange(battleState.getCurrentPhase());
     }

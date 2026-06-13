@@ -25,6 +25,10 @@ public class AventurineAI extends AttackRerollAI {
         return Strings.get("character.aventurine.name");
     }
 
+    // Aventurine's passive ("Bingo!") is attack-only. The !isAttacking guards below are
+    // defensive: these are CharacterAIProfile interface methods that generic evaluation
+    // code may call with isAttacking=false. Without them, we would incorrectly compute
+    // passive bonuses during defense evaluation.
     @Override
     public PassiveEvaluation evaluatePassiveTrigger(List<Integer> selectedValues, List<DiceType> selectedTypes, boolean isAttacking) {
         if (selectedValues.isEmpty() || !isAttacking) return PassiveEvaluation.notTriggered();

@@ -458,6 +458,8 @@ public class TurnProcessor {
         
         boolean isAttackPhase = state.getCurrentPhase() == TurnState.Phase.SELECTING_ATTACK;
         boolean aiIsAttacker = !state.isPlayerAttacker();
+        // This method only handles AI (non-player) actions, so forPlayer is always false.
+        // The variable is kept for clarity when reading the selection logic below.
         boolean forPlayer = false;
         
         List<Boolean> selected = state.getDiceSelected(forPlayer);
@@ -495,6 +497,7 @@ public class TurnProcessor {
     private void performAiSelection() {
         boolean isAttackPhase = state.getCurrentPhase() == TurnState.Phase.SELECTING_ATTACK;
         boolean aiIsAttacker = !state.isPlayerAttacker();
+        // This method only handles AI (non-player) selection, so forPlayer is always false.
         boolean forPlayer = false;
         
         aiEngine.executeSelection(state, forPlayer);
