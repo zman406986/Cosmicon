@@ -1,5 +1,5 @@
 {
-  "threeStar": [
+  "advanced": [
     {
       "name": "Castorice",
       "hp": 27,
@@ -152,7 +152,7 @@
       "passive": "After attacking: Sets Strength stacks to 50% of this attack's value. If all selected dice numbers are 6, sets it to 100% and Heals 6 HP. Strength: When attacking, provides an ATK bonus based on the number of stacks. Heal: Restores a specified amount of HP."
     }
   ],
-  "twoStar": [
+  "basic": [
     {
       "name": "Chimera",
       "hp": 22,
@@ -186,7 +186,7 @@
       "passive": "After attacking: Gains 2 stack(s) of Strength. If all the selected dice show even numbers, gains 4 stack(s) of Strength instead. Strength: When attacking, provides an ATK bonus based on the number of stacks."
     },
     {
-      "name": "Trashcan 2star",
+      "name": "Trashcan basic",
       "hp": 25,
       "dice": ["purple_d6:2", "blue_d4:3"],
       "atkLevel": 3,

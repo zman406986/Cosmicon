@@ -4,6 +4,8 @@
 
 ## Card Table / 卡牌一览
 
+### Basic / 基础
+
 | Name / 名称 | HP / 生命值 | Dice / 骰子 | ATK Level / 攻击等级 | DEF Level / 防御等级 | Passive / 被动 | Source / 来源 |
 |---|---|---|---|---|---|---|
 | Chimera / 奇美拉 | 22 | 2 Purple d6, 2 Blue d4 / 2紫色d6, 2蓝色d4 | 3 | 2 | **EN**: When attacking: If the selected dice show the same number, increases Attack by 3. If that number is 4, increases Attack by 7 instead.<br/><br/>**CN**: 攻击时：若选定的骰子含有相同点数，攻击值+3；若相同点数为4，则改为攻击值+7。 | Basic Pack / 基础包 |

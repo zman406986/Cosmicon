@@ -870,7 +870,7 @@ public class BattleUILabels {
                 String baseText = String.valueOf(vs.base);
                 attackerIconValueLabel.setText(baseText);
                 attackerIconValueLabel.setOpacity(1f);
-                positionBonusLabel(attackerBonusLabel, attackerIconValueLabel, attackerLabelY, vs.bonus, baseText);
+                positionBonusLabel(attackerBonusLabel, attackerIconValueLabel, centerX, attackerLabelY, vs.bonus, baseText);
             }
             return;
         }
@@ -882,7 +882,7 @@ public class BattleUILabels {
             String atkBaseText = String.valueOf(attackerBase);
             attackerIconValueLabel.setText(atkBaseText);
             attackerIconValueLabel.setOpacity(attackerBase > 0 || attackerBonus > 0 ? 1f : 0f);
-            positionBonusLabel(attackerBonusLabel, attackerIconValueLabel, attackerLabelY, attackerBonus, atkBaseText);
+            positionBonusLabel(attackerBonusLabel, attackerIconValueLabel, centerX, attackerLabelY, attackerBonus, atkBaseText);
 
             if (phase == Phase.SELECTING_DEFENSE || phase == Phase.DICE_DISPLAY_DEFENSE) {
                 VisibleSum vs = calculateVisibleSumBreakdown(!playerIsAttacker);
@@ -890,7 +890,7 @@ public class BattleUILabels {
                     String defBaseText = String.valueOf(vs.base);
                     defenderIconValueLabel.setText(defBaseText);
                     defenderIconValueLabel.setOpacity(1f);
-                    positionBonusLabel(defenderBonusLabel, defenderIconValueLabel, defenderLabelY, vs.bonus, defBaseText);
+                    positionBonusLabel(defenderBonusLabel, defenderIconValueLabel, centerX, defenderLabelY, vs.bonus, defBaseText);
                 }
             }
             return;
@@ -905,16 +905,16 @@ public class BattleUILabels {
             String atkBaseText = String.valueOf(attackerBase);
             attackerIconValueLabel.setText(atkBaseText);
             attackerIconValueLabel.setOpacity(attackerBase > 0 || attackerTotal > attackerBase ? 1f : 0f);
-            positionBonusLabel(attackerBonusLabel, attackerIconValueLabel, attackerLabelY, attackerTotal - attackerBase, atkBaseText);
+            positionBonusLabel(attackerBonusLabel, attackerIconValueLabel, centerX, attackerLabelY, attackerTotal - attackerBase, atkBaseText);
 
             String defBaseText = String.valueOf(defenderBase);
             defenderIconValueLabel.setText(defBaseText);
             defenderIconValueLabel.setOpacity(defenderBase > 0 || defenderTotal > defenderBase ? 1f : 0f);
-            positionBonusLabel(defenderBonusLabel, defenderIconValueLabel, defenderLabelY, defenderTotal - defenderBase, defBaseText);
+            positionBonusLabel(defenderBonusLabel, defenderIconValueLabel, centerX, defenderLabelY, defenderTotal - defenderBase, defBaseText);
         }
     }
 
-    private void positionBonusLabel(LabelAPI bonusLabel, LabelAPI mainLabel, float centerY, int bonus, String mainText) {
+    private void positionBonusLabel(LabelAPI bonusLabel, LabelAPI mainLabel, float centerX, float centerY, int bonus, String mainText) {
         if (bonus <= 0) {
             bonusLabel.setOpacity(0f);
             return;
@@ -924,10 +924,7 @@ public class BattleUILabels {
         bonusLabel.setOpacity(1f);
 
         float mainWidth = mainLabel.computeTextWidth(mainText);
-        float mainX = mainLabel.getPosition().getX();
-        float mainCenterX = mainX + 40f;
-
-        float bonusX = mainCenterX + mainWidth / 2f + BONUS_LABEL_GAP;
+        float bonusX = centerX + mainWidth / 2f + BONUS_LABEL_GAP;
         float bonusH = 28f;
         bonusLabel.getPosition().inTL(bonusX, centerY - bonusH / 2f);
     }

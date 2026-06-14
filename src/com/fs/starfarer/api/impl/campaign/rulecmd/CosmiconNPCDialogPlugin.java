@@ -52,8 +52,8 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements Intera
             CosmiconEventState.setIsTutorialMode(true);
         } else {
             CosmiconEventState.setIsTutorialMode(false);
-            if (CosmiconStats.isInEasyMode()) {
-                assignRandomUnownedTwoStarOpponent();
+            if (CosmiconStats.isEasyModeActive()) {
+                assignRandomUnownedBasicOpponent();
             } else {
                 if (npcCharId != null && !CharacterIds.EASY_MODE_CHARACTERS.contains(npcCharId)) {
                     CosmiconEventState.setOpponentCharacter(npcCharId);
@@ -67,7 +67,7 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements Intera
                         npcMarketId = personMem.getString("$cos_npc_market_id");
                     }
                 } else {
-                    assignRandomThreeStarOpponent();
+                    assignRandomAdvancedOpponent();
                 }
             }
         }
@@ -151,8 +151,8 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements Intera
         }
     }
 
-    private void assignRandomUnownedTwoStarOpponent() {
-        CharacterCard opponentCard = CharacterRegistry.getRandomUnownedTwoStarOpponent(
+    private void assignRandomUnownedBasicOpponent() {
+        CharacterCard opponentCard = CharacterRegistry.getRandomUnownedBasicOpponent(
             CosmiconStats.getUnlockedCharacters());
         if (opponentCard != null) {
             CosmiconEventState.setOpponentCharacter(opponentCard.getId());
@@ -160,8 +160,8 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements Intera
         }
     }
 
-    private void assignRandomThreeStarOpponent() {
-        CharacterCard opponentCard = CharacterRegistry.getRandomThreeStarOpponent();
+    private void assignRandomAdvancedOpponent() {
+        CharacterCard opponentCard = CharacterRegistry.getRandomAdvancedOpponent();
         if (opponentCard != null) {
             CosmiconEventState.setOpponentCharacter(opponentCard.getId());
             configureOpponentPrismaticDefaults(opponentCard);

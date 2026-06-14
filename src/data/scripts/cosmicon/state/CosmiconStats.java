@@ -19,7 +19,7 @@ public class CosmiconStats {
     private static final String KEY_UNLOCKED_PRISMATIC_TRUE = "$cos_unlocked_prismatic_true";
     private static final String KEY_PRISMATIC_FEATURE_UNLOCKED = "$cos_prismatic_feature_unlocked";
     private static final String KEY_TOURNAMENT_UNLOCKED = "$cos_tournament_unlocked";
-    private static final String KEY_GATEKEEPER_999_UNLOCKED = "$cos_gatekeeper_999_unlocked";
+    private static final String KEY_LEGEND_999_UNLOCKED = "$cos_legend_999_unlocked";
     private static final String KEY_LEGEND_TITLE_INHERITED = "$cos_legend_title_inherited";
     private static final String KEY_TUTORIAL_1_COMPLETED = "$cos_tutorial_1_completed";
     private static final String KEY_TUTORIAL_2_COMPLETED = "$cos_tutorial_2_completed";
@@ -29,8 +29,10 @@ public class CosmiconStats {
     private static final String KEY_DATA_VERSION = "$cos_data_version";
     private static final String KEY_MIGRATED_FROM_PREREWORK = "$cos_migrated_from_prerework";
     private static final String KEY_EASY_MODE_UPDATE_MSG_SHOWN = "$cos_easy_mode_update_msg_shown";
+    private static final String KEY_EASY_MODE_REENABLED = "$cos_easy_mode_reenabled";
+    private static final String KEY_EASY_MODE_COMPLETE_MSG_SHOWN = "$cos_easy_mode_complete_msg_shown";
 
-    private static final int CURRENT_DATA_VERSION = 1;
+    private static final int CURRENT_DATA_VERSION = 2;
     private static final String REPEATER_ID = "repeater";
 
     private static MemoryAPI getMemory() {
@@ -75,6 +77,18 @@ public class CosmiconStats {
         return isTutorial1Completed() && !isTutorial2Completed();
     }
 
+    public static boolean isEasyModeReenabled() {
+        return getMemory().getBoolean(KEY_EASY_MODE_REENABLED);
+    }
+
+    public static void setEasyModeReenabled(boolean enabled) {
+        getMemory().set(KEY_EASY_MODE_REENABLED, enabled);
+    }
+
+    public static boolean isEasyModeActive() {
+        return isInEasyMode() || isEasyModeReenabled();
+    }
+
     public static boolean isMigratedFromPrerework() {
         return getMemory().getBoolean(KEY_MIGRATED_FROM_PREREWORK);
     }
@@ -111,7 +125,18 @@ public class CosmiconStats {
         if (obj instanceof Set) {
             return (Set<String>) obj;
         }
-        return new HashSet<>();
+        Set<String> repaired = new HashSet<>();
+        if (obj instanceof Iterable) {
+            for (Object item : (Iterable<?>) obj) {
+                if (item != null) {
+                    repaired.add(item.toString());
+                }
+            }
+            CosmiconLogger.info("getStringSet: repaired key '%s' from %s to HashSet (%d items)",
+                key, obj.getClass().getSimpleName(), repaired.size());
+        }
+        mem.set(key, repaired);
+        return repaired;
     }
 
     public static Set<String> getUnlockedCharacters() {
@@ -166,6 +191,7 @@ public class CosmiconStats {
         CosmiconPlayerState.saveCharacter(CharacterIds.ACHERON);
         CosmiconPlayerState.savePrismaticDice(REPEATER_ID);
         CosmiconPlayerState.savePrismaticDiceTrueVersion(false);
+        showEasyModeCompleteMessage();
     }
 
     public static void completeTutorial2ForMigration() {
@@ -182,22 +208,42 @@ public class CosmiconStats {
         if (!isPrismaticFeatureUnlocked()) {
             setPrismaticFeatureUnlocked();
         }
+        showEasyModeCompleteMessage();
     }
 
     public static boolean isTournamentUnlocked() {
         return getMemory().getBoolean(KEY_TOURNAMENT_UNLOCKED);
     }
 
+    private static void showEasyModeCompleteMessage() {
+        if (getMemory().getBoolean(KEY_EASY_MODE_COMPLETE_MSG_SHOWN)) return;
+        getMemory().set(KEY_EASY_MODE_COMPLETE_MSG_SHOWN, true);
+
+        String title = data.scripts.Strings.get("update.easy_mode_complete_title");
+        String line1 = data.scripts.Strings.get("update.easy_mode_complete_1");
+        String line2 = data.scripts.Strings.get("update.easy_mode_complete_2");
+        String line3 = data.scripts.Strings.get("update.easy_mode_complete_3");
+
+        com.fs.starfarer.api.Global.getSector().getCampaignUI().addMessage(
+            title, com.fs.starfarer.api.util.Misc.getPositiveHighlightColor());
+        com.fs.starfarer.api.Global.getSector().getCampaignUI().addMessage(
+            line1, com.fs.starfarer.api.util.Misc.getGrayColor());
+        com.fs.starfarer.api.Global.getSector().getCampaignUI().addMessage(
+            line2, com.fs.starfarer.api.util.Misc.getGrayColor());
+        com.fs.starfarer.api.Global.getSector().getCampaignUI().addMessage(
+            line3, com.fs.starfarer.api.util.Misc.getGrayColor());
+    }
+
     public static void setTournamentUnlocked(boolean unlocked) {
         getMemory().set(KEY_TOURNAMENT_UNLOCKED, unlocked);
     }
 
-    public static boolean isGatekeeper999Unlocked() {
-        return getMemory().getBoolean(KEY_GATEKEEPER_999_UNLOCKED);
+    public static boolean isLegend999Unlocked() {
+        return getMemory().getBoolean(KEY_LEGEND_999_UNLOCKED);
     }
 
-    public static void setGatekeeper999Unlocked(boolean unlocked) {
-        getMemory().set(KEY_GATEKEEPER_999_UNLOCKED, unlocked);
+    public static void setLegend999Unlocked(boolean unlocked) {
+        getMemory().set(KEY_LEGEND_999_UNLOCKED, unlocked);
     }
 
     public static boolean isLegendTitleInherited() {
@@ -268,7 +314,7 @@ public class CosmiconStats {
         }
     }
 
-    public static boolean hasThreeStarCharacters() {
+    public static boolean hasAdvancedCharacters() {
         Set<String> unlocked = getUnlockedCharacters();
         for (String id : unlocked) {
             if (!CharacterIds.EASY_MODE_CHARACTERS.contains(id)) {
@@ -280,7 +326,7 @@ public class CosmiconStats {
 
     public static boolean shouldShowEasyModeUpdateMessage() {
         if (getMemory().getBoolean(KEY_EASY_MODE_UPDATE_MSG_SHOWN)) return false;
-        return !isEasyModeComplete() && hasThreeStarCharacters();
+        return !isEasyModeComplete() && hasAdvancedCharacters();
     }
 
     public static void setEasyModeUpdateMessageShown() {
@@ -321,10 +367,9 @@ public class CosmiconStats {
             if (!isCharacterUnlocked(CharacterIds.CHIMERA)) {
                 unlockCharacter(CharacterIds.CHIMERA);
             }
-        }
-
-        if (isCharacterUnlocked(CharacterIds.TRASHCAN) && !isCharacterUnlocked(CharacterIds.TRASHCAN_2STAR)) {
-            unlockCharacter(CharacterIds.TRASHCAN_2STAR);
+            if (isCharacterUnlocked(CharacterIds.TRASHCAN) && !isCharacterUnlocked(CharacterIds.TRASHCAN_BASIC)) {
+                unlockCharacter(CharacterIds.TRASHCAN_BASIC);
+            }
         }
 
         if (isTutorial2Completed()) {
@@ -346,6 +391,9 @@ public class CosmiconStats {
         if (fromVersion < 1) {
             migrateV0toV1(mem);
         }
+        if (fromVersion < 2) {
+            migrateV1toV2(mem);
+        }
     }
 
     private static void migrateV0toV1(MemoryAPI mem) {
@@ -357,23 +405,35 @@ public class CosmiconStats {
             return;
         }
 
-        boolean hasThreeStarChars = false;
         Set<String> unlocked = getUnlockedCharacters();
+        if (unlocked.remove(CharacterIds.TRASHCAN)) {
+            CosmiconLogger.info("Migration V0→V1: Removed legacy 'trashcan' from unlocked characters.");
+        }
+
+        boolean hasAdvancedChars = false;
         for (String id : unlocked) {
             if (!CharacterIds.EASY_MODE_CHARACTERS.contains(id)) {
-                hasThreeStarChars = true;
+                hasAdvancedChars = true;
                 break;
             }
         }
 
-        if (hasThreeStarChars) {
+        if (hasAdvancedChars) {
             mem.set(KEY_MIGRATED_FROM_PREREWORK, true);
-            CosmiconLogger.info("Migration V0→V1: Pre-rework save with 3-star characters. "
+            CosmiconLogger.info("Migration V0→V1: Pre-rework save with advanced characters. "
                 + "Player will play Tutorial 1 next encounter.");
         } else {
             completeTutorial1();
-            CosmiconLogger.info("Migration V0→V1: Pre-rework save with only 2-star characters. "
+            CosmiconLogger.info("Migration V0→V1: Pre-rework save with only basic characters. "
                 + "Auto-completed Tutorial 1, entering Easy Mode.");
+        }
+    }
+
+    private static void migrateV1toV2(MemoryAPI mem) {
+        int hunterLevel = CosmiconEventState.getLegendLevel();
+        if (hunterLevel >= 999 && mem.getBoolean(KEY_LEGEND_999_UNLOCKED)) {
+            mem.set(KEY_LEGEND_TITLE_INHERITED, true);
+            CosmiconLogger.info("Migration V1→V2: Detected legacy Legend clear. Inherited Legend title.");
         }
     }
 }

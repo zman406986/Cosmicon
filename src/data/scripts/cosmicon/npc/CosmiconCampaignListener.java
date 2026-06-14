@@ -81,7 +81,7 @@ public class CosmiconCampaignListener extends BaseCampaignEventListener {
             return;
         }
 
-        CharacterCard opponentCard = CharacterRegistry.getRandomThreeStarOpponent();
+        CharacterCard opponentCard = CharacterRegistry.getRandomAdvancedOpponent();
         if (opponentCard == null) return;
         spawnTempNPC(market, opponentCard);
         marketMem.set(SPAWN_TIME_KEY, Global.getSector().getClock().getTimestamp());

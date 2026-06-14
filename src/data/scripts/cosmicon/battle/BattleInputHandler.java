@@ -103,8 +103,8 @@ public class BattleInputHandler {
             int currentButton = Mouse.isButtonDown(0) ? 1 : 0;
 
             if (currentButton == 1 && lastMouseButtonState == 0) {
-                if (battlePanelUI != null && battlePanelUI.isGatekeeper999StartMessageActive()) {
-                    battlePanelUI.dismissGatekeeper999StartMessage();
+                if (battlePanelUI != null && battlePanelUI.isLegend999StartMessageActive()) {
+                    battlePanelUI.dismissLegend999StartMessage();
                     lastMouseButtonState = currentButton;
                     return;
                 }
@@ -142,6 +142,12 @@ public class BattleInputHandler {
 
                 if (battleState.getCurrentPhase() == Phase.ROLLING) {
                     if (tutorialController != null && !tutorialController.isClickToRollAllowed()) {
+                        lastMouseButtonState = currentButton;
+                        return;
+                    }
+
+                    if (tutorialController != null && tutorialController.isIntroStep()) {
+                        tutorialController.onIntroClicked();
                         lastMouseButtonState = currentButton;
                         return;
                     }

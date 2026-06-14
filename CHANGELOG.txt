@@ -2,12 +2,12 @@ Version 0.3.0
 - New content: 6 two-star characters (Chimera, Dromas, Automaton Beetle, Furbo Journalist, BananAdvisor, Senior Staff) with full AI/passives/art. Easy Mode progression: collect all 7 via random encounters, then unlock Tutorial 2. Bonus Selection: +9HP, +1ATK, +1DEF, or tiered credit bonus. Tutorial 1 opponent changed to Trashcan with revised scripted rolls and new reroll tutorial step.
 - Audio: SFX system (UI beep, impacts, select, dice roll, clash, win/lose) with new clash variants; dice roll sound properly timed to animation.
 - Bug fixes: tournament rewards/payouts/access; AI passives for 7 characters; weather-aware AI for all 8 types; status effects (Hack, Arise, Perforation, Revenge, Acid Rain, Overload, March 7th, Frost, Luminance); weather/prismatic edge cases; UI layout (scrollbar, text alignment, clipping, animations, button labels); tutorial flow (continue states, selection, prismatic filter); credit balance (encounters ~50%, loss deduction, tournament adjustment).
-- Removed 4 hallucinated prismatic dice (Mirror, Sanctions, Strategy, Toxic). Renamed Gatekeeper→Legend.
+- Removed 4 hallucinated prismatic dice (Mirror, Sanctions, Strategy, Toxic). Renamed Gatekeeper→Legend, TrashcanHunter→Legend (harmonized all internal naming to "legend").
 - Optimized AI reroll performance.
 - CN localization overhaul (43 strings, terminology unified, Legend variants).
 - Console: CosmiconReset/CosmiconStatus/CosmiconUnlock improvements.
 - Battle UI now shows base+bonus breakdown with passive/weather preview. Credit bonus scales by character tier (100/50/0%). Wins-until-next-bonus shown in victory screen. Music state cleanup on load; portrait scaling fix.
-- Terminology: '2-star'→'basic character' across all strings.
+- Terminology: '2-star/3-star'→'basic/advanced' across all strings, code identifiers (threeStar/twoStar→advanced/basic, TRASHCAN_2STAR→TRASHCAN_BASIC), JSON keys, and wiki files (Card_Index_2Star.md→Card_Index_Basic.md).
 - True prismatic dice: second unlock tier after owning the base version.
 - Update notification on game load for existing players entering easy mode.
 - Tutorial: visual highlights on interactable dice and buttons during guided steps.

@@ -61,7 +61,7 @@ public final class SelectionOptimizer {
         }
 
         if (profile != null && profile.prefersPairs()) {
-            SelectionResult pairResult = selectForPairs(diceValues, diceTypes, freeSlots);
+            SelectionResult pairResult = selectForPairs(diceValues, diceTypes, freeSlots, forcedIndices);
             if (pairResult.passiveTriggered) {
                 pairResult = mergeForcedIndices(pairResult, forcedIndices, diceValues, diceTypes);
                 CosmiconLogger.debug("Selection: pair optimization triggered, pairs found, indices: %s", 
@@ -71,11 +71,11 @@ public final class SelectionOptimizer {
         }
 
         SelectionResult greedyResult = greedyHighSelection(diceValues, diceTypes, freeSlots, 
-            isAttacking, profile, state, forPlayer);
+            isAttacking, profile, state, forPlayer, forcedIndices);
         greedyResult = mergeForcedIndices(greedyResult, forcedIndices, diceValues, diceTypes);
         
         if (profile != null && !profile.shouldOptimizeForPassive(isAttacking)) {
-            SelectionResult enhancedResult = considerPassiveBonus(diceValues, diceTypes, freeSlots, profile, isAttacking);
+            SelectionResult enhancedResult = considerPassiveBonus(diceValues, diceTypes, freeSlots, profile, isAttacking, forcedIndices);
             enhancedResult = mergeForcedIndices(enhancedResult, forcedIndices, diceValues, diceTypes);
             if (enhancedResult.totalScore > greedyResult.totalScore) {
                 CosmiconLogger.debug("Selection: passive bonus enhanced score from %.1f to %.1f", 
@@ -139,12 +139,14 @@ public final class SelectionOptimizer {
             boolean isAttacking,
             CharacterAIProfile profile,
             BattleState state,
-            boolean forPlayer) {
+            boolean forPlayer,
+            Set<Integer> forcedIndices) {
         
         boolean preferHigh = profile == null || profile.prefersHighValues(isAttacking);
 
         List<DiceIndexValue> indexedValues = new ArrayList<>();
         for (int i = 0; i < diceValues.size(); i++) {
+            if (forcedIndices.contains(i)) continue;
             float value = diceValues.get(i);
             DiceType type = diceTypes.get(i);
             if (type == DiceType.PRISMATIC && state != null) {
@@ -350,10 +352,12 @@ public final class SelectionOptimizer {
             List<DiceType> diceTypes,
             int requiredCount,
             CharacterAIProfile profile,
-            boolean isAttacking) {
+            boolean isAttacking,
+            Set<Integer> forcedIndices) {
         
         List<DiceIndexValue> indexedValues = new ArrayList<>();
         for (int i = 0; i < diceValues.size(); i++) {
+            if (forcedIndices.contains(i)) continue;
             indexedValues.add(new DiceIndexValue(i, diceValues.get(i), diceTypes.get(i)));
         }
 
@@ -447,9 +451,10 @@ public final class SelectionOptimizer {
         }
     }
 
-    public static SelectionResult selectForPairs(List<Integer> diceValues, List<DiceType> diceTypes, int requiredCount) {
+    public static SelectionResult selectForPairs(List<Integer> diceValues, List<DiceType> diceTypes, int requiredCount, Set<Integer> forcedIndices) {
         Map<Integer, List<Integer>> valueToIndices = new LinkedHashMap<>();
         for (int i = 0; i < diceValues.size(); i++) {
+            if (forcedIndices.contains(i)) continue;
             valueToIndices.computeIfAbsent(diceValues.get(i), k -> new ArrayList<>()).add(i);
         }
 
@@ -475,7 +480,7 @@ public final class SelectionOptimizer {
 
         List<DiceIndexValue> remaining = new ArrayList<>();
         for (int i = 0; i < diceValues.size(); i++) {
-            if (!selectedIndices.contains(i)) {
+            if (!selectedIndices.contains(i) && !forcedIndices.contains(i)) {
                 remaining.add(new DiceIndexValue(i, diceValues.get(i), diceTypes.get(i)));
             }
         }

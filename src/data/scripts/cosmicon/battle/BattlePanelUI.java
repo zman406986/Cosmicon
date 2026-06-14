@@ -86,8 +86,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     private UnifiedCoord playerStatusBoxCoord;
     private UnifiedCoord opponentStatusBoxCoord;
     private UnifiedCoord opponentPrismaticBtnCoord;
-    private UnifiedCoord gatekeeper999HintBoxCoord;
-    private UnifiedCoord gatekeeper999StartMsgBoxCoord;
+    private UnifiedCoord legend999HintBoxCoord;
+    private UnifiedCoord legend999StartMsgBoxCoord;
 
     private DamageResolutionAnimator damageAnimator;
     private DamageResolver.DamageResult pendingDamageResult;
@@ -123,14 +123,14 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     private float displayedPlayerHp;
     private float displayedOpponentHp;
 
-    private boolean gatekeeper999HintShown = false;
-    private boolean gatekeeper999HintActive = false;
-    private float gatekeeper999HintPulseTimer = 0f;
-    private LabelAPI gatekeeper999HintLabel = null;
+    private boolean legend999HintShown = false;
+    private boolean legend999HintActive = false;
+    private float legend999HintPulseTimer = 0f;
+    private LabelAPI legend999HintLabel = null;
 
-    private boolean gatekeeper999StartMessageActive = false;
-    private float gatekeeper999StartMessagePulseTimer = 0f;
-    private LabelAPI gatekeeper999StartMessageLabel = null;
+    private boolean legend999StartMessageActive = false;
+    private float legend999StartMessagePulseTimer = 0f;
+    private LabelAPI legend999StartMessageLabel = null;
 
     public BattlePanelUI() {
         List<float[]> diceHitboxes = new ArrayList<>();
@@ -231,8 +231,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             tutorialIndicationRenderer.cleanup();
             tutorialIndicationRenderer = null;
         }
-        removeGatekeeper999HintLabel();
-        removeGatekeeper999StartMessageLabel();
+        removeLegend999HintLabel();
+        removeLegend999StartMessageLabel();
         if (damageAnimator != null) {
             damageAnimator.cleanup();
             damageAnimator = null;
@@ -297,9 +297,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         float opponentBoxX = BattleRenderingUtils.OPPONENT_CARD_X + BattleRenderingUtils.CARD_WIDTH + 20f;
         opponentStatusBoxCoord = new UnifiedCoord(opponentBoxX, BattleRenderingUtils.OPPONENT_CARD_Y);
         opponentPrismaticBtnCoord = new UnifiedCoord(opponentPrismaticBtnX, opponentPrismaticBtnY);
-        gatekeeper999HintBoxCoord = new UnifiedCoord(
+        legend999HintBoxCoord = new UnifiedCoord(
             (BattleRenderingUtils.PANEL_WIDTH - 440f) / 2f, 35f);
-        gatekeeper999StartMsgBoxCoord = new UnifiedCoord(
+        legend999StartMsgBoxCoord = new UnifiedCoord(
             (BattleRenderingUtils.PANEL_WIDTH - 500f) / 2f,
             (BattleRenderingUtils.PANEL_HEIGHT - 100f) / 2f);
         labels.init(panel, battleState, diceRollManager,
@@ -329,16 +329,16 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             displayedOpponentHp = battleState.getOpponentHp();
         }
 
-        if (battleController != null && battleController.isGatekeeperBattle()) {
-            if (battleController.isGatekeeperEarlyExit()) {
-                gatekeeper999HintShown = true;
-                gatekeeper999HintActive = true;
-                gatekeeper999HintPulseTimer = 0f;
-                createGatekeeper999HintLabel();
+        if (battleController != null && battleController.isLegendBattle()) {
+            if (battleController.isLegendEarlyExit()) {
+                legend999HintShown = true;
+                legend999HintActive = true;
+                legend999HintPulseTimer = 0f;
+                createLegend999HintLabel();
             } else {
-                gatekeeper999StartMessageActive = true;
-                gatekeeper999StartMessagePulseTimer = 0f;
-                createGatekeeper999StartMessageLabel();
+                legend999StartMessageActive = true;
+                legend999StartMessagePulseTimer = 0f;
+                createLegend999StartMessageLabel();
             }
             inputHandler.consumeClick();
         }
@@ -375,9 +375,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             tutorialController.onPhaseChange(newPhase);
         }
 
-        if (gatekeeper999HintActive && newPhase == Phase.ROLLING) {
-            gatekeeper999HintActive = false;
-            removeGatekeeper999HintLabel();
+        if (legend999HintActive && newPhase == Phase.ROLLING) {
+            legend999HintActive = false;
+            removeLegend999HintLabel();
         }
 
         if (newPhase == Phase.ROLLING) {
@@ -501,12 +501,12 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     @Override
     public void onDamageResolved(int damage, int playerHp, int opponentHp) {
         labels.updateLabelsFromState();
-        if (!gatekeeper999HintShown && battleController != null
-                && battleController.isGatekeeperEarlyExit()) {
-            gatekeeper999HintShown = true;
-            gatekeeper999HintActive = true;
-            gatekeeper999HintPulseTimer = 0f;
-            createGatekeeper999HintLabel();
+        if (!legend999HintShown && battleController != null
+                && battleController.isLegendEarlyExit()) {
+            legend999HintShown = true;
+            legend999HintActive = true;
+            legend999HintPulseTimer = 0f;
+            createLegend999HintLabel();
         }
     }
 
@@ -812,11 +812,11 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     private void advanceCommonState(float amount) {
         advanceDisplayedHp(amount);
         advanceSecondaryDamageNumbers(amount);
-        if (gatekeeper999HintActive) {
-            gatekeeper999HintPulseTimer += amount * 3f;
+        if (legend999HintActive) {
+            legend999HintPulseTimer += amount * 3f;
         }
-        if (gatekeeper999StartMessageActive) {
-            gatekeeper999StartMessagePulseTimer += amount * 3f;
+        if (legend999StartMessageActive) {
+            legend999StartMessagePulseTimer += amount * 3f;
         }
     }
 
@@ -1250,12 +1250,12 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                 tutorialIndicationRenderer.render(alphaMult);
             }
 
-            if (gatekeeper999HintActive) {
-                renderGatekeeper999Hint(alphaMult);
+            if (legend999HintActive) {
+                renderLegend999Hint(alphaMult);
             }
 
-            if (gatekeeper999StartMessageActive) {
-                renderGatekeeper999StartMessage(alphaMult);
+            if (legend999StartMessageActive) {
+                renderLegend999StartMessage(alphaMult);
             }
 
             GLStateUtil.resetColor();
@@ -1264,7 +1264,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         }
     }
 
-    private void createGatekeeper999HintLabel() {
+    private void createLegend999HintLabel() {
         if (panel == null) return;
         float boxW = 440f;
         float boxH = 80f;
@@ -1272,28 +1272,28 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         float boxUiY = 35f;
         float labelX = boxUiX + 10f;
         float labelY = boxUiY + 5f;
-        gatekeeper999HintLabel = UIComponentFactory.createLabel(
-            panel, Strings.get("casino.gatekeeper_999_exit_hint"), Fonts.INSIGNIA_LARGE,
+        legend999HintLabel = UIComponentFactory.createLabel(
+            panel, Strings.get("casino.legend_999_exit_hint"), Fonts.INSIGNIA_LARGE,
             new Color(255, 255, 220, 255), Alignment.MID,
             boxW - 20f, boxH, labelX, labelY
         );
     }
 
-    private void removeGatekeeper999HintLabel() {
-        if (gatekeeper999HintLabel != null && panel != null) {
-            panel.removeComponent((UIComponentAPI) gatekeeper999HintLabel);
-            gatekeeper999HintLabel = null;
+    private void removeLegend999HintLabel() {
+        if (legend999HintLabel != null && panel != null) {
+            panel.removeComponent((UIComponentAPI) legend999HintLabel);
+            legend999HintLabel = null;
         }
     }
 
-    private void renderGatekeeper999Hint(float alphaMult) {
+    private void renderLegend999Hint(float alphaMult) {
         GLStateUtil.resetBlendState();
 
         float boxW = 440f;
         float boxH = 80f;
 
-        float glX = gatekeeper999HintBoxCoord.glX();
-        float glY = gatekeeper999HintBoxCoord.glSpriteY(boxH);
+        float glX = legend999HintBoxCoord.glX();
+        float glY = legend999HintBoxCoord.glSpriteY(boxH);
 
         float bgAlpha = 0.75f * alphaMult;
         GL11.glColor4f(0.05f, 0.05f, 0.15f, bgAlpha);
@@ -1305,7 +1305,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         GL11.glEnd();
 
         float borderAlpha = 0.9f * alphaMult;
-        float pulse = 0.5f + 0.5f * (float) Math.sin(gatekeeper999HintPulseTimer);
+        float pulse = 0.5f + 0.5f * (float) Math.sin(legend999HintPulseTimer);
         float r = 0.8f + 0.2f * pulse;
         float g = 0.7f + 0.1f * pulse;
         float b = 0.2f;
@@ -1321,7 +1321,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         GLStateUtil.resetColor();
     }
 
-    private void createGatekeeper999StartMessageLabel() {
+    private void createLegend999StartMessageLabel() {
         if (panel == null) return;
         float boxW = 500f;
         float boxH = 100f;
@@ -1329,39 +1329,39 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         float boxUiY = (BattleRenderingUtils.PANEL_HEIGHT - boxH) / 2f;
         float labelX = boxUiX + 10f;
         float labelY = boxUiY + 10f;
-        gatekeeper999StartMessageLabel = UIComponentFactory.createLabel(
-            panel, Strings.get("casino.gatekeeper_999_start_hint"), Fonts.INSIGNIA_LARGE,
+        legend999StartMessageLabel = UIComponentFactory.createLabel(
+            panel, Strings.get("casino.legend_999_start_hint"), Fonts.INSIGNIA_LARGE,
             new Color(255, 255, 220, 255), Alignment.MID,
             boxW - 20f, boxH, labelX, labelY
         );
     }
 
-    private void removeGatekeeper999StartMessageLabel() {
-        if (gatekeeper999StartMessageLabel != null && panel != null) {
-            panel.removeComponent((UIComponentAPI) gatekeeper999StartMessageLabel);
-            gatekeeper999StartMessageLabel = null;
+    private void removeLegend999StartMessageLabel() {
+        if (legend999StartMessageLabel != null && panel != null) {
+            panel.removeComponent((UIComponentAPI) legend999StartMessageLabel);
+            legend999StartMessageLabel = null;
         }
     }
 
-    public void dismissGatekeeper999StartMessage() {
-        if (gatekeeper999StartMessageActive) {
-            gatekeeper999StartMessageActive = false;
-            removeGatekeeper999StartMessageLabel();
+    public void dismissLegend999StartMessage() {
+        if (legend999StartMessageActive) {
+            legend999StartMessageActive = false;
+            removeLegend999StartMessageLabel();
         }
     }
 
-    public boolean isGatekeeper999StartMessageActive() {
-        return gatekeeper999StartMessageActive;
+    public boolean isLegend999StartMessageActive() {
+        return legend999StartMessageActive;
     }
 
-    private void renderGatekeeper999StartMessage(float alphaMult) {
+    private void renderLegend999StartMessage(float alphaMult) {
         GLStateUtil.resetBlendState();
 
         float boxW = 500f;
         float boxH = 100f;
 
-        float glX = gatekeeper999StartMsgBoxCoord.glX();
-        float glY = gatekeeper999StartMsgBoxCoord.glSpriteY(boxH);
+        float glX = legend999StartMsgBoxCoord.glX();
+        float glY = legend999StartMsgBoxCoord.glSpriteY(boxH);
 
         float bgAlpha = 0.85f * alphaMult;
         GL11.glColor4f(0.05f, 0.05f, 0.15f, bgAlpha);
@@ -1373,7 +1373,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         GL11.glEnd();
 
         float borderAlpha = 0.9f * alphaMult;
-        float pulse = 0.5f + 0.5f * (float) Math.sin(gatekeeper999StartMessagePulseTimer);
+        float pulse = 0.5f + 0.5f * (float) Math.sin(legend999StartMessagePulseTimer);
         float r = 0.8f + 0.2f * pulse;
         float g = 0.7f + 0.1f * pulse;
         float b = 0.2f;

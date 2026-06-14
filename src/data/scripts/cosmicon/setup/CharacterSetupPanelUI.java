@@ -114,6 +114,8 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private static final float BONUS_BUTTON_WIDTH = 80f;
     private static final float BONUS_BUTTON_HEIGHT = 24f;
 
+    private static final float TOGGLE_LABEL_WIDTH = 190f;
+
     private int selectedIndex = -1;
     private String selectedPrismaticDiceId = null;
     private BonusState selectedBonus = BonusState.NONE;
@@ -126,6 +128,9 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private LabelAPI passiveLabel;
     private LabelAPI bonusDescLabel;
     private LabelAPI creditBonusLabel;
+    private LabelAPI easyModeToggleLabel;
+    private boolean easyModeToggleEnabled;
+    private float easyModeToggleBoxX, easyModeToggleBoxY, easyModeToggleBoxW, easyModeToggleBoxH;
     private final Map<String, ButtonAPI> bonusButtons = new java.util.LinkedHashMap<>();
 
     private boolean wasMousePressed = false;
@@ -193,6 +198,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
 
     public CharacterSetupPanelUI(CharacterSetupCallback callback) {
         this.callback = callback;
+        this.easyModeToggleEnabled = CosmiconStats.isEasyModeReenabled();
 
         List<CharacterCard> allCards = CharacterRegistry.getAllCards();
         this.characters = new ArrayList<>();
@@ -260,6 +266,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         createHeaderLabels();
         createSelectionBarLabels();
         createBonusUI();
+        createEasyModeToggle();
         createPassiveLabel();
         createDiceListLabels();
     }
@@ -322,6 +329,40 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             descWidth, BONUS_BUTTON_HEIGHT, descX, bonusY);
 
         updateBonusDescription();
+    }
+
+    private void createEasyModeToggle() {
+        if (CosmiconStats.isInEasyMode() || CosmiconStats.isInTutorialMode()) {
+            return;
+        }
+
+        easyModeToggleBoxX = PANEL_WIDTH - MARGIN - TOGGLE_LABEL_WIDTH - 5f;
+        easyModeToggleBoxY = PANEL_HEIGHT - BOTTOM_BAR_HEIGHT + 3f;
+        easyModeToggleBoxW = TOGGLE_LABEL_WIDTH;
+        easyModeToggleBoxH = BONUS_BUTTON_HEIGHT;
+
+        String toggleText = getEasyModeToggleText();
+        Color toggleColor = easyModeToggleEnabled ? COLOR_SELECTED : COLOR_SECTION_HEADER;
+
+        easyModeToggleLabel = UIComponentFactory.createLabelSmall(panel, toggleText,
+            toggleColor, Alignment.RMID, easyModeToggleBoxW, easyModeToggleBoxH,
+            easyModeToggleBoxX, easyModeToggleBoxY);
+    }
+
+    private void updateEasyModeToggle() {
+        if (easyModeToggleLabel == null) return;
+        easyModeToggleLabel.setText(getEasyModeToggleText());
+        easyModeToggleLabel.setColor(easyModeToggleEnabled ? COLOR_SELECTED : COLOR_SECTION_HEADER);
+    }
+
+    private String getEasyModeToggleText() {
+        if (easyModeToggleEnabled) {
+            String onText = Strings.get("setup.easy_mode_toggle_on");
+            return "[X] " + onText;
+        } else {
+            String offText = Strings.get("setup.easy_mode_toggle_off");
+            return "[ ] " + offText;
+        }
     }
 
     private void addBonusButton(TooltipMakerAPI tp, String action, String text, boolean unlocked) {
@@ -1082,6 +1123,15 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                     }
                 }
             }
+            // Easy mode toggle click
+            else if (easyModeToggleLabel != null
+                    && mousePos.uiX() >= easyModeToggleBoxX && mousePos.uiX() <= easyModeToggleBoxX + easyModeToggleBoxW
+                    && mousePos.uiY() >= easyModeToggleBoxY && mousePos.uiY() <= easyModeToggleBoxY + easyModeToggleBoxH) {
+                easyModeToggleEnabled = !easyModeToggleEnabled;
+                CosmiconStats.setEasyModeReenabled(easyModeToggleEnabled);
+                CosmiconSFX.playUIBeep();
+                updateEasyModeToggle();
+            }
             // Version toggle click
             else {
                 boolean versionClicked = false;
@@ -1300,6 +1350,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         passiveLabel = null;
         bonusDescLabel = null;
         creditBonusLabel = null;
+        easyModeToggleLabel = null;
         noPrismaticLabel = null;
         bonusButtons.clear();
         clickRegions.clear();

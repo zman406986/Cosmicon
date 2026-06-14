@@ -206,7 +206,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         ThreeTierSplit split = splitThreeTiers(pool, rerollsLeft, isAttacking, currentDestinedIndices);
         int frozenSum = 0;
         int doomedSum = 0;
-        int doomedRerollsUsed;
+        int doomedRerollsUsed = 0;
         Set<Integer> savedDestined = null;
         String savedDestinedKey = null;
         if (split != null) {
@@ -381,7 +381,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         double sum = 0;
         for (int i = 0; i < pool.size(); i++) {
             if (diceToReroll.contains(i)) {
-                sum += pool.getType(i).getMaxFace();
+                sum += pool.getMaxFace(i);
             } else {
                 sum += pool.getValue(i);
             }
@@ -796,6 +796,13 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         public DiceType getType(int idx) { return types[idx]; }
         public int[] getPossibleFaces(int idx) { return possibleFaces[idx]; }
 
+        public int getMaxFace(int idx) {
+            if (types[idx] == DiceType.PRISMATIC) {
+                return Arrays.stream(possibleFaces[idx]).max().orElse(6);
+            }
+            return types[idx].getMaxFace();
+        }
+
         public void applyOutcome(Set<Integer> indices, Outcome outcome) {
             int i = 0;
             for (int idx : indices) {
@@ -840,7 +847,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         List<Integer> keep = new ArrayList<>();
         int frozenSum = 0;
         for (int i = 0; i < pool.size(); i++) {
-            if (pool.getValue(i) == pool.getType(i).getMaxFace()
+            if (pool.getValue(i) == pool.getMaxFace(i)
                 && !isSpecialFaceNeverReroll(i, pool.getType(i), isAttacking, null, false)) {
                 frozenSum += pool.getValue(i);
             } else {
@@ -899,7 +906,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
                 continue;
             }
 
-            if (value == type.getMaxFace()) {
+            if (value == pool.getMaxFace(i)) {
                 frozenSum += value;
                 continue;
             }
@@ -995,14 +1002,20 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
     }
 
     private static int[] adjustFacesForWeather(int[] faces, boolean preventMin, boolean preventMax) {
-        int min = preventMin ? 2 : 1;
-        int max = preventMax ? faces[faces.length - 1] - 1 : faces[faces.length - 1];
-        if (min > max) return faces;
-        int[] adjusted = new int[max - min + 1];
-        for (int v = min; v <= max; v++) {
-            adjusted[v - min] = v;
+        if (!preventMin && !preventMax) return faces;
+        int trueMax = Arrays.stream(faces).max().getAsInt();
+        List<Integer> filtered = new ArrayList<>();
+        for (int face : faces) {
+            if (preventMin && face == 1) continue;
+            if (preventMax && face == trueMax) continue;
+            filtered.add(face);
         }
-        return adjusted;
+        if (filtered.isEmpty()) return faces;
+        int[] result = new int[filtered.size()];
+        for (int i = 0; i < filtered.size(); i++) {
+            result[i] = filtered.get(i);
+        }
+        return result;
     }
 
     private static final Map<Integer, int[]> regularFacesCache = new HashMap<>();

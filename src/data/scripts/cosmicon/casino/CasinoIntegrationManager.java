@@ -35,17 +35,17 @@ public class CasinoIntegrationManager {
         return !CosmiconStats.isInTutorialMode();
     }
 
-    public static int getTrashcanHunterLevel() {
-        return CosmiconEventState.getTrashcanHunterLevel();
+    public static int getLegendLevel() {
+        return CosmiconEventState.getLegendLevel();
     }
 
-    public static void updateTrashcanHunterLevel(int damageDealt) {
+    public static void updateLegendLevel(int damageDealt) {
         int bonusHp = CosmiconEventState.getCasinoBattleBonusHp();
         int maxHp = (bonusHp >= 974) ? 999 : 99;
         int capped = Math.min(damageDealt, maxHp);
-        int current = getTrashcanHunterLevel();
+        int current = getLegendLevel();
         if (capped > current) {
-            CosmiconEventState.setTrashcanHunterLevel(capped);
+            CosmiconEventState.setLegendLevel(capped);
         }
     }
 
@@ -95,7 +95,7 @@ public class CasinoIntegrationManager {
         interaction.init(dialog);
     }
 
-    public static void startGatekeeperBattle(InteractionDialogAPI dialog, Runnable onLeave) {
+    public static void startLegendBattle(InteractionDialogAPI dialog, Runnable onLeave) {
         CosmiconEventState.clearCasinoBattleState();
         CosmiconEventState.setIsEmbeddedEntry(true);
         CosmiconEventState.setReplayTutorialGame(-1);
@@ -103,7 +103,7 @@ public class CasinoIntegrationManager {
         CosmiconEventState.setCasinoBattleMode(true);
         CosmiconEventState.setCasinoBattleIsBoss(false);
         CosmiconEventState.setCasinoBattleOpponent(CharacterIds.TRASHCAN);
-        int bonusHp = CosmiconStats.isGatekeeper999Unlocked() ? CosmiconConfig.GATEKEEPER_999_BONUS_HP : CosmiconConfig.GATEKEEPER_BONUS_HP;
+        int bonusHp = CosmiconStats.isLegend999Unlocked() ? CosmiconConfig.LEGEND_999_BONUS_HP : CosmiconConfig.LEGEND_BONUS_HP;
         CosmiconEventState.setCasinoBattleBonusHp(bonusHp);
         CosmiconEventState.setCasinoBattleUseTrue(false);
         CosmiconEventState.setLegendSkipEnabled(CosmiconStats.isLegendTitleInherited());

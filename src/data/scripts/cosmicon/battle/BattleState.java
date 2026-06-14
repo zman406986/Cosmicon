@@ -505,10 +505,12 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
     
     public void applyDamageTo(boolean isPlayer, int damage) {
+        int oldHp = isPlayer ? getPlayerHp() : getOpponentHp();
         hpManager.applyDamageTo(isPlayer, damage, getEffects(isPlayer),
             isPlayer ? playerCard : opponentCard, this::consumeUnyieldingCheck);
-        if (damage > 0) {
-            addDamageTakenThisTurn(isPlayer, damage);
+        int actual = oldHp - (isPlayer ? getPlayerHp() : getOpponentHp());
+        if (actual > 0) {
+            addDamageTakenThisTurn(isPlayer, actual);
         }
     }
 

@@ -55,7 +55,7 @@ public class CosmiconModPlugin extends BaseModPlugin {
                     if (shown) return;
                     timer += amount;
                     if (timer < 1.0f) return;
-                    if (CosmiconStats.isEasyModeComplete() || !CosmiconStats.hasThreeStarCharacters()) {
+                    if (CosmiconStats.isEasyModeComplete() || !CosmiconStats.hasAdvancedCharacters()) {
                         shown = true;
                         return;
                     }

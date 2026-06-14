@@ -18,7 +18,7 @@ Use the comm directory at any market to find a Cosmicon NPC and start a game. Yo
 
 在任何市场的通讯终端中找到战力党NPC即可开始游戏。前两局是教程关卡，会引导你掌握基本操作并解锁初始角色。
 
-If the **Interastral Peace Casino** mod is loaded, a "Cosmicon Dice Lounge" becomes accessible from the Casino main menu after tutorial completion, offering Gatekeeper challenges and Tournaments.
+If the **Interastral Peace Casino** mod is loaded, a "Cosmicon Dice Lounge" becomes accessible from the Casino main menu after tutorial completion, offering Legend challenges and Tournaments.
 
 如果加载了**星际和平赌场**模组，完成教程后可从赌场主菜单进入"战力党酒馆"，挑战老赌神或参加挑战赛。
 
@@ -76,14 +76,14 @@ All commands require the Console Commands mod and must be used in the campaign l
 | Command | Syntax | Description |
 |---------|--------|-------------|
 | `cosmicon_start` | `cosmicon_start [opponentId] [prismaticDiceId] [useTrue] [tutorialGameNum]` | Starts a Cosmicon dice battle. Without arguments, starts a standard random battle. `opponentId`: character to fight (`random` for random). `prismaticDiceId`: prismatic dice for opponent. `useTrue`: true/false. `tutorialGameNum`: 1 or 2 to replay tutorial games. |
-| `cosmicon_casino_gatekeeper` | `cosmicon_casino_gatekeeper [bonusHp]` | Starts a gatekeeper battle vs Trashcan. `bonusHp`: bonus HP for Trashcan (default: 74). |
+| `cosmicon_casino_legend` | `cosmicon_casino_legend [bonusHp]` | Starts a legend battle. `bonusHp`: bonus HP for the opponent (default: 74). |
 | `cosmicon_casino_tournament` | `cosmicon_casino_tournament` | Starts an 8-player double-elimination tournament. |
 | `cosmicon_win` | `cosmicon_win` | Forces a player victory in the current active battle. |
 
 | 命令 | 语法 | 说明 |
 |------|------|------|
 | `cosmicon_start` | `cosmicon_start [对手ID] [曜彩骰ID] [使用真版本] [教程关卡]` | 开始一局对战。不带参数则随机匹配对手。`对手ID`：对手角色（`random`为随机）。`曜彩骰ID`：对手的曜彩骰。`使用真版本`：true/false。`教程关卡`：1或2可重玩教程。 |
-| `cosmicon_casino_gatekeeper` | `cosmicon_casino_gatekeeper [额外生命值]` | 开始与垃圾桶的老赌神对战。`额外生命值`：垃圾桶的额外HP（默认：74）。 |
+| `cosmicon_casino_legend` | `cosmicon_casino_legend [额外生命值]` | 开始赌神对战。`额外生命值`：对手的额外HP（默认：74）。 |
 | `cosmicon_casino_tournament` | `cosmicon_casino_tournament` | 开始8人双败淘汰挑战赛。 |
 | `cosmicon_win` | `cosmicon_win` | 强制当前对局玩家获胜。 |
 
@@ -94,7 +94,7 @@ All commands require the Console Commands mod and must be used in the campaign l
 | `cosmicon_skip_tutorial` | `cosmicon_skip_tutorial` | Completes the tutorial and unlocks all characters and prismatic dice. |
 | `cosmicon_unlock` | `cosmicon_unlock char\|prismatic <id>\|all` | Unlocks characters or prismatic dice. `cosmicon_unlock char <id>` to unlock a specific character. `cosmicon_unlock prismatic <id>` to unlock specific dice. `cosmicon_unlock prismatic true <id>` to unlock the true version. Use `all` to unlock everything at once. |
 | `cosmicon_reset` | `cosmicon_reset [all\|stats\|unlocks\|player]` | Resets Cosmicon progress. `all`: reset everything (default). `stats`: reset games played/won. `unlocks`: reset unlocked chars/dice. `player`: reset selected character/dice. |
-| `cosmicon_casino_reset` | `cosmicon_casino_reset [all\|hunter\|battle\|tournament]` | Resets casino collab state. `all`: reset everything (default). `hunter`: reset Master Dicer Level. `battle`: clear casino battle state. `tournament`: clear tournament state and lock. |
+| `cosmicon_casino_reset` | `cosmicon_casino_reset [all\|legend\|battle\|tournament]` | Resets casino collab state. `all`: reset everything (default). `legend`: reset Master Dicer Level. `battle`: clear casino battle state. `tournament`: clear tournament state and lock. |
 
 | 命令 | 语法 | 说明 |
 |------|------|------|
@@ -125,11 +125,11 @@ All commands require the Console Commands mod and must be used in the campaign l
 # Start a battle vs Firefly with their default prismatic dice
 cosmicon_start firefly
 
-# Start a gatekeeper battle (Trashcan +74 HP)
-cosmicon_casino_gatekeeper
+# Start a legend battle (opponent +74 HP)
+cosmicon_casino_legend
 
-# Start a gatekeeper battle with +20 bonus HP
-cosmicon_casino_gatekeeper 20
+# Start a legend battle with +20 bonus HP
+cosmicon_casino_legend 20
 
 # Start a tournament
 cosmicon_casino_tournament
@@ -154,11 +154,11 @@ cosmicon_reroll_log toggle
 # 与流萤对战，使用其默认曜彩骰
 cosmicon_start firefly
 
-# 开始老赌神对战（垃圾桶+74HP）
-cosmicon_casino_gatekeeper
+# 开始赌神对战（对手+74HP）
+cosmicon_casino_legend
 
-# 老赌神对战，垃圾桶额外+20HP
-cosmicon_casino_gatekeeper 20
+# 赌神对战，对手额外+20HP
+cosmicon_casino_legend 20
 
 # 开始挑战赛
 cosmicon_casino_tournament

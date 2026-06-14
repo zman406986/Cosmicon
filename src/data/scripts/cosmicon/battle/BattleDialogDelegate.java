@@ -48,7 +48,12 @@ public class BattleDialogDelegate implements com.fs.starfarer.api.campaign.Custo
 
     @Override
     public void init(CustomPanelAPI panel, DialogCallbacks callbacks) {
-        battleController.initBattleWithSelection(playerIsAttacker);
+        try {
+            battleController.initBattleWithSelection(playerIsAttacker);
+        } catch (Exception e) {
+            battleController.cleanup();
+            throw e;
+        }
 
         if (CosmiconEventState.isLegendSkipEnabled()) {
             battleController.preApplyOpponentDamage(99);

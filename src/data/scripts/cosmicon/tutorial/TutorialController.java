@@ -14,10 +14,11 @@ import data.scripts.cosmicon.state.CosmiconStats;
 public class TutorialController {
 
     private static final Map<TutorialStep, TutorialStep> SELECT_TO_CONFIRM = Map.ofEntries(
-        Map.entry(TutorialStep.G1_T1_ATTACK_SELECT, TutorialStep.G1_T1_ATTACK_CONFIRM),
         Map.entry(TutorialStep.G1_T1_DEFENSE_SELECT, TutorialStep.G1_T1_DEFENSE_CONFIRM),
-        Map.entry(TutorialStep.G1_T2_ATTACK_SELECT, TutorialStep.G1_T2_ATTACK_CONFIRM),
+        Map.entry(TutorialStep.G1_T1_ATTACK_SELECT, TutorialStep.G1_T1_ATTACK_CONFIRM),
         Map.entry(TutorialStep.G1_T2_DEFENSE_SELECT, TutorialStep.G1_T2_DEFENSE_CONFIRM),
+        Map.entry(TutorialStep.G1_T2_ATTACK_SELECT, TutorialStep.G1_T2_ATTACK_CONFIRM),
+        Map.entry(TutorialStep.G1_T3_DEFENSE_SELECT, TutorialStep.G1_T3_DEFENSE_CONFIRM),
         Map.entry(TutorialStep.G1_T3_ATTACK_SELECT, TutorialStep.G1_T3_ATTACK_CONFIRM),
         Map.entry(TutorialStep.G2_T1_DEFENSE_SELECT, TutorialStep.G2_T1_DEFENSE_CONFIRM),
         Map.entry(TutorialStep.G2_T2_ATTACK_PRISMATIC, TutorialStep.G2_T2_ATTACK_CONFIRM),
@@ -34,30 +35,35 @@ public class TutorialController {
     }
 
     public enum TutorialStep {
-        G1_T1_ATTACK_ROLL,
-        G1_T1_ATTACK_SELECT,
-        G1_T1_ATTACK_CONFIRM,
-        G1_T1_ATTACK_WAIT,
-        G1_T1_ATTACK_RESOLVE,
+        G1_T1_INTRO,
         G1_T1_DEFENSE_ROLL,
-        G1_T1_DEFENSE_OPPONENT_REROLL,
         G1_T1_DEFENSE_SELECT,
         G1_T1_DEFENSE_CONFIRM,
         G1_T1_DEFENSE_WAIT,
         G1_T1_DEFENSE_RESOLVE,
+        G1_T1_ATTACK_ROLL,
+        G1_T1_ATTACK_REROLL,
+        G1_T1_ATTACK_SELECT,
+        G1_T1_ATTACK_CONFIRM,
+        G1_T1_ATTACK_WAIT,
+        G1_T1_ATTACK_RESOLVE,
+        G1_T2_DEFENSE_ROLL,
+        G1_T2_DEFENSE_SELECT,
+        G1_T2_DEFENSE_CONFIRM,
+        G1_T2_DEFENSE_WAIT,
+        G1_T2_DEFENSE_RESOLVE,
         G1_T2_ATTACK_ROLL,
         G1_T2_ATTACK_REROLL,
         G1_T2_ATTACK_SELECT,
         G1_T2_ATTACK_CONFIRM,
         G1_T2_ATTACK_WAIT,
         G1_T2_ATTACK_RESOLVE,
-        G1_T2_DEFENSE_ROLL,
-        G1_T2_DEFENSE_SELECT,
-        G1_T2_DEFENSE_CONFIRM,
-        G1_T2_DEFENSE_WAIT,
-        G1_T2_DEFENSE_RESOLVE,
+        G1_T3_DEFENSE_ROLL,
+        G1_T3_DEFENSE_SELECT,
+        G1_T3_DEFENSE_CONFIRM,
+        G1_T3_DEFENSE_WAIT,
+        G1_T3_DEFENSE_RESOLVE,
         G1_T3_ATTACK_ROLL,
-        G1_T3_ATTACK_REROLL,
         G1_T3_ATTACK_SELECT,
         G1_T3_ATTACK_CONFIRM,
         G1_T3_ATTACK_WAIT,
@@ -112,7 +118,7 @@ public class TutorialController {
         this.complete = false;
         this.rerollPending = false;
         this.currentStep = game == TutorialGame.GAME_1_CHIMERA
-            ? TutorialStep.G1_T1_ATTACK_ROLL
+            ? TutorialStep.G1_T1_INTRO
             : TutorialStep.G2_T1_DEFENSE_ROLL;
     }
 
@@ -157,10 +163,12 @@ public class TutorialController {
         if (complete) return true;
 
         return switch (currentStep) {
-            case G1_T1_ATTACK_SELECT, G1_T1_DEFENSE_SELECT,
-                 G1_T2_ATTACK_REROLL, G1_T2_ATTACK_SELECT,
+            case G1_T1_DEFENSE_SELECT,
+                 G1_T1_ATTACK_REROLL, G1_T1_ATTACK_SELECT,
                  G1_T2_DEFENSE_SELECT,
-                 G1_T3_ATTACK_REROLL, G1_T3_ATTACK_SELECT,
+                 G1_T2_ATTACK_REROLL, G1_T2_ATTACK_SELECT,
+                 G1_T3_DEFENSE_SELECT,
+                 G1_T3_ATTACK_SELECT,
                  G2_T1_DEFENSE_SELECT,
                  G2_T2_ATTACK_PRISMATIC, G2_T2_ATTACK_SELECT,
                  G2_T2_DEFENSE_SELECT,
@@ -187,16 +195,15 @@ public class TutorialController {
         boolean isPrismatic = types.get(diceIndex) == DiceType.PRISMATIC;
 
         return switch (currentStep) {
-            case G1_T1_ATTACK_SELECT, G1_T1_DEFENSE_SELECT,
-                 G1_T2_ATTACK_SELECT, G1_T2_DEFENSE_SELECT,
+            case G1_T1_DEFENSE_SELECT, G1_T2_DEFENSE_SELECT,
+                 G1_T3_DEFENSE_SELECT,
+                 G1_T1_ATTACK_SELECT, G1_T2_ATTACK_SELECT,
                  G1_T3_ATTACK_SELECT,
                  G2_T1_DEFENSE_SELECT,
                  G2_T2_DEFENSE_SELECT,
                  G2_T3_DEFENSE_SELECT -> isAmongHighest(diceIndex, values, battleState.getRequiredDiceCount(true));
 
-            case G1_T2_ATTACK_REROLL, G1_T3_ATTACK_REROLL -> !isAmongHighest(diceIndex, values, 2);
-
-            case G2_T3_ATTACK_REROLL, G2_T3_ATTACK_REROLL2 -> !isPrismatic;
+            case G1_T1_ATTACK_REROLL, G1_T2_ATTACK_REROLL -> !isAmongHighest(diceIndex, values, 2);
 
             case G2_T2_ATTACK_PRISMATIC, G2_T2_ATTACK_SELECT ->
                 isPrismatic || value == 4;
@@ -217,8 +224,8 @@ public class TutorialController {
     public boolean canRerollWithCurrentSelection() {
         if (complete) return true;
 
-        if (currentStep == TutorialStep.G1_T2_ATTACK_REROLL
-                || currentStep == TutorialStep.G1_T3_ATTACK_REROLL) {
+        if (currentStep == TutorialStep.G1_T1_ATTACK_REROLL
+                || currentStep == TutorialStep.G1_T2_ATTACK_REROLL) {
             List<Integer> values = battleState.getPlayerDiceValues();
             List<Boolean> selected = battleState.getPlayerDiceSelected();
             for (int i = 0; i < values.size(); i++) {
@@ -282,9 +289,9 @@ public class TutorialController {
         if (complete) return true;
 
         return switch (currentStep) {
-            case G1_T1_ATTACK_CONFIRM, G1_T1_DEFENSE_CONFIRM,
-                 G1_T2_ATTACK_CONFIRM, G1_T2_DEFENSE_CONFIRM,
-                 G1_T3_ATTACK_CONFIRM,
+            case G1_T1_DEFENSE_CONFIRM, G1_T1_ATTACK_CONFIRM,
+                 G1_T2_DEFENSE_CONFIRM, G1_T2_ATTACK_CONFIRM,
+                 G1_T3_DEFENSE_CONFIRM, G1_T3_ATTACK_CONFIRM,
                  G2_T1_DEFENSE_CONFIRM,
                  G2_T2_ATTACK_CONFIRM,
                  G2_T2_DEFENSE_CONFIRM,
@@ -298,8 +305,8 @@ public class TutorialController {
     public boolean isRerollAllowed() {
         if (complete) return true;
 
-        return currentStep == TutorialStep.G1_T2_ATTACK_REROLL
-            || currentStep == TutorialStep.G1_T3_ATTACK_REROLL
+        return currentStep == TutorialStep.G1_T1_ATTACK_REROLL
+            || currentStep == TutorialStep.G1_T2_ATTACK_REROLL
             || currentStep == TutorialStep.G2_T3_ATTACK_REROLL
             || currentStep == TutorialStep.G2_T3_ATTACK_REROLL2;
     }
@@ -334,9 +341,10 @@ public class TutorialController {
         if (complete) return true;
 
         return switch (currentStep) {
-            case G1_T1_ATTACK_ROLL, G1_T1_DEFENSE_ROLL,
-                 G1_T2_ATTACK_ROLL, G1_T2_DEFENSE_ROLL,
-                 G1_T3_ATTACK_ROLL,
+            case G1_T1_INTRO,
+                 G1_T1_DEFENSE_ROLL, G1_T1_ATTACK_ROLL,
+                 G1_T2_DEFENSE_ROLL, G1_T2_ATTACK_ROLL,
+                 G1_T3_DEFENSE_ROLL, G1_T3_ATTACK_ROLL,
                  G2_T1_DEFENSE_ROLL,
                  G2_T2_ATTACK_ROLL,
                  G2_T2_DEFENSE_ROLL,
@@ -352,6 +360,16 @@ public class TutorialController {
         // The phase check in BattleUIButtons already gates the button appropriately.
         // RESOLVE steps need Continue to advance the tutorial.
         return true;
+    }
+
+    public boolean isIntroStep() {
+        return currentStep == TutorialStep.G1_T1_INTRO;
+    }
+
+    public void onIntroClicked() {
+        if (currentStep == TutorialStep.G1_T1_INTRO) {
+            currentStep = TutorialStep.G1_T1_DEFENSE_ROLL;
+        }
     }
 
     public List<Integer> getIndicatedDiceIndices() {
@@ -397,10 +415,11 @@ public class TutorialController {
         if (complete) return;
 
         switch (currentStep) {
-            case G1_T1_ATTACK_CONFIRM -> currentStep = TutorialStep.G1_T1_ATTACK_WAIT;
             case G1_T1_DEFENSE_CONFIRM -> currentStep = TutorialStep.G1_T1_DEFENSE_WAIT;
-            case G1_T2_ATTACK_CONFIRM -> currentStep = TutorialStep.G1_T2_ATTACK_WAIT;
+            case G1_T1_ATTACK_CONFIRM -> currentStep = TutorialStep.G1_T1_ATTACK_WAIT;
             case G1_T2_DEFENSE_CONFIRM -> currentStep = TutorialStep.G1_T2_DEFENSE_WAIT;
+            case G1_T2_ATTACK_CONFIRM -> currentStep = TutorialStep.G1_T2_ATTACK_WAIT;
+            case G1_T3_DEFENSE_CONFIRM -> currentStep = TutorialStep.G1_T3_DEFENSE_WAIT;
             case G1_T3_ATTACK_CONFIRM -> currentStep = TutorialStep.G1_T3_ATTACK_WAIT;
             case G2_T1_DEFENSE_CONFIRM -> currentStep = TutorialStep.G2_T1_DEFENSE_WAIT;
             case G2_T2_ATTACK_CONFIRM -> currentStep = TutorialStep.G2_T2_ATTACK_WAIT;
@@ -419,10 +438,10 @@ public class TutorialController {
     public void onRerolled() {
         if (complete) return;
 
-        if (currentStep == TutorialStep.G1_T2_ATTACK_REROLL) {
+        if (currentStep == TutorialStep.G1_T1_ATTACK_REROLL) {
+            currentStep = TutorialStep.G1_T1_ATTACK_SELECT;
+        } else if (currentStep == TutorialStep.G1_T2_ATTACK_REROLL) {
             currentStep = TutorialStep.G1_T2_ATTACK_SELECT;
-        } else if (currentStep == TutorialStep.G1_T3_ATTACK_REROLL) {
-            currentStep = TutorialStep.G1_T3_ATTACK_SELECT;
         } else if (currentStep == TutorialStep.G2_T3_ATTACK_REROLL) {
             currentStep = TutorialStep.G2_T3_ATTACK_REROLL2;
         } else if (currentStep == TutorialStep.G2_T3_ATTACK_REROLL2) {
@@ -463,10 +482,11 @@ public class TutorialController {
         if (complete) return;
 
         switch (currentStep) {
-            case G1_T1_ATTACK_RESOLVE -> currentStep = TutorialStep.G1_T1_DEFENSE_ROLL;
-            case G1_T1_DEFENSE_RESOLVE -> currentStep = TutorialStep.G1_T2_ATTACK_ROLL;
-            case G1_T2_ATTACK_RESOLVE -> currentStep = TutorialStep.G1_T2_DEFENSE_ROLL;
-            case G1_T2_DEFENSE_RESOLVE -> currentStep = TutorialStep.G1_T3_ATTACK_ROLL;
+            case G1_T1_DEFENSE_RESOLVE -> currentStep = TutorialStep.G1_T1_ATTACK_ROLL;
+            case G1_T1_ATTACK_RESOLVE -> currentStep = TutorialStep.G1_T2_DEFENSE_ROLL;
+            case G1_T2_DEFENSE_RESOLVE -> currentStep = TutorialStep.G1_T2_ATTACK_ROLL;
+            case G1_T2_ATTACK_RESOLVE -> currentStep = TutorialStep.G1_T3_DEFENSE_ROLL;
+            case G1_T3_DEFENSE_RESOLVE -> currentStep = TutorialStep.G1_T3_ATTACK_ROLL;
             case G2_T1_DEFENSE_RESOLVE -> currentStep = TutorialStep.G2_T2_ATTACK_ROLL;
             case G2_T2_ATTACK_RESOLVE -> currentStep = TutorialStep.G2_T2_DEFENSE_ROLL;
             case G2_T2_DEFENSE_RESOLVE -> currentStep = TutorialStep.G2_T3_ATTACK_ROLL;
@@ -507,32 +527,33 @@ public class TutorialController {
 
         if (newPhase == Phase.SELECTING_ATTACK && playerIsAttacker) {
             if (currentStep == TutorialStep.G1_T1_ATTACK_ROLL) {
-                currentStep = TutorialStep.G1_T1_ATTACK_SELECT;
+                currentStep = TutorialStep.G1_T1_ATTACK_REROLL;
             } else if (currentStep == TutorialStep.G1_T2_ATTACK_ROLL) {
                 currentStep = TutorialStep.G1_T2_ATTACK_REROLL;
             } else if (currentStep == TutorialStep.G1_T3_ATTACK_ROLL) {
-                currentStep = TutorialStep.G1_T3_ATTACK_REROLL;
+                currentStep = TutorialStep.G1_T3_ATTACK_SELECT;
             }
         } else if (newPhase == Phase.SELECTING_ATTACK) {
-            // playerIsAttacker is false here (the true case was handled above)
             if (currentStep == TutorialStep.G1_T1_DEFENSE_ROLL) {
-                currentStep = TutorialStep.G1_T1_DEFENSE_OPPONENT_REROLL;
-            } else if (currentStep == TutorialStep.G1_T2_DEFENSE_ROLL) {
-                currentStep = TutorialStep.G1_T2_DEFENSE_SELECT;
-            }
-        } else if (newPhase == Phase.SELECTING_DEFENSE && !playerIsAttacker) {
-            if (currentStep == TutorialStep.G1_T1_DEFENSE_OPPONENT_REROLL) {
                 currentStep = TutorialStep.G1_T1_DEFENSE_SELECT;
             }
+        } else if (newPhase == Phase.SELECTING_DEFENSE && !playerIsAttacker) {
+            if (currentStep == TutorialStep.G1_T2_DEFENSE_ROLL) {
+                currentStep = TutorialStep.G1_T2_DEFENSE_SELECT;
+            } else if (currentStep == TutorialStep.G1_T3_DEFENSE_ROLL) {
+                currentStep = TutorialStep.G1_T3_DEFENSE_SELECT;
+            }
         } else if (newPhase == Phase.WAITING_NEXT_TURN) {
-            if (currentStep == TutorialStep.G1_T1_ATTACK_WAIT) {
-                currentStep = TutorialStep.G1_T1_ATTACK_RESOLVE;
-            } else if (currentStep == TutorialStep.G1_T1_DEFENSE_WAIT) {
+            if (currentStep == TutorialStep.G1_T1_DEFENSE_WAIT) {
                 currentStep = TutorialStep.G1_T1_DEFENSE_RESOLVE;
-            } else if (currentStep == TutorialStep.G1_T2_ATTACK_WAIT) {
-                currentStep = TutorialStep.G1_T2_ATTACK_RESOLVE;
+            } else if (currentStep == TutorialStep.G1_T1_ATTACK_WAIT) {
+                currentStep = TutorialStep.G1_T1_ATTACK_RESOLVE;
             } else if (currentStep == TutorialStep.G1_T2_DEFENSE_WAIT) {
                 currentStep = TutorialStep.G1_T2_DEFENSE_RESOLVE;
+            } else if (currentStep == TutorialStep.G1_T2_ATTACK_WAIT) {
+                currentStep = TutorialStep.G1_T2_ATTACK_RESOLVE;
+            } else if (currentStep == TutorialStep.G1_T3_DEFENSE_WAIT) {
+                currentStep = TutorialStep.G1_T3_DEFENSE_RESOLVE;
             }
         }
     }

@@ -92,11 +92,11 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
             if (oppCharId != null) {
                 opponentCard = CharacterRegistry.getCharacterById(oppCharId);
             } else {
-                if (CosmiconStats.isInEasyMode()) {
-                    opponentCard = CharacterRegistry.getRandomUnownedTwoStarOpponent(
+                if (CosmiconStats.isEasyModeActive()) {
+                    opponentCard = CharacterRegistry.getRandomUnownedBasicOpponent(
                         CosmiconStats.getUnlockedCharacters());
                 } else {
-                    opponentCard = CharacterRegistry.getRandomThreeStarOpponent();
+                    opponentCard = CharacterRegistry.getRandomAdvancedOpponent();
                 }
                 if (opponentCard != null) {
                     CosmiconEventState.setOpponentCharacter(opponentCard.getId());
@@ -127,7 +127,7 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
             }
         }
 
-        if (isGatekeeper999Battle()) {
+        if (isLegend999Battle()) {
             state.getWeatherController().getWeatherManager().excludeWeather(WeatherType.TEMPORAL_STORM);
         }
 
@@ -356,24 +356,24 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
         state.notifyBattleEnd("player");
     }
 
-    public boolean isGatekeeperBattle() {
+    public boolean isLegendBattle() {
         return CosmiconEventState.isCasinoBattleMode()
             && !CosmiconEventState.isCasinoBattleBoss()
             && CosmiconEventState.getCasinoBattleBonusHp() > 0;
     }
 
-    public boolean isGatekeeper999Battle() {
+    public boolean isLegend999Battle() {
         return CosmiconEventState.isCasinoBattleMode()
             && !CosmiconEventState.isCasinoBattleBoss()
             && CosmiconEventState.getCasinoBattleBonusHp() == 974;
     }
 
-    public boolean isGatekeeperEarlyExit() {
-        return isGatekeeperBattle() && state.getOpponentTotalDamageTaken() >= 99;
+    public boolean isLegendEarlyExit() {
+        return isLegendBattle() && state.getOpponentTotalDamageTaken() >= 99;
     }
 
-    public boolean isGatekeeper999EarlyExit() {
-        return isGatekeeper999Battle() && state.getOpponentTotalDamageTaken() >= 99;
+    public boolean isLegend999EarlyExit() {
+        return isLegend999Battle() && state.getOpponentTotalDamageTaken() >= 99;
     }
 
     public void preApplyOpponentDamage(int damage) {

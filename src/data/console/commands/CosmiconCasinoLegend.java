@@ -9,7 +9,7 @@ import org.lazywizard.console.BaseCommand;
 import org.lazywizard.console.CommonStrings;
 import org.lazywizard.console.Console;
 
-public class CosmiconCasinoGatekeeper implements BaseCommand {
+public class CosmiconCasinoLegend implements BaseCommand {
 
     @Override
     public CommandResult runCommand(@NotNull String args, CommandContext context) {
@@ -39,7 +39,7 @@ public class CosmiconCasinoGatekeeper implements BaseCommand {
         CosmiconEventState.setIsBarEvent(false);
         CosmiconEventState.setIsTutorialMode(false);
 
-        Console.showMessage("Starting legend battle vs Trashcan (+" + bonusHp + " HP)...");
+        Console.showMessage("Starting legend battle (+" + bonusHp + " HP)...");
 
         Console.showDialogOnClose(
             new CosmiconInteraction(),

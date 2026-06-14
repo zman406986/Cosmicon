@@ -100,9 +100,10 @@ public class DicePathPlanner {
     }
 
     private static PlannedPath planSingleDice(float startX, float startY,
-                                               float baseDelay, List<float[][]> existingCheckpoints,
-                                               float targetCenterX, float targetCenterY,
-                                               float panelW, float panelH) {
+                                                float baseDelay, List<float[][]> existingCheckpoints,
+                                                float targetCenterX, float targetCenterY,
+                                                float panelW, float panelH,
+                                                float requiredDistance) {
         float[] clamped = clampToBounds(startX, startY, panelW, panelH);
         float currentStartX = clamped[0];
         float currentStartY = clamped[1];
@@ -110,12 +111,11 @@ public class DicePathPlanner {
         float dx = targetCenterX - currentStartX;
         float dy = targetCenterY - currentStartY;
         float targetRotation = (float)Math.toDegrees(Math.atan2(dy, dx));
-        float targetDistance = (float)Math.sqrt(dx * dx + dy * dy);
 
         Set<Integer> ruledOutFractions = new HashSet<>();
 
         float bestRotation = targetRotation;
-        float bestTravelDistance = targetDistance;
+        float bestTravelDistance = AnimationConstants.TRAVEL_DISTANCES[0];
         boolean foundValid = false;
 
         for (int repositionAttempt = 0; repositionAttempt < MAX_REPOSITION_ATTEMPTS; repositionAttempt++) {
@@ -129,7 +129,8 @@ public class DicePathPlanner {
                     break;
                 }
 
-                float travelDistance = targetDistance * (0.9f + rand.nextFloat() * 0.2f);
+                float travelDistance = requiredDistance >= 0 ? requiredDistance
+                    : AnimationConstants.TRAVEL_DISTANCES[rand.nextInt(AnimationConstants.TRAVEL_DISTANCES.length)];
 
                 float endX = currentStartX + (float)Math.cos(Math.toRadians(ar.angle())) * travelDistance;
                 float endY = currentStartY + (float)Math.sin(Math.toRadians(ar.angle())) * travelDistance;
@@ -173,21 +174,29 @@ public class DicePathPlanner {
             dx = targetCenterX - currentStartX;
             dy = targetCenterY - currentStartY;
             targetRotation = (float)Math.toDegrees(Math.atan2(dy, dx));
-            targetDistance = (float)Math.sqrt(dx * dx + dy * dy);
         }
 
         if (!foundValid) {
             bestRotation = (float)Math.toDegrees(Math.atan2(dy, dx));
-            bestTravelDistance = (float)Math.sqrt(dx * dx + dy * dy);
-
-            float rawEndX = currentStartX + (float)Math.cos(Math.toRadians(bestRotation)) * bestTravelDistance;
-            float rawEndY = currentStartY + (float)Math.sin(Math.toRadians(bestRotation)) * bestTravelDistance;
-            float[] clampedEndpoint = clampToBounds(rawEndX, rawEndY, panelW, panelH);
-
-            float cdx = clampedEndpoint[0] - currentStartX;
-            float cdy = clampedEndpoint[1] - currentStartY;
-            bestRotation = (float)Math.toDegrees(Math.atan2(cdy, cdx));
-            bestTravelDistance = (float)Math.sqrt(cdx * cdx + cdy * cdy);
+            bestTravelDistance = AnimationConstants.TRAVEL_DISTANCES[0];
+            int startIndex = AnimationConstants.TRAVEL_DISTANCES.length - 1;
+            if (requiredDistance >= 0) {
+                for (int i = 0; i < AnimationConstants.TRAVEL_DISTANCES.length; i++) {
+                    if (AnimationConstants.TRAVEL_DISTANCES[i] == requiredDistance) {
+                        startIndex = i;
+                        break;
+                    }
+                }
+            }
+            for (int i = startIndex; i >= 0; i--) {
+                float dist = AnimationConstants.TRAVEL_DISTANCES[i];
+                float rawEndX = currentStartX + (float)Math.cos(Math.toRadians(bestRotation)) * dist;
+                float rawEndY = currentStartY + (float)Math.sin(Math.toRadians(bestRotation)) * dist;
+                if (isWithinPanelBounds(rawEndX, rawEndY, panelW, panelH)) {
+                    bestTravelDistance = dist;
+                    break;
+                }
+            }
         }
 
         int bounceCount = rand.nextInt(3);
@@ -264,13 +273,16 @@ public class DicePathPlanner {
         List<PlannedPath> paths = new ArrayList<>(count);
         List<float[][]> plannedCheckpoints = new ArrayList<>();
 
+        float requiredDistance = count >= 3 ? 350f : count == 2 ? 250f : -1f;
+
         for (int i = 0; i < count; i++) {
             float startX = startPositions[i][0];
             float startY = startPositions[i][1];
             float delay = i * 0.05f;
+            float dieRequired = (i == 0 && requiredDistance >= 0) ? requiredDistance : -1f;
 
             PlannedPath path = planSingleDice(startX, startY, delay, plannedCheckpoints,
-                targetCenterXs[i], targetCenterYs[i], panelW, panelH);
+                targetCenterXs[i], targetCenterYs[i], panelW, panelH, dieRequired);
             paths.add(path);
 
             float[][] checkpoints = calculateCheckpoints(path.startX(), path.startY(),
@@ -312,7 +324,7 @@ public class DicePathPlanner {
         }
 
         return planSingleDice(startX, startY, delay, existingCheckpoints,
-                              targetX, targetY, panelW, panelH);
+                              targetX, targetY, panelW, panelH, -1f);
     }
 
     private static float[] clampToBounds(float x, float y, float panelW, float panelH) {

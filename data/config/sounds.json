@@ -29,17 +29,14 @@
   "cos_dice_unselect": [
     {"file":"sounds/SFX/unselect.ogg","pitch":1,"volume":0.6}
   ],
-  "cos_dice_roll_1": [
-    {"file":"sounds/SFX/diceroll_1.ogg","pitch":1,"volume":0.6}
+  "cos_dice_roll_short": [
+    {"file":"sounds/SFX/diceroll-short.ogg","pitch":1,"volume":0.6}
   ],
-  "cos_dice_roll_2": [
-    {"file":"sounds/SFX/diceroll_2.ogg","pitch":1,"volume":0.6}
+  "cos_dice_roll_medium": [
+    {"file":"sounds/SFX/diceroll-medium.ogg","pitch":1,"volume":0.6}
   ],
-  "cos_dice_roll_3": [
-    {"file":"sounds/SFX/diceroll_3.ogg","pitch":1,"volume":0.6}
-  ],
-  "cos_dice_roll_4": [
-    {"file":"sounds/SFX/diceroll_4.ogg","pitch":1,"volume":0.6}
+  "cos_dice_roll_long": [
+    {"file":"sounds/SFX/diceroll-long.ogg","pitch":1,"volume":0.6}
   ],
   "cos_flying_swoosh": [
     {"file":"sounds/SFX/flying_swoosh.ogg","pitch":1,"volume":0.6}

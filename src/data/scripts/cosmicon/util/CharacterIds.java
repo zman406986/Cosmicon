@@ -23,7 +23,7 @@ public final class CharacterIds {
     public static final String HYACINE = "hyacine";
     public static final String YAO_GUANG = "yao_guang";
     public static final String TRASHCAN = "trashcan";
-    public static final String TRASHCAN_2STAR = "trashcan_2star";
+    public static final String TRASHCAN_BASIC = "trashcan_basic";
     public static final String CHIMERA = "chimera";
     public static final String DROMAS = "dromas";
     public static final String AUTOMATON_BEETLE = "automaton_beetle";
@@ -32,7 +32,7 @@ public final class CharacterIds {
     public static final String SENIOR_STAFF = "senior_staff";
 
     public static final List<String> EASY_MODE_CHARACTERS = List.of(
-        CHIMERA, DROMAS, AUTOMATON_BEETLE, TRASHCAN_2STAR,
+        CHIMERA, DROMAS, AUTOMATON_BEETLE, TRASHCAN_BASIC,
         FURBO_JOURNALIST, BANANADVISOR, SENIOR_STAFF
     );
 
@@ -41,7 +41,7 @@ public final class CharacterIds {
     public static List<String> getAllIds() {
         return List.of(AVENTURINE, FIREFLY, ACHERON, KAFKA, ROBIN, MARCH_7TH, DAN_HENG,
             THE_HERTA, CYRENE, CASTORICE, PHAINON, SPARXIE, HYACINE, YAO_GUANG,
-            TRASHCAN, TRASHCAN_2STAR, CHIMERA, DROMAS, AUTOMATON_BEETLE,
+            TRASHCAN, TRASHCAN_BASIC, CHIMERA, DROMAS, AUTOMATON_BEETLE,
             FURBO_JOURNALIST, BANANADVISOR, SENIOR_STAFF);
     }
 

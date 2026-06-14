@@ -55,7 +55,7 @@ public class CosmiconReset implements BaseCommand {
             mem.unset("$cos_bonus_atk_unlocked");
             mem.unset("$cos_bonus_def_unlocked");
             mem.unset("$cos_tournament_unlocked");
-            mem.unset("$cos_gatekeeper_999_unlocked");
+            mem.unset("$cos_legend_999_unlocked");
             mem.unset("$cos_legend_title_inherited");
             mem.unset("$cos_data_version");
             mem.unset("$cos_migrated_from_prerework");

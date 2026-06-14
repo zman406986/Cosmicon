@@ -135,9 +135,10 @@ public DiceAnimator() {
     }
     
     public void rerollWithNewPath(int newFinalValue, float startX, float startY,
-                                   float rotation, float travelDistance, 
+                                   float rotation, float travelDistance,
                                    int bounceCount, float[] bounceHeights,
                                    float targetCenterX, float targetCenterY) {
+        int previousDisplayValue = this.finalValue;
         this.finalValue = newFinalValue;
 
         this.scatterTargetX = startX;
@@ -151,11 +152,7 @@ public DiceAnimator() {
         this.phase = Phase.SCATTER_PICKUP;
         this.scale = 1f;
         this.stationaryFrameIndex = AnimationConstants.FRAME_COUNT - 1;
-        if (type == DiceType.PRISMATIC) {
-            this.stationaryResultIndex = (int)(Math.random() * 6);
-        } else if (type != null) {
-            this.stationaryResultIndex = type.getMaxFace();
-        }
+        this.stationaryResultIndex = previousDisplayValue;
         this.targetCenterX = targetCenterX;
         this.targetCenterY = targetCenterY;
     }
@@ -371,12 +368,9 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
     }
     
     private int getCycleCountForDistance(float distance) {
-        for (int i = 0; i < TRAVEL_DISTANCES.length; i++) {
-            if (distance <= TRAVEL_DISTANCES[i]) {
-                return i + 1;
-            }
-        }
-        return TRAVEL_DISTANCES.length;
+        if (distance <= 150f) return 1;
+        if (distance <= 250f) return 2;
+        return 3;
     }
     
     private void calculateBounceAtStart() {
@@ -610,7 +604,7 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         this.stationaryResultIndex = value;
     }
     
-    public void startFromRestPosition(DiceType type, int finalValue,
+    public void startFromRestPosition(DiceType type, int finalValue, int previousDisplayValue,
                                        float restX, float restY,
                                        float scatterX, float scatterY,
                                        float delay,
@@ -630,7 +624,7 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
         this.phase = Phase.SCATTER_PICKUP;
         this.scale = 1f;
         this.stationaryFrameIndex = AnimationConstants.FRAME_COUNT - 1;
-        this.stationaryResultIndex = finalValue;
+        this.stationaryResultIndex = previousDisplayValue;
         this.rollPickupStartScale = 1f;
     }
     
@@ -761,6 +755,14 @@ public void startScatterFromPreview(float scatterX, float scatterY, float delay,
     
     public float getScale() {
         return scale;
+    }
+
+    public int getFaceValue() {
+        return finalValue;
+    }
+
+    public float getTravelDistance() {
+        return travelDistance;
     }
     
     public float getVisualX() {

@@ -31,16 +31,16 @@ public class CosmiconConfig {
     public static float CREDIT_RANDOM_FACTOR_MIN = 0.9f;
     public static float CREDIT_RANDOM_FACTOR_MAX = 1.1f;
 
-    public static int GATEKEEPER_COST = 5000;
+    public static int LEGEND_COST = 5000;
     public static int TOURNAMENT_COST = 15000;
 
-    public static int GATEKEEPER_BONUS_HP = 74;
-    public static int GATEKEEPER_999_BONUS_HP = 974;
+    public static int LEGEND_BONUS_HP = 74;
+    public static int LEGEND_999_BONUS_HP = 974;
     public static int BOSS_BONUS_HP = 15;
 
     public static int BOSS_CREDIT_MULTIPLIER = 3;
-    public static int GATEKEEPER_WIN_CREDIT_MULTIPLIER = 4;
-    public static int GATEKEEPER_LOSS_CREDIT_MULTIPLIER = 2;
+    public static int LEGEND_WIN_CREDIT_MULTIPLIER = 4;
+    public static int LEGEND_LOSS_CREDIT_MULTIPLIER = 2;
     public static int TOURNAMENT_CREDIT_PER_LEVEL_MULTIPLIER = 5;
 
     public static int TOURNAMENT_CHAMPION_REWARDS = 3;
@@ -80,14 +80,14 @@ public class CosmiconConfig {
 
             JSONObject casinoSettings = settings.optJSONObject("casino");
             if (casinoSettings != null) {
-                GATEKEEPER_COST = casinoSettings.optInt("gatekeeperCost", 5000);
+                LEGEND_COST = casinoSettings.optInt("legendCost", 5000);
                 TOURNAMENT_COST = casinoSettings.optInt("tournamentCost", 15000);
-                GATEKEEPER_BONUS_HP = casinoSettings.optInt("gatekeeperBonusHp", 74);
-                GATEKEEPER_999_BONUS_HP = casinoSettings.optInt("gatekeeper999BonusHp", 974);
+                LEGEND_BONUS_HP = casinoSettings.optInt("legendBonusHp", 74);
+                LEGEND_999_BONUS_HP = casinoSettings.optInt("legend999BonusHp", 974);
                 BOSS_BONUS_HP = casinoSettings.optInt("bossBonusHp", 15);
                 BOSS_CREDIT_MULTIPLIER = casinoSettings.optInt("bossCreditMultiplier", 3);
-                GATEKEEPER_WIN_CREDIT_MULTIPLIER = casinoSettings.optInt("gatekeeperWinCreditMultiplier", 4);
-                GATEKEEPER_LOSS_CREDIT_MULTIPLIER = casinoSettings.optInt("gatekeeperLossCreditMultiplier", 2);
+                LEGEND_WIN_CREDIT_MULTIPLIER = casinoSettings.optInt("legendWinCreditMultiplier", 4);
+                LEGEND_LOSS_CREDIT_MULTIPLIER = casinoSettings.optInt("legendLossCreditMultiplier", 2);
                 TOURNAMENT_CREDIT_PER_LEVEL_MULTIPLIER = casinoSettings.optInt("tournamentCreditPerLevelMultiplier", 5);
                 TOURNAMENT_CHAMPION_REWARDS = casinoSettings.optInt("tournamentChampionRewards", 3);
                 TOURNAMENT_RUNNER_UP_REWARDS = casinoSettings.optInt("tournamentRunnerUpRewards", 2);

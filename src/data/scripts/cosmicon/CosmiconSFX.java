@@ -21,13 +21,34 @@ public class CosmiconSFX {
         Global.getSoundPlayer().playUISound("cos_dice_unselect", 1f, 1f);
     }
 
-    private static final String[] DICE_ROLL_IDS = {"cos_dice_roll_1", "cos_dice_roll_2", "cos_dice_roll_3", "cos_dice_roll_4"};
+    private static final String ROLL_SHORT = "cos_dice_roll_short";
+    private static final String ROLL_MEDIUM = "cos_dice_roll_medium";
+    private static final String ROLL_LONG = "cos_dice_roll_long";
 
-    public static void playDiceRoll(int diceCount) {
-        int toPlay = Math.min(diceCount, DICE_ROLL_IDS.length);
-        for (int i = 0; i < toPlay; i++) {
-            float pitch = 0.9f + (float) Math.random() * 0.2f;
-            Global.getSoundPlayer().playUISound(DICE_ROLL_IDS[i], pitch, 1f);
+    public static void playDiceRoll(float[] distances) {
+        if (distances == null || distances.length == 0) return;
+
+        float pitch = 0.9f + (float) Math.random() * 0.2f;
+
+        if (distances.length == 1) {
+            String soundId = distances[0] >= 350f ? ROLL_LONG : distances[0] >= 250f ? ROLL_MEDIUM : ROLL_SHORT;
+            Global.getSoundPlayer().playUISound(soundId, pitch, 1f);
+        } else if (distances.length == 2) {
+            boolean hasLong = false;
+            for (float d : distances) {
+                if (d >= 350f) { hasLong = true; break; }
+            }
+            if (hasLong) {
+                Global.getSoundPlayer().playUISound(ROLL_LONG, pitch, 1f);
+                Global.getSoundPlayer().playUISound(ROLL_MEDIUM, pitch, 1f);
+            } else {
+                Global.getSoundPlayer().playUISound(ROLL_MEDIUM, pitch * 1.05f, 1f);
+                Global.getSoundPlayer().playUISound(ROLL_SHORT, pitch, 1f);
+            }
+        } else {
+            Global.getSoundPlayer().playUISound(ROLL_SHORT, pitch * 0.95f, 1f);
+            Global.getSoundPlayer().playUISound(ROLL_MEDIUM, pitch, 1f);
+            Global.getSoundPlayer().playUISound(ROLL_LONG, pitch * 1.05f, 1f);
         }
     }
 

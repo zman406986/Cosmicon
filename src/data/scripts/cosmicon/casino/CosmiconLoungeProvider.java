@@ -58,12 +58,12 @@ public class CosmiconLoungeProvider implements LoungeProvider {
 
         dialog.getTextPanel().addPara(getString("welcome"), Color.CYAN);
 
-        int hunterLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
+        int hunterLevel = CasinoIntegrationManager.getLegendLevel();
         if (hunterLevel > 0) {
             if (CosmiconStats.isLegendTitleInherited()) {
-                dialog.getTextPanel().addPara(formatString("trashcan_hunter_greeting_legend"), Color.CYAN);
+                dialog.getTextPanel().addPara(formatString("master_dicer_greeting_legend"), Color.CYAN);
             } else {
-                dialog.getTextPanel().addPara(formatString("trashcan_hunter_greeting", hunterLevel), Color.CYAN);
+                dialog.getTextPanel().addPara(formatString("master_dicer_greeting", hunterLevel), Color.CYAN);
             }
         }
 
@@ -77,19 +77,19 @@ public class CosmiconLoungeProvider implements LoungeProvider {
         List<MenuOption> options = new ArrayList<>();
         boolean tutorialDone = CasinoIntegrationManager.isTutorialComplete();
 
-        boolean canAffordGatekeeper = CasinoAPI.canAfford(CosmiconConfig.GATEKEEPER_COST);
+        boolean canAffordLegend = CasinoAPI.canAfford(CosmiconConfig.LEGEND_COST);
         boolean tournamentActive = CasinoIntegrationManager.isTournamentActive();
-        String gatekeeperTooltip = null;
+        String legendTooltip = null;
         if (tournamentActive) {
-            gatekeeperTooltip = getString("gatekeeper_tournament_active");
+            legendTooltip = getString("legend_tournament_active");
         } else if (!tutorialDone) {
-            gatekeeperTooltip = getString("tutorial_required");
-        } else if (!canAffordGatekeeper) {
-            gatekeeperTooltip = getString("gatekeeper_insufficient");
+            legendTooltip = getString("tutorial_required");
+        } else if (!canAffordLegend) {
+            legendTooltip = getString("legend_insufficient");
         }
-        options.add(new MenuOption("lounge_gatekeeper", getString("gatekeeper"),
-            tutorialDone && canAffordGatekeeper && !tournamentActive,
-            gatekeeperTooltip));
+        options.add(new MenuOption("lounge_legend", getString("legend"),
+            tutorialDone && canAffordLegend && !tournamentActive,
+            legendTooltip));
 
         if (tournamentActive) {
             options.add(new MenuOption("lounge_continue_tournament", getString("continue_tournament"),
@@ -117,7 +117,7 @@ public class CosmiconLoungeProvider implements LoungeProvider {
     public void handleOption(InteractionDialogAPI dialog, String option,
                              Runnable onReturnToLounge, Runnable onReturnToCasino) {
         switch (option) {
-            case "lounge_gatekeeper" -> handleGatekeeper(dialog, onReturnToLounge);
+            case "lounge_legend" -> handleLegend(dialog, onReturnToLounge);
             case "lounge_tournament" -> handleTournament(dialog, onReturnToLounge);
             case "lounge_continue_tournament" -> handleContinueTournament(dialog, onReturnToLounge);
             case "lounge_back" -> onReturnToCasino.run();
@@ -125,16 +125,16 @@ public class CosmiconLoungeProvider implements LoungeProvider {
         }
     }
 
-    private void handleGatekeeper(InteractionDialogAPI dialog, Runnable onReturnToLounge) {
-        if (!CasinoAPI.canAfford(CosmiconConfig.GATEKEEPER_COST) || !CasinoIntegrationManager.isTutorialComplete()) {
+    private void handleLegend(InteractionDialogAPI dialog, Runnable onReturnToLounge) {
+        if (!CasinoAPI.canAfford(CosmiconConfig.LEGEND_COST) || !CasinoIntegrationManager.isTutorialComplete()) {
             dialog.getOptionPanel().clearOptions();
-            dialog.getTextPanel().addPara(getString("gatekeeper_insufficient"), Color.RED);
+            dialog.getTextPanel().addPara(getString("legend_insufficient"), Color.RED);
             dialog.getOptionPanel().addOption(getString("back"), "lounge_back");
             return;
         }
 
-        CasinoAPI.deduct(CosmiconConfig.GATEKEEPER_COST);
-        CasinoIntegrationManager.startGatekeeperBattle(dialog, onReturnToLounge);
+        CasinoAPI.deduct(CosmiconConfig.LEGEND_COST);
+        CasinoIntegrationManager.startLegendBattle(dialog, onReturnToLounge);
     }
 
     private void handleTournament(InteractionDialogAPI dialog, Runnable onReturnToLounge) {

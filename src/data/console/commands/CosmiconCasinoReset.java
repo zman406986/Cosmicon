@@ -20,16 +20,16 @@ public class CosmiconCasinoReset implements BaseCommand {
         String mode = args.isEmpty() ? "all" : args.trim().toLowerCase();
 
         if (!isValidMode(mode)) {
-            Console.showMessage("Error: invalid mode '" + mode + "'. Valid modes: all, hunter, battle, tournament");
+            Console.showMessage("Error: invalid mode '" + mode + "'. Valid modes: all, legend, battle, tournament");
             return CommandResult.BAD_SYNTAX;
         }
 
-        boolean resetHunter = mode.equals("all") || mode.equals("hunter");
+        boolean resetHunter = mode.equals("all") || mode.equals("legend");
         boolean resetBattle = mode.equals("all") || mode.equals("battle");
         boolean resetTournament = mode.equals("all") || mode.equals("tournament");
 
         if (resetHunter) {
-            CosmiconEventState.setTrashcanHunterLevel(0);
+            CosmiconEventState.setLegendLevel(0);
             Console.showMessage("Reset: Master Dicer Level");
         }
 
@@ -46,7 +46,7 @@ public class CosmiconCasinoReset implements BaseCommand {
 
         Console.showMessage("");
         Console.showMessage("Current state:");
-        Console.showMessage("  Master Dicer Level: " + CosmiconEventState.getTrashcanHunterLevel());
+        Console.showMessage("  Master Dicer Level: " + CosmiconEventState.getLegendLevel());
         Console.showMessage("  Casino Battle Active: " + CosmiconEventState.isCasinoBattleMode());
         Console.showMessage("  Casino Battle Type: " + (CosmiconEventState.isCasinoBattleBoss() ? "BOSS" : "CHALLENGE"));
         Console.showMessage("  Tournament Unlocked: " + CasinoIntegrationManager.isTournamentUnlocked());
@@ -56,6 +56,6 @@ public class CosmiconCasinoReset implements BaseCommand {
     }
 
     private static boolean isValidMode(String mode) {
-        return mode.equals("all") || mode.equals("hunter") || mode.equals("battle") || mode.equals("tournament");
+        return mode.equals("all") || mode.equals("legend") || mode.equals("battle") || mode.equals("tournament");
     }
 }

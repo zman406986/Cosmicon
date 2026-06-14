@@ -20,14 +20,14 @@ import java.util.concurrent.ThreadLocalRandom;
 public class CharacterRegistry {
 
     private static final String CARDS_PATH = "data/config/cards.json";
-    private static List<CharacterCard> threeStarCards;
-    private static List<CharacterCard> twoStarCards;
+    private static List<CharacterCard> advancedCards;
+    private static List<CharacterCard> basicCards;
     private static Map<String, Integer> cardIndex;
     private static List<CharacterCard> eligibleOpponents;
 
     static {
-        threeStarCards = new ArrayList<>();
-        twoStarCards = new ArrayList<>();
+        advancedCards = new ArrayList<>();
+        basicCards = new ArrayList<>();
         cardIndex = new HashMap<>();
         eligibleOpponents = new ArrayList<>();
     }
@@ -36,40 +36,40 @@ public class CharacterRegistry {
         try {
             JSONObject cardsJson = Global.getSettings().loadJSON(CARDS_PATH, CosmiconConfig.MOD_ID);
 
-            threeStarCards = parseCardArray(cardsJson.getJSONArray("threeStar"));
+            advancedCards = parseCardArray(cardsJson.getJSONArray("advanced"));
 
-            if (cardsJson.has("twoStar")) {
-                twoStarCards = parseCardArray(cardsJson.getJSONArray("twoStar"));
+            if (cardsJson.has("basic")) {
+                basicCards = parseCardArray(cardsJson.getJSONArray("basic"));
             } else {
-                twoStarCards = new ArrayList<>();
+                basicCards = new ArrayList<>();
             }
 
             cardIndex = new HashMap<>();
-            for (int i = 0; i < threeStarCards.size(); i++) {
-                cardIndex.put(threeStarCards.get(i).getId(), i);
+            for (int i = 0; i < advancedCards.size(); i++) {
+                cardIndex.put(advancedCards.get(i).getId(), i);
             }
-            for (int i = 0; i < twoStarCards.size(); i++) {
-                cardIndex.put(twoStarCards.get(i).getId(), threeStarCards.size() + i);
+            for (int i = 0; i < basicCards.size(); i++) {
+                cardIndex.put(basicCards.get(i).getId(), advancedCards.size() + i);
             }
 
             eligibleOpponents = new ArrayList<>();
-            for (CharacterCard card : threeStarCards) {
+            for (CharacterCard card : advancedCards) {
                 if (!isExcludedFromOpponents(card.getId())) {
                     eligibleOpponents.add(card);
                 }
             }
-            for (CharacterCard card : twoStarCards) {
+            for (CharacterCard card : basicCards) {
                 if (!isExcludedFromOpponents(card.getId())) {
                     eligibleOpponents.add(card);
                 }
             }
 
             Global.getLogger(CharacterRegistry.class).info(
-                "Loaded " + threeStarCards.size() + " threeStar and " + twoStarCards.size() + " twoStar cards from " + CARDS_PATH);
+                "Loaded " + advancedCards.size() + " advanced and " + basicCards.size() + " basic cards from " + CARDS_PATH);
         } catch (IOException | JSONException e) {
             Global.getLogger(CharacterRegistry.class).error("Error loading cards from " + CARDS_PATH, e);
-            threeStarCards = new ArrayList<>();
-            twoStarCards = new ArrayList<>();
+            advancedCards = new ArrayList<>();
+            basicCards = new ArrayList<>();
             cardIndex = new HashMap<>();
             eligibleOpponents = new ArrayList<>();
         }
@@ -194,10 +194,10 @@ public class CharacterRegistry {
     }
 
     public static CharacterCard getRandomCharacter() {
-        if (threeStarCards.isEmpty()) {
+        if (advancedCards.isEmpty()) {
             throw new IllegalStateException("CharacterRegistry is empty — cards failed to load");
         }
-        return threeStarCards.get(ThreadLocalRandom.current().nextInt(threeStarCards.size())).copy();
+        return advancedCards.get(ThreadLocalRandom.current().nextInt(advancedCards.size())).copy();
     }
 
     public static CharacterCard getRandomOpponent() {
@@ -210,62 +210,62 @@ public class CharacterRegistry {
     public static CharacterCard getCharacterById(String id) {
         Integer index = cardIndex.get(id);
         if (index == null) return getRandomCharacter();
-        if (index < threeStarCards.size()) {
-            return threeStarCards.get(index).copy();
+        if (index < advancedCards.size()) {
+            return advancedCards.get(index).copy();
         }
-        return twoStarCards.get(index - threeStarCards.size()).copy();
+        return basicCards.get(index - advancedCards.size()).copy();
     }
 
     public static List<CharacterCard> getAllCards() {
         List<CharacterCard> copies = new ArrayList<>();
-        for (CharacterCard card : threeStarCards) {
+        for (CharacterCard card : advancedCards) {
             copies.add(card.copy());
         }
-        for (CharacterCard card : twoStarCards) {
+        for (CharacterCard card : basicCards) {
             copies.add(card.copy());
         }
         return copies;
     }
 
     private static boolean isExcludedFromOpponents(String id) {
-        return CharacterIds.TRASHCAN.equals(id) || CharacterIds.TRASHCAN_2STAR.equals(id);
+        return CharacterIds.TRASHCAN.equals(id) || CharacterIds.TRASHCAN_BASIC.equals(id);
     }
 
-    public static CharacterCard getRandomTwoStarOpponent() {
+    public static CharacterCard getRandomBasicOpponent() {
         List<CharacterCard> candidates = new ArrayList<>();
-        for (CharacterCard card : twoStarCards) {
+        for (CharacterCard card : basicCards) {
             if (!isExcludedFromOpponents(card.getId())) {
                 candidates.add(card);
             }
         }
         if (candidates.isEmpty()) {
-            throw new IllegalStateException("No eligible 2-star opponents in CharacterRegistry");
+            throw new IllegalStateException("No eligible basic opponents in CharacterRegistry");
         }
         return candidates.get(ThreadLocalRandom.current().nextInt(candidates.size())).copy();
     }
 
-    public static CharacterCard getRandomUnownedTwoStarOpponent(java.util.Set<String> unlockedCharacters) {
+    public static CharacterCard getRandomUnownedBasicOpponent(java.util.Set<String> unlockedCharacters) {
         List<CharacterCard> candidates = new ArrayList<>();
-        for (CharacterCard card : twoStarCards) {
+        for (CharacterCard card : basicCards) {
             if (!isExcludedFromOpponents(card.getId()) && !unlockedCharacters.contains(card.getId())) {
                 candidates.add(card);
             }
         }
         if (candidates.isEmpty()) {
-            return getRandomTwoStarOpponent();
+            return getRandomBasicOpponent();
         }
         return candidates.get(ThreadLocalRandom.current().nextInt(candidates.size())).copy();
     }
 
-    public static CharacterCard getRandomThreeStarOpponent() {
+    public static CharacterCard getRandomAdvancedOpponent() {
         List<CharacterCard> candidates = new ArrayList<>();
-        for (CharacterCard card : threeStarCards) {
+        for (CharacterCard card : advancedCards) {
             if (!isExcludedFromOpponents(card.getId())) {
                 candidates.add(card);
             }
         }
         if (candidates.isEmpty()) {
-            throw new IllegalStateException("No eligible 3-star opponents in CharacterRegistry");
+            throw new IllegalStateException("No eligible advanced opponents in CharacterRegistry");
         }
         return candidates.get(ThreadLocalRandom.current().nextInt(candidates.size())).copy();
     }

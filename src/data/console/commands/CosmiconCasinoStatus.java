@@ -20,7 +20,7 @@ public class CosmiconCasinoStatus implements BaseCommand {
 
         boolean casinoLoaded = CasinoIntegrationManager.isCasinoLoaded();
         boolean tutorialComplete = CasinoIntegrationManager.isTutorialComplete();
-        int hunterLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
+        int hunterLevel = CasinoIntegrationManager.getLegendLevel();
         int rewardTier = CasinoIntegrationManager.getBossRewardTier();
         int creditReward = CasinoIntegrationManager.getCreditReward();
 

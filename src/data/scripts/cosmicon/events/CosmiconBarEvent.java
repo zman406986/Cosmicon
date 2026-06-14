@@ -76,16 +76,16 @@ public class CosmiconBarEvent extends BaseBarEvent {
         }
 
         boolean isTutorial = CosmiconStats.isInTutorialMode();
-        boolean isEasyMode = CosmiconStats.isInEasyMode();
+        boolean isEasyMode = CosmiconStats.isEasyModeActive();
         TextPanelAPI textPanel = dialog.getTextPanel();
 
         if (CasinoIntegrationManager.isCasinoLoaded()) {
-            int hunterLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
+            int hunterLevel = CasinoIntegrationManager.getLegendLevel();
             if (hunterLevel > 0) {
                 if (CosmiconStats.isLegendTitleInherited()) {
-                    textPanel.addPara(Strings.get("bar_event.trashcan_hunter_prompt_legend"));
+                    textPanel.addPara(Strings.get("bar_event.master_dicer_prompt_legend"));
                 } else {
-                    textPanel.addPara(Strings.format("bar_event.trashcan_hunter_prompt", hunterLevel));
+                    textPanel.addPara(Strings.format("bar_event.master_dicer_prompt", hunterLevel));
                 }
                 dialog.getOptionPanel().addOption(Strings.get("bar_event.approach"), this);
                 return;
@@ -132,7 +132,7 @@ public class CosmiconBarEvent extends BaseBarEvent {
 
                 case PLAY:
                     boolean isTutorial = CosmiconStats.isInTutorialMode();
-                    boolean isEasyMode = CosmiconStats.isInEasyMode();
+                    boolean isEasyMode = CosmiconStats.isEasyModeActive();
 
                     if (isTutorial) {
                         String opponentId;
@@ -146,13 +146,13 @@ public class CosmiconBarEvent extends BaseBarEvent {
                     } else {
                         CosmiconEventState.setIsTutorialMode(false);
                         if (isEasyMode) {
-                            CharacterCard opponentCard = CharacterRegistry.getRandomUnownedTwoStarOpponent(
+                            CharacterCard opponentCard = CharacterRegistry.getRandomUnownedBasicOpponent(
                                 CosmiconStats.getUnlockedCharacters());
                             if (opponentCard != null) {
                                 CosmiconEventState.setOpponentCharacter(opponentCard.getId());
                             }
                         } else {
-                            CharacterCard opponentCard = CharacterRegistry.getRandomThreeStarOpponent();
+                            CharacterCard opponentCard = CharacterRegistry.getRandomAdvancedOpponent();
                             if (opponentCard != null) {
                                 CosmiconEventState.setOpponentCharacter(opponentCard.getId());
 

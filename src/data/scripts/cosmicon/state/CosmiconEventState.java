@@ -24,7 +24,7 @@ public class CosmiconEventState {
     private static final String KEY_CASINO_BATTLE_RESULT_DAMAGE = "$cos_casino_battle_result_damage";
     private static final String KEY_CASINO_BATTLE_OPPONENT_KILLED = "$cos_casino_battle_opponent_killed";
     private static final String KEY_LEGEND_SKIP_ENABLED = "$cos_legend_skip_enabled";
-    private static final String KEY_TRASHCAN_HUNTER_LEVEL = "$cos_trashcan_hunter_level";
+    private static final String KEY_LEGEND_LEVEL = "$cos_legend_level";
     private static final String KEY_ORIGINAL_NPC_CHAR = "$cos_original_npc_char";
 
     private static final String KEY_TOURNAMENT_WINS = "$cos_tournament_wins";
@@ -123,7 +123,7 @@ public class CosmiconEventState {
         return getMemory().getBoolean(KEY_IS_TUTORIAL);
     }
 
-    public static void clearBattleState() {
+    public static void clearReplayTutorialFlag() {
         MemoryAPI mem = getMemory();
         mem.unset(KEY_REPLAY_TUTORIAL);
     }
@@ -223,12 +223,12 @@ public class CosmiconEventState {
         return getMemory().getBoolean(KEY_LEGEND_SKIP_ENABLED);
     }
 
-    public static void setTrashcanHunterLevel(int level) {
-        getMemory().set(KEY_TRASHCAN_HUNTER_LEVEL, level);
+    public static void setLegendLevel(int level) {
+        getMemory().set(KEY_LEGEND_LEVEL, level);
     }
 
-    public static int getTrashcanHunterLevel() {
-        return getMemory().getInt(KEY_TRASHCAN_HUNTER_LEVEL);
+    public static int getLegendLevel() {
+        return getMemory().getInt(KEY_LEGEND_LEVEL);
     }
 
     public static void setOriginalNpcCharId(String charId) {

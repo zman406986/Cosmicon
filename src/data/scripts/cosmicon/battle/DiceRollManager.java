@@ -641,7 +641,7 @@ public class DiceRollManager {
                     DiceAnimator restAnimator = restAnimators.get(i);
                     float scatterX = scatters[i][0];
                     float scatterY = scatters[i][1];
-                    animator.startFromRestPosition(allTypes.get(i), displayValue,
+                    animator.startFromRestPosition(allTypes.get(i), displayValue, restAnimator.getFaceValue(),
                         restAnimator.getX(), restAnimator.getY(),
                         scatterX, scatterY,
                         path.delay(), path.rotation(), path.travelDistance(),
@@ -669,7 +669,11 @@ public class DiceRollManager {
             if (!rollSoundPlayed && !animators.isEmpty()) {
                 for (DiceAnimator animator : animators) {
                     if (animator.isTraveling()) {
-                        CosmiconSFX.playDiceRoll(animators.size());
+                        float[] distances = new float[animators.size()];
+                        for (int i = 0; i < animators.size(); i++) {
+                            distances[i] = animators.get(i).getTravelDistance();
+                        }
+                        CosmiconSFX.playDiceRoll(distances);
                         rollSoundPlayed = true;
                         break;
                     }

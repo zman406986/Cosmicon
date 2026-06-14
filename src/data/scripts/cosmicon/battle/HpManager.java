@@ -55,12 +55,11 @@ public class HpManager {
     }
 
     public void applyDamageTo(boolean isPlayer, int damage, StatusEffectProcessor effects,
-                              CharacterCard card, UnyieldingCheck unyieldingCheck) {
+                               CharacterCard card, UnyieldingCheck unyieldingCheck) {
         int oldHp = getHp(isPlayer);
         String characterName = getCharacterName(card, isPlayer);
 
         setHp(isPlayer, Math.max(0, oldHp - damage));
-        recordDamageTaken(damage, isPlayer);
 
         int newHp = getHp(isPlayer);
 
@@ -75,11 +74,16 @@ public class HpManager {
             }
         }
 
+        int actualDamage = oldHp - newHp;
+        if (actualDamage > 0) {
+            recordDamageTaken(actualDamage, isPlayer);
+        }
+
         int maxHp = card != null ? card.getMaxHp() : oldHp;
 
         CosmiconLogger.hpChange(characterName, oldHp, newHp, maxHp);
-        if (damage > 0) {
-            CosmiconLogger.debug("%s took %d damage (HP: %d/%d)", characterName, damage, newHp, maxHp);
+        if (actualDamage > 0) {
+            CosmiconLogger.debug("%s took %d damage (HP: %d/%d)", characterName, actualDamage, newHp, maxHp);
         }
     }
 

@@ -68,7 +68,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         HELP,
         REWARD_SELECTION,
         CASINO_BOSS_REWARD,
-        GATEKEEPER_REWARD,
+        LEGEND_REWARD,
         TOURNAMENT_BRACKET,
         TOURNAMENT_REWARD
     }
@@ -116,12 +116,12 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         }
 
         if (CasinoIntegrationManager.isCasinoLoaded()) {
-            int hunterLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
+            int hunterLevel = CasinoIntegrationManager.getLegendLevel();
             if (hunterLevel > 0) {
                 if (CosmiconStats.isLegendTitleInherited()) {
-                    textPanel.addPara(Strings.get("menu.trashcan_hunter_welcome_legend"), Color.CYAN);
+                    textPanel.addPara(Strings.get("menu.master_dicer_welcome_legend"), Color.CYAN);
                 } else {
-                    textPanel.addPara(Strings.format("menu.trashcan_hunter_welcome", hunterLevel), Color.CYAN);
+                    textPanel.addPara(Strings.format("menu.master_dicer_welcome", hunterLevel), Color.CYAN);
                 }
             }
         }
@@ -247,8 +247,8 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 handleCasinoRewardSelection(data);
                 break;
 
-            case GATEKEEPER_REWARD:
-                handleGatekeeperRewardSelection(data);
+            case LEGEND_REWARD:
+                handleLegendRewardSelection(data);
                 break;
 
             case TOURNAMENT_BRACKET:
@@ -290,7 +290,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         Boolean forcedPlayerIsAttacker = null;
         if (TutorialController.shouldActivateTutorial()) {
             TutorialController.TutorialGame tutorialGame = TutorialController.determineTutorialGame();
-            forcedPlayerIsAttacker = tutorialGame == TutorialController.TutorialGame.GAME_1_CHIMERA;
+            forcedPlayerIsAttacker = false;
         }
 
         CoinFlipPanelUI coinFlipUI = new CoinFlipPanelUI(forcedPlayerIsAttacker);
@@ -443,10 +443,12 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             if (remaining > 0) {
                 textPanel.addPara(Strings.format("tutorial.games_remaining", remaining));
             }
-            options.addOption(Strings.get("menu.back"), "back");
+            options.addOption(Strings.get("menu.leave"), "leave");
+            options.addOption(Strings.get("menu.back_to_preparation"), "back");
         } else if (CosmiconStats.isTutorial2Completed()) {
             textPanel.addPara(Strings.get("tutorial.g2_reward"));
-            options.addOption(Strings.get("menu.back"), "back");
+            options.addOption(Strings.get("menu.leave"), "leave");
+            options.addOption(Strings.get("menu.back_to_preparation"), "back");
         }
 
         setState(State.REWARD_SELECTION);
@@ -489,6 +491,9 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         int baseCredits = CosmiconStats.calculateNormalEncounterCreditReward(playerLevel);
         pendingBaseCredits = baseCredits;
         int bonusPercent = CosmiconPlayerState.getCreditBonusPercent();
+        if (CosmiconStats.isEasyModeReenabled()) {
+            bonusPercent = 0;
+        }
         if (!hasCharReward && !hasPrismaticReward && !hasPrismaticTrueReward) {
             if (bonusPercent > 0) {
                 textPanel.addPara(Strings.format("bonus.credit_bonus_tier", bonusPercent), Color.GREEN);
@@ -662,6 +667,21 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                 AddRemoveCommodity.addCreditsGainText(pendingBaseCredits, textPanel);
                 finishReward();
             }
+            case "leave" -> {
+                if (CosmiconEventState.isTournamentActive()) {
+                    CosmiconEventState.setIsEmbeddedEntry(true);
+                    CosmiconEventState.setIsBarEvent(false);
+                    CosmiconMusicPlugin.stopMusic();
+                } else {
+                    CosmiconEventState.clearAll();
+                    CosmiconMusicPlugin.stopMusic();
+                }
+                if (onLeaveAction != null) {
+                    onLeaveAction.run();
+                } else {
+                    dialog.dismiss();
+                }
+            }
             default -> finishReward();
         }
     }
@@ -695,7 +715,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         } else if (CosmiconEventState.isTournamentActive()) {
             handleTournamentVictory();
         } else {
-            handleGatekeeperVictory(damageDealt);
+            handleLegendVictory(damageDealt);
         }
     }
 
@@ -710,7 +730,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         } else if (CosmiconEventState.isTournamentActive()) {
             handleTournamentDefeat();
         } else {
-            handleGatekeeperDefeat(damageDealt);
+            handleLegendDefeat(damageDealt);
         }
     }
 
@@ -786,10 +806,10 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         onDone.run();
     }
 
-    private void handleGatekeeperVictory(int damageDealt) {
-        int oldLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
-        CasinoIntegrationManager.updateTrashcanHunterLevel(damageDealt);
-        int newLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
+    private void handleLegendVictory(int damageDealt) {
+        int oldLevel = CasinoIntegrationManager.getLegendLevel();
+        CasinoIntegrationManager.updateLegendLevel(damageDealt);
+        int newLevel = CasinoIntegrationManager.getLegendLevel();
 
         boolean is999Battle = CosmiconEventState.getCasinoBattleBonusHp() >= 974;
         boolean opponentKilled = CosmiconEventState.isCasinoBattleOpponentKilled();
@@ -799,57 +819,57 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             textPanel.addPara(Strings.get("casino.legend_title_inherited"), Color.CYAN);
             CosmiconStats.setLegendTitleInherited(true);
         } else {
-            textPanel.addPara(Strings.get("casino.gatekeeper_victory"), Color.GREEN);
+            textPanel.addPara(Strings.get("casino.legend_victory"), Color.GREEN);
         }
 
         if (newLevel > oldLevel) {
-            textPanel.addPara(Strings.format("casino.gatekeeper_hunter_level_up", newLevel), Color.CYAN);
+            textPanel.addPara(Strings.format("casino.legend_level_up", newLevel), Color.CYAN);
         }
 
-        int credits = CasinoIntegrationManager.getCreditReward() * CosmiconConfig.GATEKEEPER_WIN_CREDIT_MULTIPLIER;
+        int credits = CasinoIntegrationManager.getCreditReward() * CosmiconConfig.LEGEND_WIN_CREDIT_MULTIPLIER;
         getCredits().add(credits);
         AddRemoveCommodity.addCreditsGainText(credits, textPanel);
-        textPanel.addPara(Strings.format("casino.gatekeeper_reward_win", credits));
+        textPanel.addPara(Strings.format("casino.legend_reward_win", credits));
 
         CasinoIntegrationManager.setTournamentUnlocked(true);
         if (damageDealt >= 99) {
-            CosmiconStats.setGatekeeper999Unlocked(true);
+            CosmiconStats.setLegend999Unlocked(true);
         }
-        textPanel.addPara(Strings.get("casino.gatekeeper_unlock_tournament"), Color.CYAN);
+        textPanel.addPara(Strings.get("casino.legend_unlock_tournament"), Color.CYAN);
 
         options.addOption(Strings.get("casino.back_lounge"), "casino_back");
-        setState(State.GATEKEEPER_REWARD);
+        setState(State.LEGEND_REWARD);
     }
 
-    private void handleGatekeeperDefeat(int damageDealt) {
-        int oldLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
-        CasinoIntegrationManager.updateTrashcanHunterLevel(damageDealt);
-        int newLevel = CasinoIntegrationManager.getTrashcanHunterLevel();
+    private void handleLegendDefeat(int damageDealt) {
+        int oldLevel = CasinoIntegrationManager.getLegendLevel();
+        CasinoIntegrationManager.updateLegendLevel(damageDealt);
+        int newLevel = CasinoIntegrationManager.getLegendLevel();
 
         boolean dealt99Plus = damageDealt >= 99;
 
         if (dealt99Plus) {
-            textPanel.addPara(Strings.get("casino.gatekeeper_moral_victory"), Color.GREEN);
-            CosmiconStats.setGatekeeper999Unlocked(true);
+            textPanel.addPara(Strings.get("casino.legend_moral_victory"), Color.GREEN);
+            CosmiconStats.setLegend999Unlocked(true);
             if (!CasinoIntegrationManager.isTournamentUnlocked()) {
                 CasinoIntegrationManager.setTournamentUnlocked(true);
-                textPanel.addPara(Strings.get("casino.gatekeeper_unlock_tournament"), Color.CYAN);
+                textPanel.addPara(Strings.get("casino.legend_unlock_tournament"), Color.CYAN);
             }
         } else {
-            textPanel.addPara(Strings.get("casino.gatekeeper_defeat"), Color.RED);
+            textPanel.addPara(Strings.get("casino.legend_defeat"), Color.RED);
         }
 
         if (newLevel > oldLevel) {
-            textPanel.addPara(Strings.format("casino.gatekeeper_hunter_level_up", newLevel), Color.CYAN);
+            textPanel.addPara(Strings.format("casino.legend_level_up", newLevel), Color.CYAN);
         }
 
-        int credits = CasinoIntegrationManager.getCreditReward() * CosmiconConfig.GATEKEEPER_LOSS_CREDIT_MULTIPLIER;
+        int credits = CasinoIntegrationManager.getCreditReward() * CosmiconConfig.LEGEND_LOSS_CREDIT_MULTIPLIER;
         getCredits().add(credits);
         AddRemoveCommodity.addCreditsGainText(credits, textPanel);
-        textPanel.addPara(Strings.format("casino.gatekeeper_reward_lose", credits));
+        textPanel.addPara(Strings.format("casino.legend_reward_lose", credits));
 
         options.addOption(Strings.get("casino.back_lounge"), "casino_back");
-        setState(State.GATEKEEPER_REWARD);
+        setState(State.LEGEND_REWARD);
     }
 
     private void handleTournamentVictory() {
@@ -1146,7 +1166,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         CosmiconEventState.clearTournamentState();
     }
 
-    private void handleGatekeeperRewardSelection(String data) {
+    private void handleLegendRewardSelection(String data) {
         if ("casino_back".equals(data)) {
             if (onLeaveAction != null) {
                 onLeaveAction.run();
@@ -1231,7 +1251,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     }
 
     private void finishReward() {
-        CosmiconEventState.clearBattleState();
+        CosmiconEventState.clearReplayTutorialFlag();
         showMenu();
     }
 
