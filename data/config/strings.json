@@ -580,7 +580,7 @@
         "no_prismatic_allowed": "Tutorial mode: Prismatic dice are disabled for this game.",
         "games_remaining": "Tutorial mode - {0} games remaining",
         "g1_reward": "You unlocked [Chimera] (basic character)! You are now in Easy Mode. Win random encounters to collect all 7 basic characters.",
-        "g2_reward": "You unlocked [Acheron] and the [Repeater] prismatic dice! The full game is now available. Visit bars to find random encounters!",
+        "g2_reward": "You unlocked [Acheron] and the [Repeater] prismatic dice! The full game is now available. Seek out random encounters to unlock more characters and dice!",
         "g2_unlock_option": "Unlock character [Acheron] and prismatic dice [Repeater]",
 
         "g1_t1_intro": "The opponent attacks first. It will select dice equal to its [Attack Level].",
@@ -616,7 +616,7 @@
         "g1_t3_attack_select": "Select your 3 best dice! Even if the opponent rolls two 6s, they can't block this!",
         "g1_t3_attack_confirm": "Click confirm — take this match!",
         "g1_t3_attack_wait": "Waiting for resolution! Rolling, selecting, rerolling, passives — you have mastered the basics.",
-        "g1_victory": "Victory! You can now encounter and unlock basic characters in battles. Collect all 7 basic characters to unlock Tutorial 2, which teaches advanced mechanics.",
+        "g1_victory": "Victory! You can now encounter and unlock basic characters in battles. Collect all 7 basic characters to unlock advanced encounters featuring stronger opponents, prismatic dice, and weather effects!",
 
         "g2_t1_defense_roll": "You now play as [Acheron]! Her ability triggers when she selects all 4s on attack. For now, defend first - roll the dice!",
         "g2_t1_defense_select": "You rolled two 4s! Select them - You'll get to use a special dice next turn!",
@@ -650,11 +650,11 @@
         "g2_t4_attack_roll": "Final attack! Your prismatic uses have run out, but a Perforation attack with three 4s can win the game!",
         "g2_t4_attack_select": "Three 4s! Select them all to trigger Acheron's ability - finish it!",
         "g2_t4_attack_confirm": "Confirm to claim victory. You've mastered prismatic dice and weather tactics and unlocked Acheron and the Repeater prismatic dice.",
-        "g2_victory": "Victory! Visit bars to find random encounters and unlock more characters and dice!"
+        "g2_victory": "Victory! Seek out random encounters to unlock more characters and dice!"
     },
     "easy_mode": {
         "collection_progress": "Collection: {0}/{1} basic characters collected",
-        "all_collected": "All 7 basic characters collected! Start Tutorial 2 from the main menu.",
+        "all_collected": "All 7 basic characters collected! Your next encounter will be an advanced tutorial match featuring prismatic dice and weather effects!",
         "migrated_complete": "All basic characters collected! You're ready for the full game.",
         "wins_until_next_bonus": "{0} more wins until unlocking next bonus option"
     },

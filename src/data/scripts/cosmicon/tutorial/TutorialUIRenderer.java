@@ -20,6 +20,7 @@ public class TutorialUIRenderer {
     private static final float TEXT_BOX_WIDTH = 440f;
     private static final float TEXT_BOX_HEIGHT = 80f;
     private static final float TEXT_BOX_MARGIN = 10f;
+    private static final float TEXT_BOX_X_OFFSET = 140f;
     private static final float PULSE_SPEED = 3f;
 
     private TutorialController controller;
@@ -61,7 +62,7 @@ public class TutorialUIRenderer {
                 panel.removeComponent((UIComponentAPI) tutorialTextLabel);
             }
 
-            float labelX = (BattleRenderingUtils.PANEL_WIDTH - TEXT_BOX_WIDTH) / 2f + TEXT_BOX_MARGIN;
+            float labelX = (BattleRenderingUtils.PANEL_WIDTH - TEXT_BOX_WIDTH) / 2f + TEXT_BOX_MARGIN + TEXT_BOX_X_OFFSET;
             float labelY = 40f;
             tutorialTextLabel = UIComponentFactory.createLabel(
                 panel, text, Fonts.INSIGNIA_LARGE,
@@ -88,7 +89,7 @@ public class TutorialUIRenderer {
         float boxH = TEXT_BOX_HEIGHT;
 
         if (!coordCached) {
-            float boxUiX = (BattleRenderingUtils.PANEL_WIDTH - boxW) / 2f;
+            float boxUiX = (BattleRenderingUtils.PANEL_WIDTH - boxW) / 2f + TEXT_BOX_X_OFFSET;
             float boxUiY = 35f;
             UnifiedCoord boxPos = new UnifiedCoord(boxUiX, boxUiY);
             cachedGlX = boxPos.glX();

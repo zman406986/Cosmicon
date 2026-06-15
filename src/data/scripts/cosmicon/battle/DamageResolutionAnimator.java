@@ -34,6 +34,7 @@ public class DamageResolutionAnimator {
     private static final float SLASH_DRAWBACK_DIST = 70f;
     private static final float SLASH_FORWARD_DURATION = 0.25f;
     private static final float SLASH_OVERSHOOT = 350f;
+    private static final float SLASH_PAUSE_DURATION = 0.45f;
     private static final float SLASH_TRAIL_DURATION = 0.45f;
     private static final float SHEATHE_PAUSE = 0.1f;
     private static final float SHEATHE_DURATION = 0.45f;
@@ -42,6 +43,7 @@ public class DamageResolutionAnimator {
     private static final float COMBO_SLASH_DRAWBACK_DIST = 50f;
     private static final float COMBO_SLASH_FORWARD_DURATION = 0.18f;
     private static final float COMBO_SLASH_OVERSHOOT = 280f;
+    private static final float COMBO_SLASH_PAUSE_DURATION = 0.3f;
     private static final float COMBO_SLASH_TRAIL_DURATION = 0.3f;
     private static final float COMBO_SHEATHE_PAUSE = 0.08f;
     private static final float COMBO_SHEATHE_DURATION = 0.35f;
@@ -65,6 +67,7 @@ public class DamageResolutionAnimator {
         ICON_IMPACT,
         WINNER_SLASH_DRAWBACK,
         WINNER_SLASH_FORWARD,
+        WINNER_SLASH_PAUSE,
         WINNER_SLASH_TRAIL,
         WINNER_SHEATHE,
         ICON_RETREAT,
@@ -78,6 +81,7 @@ public class DamageResolutionAnimator {
         COMBO_SECOND_IMPACT,
         COMBO_WINNER_SLASH_DRAWBACK,
         COMBO_WINNER_SLASH_FORWARD,
+        COMBO_WINNER_SLASH_PAUSE,
         COMBO_WINNER_SLASH_TRAIL,
         COMBO_WINNER_SHEATHE,
         COMBO_ICON_RETREAT,
@@ -133,7 +137,7 @@ public class DamageResolutionAnimator {
     private float overshootX;
     private float overshootY;
     private float slashFlightSpeed;
-    private float defenderPassFraction;
+    private float startToDefenderDist;
     private boolean damageDealt;
 
     private int comboDamage;
@@ -329,6 +333,7 @@ public class DamageResolutionAnimator {
             case ICON_IMPACT -> advanceIconImpact();
             case WINNER_SLASH_DRAWBACK -> advanceWinnerSlashDrawback();
             case WINNER_SLASH_FORWARD -> advanceWinnerSlashForward();
+            case WINNER_SLASH_PAUSE -> advanceWinnerSlashPause();
             case WINNER_SLASH_TRAIL -> advanceWinnerSlashTrail();
             case WINNER_SHEATHE -> advanceWinnerSheathe();
             case ICON_RETREAT -> advanceIconRetreat();
@@ -341,6 +346,7 @@ public class DamageResolutionAnimator {
             case COMBO_SECOND_IMPACT -> advanceComboSecondImpact();
             case COMBO_WINNER_SLASH_DRAWBACK -> advanceComboWinnerSlashDrawback();
             case COMBO_WINNER_SLASH_FORWARD -> advanceComboWinnerSlashForward();
+            case COMBO_WINNER_SLASH_PAUSE -> advanceComboWinnerSlashPause();
             case COMBO_WINNER_SLASH_TRAIL -> advanceComboWinnerSlashTrail();
             case COMBO_WINNER_SHEATHE -> advanceComboWinnerSheathe();
             case COMBO_ICON_RETREAT -> advanceComboIconRetreat();
@@ -505,10 +511,10 @@ public class DamageResolutionAnimator {
 
             float totalFlightDist = dist + SLASH_OVERSHOOT;
             slashFlightSpeed = totalFlightDist / SLASH_FORWARD_DURATION;
-            defenderPassFraction = dist > 0f ? dist / totalFlightDist : 0f;
 
             slashStartX = atkClashX - dirX * SLASH_DRAWBACK_DIST;
             slashStartY = atkClashY - dirY * SLASH_DRAWBACK_DIST;
+            startToDefenderDist = SLASH_DRAWBACK_DIST + dist;
             slashTrail.clear();
             damageDealt = false;
 
@@ -544,8 +550,25 @@ public class DamageResolutionAnimator {
             slashTrail.updateEndPosition(atkFlyingIcon.getX(), atkFlyingIcon.getY());
         }
 
-        float fraction = phaseElapsed / SLASH_FORWARD_DURATION;
-        if (!damageDealt && fraction >= defenderPassFraction) {
+        boolean atkDone = atkFlyingIcon == null || atkFlyingIcon.isComplete();
+
+        if (phaseElapsed >= SLASH_FORWARD_DURATION || atkDone) {
+            phase = Phase.WINNER_SLASH_PAUSE;
+            phaseElapsed = 0f;
+        }
+    }
+
+    private void advanceWinnerSlashPause() {
+        if (phaseElapsed >= SLASH_PAUSE_DURATION) {
+            slashTrail.transitionToRed();
+            damageDealt = false;
+            phase = Phase.WINNER_SLASH_TRAIL;
+            phaseElapsed = 0f;
+        }
+    }
+
+    private void advanceWinnerSlashTrail() {
+        if (!damageDealt && slashTrail.getTransitionDistance() >= startToDefenderDist) {
             damageDealt = true;
 
             impactEffect.triggerHeavyImpact(defenderTargetX, defenderTargetY, DAMAGE_RESULT_COLOR);
@@ -561,19 +584,9 @@ public class DamageResolutionAnimator {
                 }
             }
 
-            slashTrail.transitionToRed();
             startResultFlight();
         }
 
-        boolean atkDone = atkFlyingIcon == null || atkFlyingIcon.isComplete();
-
-        if (phaseElapsed >= SLASH_FORWARD_DURATION || atkDone) {
-            phase = Phase.WINNER_SLASH_TRAIL;
-            phaseElapsed = 0f;
-        }
-    }
-
-    private void advanceWinnerSlashTrail() {
         if (phaseElapsed >= SLASH_TRAIL_DURATION + SHEATHE_PAUSE) {
             if (atkFlyingIcon != null) {
                 atkFlyingIcon.setRotation(0f);
@@ -777,10 +790,10 @@ public class DamageResolutionAnimator {
 
                 float totalFlightDist = dist + COMBO_SLASH_OVERSHOOT;
                 slashFlightSpeed = totalFlightDist / COMBO_SLASH_FORWARD_DURATION;
-                defenderPassFraction = dist > 0f ? dist / totalFlightDist : 0f;
 
                 slashStartX = atkClashX - dirX * COMBO_SLASH_DRAWBACK_DIST;
                 slashStartY = atkClashY - dirY * COMBO_SLASH_DRAWBACK_DIST;
+                startToDefenderDist = COMBO_SLASH_DRAWBACK_DIST + dist;
                 slashTrail.clear();
                 damageDealt = false;
 
@@ -818,8 +831,25 @@ public class DamageResolutionAnimator {
             slashTrail.updateEndPosition(atkFlyingIcon.getX(), atkFlyingIcon.getY());
         }
 
-        float fraction = phaseElapsed / COMBO_SLASH_FORWARD_DURATION;
-        if (!damageDealt && fraction >= defenderPassFraction) {
+        boolean atkDone = atkFlyingIcon == null || atkFlyingIcon.isComplete();
+
+        if (phaseElapsed >= COMBO_SLASH_FORWARD_DURATION || atkDone) {
+            phase = Phase.COMBO_WINNER_SLASH_PAUSE;
+            phaseElapsed = 0f;
+        }
+    }
+
+    private void advanceComboWinnerSlashPause() {
+        if (phaseElapsed >= COMBO_SLASH_PAUSE_DURATION) {
+            slashTrail.transitionToRed();
+            damageDealt = false;
+            phase = Phase.COMBO_WINNER_SLASH_TRAIL;
+            phaseElapsed = 0f;
+        }
+    }
+
+    private void advanceComboWinnerSlashTrail() {
+        if (!damageDealt && slashTrail.getTransitionDistance() >= startToDefenderDist) {
             damageDealt = true;
 
             impactEffect.triggerHeavyImpact(defenderTargetX, defenderTargetY, DAMAGE_RESULT_COLOR);
@@ -834,8 +864,6 @@ public class DamageResolutionAnimator {
                 }
             }
 
-            slashTrail.transitionToRed();
-
             comboResultNumber = new FlyingNumber();
             comboResultNumber.setValue(comboDamage);
             comboResultNumber.setColor(DAMAGE_RESULT_COLOR);
@@ -843,15 +871,6 @@ public class DamageResolutionAnimator {
             comboResultNumber.flyTo(defenderTargetX, defenderTargetY - 30f, RESULT_FLIGHT_DURATION);
         }
 
-        boolean atkDone = atkFlyingIcon == null || atkFlyingIcon.isComplete();
-
-        if (phaseElapsed >= COMBO_SLASH_FORWARD_DURATION || atkDone) {
-            phase = Phase.COMBO_WINNER_SLASH_TRAIL;
-            phaseElapsed = 0f;
-        }
-    }
-
-    private void advanceComboWinnerSlashTrail() {
         if (phaseElapsed >= COMBO_SLASH_TRAIL_DURATION + COMBO_SHEATHE_PAUSE) {
             if (atkFlyingIcon != null) {
                 atkFlyingIcon.setRotation(0f);
@@ -900,6 +919,7 @@ public class DamageResolutionAnimator {
     public void render(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
         if (phase == Phase.IDLE) return;
 
+        BattleRenderingUtils.setupScissor(panelX, panelY, panelWidth, panelHeight);
         renderNumbersOnIcons(panelX, panelY, panelWidth, panelHeight, alphaMult);
 
         if (phase != Phase.COMBO_PAUSE && phase != Phase.COMBO_ICON_RETREAT) {
@@ -912,6 +932,7 @@ public class DamageResolutionAnimator {
         impactEffect.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
         counterBurstEffect.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
         slashTrail.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
+        BattleRenderingUtils.disableScissor();
     }
 
     private void renderNumbersOnIcons(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
@@ -922,6 +943,7 @@ public class DamageResolutionAnimator {
             phase == Phase.ICON_IMPACT ||
             phase == Phase.WINNER_SLASH_DRAWBACK ||
             phase == Phase.WINNER_SLASH_FORWARD ||
+            phase == Phase.WINNER_SLASH_PAUSE ||
             phase == Phase.WINNER_SLASH_TRAIL ||
             phase == Phase.WINNER_SHEATHE ||
             phase == Phase.ICON_RETREAT ||
@@ -935,15 +957,18 @@ public class DamageResolutionAnimator {
             boolean duringComboClash = phase == Phase.COMBO_SECOND_CLASH;
             boolean duringComboWinnerFly = phase == Phase.COMBO_WINNER_SLASH_DRAWBACK ||
                 phase == Phase.COMBO_WINNER_SLASH_FORWARD ||
+                phase == Phase.COMBO_WINNER_SLASH_PAUSE ||
                 phase == Phase.COMBO_WINNER_SLASH_TRAIL ||
                 phase == Phase.COMBO_WINNER_SHEATHE;
+            boolean comboIconOffScreen = phase == Phase.COMBO_WINNER_SLASH_PAUSE ||
+                phase == Phase.COMBO_WINNER_SLASH_TRAIL;
             boolean atkHiddenBySplit = splitEffect.isActive() && !comboAttackWins;
             boolean defHiddenBySplit = splitEffect.isActive() && comboAttackWins;
 
             if (atkFlyingIcon != null && !atkHiddenBySplit) {
                 atkFlyingIcon.render(panelX, panelY, panelHeight, alphaMult);
                 atkFlyingIcon.setLabelOpacity(
-                    (duringComboClash || duringComboWinnerFly) ? alphaMult : 0f);
+                    (duringComboClash || (duringComboWinnerFly && !comboIconOffScreen)) ? alphaMult : 0f);
             }
             if (defFlyingIcon != null && !defHiddenBySplit) {
                 defFlyingIcon.render(panelX, panelY, panelHeight, alphaMult);
@@ -983,8 +1008,9 @@ public class DamageResolutionAnimator {
 
         if (atkFlyingIcon != null && !atkHiddenBySplit && (!atkShattered || (restoring && splitDone))) {
             float restoreAlpha = atkShattered ? shatterRestoreAlpha : alphaMult;
+            boolean iconOffScreen = phase == Phase.WINNER_SLASH_PAUSE || phase == Phase.WINNER_SLASH_TRAIL;
             atkFlyingIcon.render(panelX, panelY, panelHeight, restoreAlpha);
-            atkFlyingIcon.setLabelOpacity(restoreAlpha);
+            atkFlyingIcon.setLabelOpacity(iconOffScreen ? 0f : restoreAlpha);
         }
         if (defFlyingIcon != null && !defHiddenBySplit && (!defShattered || (restoring && splitDone))) {
             float restoreAlpha = defShattered ? shatterRestoreAlpha : alphaMult;
@@ -1001,6 +1027,7 @@ public class DamageResolutionAnimator {
                phase == Phase.ICON_IMPACT ||
                phase == Phase.WINNER_SLASH_DRAWBACK ||
                phase == Phase.WINNER_SLASH_FORWARD ||
+               phase == Phase.WINNER_SLASH_PAUSE ||
                phase == Phase.WINNER_SLASH_TRAIL ||
                phase == Phase.WINNER_SHEATHE ||
                phase == Phase.ICON_RETREAT ||
@@ -1010,6 +1037,7 @@ public class DamageResolutionAnimator {
                phase == Phase.COMBO_SECOND_IMPACT ||
                phase == Phase.COMBO_WINNER_SLASH_DRAWBACK ||
                phase == Phase.COMBO_WINNER_SLASH_FORWARD ||
+               phase == Phase.COMBO_WINNER_SLASH_PAUSE ||
                phase == Phase.COMBO_WINNER_SLASH_TRAIL ||
                phase == Phase.COMBO_WINNER_SHEATHE ||
                phase == Phase.COMBO_ICON_RETREAT;
@@ -1021,6 +1049,7 @@ public class DamageResolutionAnimator {
                phase == Phase.COMBO_SECOND_IMPACT ||
                phase == Phase.COMBO_WINNER_SLASH_DRAWBACK ||
                phase == Phase.COMBO_WINNER_SLASH_FORWARD ||
+               phase == Phase.COMBO_WINNER_SLASH_PAUSE ||
                phase == Phase.COMBO_WINNER_SLASH_TRAIL ||
                phase == Phase.COMBO_WINNER_SHEATHE ||
                phase == Phase.COMBO_ICON_RETREAT;
@@ -1042,8 +1071,10 @@ public class DamageResolutionAnimator {
             phase != Phase.ICON_IMPACT &&
             phase != Phase.WINNER_SLASH_DRAWBACK &&
             phase != Phase.WINNER_SLASH_FORWARD &&
+            phase != Phase.WINNER_SLASH_PAUSE &&
             phase != Phase.COMBO_WINNER_SLASH_DRAWBACK &&
-            phase != Phase.COMBO_WINNER_SLASH_FORWARD;
+            phase != Phase.COMBO_WINNER_SLASH_FORWARD &&
+            phase != Phase.COMBO_WINNER_SLASH_PAUSE;
     }
 
     public boolean isComplete() {
@@ -1062,6 +1093,7 @@ public class DamageResolutionAnimator {
             complete = true;
         } else if (phase == Phase.ICON_IMPACT || phase == Phase.WINNER_SLASH_DRAWBACK ||
                    phase == Phase.WINNER_SLASH_FORWARD ||
+                   phase == Phase.WINNER_SLASH_PAUSE ||
                    phase == Phase.WINNER_SLASH_TRAIL || phase == Phase.WINNER_SHEATHE ||
                    phase == Phase.ICON_RETREAT || phase == Phase.SHATTER_RESTORE) {
             if (!attackWins || isDraw) {
@@ -1074,6 +1106,7 @@ public class DamageResolutionAnimator {
                    phase == Phase.COMBO_PAUSE || phase == Phase.COMBO_SECOND_CLASH ||
                    phase == Phase.COMBO_SECOND_IMPACT || phase == Phase.COMBO_WINNER_SLASH_DRAWBACK ||
                    phase == Phase.COMBO_WINNER_SLASH_FORWARD ||
+                   phase == Phase.COMBO_WINNER_SLASH_PAUSE ||
                    phase == Phase.COMBO_WINNER_SLASH_TRAIL || phase == Phase.COMBO_WINNER_SHEATHE ||
                    phase == Phase.COMBO_ICON_RETREAT) {
             phase = Phase.COMPLETE;

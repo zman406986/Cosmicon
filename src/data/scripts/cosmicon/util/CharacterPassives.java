@@ -39,7 +39,7 @@ public class CharacterPassives {
             case HYACINE -> evaluateHyacine(result, diceValues, isAttacking, currentStrengthLayers);
             case DAN_HENG -> evaluateDanHengPT(result, diceValues, isAttacking);
             case PHAINON -> evaluatePhainon(result, diceValues, isAttacking);
-            case TRASHCAN -> evaluateTrashcan(result, diceValues, isAttacking);
+            case TRASHCAN, TRASHCAN_BASIC -> evaluateTrashcan(result, diceValues, isAttacking);
             case CHIMERA -> evaluateChimera(result, diceValues, isAttacking);
             case DROMAS -> evaluateDromas(result, diceValues, isAttacking);
             case AUTOMATON_BEETLE -> evaluateAutomatonBeetle(result, diceValues, isAttacking);
@@ -67,6 +67,7 @@ public class CharacterPassives {
             case AUTOMATON_BEETLE, BANANADVISOR -> !isAttacking;
             case FURBO_JOURNALIST -> !isAttacking && dieValue % 2 != 0;
             case SENIOR_STAFF -> true;
+            case TRASHCAN, TRASHCAN_BASIC -> isAttacking && dieValue % 2 == 0;
             default -> false;
         };
     }

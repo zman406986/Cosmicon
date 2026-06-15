@@ -218,6 +218,8 @@ public class TutorialController {
 
             case G2_T4_ATTACK_SELECT -> value == 4;
 
+            case G2_T3_ATTACK_REROLL, G2_T3_ATTACK_REROLL2 -> !isPrismatic;
+
             default -> true;
         };
     }

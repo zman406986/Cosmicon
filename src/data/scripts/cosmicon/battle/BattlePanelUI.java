@@ -21,6 +21,7 @@ import com.fs.starfarer.api.ui.UIComponentAPI;
 
 import data.scripts.CosmiconConfig;
 import data.scripts.Strings;
+import data.scripts.cosmicon.CosmiconSFX;
 import data.scripts.cosmicon.battle.BattleEventBus.BattleEventListener;
 import data.scripts.cosmicon.battle.TurnState.Phase;
 import data.scripts.cosmicon.state.CosmiconStats;
@@ -317,7 +318,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             tutorialLabel.setAlignment(Alignment.MID);
             tutorialLabel.setColor(new Color(255, 200, 80, 255));
             float labelW = 400f;
-            float labelX = (BattleRenderingUtils.PANEL_WIDTH - labelW) / 2f;
+            float labelX = (BattleRenderingUtils.PANEL_WIDTH - labelW) / 2f + 140f;
             panel.addComponent((UIComponentAPI) tutorialLabel).setSize(labelW, 24f).inTL(labelX, 10f);
         }
 
@@ -687,6 +688,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             impactEffect.triggerParticles(cardCenterX, cardCenterY, 10, color);
         }
 
+        CosmiconSFX.playImpact();
         secondaryDamageNumbers.add(new SecondaryDamageEntry(fn, isPlayer, impactEffect));
         if (isPlayer) playerSecondaryCount++; else opponentSecondaryCount++;
 

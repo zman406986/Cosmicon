@@ -563,7 +563,7 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
                 turnState.getTurnNumber(), phase, prismaticState.getPrismaticDiceMap(true).keySet());
             return;
         }
-        prismaticManager.clearState();
+        prismaticManager.clearPerTurnState();
         prismaticState.clearDiceMaps();
     }
     

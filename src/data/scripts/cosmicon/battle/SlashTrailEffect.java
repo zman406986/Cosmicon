@@ -89,6 +89,10 @@ public class SlashTrailEffect {
         fading = false;
     }
 
+    public float getTransitionDistance() {
+        return transitionDist;
+    }
+
     public void render(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
         if (!active) return;
 

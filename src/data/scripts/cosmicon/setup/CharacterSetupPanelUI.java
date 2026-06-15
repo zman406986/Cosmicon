@@ -1177,7 +1177,6 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private void handleCardSelection(int index) {
         if (index < 0 || index >= characters.size()) return;
         selectedIndex = index;
-        selectedBonus = CosmiconPlayerState.loadBonusSelection(characters.get(index).getId());
         updateBonusDescription();
         updateBonusButtonHighlights();
     }
@@ -1234,6 +1233,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                 if (selectedIndex >= 0 && selectedIndex < characters.size()) {
                     CharacterCard card = characters.get(selectedIndex);
                     CosmiconPlayerState.saveBonusSelection(card.getId(), selectedBonus);
+                    CosmiconPlayerState.saveGlobalBonusSelection(selectedBonus);
                     CosmiconPlayerState.setCreditBonusActive(selectedBonus == BonusState.NONE);
                     if (callback != null) {
                         String diceId = card.getPrismaticDiceIds().isEmpty() ? null : selectedPrismaticDiceId;
@@ -1245,6 +1245,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             case ACTION_CANCEL -> {
                 if (selectedIndex >= 0 && selectedIndex < characters.size()) {
                     CosmiconPlayerState.saveBonusSelection(characters.get(selectedIndex).getId(), selectedBonus);
+                    CosmiconPlayerState.saveGlobalBonusSelection(selectedBonus);
                 }
                 if (callback != null) {
                     callback.onCancel();
@@ -1253,12 +1254,14 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             }
             case ACTION_BONUS_NONE -> {
                 selectedBonus = BonusState.NONE;
+                CosmiconPlayerState.saveGlobalBonusSelection(selectedBonus);
                 updateBonusDescription();
                 updateBonusButtonHighlights();
             }
             case ACTION_BONUS_HP -> {
                 if (CosmiconStats.isHpBonusUnlocked()) {
                     selectedBonus = BonusState.HP_9;
+                    CosmiconPlayerState.saveGlobalBonusSelection(selectedBonus);
                     updateBonusDescription();
                     updateBonusButtonHighlights();
                 }
@@ -1268,6 +1271,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                     CharacterCard card = characters.get(selectedIndex);
                     if (card.getAtkLevel() < 5) {
                         selectedBonus = BonusState.ATK_1;
+                        CosmiconPlayerState.saveGlobalBonusSelection(selectedBonus);
                     }
                     updateBonusDescription();
                     updateBonusButtonHighlights();
@@ -1278,6 +1282,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
                     CharacterCard card = characters.get(selectedIndex);
                     if (card.getDefLevel() < 5) {
                         selectedBonus = BonusState.DEF_1;
+                        CosmiconPlayerState.saveGlobalBonusSelection(selectedBonus);
                     }
                     updateBonusDescription();
                     updateBonusButtonHighlights();
@@ -1294,7 +1299,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         for (int i = 0; i < characters.size(); i++) {
             if (characters.get(i).getId().equals(charId)) {
                 selectedIndex = i;
-                selectedBonus = CosmiconPlayerState.loadBonusSelection(charId);
+                selectedBonus = CosmiconPlayerState.loadGlobalBonusSelection();
                 updateBonusDescription();
                 updateBonusButtonHighlights();
                 break;
@@ -1322,7 +1327,7 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         if (!characters.isEmpty()) {
             selectedIndex = 0;
             CharacterCard firstCard = characters.get(0);
-            selectedBonus = CosmiconPlayerState.loadBonusSelection(firstCard.getId());
+            selectedBonus = CosmiconPlayerState.loadGlobalBonusSelection();
             updateBonusDescription();
             updateBonusButtonHighlights();
             String defaultDice = CosmiconPlayerState.getDefaultPrismaticForCharacter(firstCard.getId());

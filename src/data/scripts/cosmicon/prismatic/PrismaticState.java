@@ -49,11 +49,15 @@ public class PrismaticState {
     public int getInstantDamage() { return instantDamage; }
     public void addInstantDamage(int amount) { this.instantDamage += amount; }
     
+    public void clearPerTurnState() {
+        doubleValueActive = false;
+        instantDamage = 0;
+    }
+
     public void clear() {
         usesByType.clear();
         uses = 0;
-        doubleValueActive = false;
-        instantDamage = 0;
+        clearPerTurnState();
     }
     
 }

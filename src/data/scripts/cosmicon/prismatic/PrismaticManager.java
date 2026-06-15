@@ -181,6 +181,11 @@ public class PrismaticManager {
         getState(forPlayer).addInstantDamage(amount);
     }
     
+    public void clearPerTurnState() {
+        playerPrismatic.clearPerTurnState();
+        opponentPrismatic.clearPerTurnState();
+    }
+
     public void clearState() {
         playerPrismatic.clear();
         opponentPrismatic.clear();

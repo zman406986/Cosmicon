@@ -648,10 +648,8 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         List<Outcome> result = new ArrayList<>();
         int totalCombos = 1;
         for (int[] faces : diceFaces) totalCombos *= faces.length;
-        double probPerCombo = 1.0 / totalCombos;
-
         int[] currentFaces = new int[diceFaces.size()];
-        enumerateRec(diceFaces, 0, currentFaces, probPerCombo, result);
+        enumerateRec(diceFaces, 0, currentFaces, 1.0, result);
         return result;
     }
 

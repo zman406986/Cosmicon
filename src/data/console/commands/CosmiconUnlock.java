@@ -5,6 +5,7 @@ import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.CharacterRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceRegistry;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
+import data.scripts.cosmicon.state.CosmiconPlayerState;
 import data.scripts.cosmicon.state.CosmiconStats;
 import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.PrismaticDisplayHelper;
@@ -200,6 +201,10 @@ public class CosmiconUnlock implements BaseCommand {
     }
 
     private void unlockAll() {
+        String prevChar = CosmiconPlayerState.loadCharacter();
+        String prevPrismatic = CosmiconPlayerState.loadPrismaticDice();
+        boolean prevPrismaticTrue = CosmiconPlayerState.loadPrismaticDiceTrueVersion();
+
         int charCount = 0;
         for (CharacterCard card : CharacterRegistry.getAllCards()) {
             if (!CosmiconStats.isCharacterUnlocked(card.getId())) {
@@ -235,7 +240,16 @@ public class CosmiconUnlock implements BaseCommand {
             CosmiconStats.forceCompleteTutorial();
         }
 
+        CosmiconStats.setEasyModeReenabled(false);
         CosmiconStats.checkAndUnlockBonuses();
+
+        if (prevChar != null) {
+            CosmiconPlayerState.saveCharacter(prevChar);
+        }
+        if (prevPrismatic != null) {
+            CosmiconPlayerState.savePrismaticDice(prevPrismatic);
+            CosmiconPlayerState.savePrismaticDiceTrueVersion(prevPrismaticTrue);
+        }
 
         Console.showMessage("Unlocked " + charCount + " characters, " + diceCount + " prismatic dice, and " + trueCount + " true versions.");
         Console.showMessage("Bonuses: HP=" + CosmiconStats.isHpBonusUnlocked()

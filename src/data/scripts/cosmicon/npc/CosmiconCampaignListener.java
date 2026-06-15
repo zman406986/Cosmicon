@@ -76,6 +76,12 @@ public class CosmiconCampaignListener extends BaseCampaignEventListener {
                             spawnTempNPC(market, card);
                             marketMem.set(STORED_CHAR_KEY, card.getId());
                         }
+                    } else if (CosmiconStats.isEasyModeComplete() && CharacterIds.EASY_MODE_CHARACTERS.contains(charId)) {
+                        CharacterCard card = CharacterRegistry.getRandomAdvancedOpponent();
+                        if (card != null) {
+                            spawnTempNPC(market, card);
+                            marketMem.set(STORED_CHAR_KEY, card.getId());
+                        }
                     } else {
                         CharacterCard card = CharacterRegistry.getCharacterById(charId);
                         if (card != null) {

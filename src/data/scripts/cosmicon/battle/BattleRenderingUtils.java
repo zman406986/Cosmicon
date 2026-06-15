@@ -116,7 +116,7 @@ public final class BattleRenderingUtils {
     private static float cachedScissorPW = -1f, cachedScissorPH = -1f;
     private static int cachedScissorX, cachedScissorY, cachedScissorW, cachedScissorH;
 
-    static void setupScissor(float panelX, float panelY, float panelW, float panelH) {
+    public static void setupScissor(float panelX, float panelY, float panelW, float panelH) {
         if (panelX != cachedScissorPX || panelY != cachedScissorPY
             || panelW != cachedScissorPW || panelH != cachedScissorPH) {
             cachedScissorPX = panelX;
@@ -135,7 +135,7 @@ public final class BattleRenderingUtils {
         GL11.glScissor(cachedScissorX, cachedScissorY, cachedScissorW, cachedScissorH);
     }
 
-    private static void disableScissor() {
+    public static void disableScissor() {
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
     }
 

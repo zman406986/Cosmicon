@@ -277,7 +277,7 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
             }
         }
 
-        if (CosmiconStats.isInEasyMode() && !CosmiconEventState.isCasinoBattleMode()) {
+        if (!isTutorial && CosmiconStats.isInEasyMode() && !CosmiconEventState.isCasinoBattleMode()) {
             state.getWeatherController().getWeatherManager().setWeatherDisabled(true);
             CosmiconLogger.debug("Easy mode: Weather disabled (normal encounter)");
         }

@@ -15,6 +15,7 @@ public class CosmiconPlayerState {
     private static final String KEY_EQUIPPED_PRISMATIC = "$cos_equipped_prismatic";
     private static final String KEY_EQUIPPED_PRISMATIC_TRUE = "$cos_equipped_prismatic_true";
     private static final String KEY_BONUS_SELECTION_PREFIX = "$cos_bonus_";
+    private static final String KEY_BONUS_GLOBAL = "$cos_bonus_global";
     private static final String KEY_CREDIT_BONUS_ACTIVE = "$cos_credit_bonus_active";
 
     private static MemoryAPI getMemory() {
@@ -58,6 +59,20 @@ public class CosmiconPlayerState {
     public static BonusState loadBonusSelection(String charId) {
         if (charId == null || charId.isEmpty()) return BonusState.NONE;
         String val = getMemory().getString(KEY_BONUS_SELECTION_PREFIX + charId);
+        if (val == null || val.isEmpty()) return BonusState.NONE;
+        try {
+            return BonusState.valueOf(val);
+        } catch (IllegalArgumentException e) {
+            return BonusState.NONE;
+        }
+    }
+
+    public static void saveGlobalBonusSelection(BonusState bonus) {
+        getMemory().set(KEY_BONUS_GLOBAL, bonus.name());
+    }
+
+    public static BonusState loadGlobalBonusSelection() {
+        String val = getMemory().getString(KEY_BONUS_GLOBAL);
         if (val == null || val.isEmpty()) return BonusState.NONE;
         try {
             return BonusState.valueOf(val);

@@ -42,6 +42,10 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements Intera
         String npcCharId = (personMem != null && personMem.contains("$cos_npc_char"))
             ? personMem.getString("$cos_npc_char") : null;
 
+        if (personMem != null && personMem.contains("$cos_npc_market_id")) {
+            npcMarketId = personMem.getString("$cos_npc_market_id");
+        }
+
         if (isTutorial) {
             if (npcCharId != null) {
                 CosmiconEventState.setOriginalNpcCharId(npcCharId);
@@ -67,9 +71,6 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements Intera
                     CharacterCard opponentCard = CharacterRegistry.getCharacterById(npcCharId);
                     if (opponentCard != null) {
                         configureOpponentPrismaticDefaults(opponentCard);
-                    }
-                    if (personMem.contains("$cos_npc_market_id")) {
-                        npcMarketId = personMem.getString("$cos_npc_market_id");
                     }
                 } else {
                     assignRandomAdvancedOpponent();
