@@ -377,10 +377,6 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
         return isLegendBattle() && state.getOpponentTotalDamageTaken() >= 99;
     }
 
-    public boolean isLegend999EarlyExit() {
-        return isLegend999Battle() && state.getOpponentTotalDamageTaken() >= 99;
-    }
-
     public void preApplyOpponentDamage(int damage) {
         state.preApplyOpponentDamage(damage);
     }

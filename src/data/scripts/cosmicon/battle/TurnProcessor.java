@@ -437,17 +437,17 @@ public class TurnProcessor {
     
     private void executePlannedAiReroll() {
         if (aiPlannedIndices == null || aiPlannedIndices.isEmpty()) return;
-        
+
         List<Boolean> selected = state.getDiceSelected(false);
-        if (selected != null) {
-            Collections.fill(selected, false);
-            for (int idx : aiPlannedIndices) {
-                if (idx < selected.size()) {
-                    selected.set(idx, true);
-                }
+        if (selected == null) return;
+
+        Collections.fill(selected, false);
+        for (int idx : aiPlannedIndices) {
+            if (idx < selected.size()) {
+                selected.set(idx, true);
             }
         }
-        
+
         diceRoller.rerollSelected(state, false);
         
         CosmiconLogger.verbose("AI executed planned reroll for indices: %s", aiPlannedIndices);

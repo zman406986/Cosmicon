@@ -76,8 +76,6 @@ public class BattleDialogDelegate implements com.fs.starfarer.api.campaign.Custo
 
     @Override
     public void reportDismissed(int option) {
-        battlePanel.dispose();
-
         String winner = battleController.getState().getWinner();
         boolean playerWon = "player".equals(winner);
 
@@ -88,6 +86,7 @@ public class BattleDialogDelegate implements com.fs.starfarer.api.campaign.Custo
             CosmiconEventState.setCasinoBattleOpponentKilled(opponentKilled);
         }
 
+        battlePanel.cleanup();
         battleController.cleanup();
 
         if (memoryMap != null) {

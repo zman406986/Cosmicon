@@ -6,7 +6,6 @@ import org.lwjgl.opengl.GL11;
 
 import data.scripts.cosmicon.util.ColorHelper;
 import data.scripts.cosmicon.util.GLStateUtil;
-import data.scripts.cosmicon.util.UnifiedCoord;
 
 public class SlashTrailEffect {
     private static final float TRAIL_CORE_WIDTH = 4f;
@@ -23,7 +22,6 @@ public class SlashTrailEffect {
     private float endX, endY;
     private float totalDist;
     private float flightSpeed;
-    private float elapsed;
     private float fadeElapsed;
     private boolean active;
     private boolean redPhase;
@@ -36,7 +34,6 @@ public class SlashTrailEffect {
         this.endX = startX;
         this.endY = startY;
         this.flightSpeed = flightSpeed;
-        this.elapsed = 0f;
         this.fadeElapsed = 0f;
         this.active = true;
         this.redPhase = false;
@@ -60,7 +57,6 @@ public class SlashTrailEffect {
 
     public void advance(float amount) {
         if (!active) return;
-        elapsed += amount;
 
         if (redPhase && !fading) {
             transitionDist += flightSpeed * amount;
@@ -93,7 +89,7 @@ public class SlashTrailEffect {
         return transitionDist;
     }
 
-    public void render(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
+    public void render(float panelX, float panelY, float panelHeight, float alphaMult) {
         if (!active) return;
 
         float glX1 = panelX + startX;

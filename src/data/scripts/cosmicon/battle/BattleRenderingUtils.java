@@ -67,9 +67,6 @@ public final class BattleRenderingUtils {
     public static final float REST_GRID_GROUP_GAP = 12f;
     public static final float REST_GRID_BOX_PADDING = 6f;
 
-    public static final float BUTTON_WIDTH = 120f;
-    public static final float BUTTON_HEIGHT = 40f;
-
     public static final Color COLOR_BG_DARK = new Color(25, 25, 35);
     public static final Color COLOR_BG_BOARD = new Color(45, 50, 70);
     public static final Color COLOR_CARD_BG = new Color(60, 65, 85);

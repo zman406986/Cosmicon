@@ -790,6 +790,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
     @Override
     public void advance(float amount) {
+        if (battleController == null || battleState == null) return;
+
         advanceCommonState(amount);
         advanceLabelsAndUI(amount);
         advanceAiAndTutorial(amount);
@@ -937,26 +939,38 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                 boolean showPlayerDice = isDefenderRolling != battleState.isPlayerAttacker();
                 boolean anyDiceStarted = false;
 
-                CosmiconLogger.verbose("[ANIM] Starting stationary preview - isDefenderRolling=%s, showPlayerDice=%s, playerIsAttacker=%s",
-                    isDefenderRolling, showPlayerDice, battleState.isPlayerAttacker());
+                if (showPlayerDice && !diceRollManager.isRestAnimatorsEmpty(true)) {
+                    startRollFromRestForSide(true);
+                    anyDiceStarted = diceRollManager.hasAnimators();
+                    CosmiconLogger.verbose("[ANIM] Retried roll-from-rest for player side, started=%s", anyDiceStarted);
+                } else if (!showPlayerDice && !diceRollManager.isRestAnimatorsEmpty(false)) {
+                    startRollFromRestForSide(false);
+                    anyDiceStarted = diceRollManager.hasOpponentAnimators();
+                    CosmiconLogger.verbose("[ANIM] Retried roll-from-rest for opponent side, started=%s", anyDiceStarted);
+                }
 
-                if (showPlayerDice) {
-                    List<DiceType> types = battleState.getPlayerDiceTypes();
-                    List<Integer> values = battleState.getPlayerDiceValues();
-                    if (types != null && values != null && !types.isEmpty()) {
-                        diceRollManager.startStationaryPreview(types, values, diceZoneCenterX, diceZoneCenterY);
-                        inputHandler.setWaitingForClickToRoll(true);
-                        anyDiceStarted = true;
-                        CosmiconLogger.verbose("[ANIM] Player stationary preview started - %d dice, waiting for click", types.size());
-                    }
-                } else {
-                    List<DiceType> types = battleState.getOpponentDiceTypes();
-                    List<Integer> values = battleState.getOpponentDiceValues();
-                    if (types != null && values != null && !types.isEmpty()) {
-                        diceRollManager.startOpponentStationaryPreview(types, values, opponentDiceZoneCenterX, opponentDiceZoneCenterY);
-                        opponentAutoRollDelay = OPPONENT_AUTO_ROLL_DELAY;
-                        anyDiceStarted = true;
-                        CosmiconLogger.verbose("[ANIM] Opponent stationary preview started - %d dice, auto-roll in %.1fs", types.size(), OPPONENT_AUTO_ROLL_DELAY);
+                if (!anyDiceStarted) {
+                    CosmiconLogger.verbose("[ANIM] Starting stationary preview - isDefenderRolling=%s, showPlayerDice=%s, playerIsAttacker=%s",
+                        isDefenderRolling, showPlayerDice, battleState.isPlayerAttacker());
+
+                    if (showPlayerDice) {
+                        List<DiceType> types = battleState.getPlayerDiceTypes();
+                        List<Integer> values = battleState.getPlayerDiceValues();
+                        if (types != null && values != null && !types.isEmpty()) {
+                            diceRollManager.startStationaryPreview(types, values, diceZoneCenterX, diceZoneCenterY);
+                            inputHandler.setWaitingForClickToRoll(true);
+                            anyDiceStarted = true;
+                            CosmiconLogger.verbose("[ANIM] Player stationary preview started - %d dice, waiting for click", types.size());
+                        }
+                    } else {
+                        List<DiceType> types = battleState.getOpponentDiceTypes();
+                        List<Integer> values = battleState.getOpponentDiceValues();
+                        if (types != null && values != null && !types.isEmpty()) {
+                            diceRollManager.startOpponentStationaryPreview(types, values, opponentDiceZoneCenterX, opponentDiceZoneCenterY);
+                            opponentAutoRollDelay = OPPONENT_AUTO_ROLL_DELAY;
+                            anyDiceStarted = true;
+                            CosmiconLogger.verbose("[ANIM] Opponent stationary preview started - %d dice, auto-roll in %.1fs", types.size(), OPPONENT_AUTO_ROLL_DELAY);
+                        }
                     }
                 }
 

@@ -920,7 +920,7 @@ public class DamageResolutionAnimator {
         if (phase == Phase.IDLE) return;
 
         BattleRenderingUtils.setupScissor(panelX, panelY, panelWidth, panelHeight);
-        renderNumbersOnIcons(panelX, panelY, panelWidth, panelHeight, alphaMult);
+        renderNumbersOnIcons(panelX, panelY, panelHeight, alphaMult);
 
         if (phase != Phase.COMBO_PAUSE && phase != Phase.COMBO_ICON_RETREAT) {
             shatterEffect.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
@@ -931,11 +931,11 @@ public class DamageResolutionAnimator {
 
         impactEffect.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
         counterBurstEffect.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
-        slashTrail.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
+        slashTrail.render(panelX, panelY, panelHeight, alphaMult);
         BattleRenderingUtils.disableScissor();
     }
 
-    private void renderNumbersOnIcons(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
+    private void renderNumbersOnIcons(float panelX, float panelY, float panelHeight, float alphaMult) {
         boolean shouldRenderNumbers = phase == Phase.ICON_PREPARATION ||
             phase == Phase.ICON_ROTATION ||
             phase == Phase.ICON_DRAWBACK ||

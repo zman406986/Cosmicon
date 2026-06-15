@@ -129,6 +129,7 @@ public class DiceRoller {
         List<Integer> values = state.getDiceValues(forPlayer);
         List<Boolean> selected = state.getDiceSelected(forPlayer);
         List<DiceType> types = state.getDiceTypes(forPlayer);
+        if (values == null || selected == null || types == null) return;
         List<Integer> rerolledIndices = new ArrayList<>();
         
         boolean isAttacker = state.isAttacker(forPlayer);
