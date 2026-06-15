@@ -12,7 +12,6 @@ import com.fs.starfarer.api.impl.campaign.intel.bar.PortsideBarEvent;
 import com.fs.starfarer.api.impl.campaign.intel.bar.events.BarEventManager;
 import com.fs.starfarer.api.util.Misc;
 
-import data.scripts.Strings;
 import data.scripts.cosmicon.battle.CharacterRegistry;
 import data.scripts.cosmicon.battle.CosmiconSprites;
 import data.scripts.cosmicon.events.CosmiconBarEvent;
@@ -108,11 +107,7 @@ public class CosmiconModPlugin extends BaseModPlugin {
             if (bar == null) return;
 
             // Remove our creator from the creators list
-            for (BarEventManager.GenericBarEventCreator c : new ArrayList<>(bar.getCreators())) {
-                if (c instanceof CosmiconBarEventCreator) {
-                    bar.getCreators().remove(c);
-                }
-            }
+            bar.getCreators().removeIf(c -> c instanceof CosmiconBarEventCreator);
 
             // Remove our creator from the timeout tracker
             for (BarEventManager.GenericBarEventCreator c : new ArrayList<>(bar.getTimeout().getItems())) {

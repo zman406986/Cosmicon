@@ -80,12 +80,12 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
         CharacterCard opponentCard;
         int replayGame = CosmiconEventState.getReplayTutorialGame();
         if (replayGame >= 0) {
-            String opponentId = replayGame == 1 ? CharacterIds.TRASHCAN : CharacterIds.ROBIN;
+            String opponentId = replayGame == 1 ? CharacterIds.TRASHCAN_BASIC : CharacterIds.ROBIN;
             opponentCard = CharacterRegistry.getCharacterById(opponentId);
             CosmiconEventState.setOpponentCharacter(opponentCard.getId());
             CosmiconLogger.debug("Replay tutorial game %d: opponent = %s", replayGame, opponentCard.getName());
         } else if (CosmiconStats.isInTutorialMode()) {
-            opponentCard = CharacterRegistry.getCharacterById(CharacterIds.TRASHCAN);
+            opponentCard = CharacterRegistry.getCharacterById(CharacterIds.TRASHCAN_BASIC);
             CosmiconEventState.setOpponentCharacter(Objects.requireNonNull(opponentCard).getId());
         } else {
             String oppCharId = CosmiconEventState.getOpponentCharacter();
@@ -93,8 +93,13 @@ public class BattleController implements BattleEventBus.DamageAnimationCallback 
                 opponentCard = CharacterRegistry.getCharacterById(oppCharId);
             } else {
                 if (CosmiconStats.isEasyModeActive()) {
-                    opponentCard = CharacterRegistry.getRandomUnownedBasicOpponent(
-                        CosmiconStats.getUnlockedCharacters());
+                    if (CosmiconStats.isEasyModeComplete()) {
+                        opponentCard = CharacterRegistry.getCharacterById(CharacterIds.ROBIN);
+                        CosmiconEventState.setIsTutorialMode(true);
+                    } else {
+                        opponentCard = CharacterRegistry.getRandomUnownedBasicOpponent(
+                            CosmiconStats.getUnlockedCharacters());
+                    }
                 } else {
                     opponentCard = CharacterRegistry.getRandomAdvancedOpponent();
                 }

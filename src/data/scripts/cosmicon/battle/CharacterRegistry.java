@@ -228,7 +228,7 @@ public class CharacterRegistry {
     }
 
     private static boolean isExcludedFromOpponents(String id) {
-        return CharacterIds.TRASHCAN.equals(id) || CharacterIds.TRASHCAN_BASIC.equals(id);
+        return CharacterIds.TRASHCAN.equals(id);
     }
 
     public static CharacterCard getRandomBasicOpponent() {

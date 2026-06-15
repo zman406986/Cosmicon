@@ -42,6 +42,7 @@ public class FlyingIcon {
     private boolean usePullback;
     private boolean useLinearFlight;
     private boolean autoLaunch;
+    private boolean useEaseInFlight;
     
     private float currentRotation = 0f;
     private float targetRotation = 0f;
@@ -63,6 +64,7 @@ public class FlyingIcon {
         this.labelCreated = false;
         this.usePullback = false;
         this.autoLaunch = false;
+        this.useEaseInFlight = false;
         this.startX = startX;
         this.startY = startY;
         this.currentX = startX;
@@ -99,6 +101,7 @@ public class FlyingIcon {
         this.originalRotation = 0f;
         this.autoLaunch = false;
         this.usePullback = false;
+        this.useEaseInFlight = false;
         this.pullbackDuration = DEFAULT_PULLBACK_DURATION;
     }
 
@@ -168,6 +171,30 @@ public class FlyingIcon {
         this.rotationElapsed = 0f;
         this.usePullback = false;
         this.useLinearFlight = useLinear;
+        this.useEaseInFlight = false;
+        
+        if (Math.abs(targetRotation - currentRotation) > ROTATION_THRESHOLD) {
+            this.originalRotation = currentRotation;
+            flyPhase = FlyPhase.ROTATING;
+        } else {
+            flyPhase = FlyPhase.FLYING;
+        }
+    }
+    
+    public void flyDirectToEaseIn(float x, float y, float duration) {
+        this.startX = currentX;
+        this.startY = currentY;
+        this.pullbackX = currentX;
+        this.pullbackY = currentY;
+        this.targetX = x;
+        this.targetY = y;
+        this.flyDuration = duration;
+        this.pullbackDuration = DEFAULT_PULLBACK_DURATION;
+        this.elapsed = 0f;
+        this.rotationElapsed = 0f;
+        this.usePullback = false;
+        this.useLinearFlight = false;
+        this.useEaseInFlight = true;
         
         if (Math.abs(targetRotation - currentRotation) > ROTATION_THRESHOLD) {
             this.originalRotation = currentRotation;
@@ -295,7 +322,14 @@ public class FlyingIcon {
         }
         
         float progress = elapsed / flyDuration;
-        float eased = useLinearFlight ? progress : EasingUtil.easeOutQuad(progress);
+        float eased;
+        if (useLinearFlight) {
+            eased = progress;
+        } else if (useEaseInFlight) {
+            eased = EasingUtil.easeInQuad(progress);
+        } else {
+            eased = EasingUtil.easeOutQuad(progress);
+        }
         currentX = pullbackX + (targetX - pullbackX) * eased;
         currentY = pullbackY + (targetY - pullbackY) * eased;
     }

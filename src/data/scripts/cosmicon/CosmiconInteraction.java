@@ -528,8 +528,9 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
         boolean hadAtk = CosmiconStats.isAtkBonusUnlocked();
         boolean hadDef = CosmiconStats.isDefBonusUnlocked();
 
-        String newCharId = CosmiconStats.unlockRandomEasyModeCharacter();
+        String newCharId = pendingRewardCharId;
         if (newCharId != null) {
+            CosmiconStats.unlockCharacter(newCharId);
             String charName = CharacterRegistry.getCharacterById(newCharId).getName();
             textPanel.addPara(Strings.format("reward.character_unlocked", charName));
         }

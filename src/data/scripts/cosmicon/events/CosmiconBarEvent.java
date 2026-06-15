@@ -135,7 +135,7 @@ public class CosmiconBarEvent extends BaseBarEvent {
                     if (isTutorial) {
                         String opponentId;
                         if (!CosmiconStats.isTutorial1Completed()) {
-                            opponentId = CharacterIds.TRASHCAN;
+                            opponentId = CharacterIds.TRASHCAN_BASIC;
                         } else {
                             opponentId = CharacterIds.ROBIN;
                         }
@@ -144,10 +144,15 @@ public class CosmiconBarEvent extends BaseBarEvent {
                     } else {
                         CosmiconEventState.setIsTutorialMode(false);
                         if (isEasyMode) {
-                            CharacterCard opponentCard = CharacterRegistry.getRandomUnownedBasicOpponent(
-                                CosmiconStats.getUnlockedCharacters());
-                            if (opponentCard != null) {
-                                CosmiconEventState.setOpponentCharacter(opponentCard.getId());
+                            if (CosmiconStats.isEasyModeComplete()) {
+                                CosmiconEventState.setOpponentCharacter(CharacterIds.ROBIN);
+                                CosmiconEventState.setIsTutorialMode(true);
+                            } else {
+                                CharacterCard opponentCard = CharacterRegistry.getRandomUnownedBasicOpponent(
+                                    CosmiconStats.getUnlockedCharacters());
+                                if (opponentCard != null) {
+                                    CosmiconEventState.setOpponentCharacter(opponentCard.getId());
+                                }
                             }
                         } else {
                             CharacterCard opponentCard = CharacterRegistry.getRandomAdvancedOpponent();

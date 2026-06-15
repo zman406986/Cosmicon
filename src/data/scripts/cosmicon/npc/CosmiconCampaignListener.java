@@ -12,6 +12,8 @@ import data.scripts.Strings;
 import data.scripts.CosmiconConfig;
 import data.scripts.cosmicon.battle.CharacterCard;
 import data.scripts.cosmicon.battle.CharacterRegistry;
+import data.scripts.cosmicon.state.CosmiconStats;
+import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.cosmicon.util.CosmiconRandom;
 
 import java.util.LinkedHashMap;
@@ -67,9 +69,18 @@ public class CosmiconCampaignListener extends BaseCampaignEventListener {
             if (Global.getSector().getClock().getElapsedDaysSince(lastTimestamp) < CosmiconConfig.NPC_SPAWN_INTERVAL_DAYS) {
                 if (marketMem.contains(STORED_CHAR_KEY)) {
                     String charId = marketMem.getString(STORED_CHAR_KEY);
-                    CharacterCard card = CharacterRegistry.getCharacterById(charId);
-                    if (card != null) {
-                        spawnTempNPC(market, card);
+                    if (CosmiconStats.isEasyModeActive() && !CosmiconStats.isEasyModeComplete() && !CharacterIds.EASY_MODE_CHARACTERS.contains(charId)) {
+                        CharacterCard card = CharacterRegistry.getRandomUnownedBasicOpponent(
+                            CosmiconStats.getUnlockedCharacters());
+                        if (card != null) {
+                            spawnTempNPC(market, card);
+                            marketMem.set(STORED_CHAR_KEY, card.getId());
+                        }
+                    } else {
+                        CharacterCard card = CharacterRegistry.getCharacterById(charId);
+                        if (card != null) {
+                            spawnTempNPC(market, card);
+                        }
                     }
                 }
                 return;
@@ -81,7 +92,23 @@ public class CosmiconCampaignListener extends BaseCampaignEventListener {
             return;
         }
 
-        CharacterCard opponentCard = CharacterRegistry.getRandomAdvancedOpponent();
+        if (!CosmiconStats.isTutorial1Completed()) {
+            CharacterCard trashcanBasic = CharacterRegistry.getCharacterById(CharacterIds.TRASHCAN_BASIC);
+            if (trashcanBasic != null) {
+                spawnTempNPC(market, trashcanBasic);
+                marketMem.set(SPAWN_TIME_KEY, Global.getSector().getClock().getTimestamp());
+                marketMem.set(STORED_CHAR_KEY, trashcanBasic.getId());
+            }
+            return;
+        }
+
+        CharacterCard opponentCard;
+        if (CosmiconStats.isEasyModeActive() && !CosmiconStats.isEasyModeComplete()) {
+            opponentCard = CharacterRegistry.getRandomUnownedBasicOpponent(
+                CosmiconStats.getUnlockedCharacters());
+        } else {
+            opponentCard = CharacterRegistry.getRandomAdvancedOpponent();
+        }
         if (opponentCard == null) return;
         spawnTempNPC(market, opponentCard);
         marketMem.set(SPAWN_TIME_KEY, Global.getSector().getClock().getTimestamp());
