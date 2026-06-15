@@ -220,13 +220,16 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                             CosmiconEventState.setIsBarEvent(false);
                             CosmiconMusicPlugin.stopMusic();
                         } else {
-                            CosmiconEventState.clearAll();
                             CosmiconMusicPlugin.stopMusic();
                         }
                         if (onLeaveAction != null) {
                             onLeaveAction.run();
                         } else {
+                            CosmiconEventState.clearAll();
                             dialog.dismiss();
+                        }
+                        if (!CosmiconEventState.isTournamentActive()) {
+                            CosmiconEventState.clearAll();
                         }
                     }
 
@@ -673,13 +676,16 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
                     CosmiconEventState.setIsBarEvent(false);
                     CosmiconMusicPlugin.stopMusic();
                 } else {
-                    CosmiconEventState.clearAll();
                     CosmiconMusicPlugin.stopMusic();
                 }
                 if (onLeaveAction != null) {
                     onLeaveAction.run();
                 } else {
+                    CosmiconEventState.clearAll();
                     dialog.dismiss();
+                }
+                if (!CosmiconEventState.isTournamentActive()) {
+                    CosmiconEventState.clearAll();
                 }
             }
             default -> finishReward();

@@ -7,9 +7,10 @@ import com.fs.starfarer.api.impl.campaign.intel.bar.events.BaseBarEventCreator;
 import data.scripts.CosmiconConfig;
 import data.scripts.cosmicon.util.CosmiconRandom;
 
-// DO NOT DELETE — serialized into old saves via BarEventManager.creators,
-// BarEventManager.timeout (TimeoutTracker), and BarEventManager.barEventCreators map.
-// CosmiconBarEvent.java has the same constraint. Both must remain for backward compatibility.
+// Retained for backward compatibility with saves created before the proactive cleanup fix.
+// CosmiconModPlugin.onGameLoad() now purges all references to this class from
+// BarEventManager (creators list, timeout tracker, barEventCreators map) on every load.
+// After one load+save cycle with the fix, saves are clean and these classes can be removed.
 public class CosmiconBarEventCreator extends BaseBarEventCreator {
 
     @Override

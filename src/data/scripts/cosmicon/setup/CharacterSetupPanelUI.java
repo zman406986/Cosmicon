@@ -209,9 +209,9 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             }
         }
         if (this.characters.isEmpty()) {
-            for (CharacterCard card : allCards) {
-                if (CharacterIds.TRASHCAN.equals(card.getId())) continue;
-                this.characters.add(card);
+            CharacterCard fallback = CharacterRegistry.getCharacterById(CharacterIds.TUTORIAL_1_DEFAULT_CHARACTER);
+            if (fallback != null) {
+                this.characters.add(fallback);
             }
         }
 

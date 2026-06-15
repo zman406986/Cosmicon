@@ -206,7 +206,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
         ThreeTierSplit split = splitThreeTiers(pool, rerollsLeft, isAttacking, currentDestinedIndices);
         int frozenSum = 0;
         int doomedSum = 0;
-        int doomedRerollsUsed = 0;
+        int doomedRerollsUsed;
         Set<Integer> savedDestined = null;
         String savedDestinedKey = null;
         if (split != null) {
@@ -1003,6 +1003,7 @@ public abstract class AttackRerollAI implements CharacterAIProfile {
 
     private static int[] adjustFacesForWeather(int[] faces, boolean preventMin, boolean preventMax) {
         if (!preventMin && !preventMax) return faces;
+        if (faces.length == 0) return faces;
         int trueMax = Arrays.stream(faces).max().getAsInt();
         List<Integer> filtered = new ArrayList<>();
         for (int face : faces) {

@@ -1,13 +1,22 @@
 package data.scripts;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Map;
+
 import com.fs.starfarer.api.BaseModPlugin;
 import com.fs.starfarer.api.EveryFrameScript;
 import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.impl.campaign.intel.bar.PortsideBarData;
+import com.fs.starfarer.api.impl.campaign.intel.bar.PortsideBarEvent;
+import com.fs.starfarer.api.impl.campaign.intel.bar.events.BarEventManager;
 import com.fs.starfarer.api.util.Misc;
 
 import data.scripts.Strings;
 import data.scripts.cosmicon.battle.CharacterRegistry;
 import data.scripts.cosmicon.battle.CosmiconSprites;
+import data.scripts.cosmicon.events.CosmiconBarEvent;
+import data.scripts.cosmicon.events.CosmiconBarEventCreator;
 import data.scripts.cosmicon.npc.CosmiconCampaignListener;
 import data.scripts.cosmicon.npc.CosmiconNPCManager;
 import data.scripts.cosmicon.state.CosmiconStats;
@@ -85,9 +94,67 @@ public class CosmiconModPlugin extends BaseModPlugin {
         CosmiconNPCManager.cleanupAllNPCs();
         CosmiconNPCManager.cleanupStaleMemoryKeys();
 
+        cleanupBarEventReferences();
+
         Global.getSector().getListenerManager().addListener(
             new CosmiconCampaignListener(), true);
 
         Global.getLogger(this.getClass()).info("Cosmicon NPC listener registered");
+    }
+
+    private void cleanupBarEventReferences() {
+        try {
+            BarEventManager bar = BarEventManager.getInstance();
+            if (bar == null) return;
+
+            // Remove our creator from the creators list
+            for (BarEventManager.GenericBarEventCreator c : new ArrayList<>(bar.getCreators())) {
+                if (c instanceof CosmiconBarEventCreator) {
+                    bar.getCreators().remove(c);
+                }
+            }
+
+            // Remove our creator from the timeout tracker
+            for (BarEventManager.GenericBarEventCreator c : new ArrayList<>(bar.getTimeout().getItems())) {
+                if (c instanceof CosmiconBarEventCreator) {
+                    bar.getTimeout().remove(c);
+                }
+            }
+
+            // Remove our events from the active tracker
+            for (PortsideBarEvent e : new ArrayList<>(bar.getActive().getItems())) {
+                if (e instanceof CosmiconBarEvent) {
+                    bar.getActive().remove(e);
+                }
+            }
+
+            // Remove barEventCreators map entries referencing our creator/events (requires reflection)
+            try {
+                Field f = BarEventManager.class.getDeclaredField("barEventCreators");
+                f.setAccessible(true);
+                Map<?, ?> map = (Map<?, ?>) f.get(bar);
+                map.entrySet().removeIf(entry -> {
+                    Object value = entry.getValue();
+                    Object key = entry.getKey();
+                    return value instanceof CosmiconBarEventCreator || key instanceof CosmiconBarEvent;
+                });
+            } catch (Exception e) {
+                Global.getLogger(this.getClass()).warn("Could not clean barEventCreators map", e);
+            }
+
+            // Remove our events from PortsideBarData
+            PortsideBarData portData = PortsideBarData.getInstance();
+            if (portData != null) {
+                for (PortsideBarEvent e : new ArrayList<>(portData.getEvents())) {
+                    if (e instanceof CosmiconBarEvent) {
+                        portData.removeEvent(e);
+                    }
+                }
+            }
+
+            Global.getLogger(this.getClass()).info("Cosmicon: Cleaned up bar event references");
+        } catch (Exception e) {
+            Global.getLogger(this.getClass()).warn("Cosmicon: Error cleaning up bar events", e);
+        }
     }
 }

@@ -43,6 +43,7 @@ public class TutorialController {
         G1_T1_DEFENSE_RESOLVE,
         G1_T1_ATTACK_ROLL,
         G1_T1_ATTACK_REROLL,
+        G1_T1_ATTACK_REROLL2,
         G1_T1_ATTACK_SELECT,
         G1_T1_ATTACK_CONFIRM,
         G1_T1_ATTACK_WAIT,
@@ -164,7 +165,7 @@ public class TutorialController {
 
         return switch (currentStep) {
             case G1_T1_DEFENSE_SELECT,
-                 G1_T1_ATTACK_REROLL, G1_T1_ATTACK_SELECT,
+                 G1_T1_ATTACK_REROLL, G1_T1_ATTACK_REROLL2, G1_T1_ATTACK_SELECT,
                  G1_T2_DEFENSE_SELECT,
                  G1_T2_ATTACK_REROLL, G1_T2_ATTACK_SELECT,
                  G1_T3_DEFENSE_SELECT,
@@ -203,7 +204,7 @@ public class TutorialController {
                  G2_T2_DEFENSE_SELECT,
                  G2_T3_DEFENSE_SELECT -> isAmongHighest(diceIndex, values, battleState.getRequiredDiceCount(true));
 
-            case G1_T1_ATTACK_REROLL, G1_T2_ATTACK_REROLL -> !isAmongHighest(diceIndex, values, 2);
+            case G1_T1_ATTACK_REROLL, G1_T1_ATTACK_REROLL2, G1_T2_ATTACK_REROLL -> !isAmongHighest(diceIndex, values, 2);
 
             case G2_T2_ATTACK_PRISMATIC, G2_T2_ATTACK_SELECT ->
                 isPrismatic || value == 4;
@@ -225,6 +226,7 @@ public class TutorialController {
         if (complete) return true;
 
         if (currentStep == TutorialStep.G1_T1_ATTACK_REROLL
+                || currentStep == TutorialStep.G1_T1_ATTACK_REROLL2
                 || currentStep == TutorialStep.G1_T2_ATTACK_REROLL) {
             List<Integer> values = battleState.getPlayerDiceValues();
             List<Boolean> selected = battleState.getPlayerDiceSelected();
@@ -306,6 +308,7 @@ public class TutorialController {
         if (complete) return true;
 
         return currentStep == TutorialStep.G1_T1_ATTACK_REROLL
+            || currentStep == TutorialStep.G1_T1_ATTACK_REROLL2
             || currentStep == TutorialStep.G1_T2_ATTACK_REROLL
             || currentStep == TutorialStep.G2_T3_ATTACK_REROLL
             || currentStep == TutorialStep.G2_T3_ATTACK_REROLL2;
@@ -439,6 +442,8 @@ public class TutorialController {
         if (complete) return;
 
         if (currentStep == TutorialStep.G1_T1_ATTACK_REROLL) {
+            currentStep = TutorialStep.G1_T1_ATTACK_REROLL2;
+        } else if (currentStep == TutorialStep.G1_T1_ATTACK_REROLL2) {
             currentStep = TutorialStep.G1_T1_ATTACK_SELECT;
         } else if (currentStep == TutorialStep.G1_T2_ATTACK_REROLL) {
             currentStep = TutorialStep.G1_T2_ATTACK_SELECT;
@@ -533,12 +538,10 @@ public class TutorialController {
             } else if (currentStep == TutorialStep.G1_T3_ATTACK_ROLL) {
                 currentStep = TutorialStep.G1_T3_ATTACK_SELECT;
             }
-        } else if (newPhase == Phase.SELECTING_ATTACK) {
+        } else if (newPhase == Phase.SELECTING_DEFENSE && !playerIsAttacker) {
             if (currentStep == TutorialStep.G1_T1_DEFENSE_ROLL) {
                 currentStep = TutorialStep.G1_T1_DEFENSE_SELECT;
-            }
-        } else if (newPhase == Phase.SELECTING_DEFENSE && !playerIsAttacker) {
-            if (currentStep == TutorialStep.G1_T2_DEFENSE_ROLL) {
+            } else if (currentStep == TutorialStep.G1_T2_DEFENSE_ROLL) {
                 currentStep = TutorialStep.G1_T2_DEFENSE_SELECT;
             } else if (currentStep == TutorialStep.G1_T3_DEFENSE_ROLL) {
                 currentStep = TutorialStep.G1_T3_DEFENSE_SELECT;

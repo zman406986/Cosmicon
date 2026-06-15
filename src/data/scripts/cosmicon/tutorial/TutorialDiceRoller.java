@@ -31,23 +31,23 @@ public class TutorialDiceRoller {
     // Flow: T1Def → T1Atk → T2Def → T2Atk → T3Def → T3Atk → Victory
     //
     // T1 Defense: Player [5,4,3,1] all unique → DEF 9. Opp attacks [4,3,3,3,2] → ATK 10, DMG 1.
-    // T1 Attack: Player [6,4,2,1] all unique → reroll lowest 2 → [5,3] → [6,4,5,3] ATK 15.
-    //   Opp defends [3,2,1,1,1] → DEF 5, DMG 10. Teaches: ATK reroll
+    // T1 Attack: Player [6,5,2,1] all unique → reroll lowest 2 (d4s) → [3,2] → [6,5,3,2] → reroll lowest 2 (d4s) → [4,3] → [6,5,4,3] all unique.
+    //   Opp defends [3,2,1,1,1] → DEF 5, DMG 16. Teaches: ATK reroll (2 rerolls)
     // T2 Defense: Player [4,3,2,1] all unique → DEF 7. Opp attacks [4,3,1,1,1] → rerolls 1s → [3,3,2]
     //   → [4,3,3,3,2] ATK 10 + 2 Strength = 12, DMG 5. Teaches: opponent Strength passive (mouse over)
     // T2 Attack: Player [1,3,4,1] pair of 1s → reroll 1s → [6,4] → [6,4,4,3] pair of 4s → +7 ATK
     //   Opp defends [4,3,1,1,1] → DEF 7, DMG 14 (ATK 21-7). Teaches: Chimera passive ability
     // T3 Defense: Player [4,3,2,1] → DEF 7. Opp attacks [5,3,1,1,1] → rerolls 1s → [4,3,2]
     //   → [5,3,4,3,2] ATK 12 + 4 Strength = 16, DMG 9. Teaches: dice types, HP from cards
-    // T3 Attack: Player [5,3,2,1] no rerolls left → ATK 10. Opp defends [3,2,1,1,1] → DEF 5, DMG 5.
-    //   Total damage: 10+14+5=29 > 25 HP. Victory!
+    // T3 Attack: Player [6,5,4,3] no rerolls left → ATK 18. Opp defends [3,2,1,1,1] → DEF 8, DMG 10.
+    //   Total damage: 10+14+10=34 > 25 HP. Victory! Even two 6s can't block this.
     private static final int[][] GAME1_PLAYER_ROLLS = {
         {5, 4, 3, 1},   // T1 Defense (all unique, no matching)
-        {6, 4, 2, 1},   // T1 Attack (before reroll, all unique)
+        {6, 5, 2, 1},   // T1 Attack (before reroll, all unique)
         {4, 3, 2, 1},   // T2 Defense (all unique, ability not yet taught)
         {1, 3, 4, 1},   // T2 Attack (before reroll, pair of 1s)
         {4, 3, 2, 1},   // T3 Defense (no new mechanics)
-        {5, 3, 2, 1}    // T3 Attack (no rerolls left)
+        {6, 5, 4, 3}    // T3 Attack (no rerolls left, even two 6s can't block)
     };
 
     private static final int[][] GAME1_OPPONENT_ROLLS = {
@@ -71,13 +71,16 @@ public class TutorialDiceRoller {
         {4, 3, 2}
     };
 
-    // T1 Attack reroll: player rerolls the 2 lowest dice (1,2) → [5,3]
-    // After reroll: [6,4,5,3] all unique, ATK 15
+    // T1 Attack reroll 1: player rerolls the 2 lowest dice (1,2) → [3,2]
+    // After reroll: [6,5,3,2] all unique
+    // T1 Attack reroll 2: player rerolls the 2 lowest dice (2,3) → [4,3]
+    // After reroll: [6,5,4,3] all unique
     // T2 Attack reroll: player rerolls the pair of 1s → [6,4]
     // After reroll: [6,4,4,3] pair of 4s → +7 ATK
     private static final int[][] GAME1_REROLL_RESULTS = {
-        {5, 3},        // T1 reroll
-        {6, 4}         // T2 reroll
+        {3, 2},        // T1 reroll 1: d4s get 3,2 (was 5,3 — exceeded d4 max)
+        {4, 3},        // T1 reroll 2: d4s get 4,3 (was 6,5 — exceeded d4 max)
+        {6, 4}         // T2 reroll: d6 gets 6, d4 gets 4
     };
 
     // Opponent selections: which dice indices the opponent selects
@@ -258,6 +261,9 @@ public class TutorialDiceRoller {
             if (controller.getCurrentStep() == TutorialController.TutorialStep.G1_T1_ATTACK_REROLL) {
                 return "G1_T1_PLAYER";
             }
+            if (controller.getCurrentStep() == TutorialController.TutorialStep.G1_T1_ATTACK_REROLL2) {
+                return "G1_T1_PLAYER_2";
+            }
             if (controller.getCurrentStep() == TutorialController.TutorialStep.G1_T2_ATTACK_REROLL) {
                 return "G1_T2_PLAYER";
             }
@@ -288,7 +294,7 @@ public class TutorialDiceRoller {
 
             switch (key)
             {
-                case "G1_T1_PLAYER", "G1_T2_PLAYER" -> rerollGame1Player(state);
+                case "G1_T1_PLAYER", "G1_T1_PLAYER_2", "G1_T2_PLAYER" -> rerollGame1Player(state);
                 case "G2_T3_PLAYER_1" -> rerollGame2T3(state);
                 case "G2_T3_PLAYER_2" -> rerollGame2T3Second(state);
             }

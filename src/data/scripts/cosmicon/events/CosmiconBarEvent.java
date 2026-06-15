@@ -22,12 +22,10 @@ import data.scripts.cosmicon.state.CosmiconStats;
 import data.scripts.cosmicon.util.CharacterIds;
 import data.scripts.CosmiconConfig;
 
-// Retained for stale save compatibility: bar events from older saves may still reference this class.
-// New bar events are no longer generated (creator registration removed from CosmiconModPlugin).
-// NPC dialogue (CosmiconNPCDialogPlugin) is now the standalone entry point.
-// NOTE: CosmiconBarEventCreator.java must also remain — both classes are serialized into old
-// saves via BarEventManager.non-transient fields (creators list, timeout tracker, event--creator map)
-// and deleting either causes ClassNotFoundException on load.
+// Retained for backward compatibility with saves created before the proactive cleanup fix.
+// CosmiconModPlugin.onGameLoad() now purges all references to this class and
+// CosmiconBarEventCreator from BarEventManager/PortsideBarData on every load.
+// After one load+save cycle with the fix, saves are clean and these classes can be removed.
 public class CosmiconBarEvent extends BaseBarEvent {
 
     public enum OptionId {

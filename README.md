@@ -1,8 +1,8 @@
 # Cosmicon Dice / 银河战力党
 
-A turn-based dice battle card game for Starsector, cloning Honkai: Star Rail's minigame of the same name.
+**Version 0.2.0** — A turn-based dice battle card game for Starsector, cloning Honkai: Star Rail's minigame of the same name.
 
-为 Starsector 制作的回合制骰子对战卡牌游戏，复刻自《崩坏：星穹铁道》同名小游戏。
+**版本 0.2.0** — 为 Starsector 制作的回合制骰子对战卡牌游戏，复刻自《崩坏：星穹铁道》同名小游戏。
 
 Requires **Console Commands** mod for debugging commands. / 调试命令需要**Console Commands**模组。
 
@@ -21,6 +21,35 @@ Use the comm directory at any market to find a Cosmicon NPC and start a game. Yo
 If the **Interastral Peace Casino** mod is loaded, a "Cosmicon Dice Lounge" becomes accessible from the Casino main menu after tutorial completion, offering Legend challenges and Tournaments.
 
 如果加载了**星际和平赌场**模组，完成教程后可从赌场主菜单进入"战力党酒馆"，挑战老赌神或参加挑战赛。
+
+### Progression Flow / 游戏进程
+
+```
+[Fresh Save]
+    |
+    v
+[Tutorial 1] -- vs Trashcan (using Chimera)
+    |   Teaches: rolling, selecting dice, rerolling, character passives
+    |   Reward: Unlocks Chimera basic character
+    v
+[Easy Mode] -- Collect 7 basic characters from bar encounters
+    |   No weather, no prismatic dice
+    |   Stat bonuses unlock at 3/5/7 collections
+    |   Characters: Chimera, Dromas, Automaton Beetle, Trashcan,
+    |   |           Furbo Journalist, BananAdvisor, Senior Staff
+    v
+[Tutorial 2] -- vs Robin (using Acheron)
+    |   Teaches: prismatic dice, weather system, advanced strategies
+    |   Reward: Unlocks Acheron + Repeater prismatic dice
+    v
+[Full Game] -- Advanced NPC opponents at bars
+    |   Weather & prismatic dice active
+    |   Full character selection with stat bonuses
+    v
+[Casino Collab] -- If Interastral Peace Casino mod loaded
+        Challenge the Legend (5,000 stargems)
+        Join a Tournament (15,000 stargems)
+```
 
 ### Battle Basics / 对战基础
 
@@ -53,15 +82,113 @@ Reduce the opponent's HP to 0 to win.
 | Orange d8 | 1-8 | 橙色8面骰 |
 | Prismatic Dice | Varies | 曜彩骰 |
 
-**Prismatic Dice / 曜彩骰**: Special dice with modified faces and unique effects (e.g. double ATK/DEF, heal HP, gain Combo). Each character comes with a default prismatic dice; some have a "True" upgraded version. Prismatic dice have limited uses per game and may require conditions to be met before they can be rolled.
+**Prismatic Dice / 曜彩骰**: Special dice with modified faces and unique effects (e.g. double ATK/DEF, heal HP, gain Combo). Each character comes with a default prismatic dice; some have a "True" upgraded version. Prismatic dice have limited uses per game and may require conditions to be met before they can be rolled (e.g. HP <= 8, after taking 25+ total damage, defense-only, first 4 turns only).
 
-**曜彩骰**：拥有特殊骰面和独特效果的特殊骰子（如攻击值/防御值翻倍、治愈生命值、获得连击等）。每个角色自带默认曜彩骰，部分拥有"真"升级版本。曜彩骰每局使用次数有限，部分需要满足条件才能投掷。
+**曜彩骰**：拥有特殊骰面和独特效果的特殊骰子（如攻击值/防御值翻倍、治愈生命值、获得连击等）。每个角色自带默认曜彩骰，部分拥有"真"升级版本。曜彩骰每局使用次数有限，部分需要满足条件才能投掷（如生命值≤8、累计承受25+伤害、仅限防御阶段、仅前4回合等）。
 
 ### Weather / 天气
 
-Starting from turn 2, weather effects activate at turns 2/4/6/8, affecting both players. Weather can boost attackers, defenders, or create chaotic reversals. In free encounters, weather is random; story battles use predetermined weather sequences.
+Starting from turn 2, weather effects activate at turns 2/4/6/8, affecting both players. There are 25 weather types across 4 categories:
 
-从第2回合起，天气效果在第2/4/6/8回合激活，影响双方。天气可能增强攻击方、防守方，或制造混乱的逆转效果。自由对战中天气随机，剧情对战使用预设天气序列。
+从第2回合起，天气效果在第2/4/6/8回合激活，影响双方。共25种天气，分为4大类：
+
+| Category | Chinese | Description |
+|----------|---------|-------------|
+| Safeguard | 守护类 | Benefits defenders (e.g. Sleet, Blizzard) |
+| Attack | 攻击类 | Benefits attackers (e.g. Solar Eclipse, Dust) |
+| Help | 增益类 | Neutral benefits (e.g. Fish Rain, Sea of Clouds) |
+| Reversal | 逆转类 | Punishes or reverses normal flow (e.g. Acid Rain, Temporal Storm) |
+
+In free encounters, weather is random; story battles use predetermined weather sequences.
+
+自由对战中天气随机，剧情对战使用预设天气序列。
+
+### Status Effects / 状态效果
+
+| Effect | Chinese | Description |
+|--------|---------|-------------|
+| Strength | 力量 | ATK bonus = stack count |
+| Toughness | 韧性 | DEF bonus = stack count |
+| Poison | 毒 | End of turn: DMG = stack count, then -1 stack |
+| Combo | 连击 | Extra attack based on current ATK value |
+| Counter | 反击 | If DEF > ATK, deal difference DMG to attacker |
+| Forcefield | 力场 | Negates conventional attack damage |
+| Perforation | 贯穿 | Ignores DEF and Forcefield |
+| Thorns | 反伤 | Before resolution: DMG = stack count |
+| Unyielding | 不屈 | Always retain 1 HP while active |
+| Hack | 骇入 | Turn opponent's highest die into 2 |
+| Arise | 兴起 | Transform lowest die to that die's max value |
+| Siphon | 吸血 | Recover HP = percentage of DMG dealt |
+| Overload | 超载 | +ATK per stack but self-damage on defense |
+| Venom | 剧毒 | Poison damage becomes 2x |
+| Instant Damage | 即时伤害 | Bypasses damage calculation |
+| Awakening | 觉醒 | Double all dice values after selection |
+| Destined | 命运 | Dice with this effect must be selected |
+| Last Stand | 穷途 | Reduce HP to 1, gain bonus = HP reduction |
+
+### Bonus System / 加成系统
+
+Collecting basic characters in Easy Mode unlocks permanent stat bonuses:
+- **+9 HP** option (unlocked after collecting 3 basic characters)
+- **+1 ATK Level** (max 5, unlocked after collecting 5 basic characters)
+- **+1 DEF Level** (max 5, unlocked after collecting 7 basic characters)
+
+### Characters / 角色
+
+#### Basic Characters (7 — Easy Mode) / 基础角色（7个——简易模式）
+
+| ID | Name | HP | Dice Pool | ATK | DEF | Passive |
+|----|------|----|-----------|-----|-----|---------|
+| chimera | Chimera | 22 | 2d6, 2d4 | 3 | 2 | Matching numbers: +3 ATK (4s: +7) |
+| dromas | Dromas | 26 | 2d6, 2d4 | 3 | 2 | All even: 2 Poison stacks |
+| automaton_beetle | Automaton Beetle | 10 | 1d6, 3d4 | 3 | 3 | 3 consecutives: Forcefield + 8 Strength |
+| trashcan_basic | Trashcan | 25 | 2d6, 3d4 | 3 | 2 | All even: 4 Strength (else 2) |
+| furbo_journalist | Furbo Journalist | 28 | 1d6, 4d4 | 4 | 3 | All odd: 4 Instant Dmg (else 2) |
+| bananadvisor | BananAdvisor | 24 | 2d6, 3d4 | 4 | 3 | No DMG: Heal 5; HP<=5: DEF+1 |
+| senior_staff | Senior Staff | 22 | 1d8, 1d6, 3d4 | 3 | 2 | Distinct numbers: +1 ATK/DEF each |
+
+#### Advanced Characters (14 — Full Game) / 进阶角色（14个——完整游戏）
+
+| ID | Name | HP | Dice Pool | Prismatic | ATK | DEF | Passive Summary |
+|----|------|----|-----------|-----------|-----|-----|---------|
+| acheron | Acheron | 33 | 1d8, 1d6, 3d4 | Repeater x2 | 2 | 3 | All 4s = Perforation, ATK+1 |
+| castorice | Castorice | 27 | 2d8, 1d6, 2d4 | Doctor's Advice x2 | 3 | 2 | DMG>=8: ATK/DEF+1; DMG<=5: 3 Instant Dmg |
+| firefly | Firefly | 28 | 3d6, 2d4 | Sorcerer x2 | 4 | 3 | 2 pairs: Combo; Full HP: +5 ATK |
+| robin | Robin | 30 | 2d6, 3d4 | None | 4 | 3 | All even: Level Up dice (up to d12) |
+| the_herta | The Herta | 42 | 2d8, 3d6 | Berserker x2 | 3 | 2 | +1 Prismatic use/turn; 4+ triggers: Arise |
+| kafka | Kafka | 30 | 2d6, 3d4 | Prime Number x2 | 4 | 3 | Different numbers: Poison stacks |
+| aventurine | Aventurine | 33 | 1d8, 3d6, 1d4 | Prime Number x2 | 4 | 2 | Odd numbers: Toughness; 7 stacks: 7 Instant Dmg |
+| march_7th | March 7th | 25 | 2d6, 3d4 | Magic Bullet x2 | 4 | 3 | Pairs: 3 Instant Damage each |
+| dan_heng | Dan Heng | 25 | 2d8, 3d6 | Sorcerer x2 | 3 | 2 | ATK>=18: Counter + DEF+3 next defense |
+| sparxie | Sparxie | 22 | 1d8, 2d6, 2d4 | Sorcerer x2 | 4 | 3 | Identical numbers: Hack (highest die -> 2) |
+| yao_guang | Yao Guang | 35 | 2d8, 3d6 | Destiny x2 | 3 | 2 | 4 rerolls; >2 rerolls: Thorns; ATK>=18: cleanse + Prismatic use |
+| cyrene | Cyrene | 30 | 1d8, 3d6, 1d4 | Gambler x2 | 3 | 2 | Cumulative ATK+DEF >24: ATK Lv5 + Arise |
+| phainon | Phainon | 20 | 2d8, 3d6 | Astral Shield x2 | 4 | 2 | Siphon 50%; All same: Unyielding (1/game) |
+| hyacine | Hyacine | 28 | 1d8, 4d6 | Oath x2 | 2 | 2 | Strength = 50% ATK; All 6s: 100% + Heal 6 |
+
+### Prismatic Dice / 曜彩骰
+
+| ID | Name | Condition | Effect |
+|----|------|-----------|--------|
+| evolution | Evolution | Always | 2 pts, Double ATK/DEF |
+| absolute_six | Absolute Six | Always | Always 6 |
+| destiny | Destiny | Always | Points + Destined (must select) |
+| revenge | Revenge | After 25+ total DMG taken | High-value faces |
+| doctors_advice | Doctor's Advice | Always | Points + Heal equal to face value |
+| last_words | Last Words | HP <= 8 | Points + Double ATK/DEF |
+| repeater | Repeater | After selecting face 4 twice | 4 pts + Combo |
+| cactus | Cactus | Defense only | Points + Counter |
+| miracle | Miracle | After selecting 1 nine times | All 99s |
+| loan | Loan | Always | Points + Overload stacks |
+| astral_shield | Astral Shield | Defense only | 1 pt + Forcefield |
+| oath | Oath | Defense only | Points + Unyielding |
+| prime_number | Prime Number | Always | Always prime values (3,5,7) |
+| big_red_button | Big Red Button | Turn 5+, attacking | Points + Last Stand |
+| sorcerer | Sorcerer | Always | Points + Hack |
+| heartbeat | Heartbeat | Always | 9 pts +1 Prismatic use |
+| berserker | Berserker | Always | Points + Thorns stacks |
+| gambler | Gambler | First 4 turns | Balanced values |
+| magic_bullet | Magic Bullet | Always | Points + 3 Instant Damage |
 
 ---
 
@@ -101,23 +228,25 @@ All commands require the Console Commands mod and must be used in the campaign l
 | `cosmicon_skip_tutorial` | `cosmicon_skip_tutorial` | 跳过教程，解锁所有角色和曜彩骰。 |
 | `cosmicon_unlock` | `cosmicon_unlock char\|prismatic <ID>\|all` | 解锁角色或曜彩骰。`cosmicon_unlock char <ID>` 解锁指定角色。`cosmicon_unlock prismatic <ID>` 解锁指定曜彩骰。`cosmicon_unlock prismatic true <ID>` 解锁真版本。使用 `all` 一键解锁全部。 |
 | `cosmicon_reset` | `cosmicon_reset [all\|stats\|unlocks\|player]` | 重置进度。`all`：全部重置（默认）。`stats`：重置胜负场次。`unlocks`：重置已解锁角色/骰子。`player`：重置已选角色/骰子。 |
-| `cosmicon_casino_reset` | `cosmicon_casino_reset [all\|hunter\|battle\|tournament]` | 重置赌场联动状态。`all`：全部重置（默认）。`hunter`：重置赌神等级。`battle`：清除赌场对战状态。`tournament`：清除挑战赛状态并锁定。 |
+| `cosmicon_casino_reset` | `cosmicon_casino_reset [all\|legend\|battle\|tournament]` | 重置赌场联动状态。`all`：全部重置（默认）。`legend`：重置赌神等级。`battle`：清除赌场对战状态。`tournament`：清除挑战赛状态并锁定。 |
 
 ### Info & Debug Commands / 信息与调试命令
 
 | Command | Syntax | Description |
 |---------|--------|-------------|
-| `cosmicon_status` | `cosmicon_status [verbose]` | Shows current Cosmicon stats: games played/won, unlocks, selected character, tutorial status. `verbose`: also lists all unlocks, config, and memory keys. |
-| `cosmicon_config` | `cosmicon_config [show\|set <key> <value>]` | Shows or modifies config values at runtime. `set` keys: `cosmiconDiceEnabled`, `marketSizeMin`, `defaultHP`, `defaultRerolls`, `debugEnabled`, `rerollLogEnabled`. Changes do not persist to file. |
-| `cosmicon_casino_status` | `cosmicon_casino_status` | Shows casino collab status: Master Dicer Level, locked reward pools, current battle state, tournament status, and potential boss rewards. |
+| `cosmicon_status` | `cosmicon_status [verbose]` | Shows current Cosmicon stats: games played/won, mode, unlocks, bonuses, selected character, tutorial status. `verbose`: also lists all unlocks, config, and `$cos_*` memory keys. |
+| `cosmicon_config` | `cosmicon_config [show\|set <key> <value>]` | Shows or modifies config values at runtime. Settable keys: `cosmiconDiceEnabled`, `marketSizeMin`, `defaultHP`, `defaultRerolls`, `debugEnabled`, `verboseEnabled`, `rerollLogEnabled`. Changes do not persist to file. |
+| `cosmicon_debug` | `cosmicon_debug [off\|debug\|verbose\|reroll]` | Unified debug logging control. `off`: disable all. `debug`: enable tier 2 (battle flow, damage, status effects). `verbose`: enable tier 2 + tier 3 (AI internals, dice rest, animations). `reroll`: toggle AI reroll decision logging. Without arguments, shows current state. |
 | `cosmicon_reroll_log` | `cosmicon_reroll_log [on\|off\|toggle]` | Toggles AI reroll decision logging. Without arguments, shows current state. |
+| `cosmicon_casino_status` | `cosmicon_casino_status` | Shows casino collab status: Master Dicer Level, locked reward pools, current battle state, tournament status, and potential boss rewards. |
 
 | 命令 | 语法 | 说明 |
 |------|------|------|
-| `cosmicon_status` | `cosmicon_status [verbose]` | 显示当前状态：胜负场次、解锁情况、已选角色、教程进度。`verbose`：额外列出所有解锁项、配置和内存键。 |
-| `cosmicon_config` | `cosmicon_config [show\|set <键> <值>]` | 显示或修改运行时配置。可设置的键：`cosmiconDiceEnabled`、`marketSizeMin`、`defaultHP`、`defaultRerolls`、`debugEnabled`、`rerollLogEnabled`。修改不会写入文件。 |
-| `cosmicon_casino_status` | `cosmicon_casino_status` | 显示赌场联动状态：赌神等级、未领取奖励池、当前对战状态、挑战赛进度及可能的Boss奖励。 |
+| `cosmicon_status` | `cosmicon_status [verbose]` | 显示当前状态：胜负场次、游戏模式、解锁情况、加成、已选角色、教程进度。`verbose`：额外列出所有解锁项、配置和 `$cos_*` 内存键。 |
+| `cosmicon_config` | `cosmicon_config [show\|set <键> <值>]` | 显示或修改运行时配置。可设置的键：`cosmiconDiceEnabled`、`marketSizeMin`、`defaultHP`、`defaultRerolls`、`debugEnabled`、`verboseEnabled`、`rerollLogEnabled`。修改不会写入文件。 |
+| `cosmicon_debug` | `cosmicon_debug [off\|debug\|verbose\|reroll]` | 统一调试日志控制。`off`：关闭所有。`debug`：启用二级日志（战斗流程、伤害、状态效果）。`verbose`：启用二级+三级日志（AI内部、骰子重置、动画）。`reroll`：切换AI重投日志。不带参数显示当前状态。 |
 | `cosmicon_reroll_log` | `cosmicon_reroll_log [on\|off\|toggle]` | 切换AI重投决策日志。不带参数显示当前状态。 |
+| `cosmicon_casino_status` | `cosmicon_casino_status` | 显示赌场联动状态：赌神等级、未领取奖励池、当前对战状态、挑战赛进度及可能的Boss奖励。 |
 
 ### Example Usage / 使用示例
 
@@ -140,14 +269,23 @@ cosmicon_unlock all
 # Unlock the true version of a specific prismatic dice
 cosmicon_unlock prismatic true repeater
 
-# Check casino collab status
-cosmicon_casino_status
+# Set debug level to verbose
+cosmicon_debug verbose
+
+# Toggle AI reroll logging (via unified command)
+cosmicon_debug reroll
+
+# Toggle AI reroll logging (legacy command)
+cosmicon_reroll_log toggle
 
 # Show full debug status
 cosmicon_status verbose
 
-# Toggle AI reroll logging
-cosmicon_reroll_log toggle
+# Check casino collab status
+cosmicon_casino_status
+
+# Show runtime config
+cosmicon_config show
 ```
 
 ```
@@ -169,12 +307,21 @@ cosmicon_unlock all
 # 解锁指定曜彩骰的真版本
 cosmicon_unlock prismatic true repeater
 
-# 查看赌场联动状态
-cosmicon_casino_status
+# 设置调试级别为详细
+cosmicon_debug verbose
+
+# 切换AI重投日志（统一命令）
+cosmicon_debug reroll
+
+# 切换AI重投日志（旧命令）
+cosmicon_reroll_log toggle
 
 # 显示完整调试信息
 cosmicon_status verbose
 
-# 切换AI重投日志
-cosmicon_reroll_log toggle
+# 查看赌场联动状态
+cosmicon_casino_status
+
+# 显示运行时配置
+cosmicon_config show
 ```
