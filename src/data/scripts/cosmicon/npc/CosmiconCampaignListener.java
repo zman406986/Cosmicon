@@ -46,6 +46,8 @@ public class CosmiconCampaignListener extends BaseCampaignEventListener {
         CHARACTER_PORTRAITS.put("furbo_journalist", "graphics/cosmicon/portraits/Furbo.png");
         CHARACTER_PORTRAITS.put("bananadvisor", "graphics/cosmicon/portraits/Bananadvisor.png");
         CHARACTER_PORTRAITS.put("senior_staff", "graphics/cosmicon/portraits/Senior Staff.png");
+        CHARACTER_PORTRAITS.put("trashcan", "graphics/cosmicon/Cards/Characters/Trashcan.png");
+        CHARACTER_PORTRAITS.put("trashcan_basic", "graphics/cosmicon/Cards/Characters/Trashcan.png");
     }
 
     public CosmiconCampaignListener() {

@@ -1203,6 +1203,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
 
         UnifiedCoord.setCurrent(new UnifiedCoord.PanelContext(x, y, w, h));
 
+        if (battleState == null) return;
+
         try {
             GLStateUtil.resetBlendState();
 

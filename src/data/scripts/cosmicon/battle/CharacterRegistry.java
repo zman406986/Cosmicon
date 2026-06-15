@@ -54,12 +54,12 @@ public class CharacterRegistry {
 
             eligibleOpponents = new ArrayList<>();
             for (CharacterCard card : advancedCards) {
-                if (!isExcludedFromOpponents(card.getId())) {
+                if (isEligibleOpponent(card.getId())) {
                     eligibleOpponents.add(card);
                 }
             }
             for (CharacterCard card : basicCards) {
-                if (!isExcludedFromOpponents(card.getId())) {
+                if (isEligibleOpponent(card.getId())) {
                     eligibleOpponents.add(card);
                 }
             }
@@ -227,14 +227,14 @@ public class CharacterRegistry {
         return copies;
     }
 
-    private static boolean isExcludedFromOpponents(String id) {
-        return CharacterIds.TRASHCAN.equals(id);
+    private static boolean isEligibleOpponent(String id) {
+        return !CharacterIds.TRASHCAN.equals(id);
     }
 
     public static CharacterCard getRandomBasicOpponent() {
         List<CharacterCard> candidates = new ArrayList<>();
         for (CharacterCard card : basicCards) {
-            if (!isExcludedFromOpponents(card.getId())) {
+            if (isEligibleOpponent(card.getId())) {
                 candidates.add(card);
             }
         }
@@ -247,7 +247,7 @@ public class CharacterRegistry {
     public static CharacterCard getRandomUnownedBasicOpponent(java.util.Set<String> unlockedCharacters) {
         List<CharacterCard> candidates = new ArrayList<>();
         for (CharacterCard card : basicCards) {
-            if (!isExcludedFromOpponents(card.getId()) && !unlockedCharacters.contains(card.getId())) {
+            if (isEligibleOpponent(card.getId()) && !unlockedCharacters.contains(card.getId())) {
                 candidates.add(card);
             }
         }
@@ -257,10 +257,17 @@ public class CharacterRegistry {
         return candidates.get(ThreadLocalRandom.current().nextInt(candidates.size())).copy();
     }
 
+    public static boolean isBasicCharacter(String id) {
+        for (CharacterCard card : basicCards) {
+            if (card.getId().equals(id)) return true;
+        }
+        return false;
+    }
+
     public static CharacterCard getRandomAdvancedOpponent() {
         List<CharacterCard> candidates = new ArrayList<>();
         for (CharacterCard card : advancedCards) {
-            if (!isExcludedFromOpponents(card.getId())) {
+            if (isEligibleOpponent(card.getId())) {
                 candidates.add(card);
             }
         }

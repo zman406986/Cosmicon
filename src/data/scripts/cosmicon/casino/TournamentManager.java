@@ -8,6 +8,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import data.scripts.Strings;
+import data.scripts.cosmicon.battle.CharacterRegistry;
 
 public class TournamentManager {
 
@@ -117,6 +118,12 @@ public class TournamentManager {
     }
 
     private int simulateMatch(int slot1, int slot2) {
+        boolean slot1Basic = CharacterRegistry.isBasicCharacter(playerNames[slot1]);
+        boolean slot2Basic = CharacterRegistry.isBasicCharacter(playerNames[slot2]);
+
+        if (slot1Basic && !slot2Basic) return slot2;
+        if (!slot1Basic && slot2Basic) return slot1;
+
         return ThreadLocalRandom.current().nextBoolean() ? slot1 : slot2;
     }
 
@@ -631,10 +638,10 @@ public class TournamentManager {
             tm.lbMatchups = parseIntArray2D(obj.getJSONArray("lbMatchups"));
             tm.lbResults = parseIntArray2D(obj.getJSONArray("lbResults"));
 
-            if (!validateBracketArrays(tm.wbMatchups, WB_ROUNDS, WB_MATCH_COUNTS, true)) return null;
-            if (!validateBracketArrays(tm.wbResults, WB_ROUNDS, WB_MATCH_COUNTS, false)) return null;
-            if (!validateBracketArrays(tm.lbMatchups, LB_ROUNDS, LB_MATCH_COUNTS, true)) return null;
-            if (!validateBracketArrays(tm.lbResults, LB_ROUNDS, LB_MATCH_COUNTS, false)) return null;
+            if (isBracketArrayInvalid(tm.wbMatchups, WB_ROUNDS, WB_MATCH_COUNTS, true)) return null;
+            if (isBracketArrayInvalid(tm.wbResults, WB_ROUNDS, WB_MATCH_COUNTS, false)) return null;
+            if (isBracketArrayInvalid(tm.lbMatchups, LB_ROUNDS, LB_MATCH_COUNTS, true)) return null;
+            if (isBracketArrayInvalid(tm.lbResults, LB_ROUNDS, LB_MATCH_COUNTS, false)) return null;
 
             JSONArray gfArr = obj.getJSONArray("gfSeries");
             tm.gfSeries = new int[GF_SERIES_LENGTH];
@@ -672,14 +679,14 @@ public class TournamentManager {
         return result;
     }
 
-    private static boolean validateBracketArrays(int[][] arr, int expectedRounds,
+    private static boolean isBracketArrayInvalid(int[][] arr, int expectedRounds,
             int[] matchCounts, boolean isMatchups) {
-        if (arr.length != expectedRounds) return false;
+        if (arr.length != expectedRounds) return true;
         for (int r = 0; r < expectedRounds; r++) {
             int expectedLen = isMatchups ? matchCounts[r] * 2 : matchCounts[r];
-            if (arr[r] == null || arr[r].length != expectedLen) return false;
+            if (arr[r] == null || arr[r].length != expectedLen) return true;
         }
-        return true;
+        return false;
     }
 
     private void appendIntArray2D(StringBuilder sb, String key, int[][] arr) {

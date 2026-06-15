@@ -125,17 +125,42 @@ public class CasinoIntegrationManager {
             playerCharId = CharacterIds.TRASHCAN;
         }
 
-        List<String> opponentPool = new ArrayList<>();
+        boolean playerIsBasic = CharacterRegistry.isBasicCharacter(playerCharId);
+        int basicNeeded = playerIsBasic ? 3 : 4;
+        int advancedNeeded = playerIsBasic ? 4 : 3;
+
+        List<String> basicPool = new ArrayList<>();
+        List<String> advancedPool = new ArrayList<>();
         for (CharacterCard card : CharacterRegistry.getAllCards()) {
             String id = card.getId();
-            if (!id.equals(CharacterIds.TRASHCAN) && !id.equals(playerCharId)) {
-                opponentPool.add(id);
+            if (id.equals(playerCharId)) continue;
+            if (CharacterRegistry.isBasicCharacter(id)) {
+                if (!id.equals(CharacterIds.TRASHCAN)) {
+                    basicPool.add(id);
+                }
+            } else {
+                advancedPool.add(id);
             }
         }
-        Collections.shuffle(opponentPool, ThreadLocalRandom.current());
-        List<String> selectedOpponents = opponentPool.subList(0, Math.min(TOURNAMENT_OPPONENT_COUNT, opponentPool.size()));
+        Collections.shuffle(basicPool, ThreadLocalRandom.current());
+        Collections.shuffle(advancedPool, ThreadLocalRandom.current());
 
-        TournamentManager tournament = TournamentManager.createNew(selectedOpponents);
+        List<String> basics = new ArrayList<>(basicPool.subList(0, Math.min(basicNeeded, basicPool.size())));
+        List<String> advanceds = new ArrayList<>(advancedPool.subList(0, Math.min(advancedNeeded, advancedPool.size())));
+
+        // Slot layout: slot1=basic, slot2=advanced, slot3=basic, slot4=advanced,
+        //              slot5=basic, slot6=advanced, slot7=basic
+        // This ensures: R1 vs basic, if won vs advanced, if lost vs basic in LB
+        List<String> opponents = new ArrayList<>();
+        for (int i = 0; i < TOURNAMENT_OPPONENT_COUNT; i++) {
+            if (i % 2 == 0) {
+                opponents.add(basics.isEmpty() ? advanceds.remove(0) : basics.remove(0));
+            } else {
+                opponents.add(advanceds.isEmpty() ? basics.remove(0) : advanceds.remove(0));
+            }
+        }
+
+        TournamentManager tournament = TournamentManager.createNew(opponents);
         tournament.simulateUpToPlayerMatch();
 
         String json = tournament.toJson();

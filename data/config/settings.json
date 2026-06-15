@@ -12,8 +12,8 @@
     "npcMinLifetimeDays": 30,
     "npcMaxLifetimeDays": 60,
     "credits": {
-        "normalEncounterPerLevel": 1500,
-        "baseRewardPerLevel": 3000,
+        "normalEncounterPerLevel": 500,
+        "baseRewardPerLevel": 1000,
         "randomFactorMin": 0.9,
         "randomFactorMax": 1.1
     },

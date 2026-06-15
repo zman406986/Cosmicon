@@ -11,6 +11,7 @@ import com.fs.starfarer.api.impl.campaign.intel.bar.PortsideBarData;
 import com.fs.starfarer.api.impl.campaign.intel.bar.PortsideBarEvent;
 import com.fs.starfarer.api.impl.campaign.intel.bar.events.BarEventManager;
 import com.fs.starfarer.api.util.Misc;
+import com.thoughtworks.xstream.XStream;
 
 import data.scripts.cosmicon.battle.CharacterRegistry;
 import data.scripts.cosmicon.battle.CosmiconSprites;
@@ -21,6 +22,13 @@ import data.scripts.cosmicon.npc.CosmiconNPCManager;
 import data.scripts.cosmicon.state.CosmiconStats;
 
 public class CosmiconModPlugin extends BaseModPlugin {
+
+    @Override
+    public void configureXStream(XStream x) {
+        x.alias("CosmiconCampaignListener", CosmiconCampaignListener.class);
+        x.alias("CosmiconBarEvent", CosmiconBarEvent.class);
+        x.alias("CosmiconBarEventCreator", CosmiconBarEventCreator.class);
+    }
 
     @Override
     public void onApplicationLoad() {
