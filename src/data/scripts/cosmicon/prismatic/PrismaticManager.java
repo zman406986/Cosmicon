@@ -86,12 +86,7 @@ public class PrismaticManager {
         return available;
     }
     
-    public void applyQueuedEffects(BattleState state) {
-        applyQueuedEffectsFor(state, true);
-        applyQueuedEffectsFor(state, false);
-    }
-    
-    private void applyQueuedEffectsFor(BattleState state, boolean forPlayer) {
+    public void applyQueuedEffectsFor(BattleState state, boolean forPlayer) {
         List<PrismaticDiceInstance> selectedDice = state.getSelectedPrismaticDice(forPlayer);
         
         for (PrismaticDiceInstance dice : selectedDice) {

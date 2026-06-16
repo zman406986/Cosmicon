@@ -525,26 +525,6 @@ public class TurnProcessor {
     private void resolveDamage() {
         weatherController.applyPreResolution(state);
 
-        int prePrismaticAttack = state.getAttackValue();
-        int prePrismaticDefense = state.getDefenseValue();
-
-        state.applyPrismaticDiceEffects();
-
-        int postPrismaticAttack = state.getAttackValue();
-        int postPrismaticDefense = state.getDefenseValue();
-        
-        boolean playerIsAttacker = state.isPlayerAttacker();
-        if (postPrismaticAttack != prePrismaticAttack) {
-            int delta = postPrismaticAttack - prePrismaticAttack;
-            state.queueValueChange(playerIsAttacker, "PRISMATIC", delta);
-            state.notifyValueChange(playerIsAttacker, "PRISMATIC", prePrismaticAttack, postPrismaticAttack, delta);
-        }
-        if (postPrismaticDefense != prePrismaticDefense) {
-            int delta = postPrismaticDefense - prePrismaticDefense;
-            state.queueValueChange(!playerIsAttacker, "PRISMATIC", delta);
-            state.notifyValueChange(!playerIsAttacker, "PRISMATIC", prePrismaticDefense, postPrismaticDefense, delta);
-        }
-
         state.setCurrentPhase(TurnState.Phase.RESOLVING_PRE_CLASH);
         state.notifyPhaseChange(TurnState.Phase.RESOLVING_PRE_CLASH);
     }
@@ -1045,6 +1025,7 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
     
     private void applyPostSelectionProcessing(boolean forPlayer) {
         processPassiveEffects(forPlayer);
+        state.applyPrismaticDiceEffects(forPlayer);
         
         boolean isAttackPhase = state.getCurrentPhase() == TurnState.Phase.SELECTING_ATTACK;
         boolean isAttackerSide = forPlayer == state.isPlayerAttacker();
@@ -1214,7 +1195,6 @@ private void applyPostAnimationEffects(DamageResolver.DamageResult result) {
             String source = state.consumePendingStrengthSource(forPlayer);
             if (source == null) source = "passive.hyacine";
             StatusEffectProcessor effects = state.getEffects(forPlayer);
-            effects.removeFromSource(StatusEffectProcessor.StatusEffect.STRENGTH, source);
             effects.addEffect(StatusEffectProcessor.StatusEffect.STRENGTH, source, pending, DurationType.PERMANENT);
         }
     }

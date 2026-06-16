@@ -157,6 +157,10 @@ public class BattleInputHandler {
                         waitingForClickToRoll = false;
                         labels.hideClickHint();
                     } else if (diceRollManager.hasAnimators() || diceRollManager.isWaitingForRollTrigger()) {
+                        if (tutorialController != null) {
+                            lastMouseButtonState = currentButton;
+                            return;
+                        }
                         boolean showPlayerDice = battleState.isDefenderRolling() != battleState.isPlayerAttacker();
                         if (showPlayerDice && diceHitboxes.isEmpty()) {
                             List<DiceType> types = battleState.getPlayerDiceTypes();
@@ -175,6 +179,10 @@ public class BattleInputHandler {
                             battleController.advanceToSelectPhase();
                         }
                     } else if (diceRollManager.hasOpponentAnimators() || diceRollManager.isOpponentWaitingForRollTrigger()) {
+                        if (tutorialController != null) {
+                            lastMouseButtonState = currentButton;
+                            return;
+                        }
                         if (diceRollManager.isOpponentWaitingForRollTrigger()) {
                             diceRollManager.triggerOpponentRollFromStationary();
                         }
@@ -193,13 +201,15 @@ public class BattleInputHandler {
                 }
 
                 if (damageAnimator != null) {
-                    damageAnimator.forceComplete();
+                    if (tutorialController == null) {
+                        damageAnimator.forceComplete();
+                    }
                     lastMouseButtonState = currentButton;
                     return;
                 }
 
                 if (battleState.getCurrentPhase() == Phase.RESOLVING_MODIFICATION) {
-                    if (battleController != null) {
+                    if (tutorialController == null && battleController != null) {
                         battleController.proceedFromModificationPause();
                     }
                     lastMouseButtonState = currentButton;
@@ -218,6 +228,10 @@ public class BattleInputHandler {
                 boolean opponentRerollAnimating = diceRollManager.hasOpponentAnimators() && !diceRollManager.isOpponentComplete();
 
                 if (playerRerollAnimating || opponentRerollAnimating) {
+                    if (tutorialController != null) {
+                        lastMouseButtonState = currentButton;
+                        return;
+                    }
             if (playerRerollAnimating && canSkipPlayerAnim()) {
                 diceRollManager.forceCompleteAll();
             }

@@ -567,8 +567,8 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
         prismaticState.clearDiceMaps();
     }
     
-    public void applyPrismaticDiceEffects() {
-        prismaticManager.applyQueuedEffects(this);
+    public void applyPrismaticDiceEffects(boolean forPlayer) {
+        prismaticManager.applyQueuedEffectsFor(this, forPlayer);
     }
     
     public int getPrismaticDiceTotalValue(boolean isPlayer) {

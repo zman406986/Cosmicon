@@ -122,12 +122,14 @@ public class CharacterPassives {
 
     private static void evaluateHyacine(PassiveResult result, List<Integer> values, boolean isAttacking, int currentStrengthLayers) {
         if (!isAttacking || values == null || values.isEmpty()) return;
-        int totalAttack = sumOfValues(values) + currentStrengthLayers;
         if (allDiceEqualSix(values)) {
-            result.setPendingStrength(totalAttack);
+            result.setPendingStrength(sumOfValues(values));
             result.setHealAmount(6);
         } else {
-            result.setPendingStrength((totalAttack + 1) / 2);
+            int netNew = (sumOfValues(values) + currentStrengthLayers + 1) / 2 - currentStrengthLayers;
+            if (netNew > 0) {
+                result.setPendingStrength(netNew);
+            }
         }
     }
 
