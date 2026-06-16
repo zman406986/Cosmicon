@@ -65,6 +65,7 @@
         "no_selection": "Select dice...",
         "prismatic_effect_none": "",
         "weather_none": "None",
+        "active_status_effects": "Active Status Effects:",
         "weather_effects": "Weather Effects",
         "weather_none_desc": "No weather is active yet. Weather will appear starting from turn 2.",
         "weather_category": "Category: {0}"

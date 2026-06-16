@@ -193,8 +193,8 @@ public class BattleUIButtons implements ActionListenerDelegate {
         float opponentBtnX = opponentBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
 
         TooltipMakerAPI opponentTp = UIComponentFactory.createTooltipForButtons(panel, this,
-            BattleRenderingUtils.STATUS_BOX_WIDTH, BattleRenderingUtils.CARD_HEIGHT,
-            opponentBtnX, opponentCardY + BattleRenderingUtils.STATUS_BOX_PADDING);
+            BattleRenderingUtils.STATUS_BOX_WIDTH, BattleRenderingUtils.CARD_HEIGHT - BattleUILabels.STATUS_TITLE_HEIGHT,
+            opponentBtnX, opponentCardY + BattleUILabels.STATUS_TITLE_HEIGHT + BattleRenderingUtils.STATUS_BOX_PADDING);
 
         for (int i = 0; i < BattleUILabels.MAX_STATUS_EFFECTS; i++) {
             float yOffset = i * spacing;
@@ -235,8 +235,8 @@ public class BattleUIButtons implements ActionListenerDelegate {
         float playerBtnX = playerBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
 
         TooltipMakerAPI playerTp = UIComponentFactory.createTooltipForButtons(panel, this,
-            BattleRenderingUtils.STATUS_BOX_WIDTH, BattleRenderingUtils.CARD_HEIGHT,
-            playerBtnX, playerCardY + BattleRenderingUtils.STATUS_BOX_PADDING);
+            BattleRenderingUtils.STATUS_BOX_WIDTH, BattleRenderingUtils.CARD_HEIGHT - BattleUILabels.STATUS_TITLE_HEIGHT,
+            playerBtnX, playerCardY + BattleUILabels.STATUS_TITLE_HEIGHT + BattleRenderingUtils.STATUS_BOX_PADDING);
 
         for (int i = 0; i < BattleUILabels.MAX_STATUS_EFFECTS; i++) {
             float yOffset = i * spacing;

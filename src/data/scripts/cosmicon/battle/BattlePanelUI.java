@@ -294,9 +294,9 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             BattleRenderingUtils.MARGIN + 5f + 17f,
             BattleRenderingUtils.MARGIN + 14f + 10f);
         float playerBoxX = BattleRenderingUtils.PLAYER_CARD_X - BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
-        playerStatusBoxCoord = new UnifiedCoord(playerBoxX, BattleRenderingUtils.PLAYER_CARD_Y);
+        playerStatusBoxCoord = new UnifiedCoord(playerBoxX, BattleRenderingUtils.PLAYER_CARD_Y + BattleUILabels.STATUS_TITLE_HEIGHT);
         float opponentBoxX = BattleRenderingUtils.OPPONENT_CARD_X + BattleRenderingUtils.CARD_WIDTH + 20f;
-        opponentStatusBoxCoord = new UnifiedCoord(opponentBoxX, BattleRenderingUtils.OPPONENT_CARD_Y);
+        opponentStatusBoxCoord = new UnifiedCoord(opponentBoxX, BattleRenderingUtils.OPPONENT_CARD_Y + BattleUILabels.STATUS_TITLE_HEIGHT);
         opponentPrismaticBtnCoord = new UnifiedCoord(opponentPrismaticBtnX, opponentPrismaticBtnY);
         legend999HintBoxCoord = new UnifiedCoord(
             (BattleRenderingUtils.PANEL_WIDTH - 440f) / 2f, 35f);
@@ -1431,17 +1431,19 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
     }
 
     private void renderStatusEffectBoxes(float alphaMult) {
+        float boxH = BattleRenderingUtils.CARD_HEIGHT - BattleUILabels.STATUS_TITLE_HEIGHT;
+
         float playerBoxGlX = playerStatusBoxCoord.glX();
-        float playerBoxGlY = playerStatusBoxCoord.glSpriteY(BattleRenderingUtils.CARD_HEIGHT);
+        float playerBoxGlY = playerStatusBoxCoord.glSpriteY(boxH);
 
         BattleRenderingUtils.renderStatusEffectBox(playerBoxGlX, playerBoxGlY,
-            BattleRenderingUtils.STATUS_BOX_WIDTH, BattleRenderingUtils.CARD_HEIGHT, alphaMult);
+            BattleRenderingUtils.STATUS_BOX_WIDTH, boxH, alphaMult);
 
         float opponentBoxGlX = opponentStatusBoxCoord.glX();
-        float opponentBoxGlY = opponentStatusBoxCoord.glSpriteY(BattleRenderingUtils.CARD_HEIGHT);
+        float opponentBoxGlY = opponentStatusBoxCoord.glSpriteY(boxH);
 
         BattleRenderingUtils.renderStatusEffectBox(opponentBoxGlX, opponentBoxGlY,
-            BattleRenderingUtils.STATUS_BOX_WIDTH, BattleRenderingUtils.CARD_HEIGHT, alphaMult);
+            BattleRenderingUtils.STATUS_BOX_WIDTH, boxH, alphaMult);
     }
 
     private void renderWeatherDescBox(float alphaMult) {

@@ -4,6 +4,7 @@ import data.scripts.cosmicon.character.PassiveEventSystem;
 import data.scripts.cosmicon.prismatic.PrismaticDiceInstance;
 import data.scripts.cosmicon.prismatic.PrismaticDiceType;
 import data.scripts.cosmicon.prismatic.PrismaticEffect;
+import data.scripts.cosmicon.state.CosmiconStats;
 import data.scripts.cosmicon.tutorial.TutorialDiceRoller;
 import data.scripts.cosmicon.util.CosmiconLogger;
 import data.scripts.cosmicon.util.CosmiconRandom;
@@ -77,7 +78,12 @@ public class DiceRoller {
         for (DiceType type : types) {
             int maxRoll = getMaxRoll(type.getMaxFace(), isAttacker);
             
-            int value = CosmiconRandom.nextInt(maxRoll - minRoll + 1) + minRoll;
+            int value;
+            if (shouldApplyEasyModeDiceBonus(forPlayer)) {
+                value = rollEasyBonus(minRoll, maxRoll);
+            } else {
+                value = CosmiconRandom.nextInt(maxRoll - minRoll + 1) + minRoll;
+            }
             values.add(value);
             selected.add(false);
         }
@@ -89,6 +95,19 @@ public class DiceRoller {
         state.notifyDiceRolled(forPlayer, types, values);
         
         logDiceRoll(card.getName(), types, values, isAttacker);
+    }
+    
+    private static boolean shouldApplyEasyModeDiceBonus(boolean forPlayer) {
+        return forPlayer
+            && CosmiconStats.isEasyModeActive()
+            && !CosmiconStats.isEasyModeComplete();
+    }
+    
+    private static int rollEasyBonus(int minRoll, int maxRoll) {
+        int range = maxRoll - minRoll + 1;
+        int roll1 = CosmiconRandom.nextInt(range) + minRoll;
+        int roll2 = CosmiconRandom.nextInt(range) + minRoll;
+        return Math.max(roll1, roll2);
     }
     
     private void logDiceRoll(String character, List<DiceType> types, List<Integer> values, boolean isAttacker) {
@@ -153,7 +172,12 @@ public class DiceRoller {
                 } else {
                     int maxRoll = getMaxRoll(type.getMaxFace(), isAttacker);
                     
-                    int value = CosmiconRandom.nextInt(maxRoll - minRoll + 1) + minRoll;
+                    int value;
+                    if (shouldApplyEasyModeDiceBonus(forPlayer)) {
+                        value = rollEasyBonus(minRoll, maxRoll);
+                    } else {
+                        value = CosmiconRandom.nextInt(maxRoll - minRoll + 1) + minRoll;
+                    }
                     values.set(i, value);
                 }
                 rerolledIndices.add(i);

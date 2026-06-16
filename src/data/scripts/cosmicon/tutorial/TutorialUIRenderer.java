@@ -18,7 +18,7 @@ import data.scripts.cosmicon.util.UnifiedCoord;
 public class TutorialUIRenderer {
 
     private static final float TEXT_BOX_WIDTH = 440f;
-    private static final float TEXT_BOX_HEIGHT = 80f;
+    private static final float TEXT_BOX_HEIGHT = 86f;
     private static final float TEXT_BOX_MARGIN = 10f;
     private static final float TEXT_BOX_X_OFFSET = 140f;
     private static final float PULSE_SPEED = 3f;

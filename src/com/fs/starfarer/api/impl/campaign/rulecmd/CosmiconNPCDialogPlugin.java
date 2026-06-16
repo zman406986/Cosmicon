@@ -60,11 +60,19 @@ public class CosmiconNPCDialogPlugin extends BaseCommandPlugin implements Intera
                 if (CosmiconStats.isEasyModeComplete()) {
                     CosmiconEventState.setOpponentCharacter(CharacterIds.ROBIN);
                     CosmiconEventState.setIsTutorialMode(true);
+                } else if (npcCharId != null && CharacterIds.EASY_MODE_CHARACTERS.contains(npcCharId)) {
+                    CosmiconEventState.setOpponentCharacter(npcCharId);
+                    CosmiconEventState.setOriginalNpcCharId(npcCharId);
+
+                    CharacterCard opponentCard = CharacterRegistry.getCharacterById(npcCharId);
+                    if (opponentCard != null) {
+                        configureOpponentPrismaticDefaults(opponentCard);
+                    }
                 } else {
                     assignRandomUnownedBasicOpponent();
                 }
             } else {
-                if (npcCharId != null && !CharacterIds.EASY_MODE_CHARACTERS.contains(npcCharId)) {
+                if (npcCharId != null) {
                     CosmiconEventState.setOpponentCharacter(npcCharId);
                     CosmiconEventState.setOriginalNpcCharId(npcCharId);
 

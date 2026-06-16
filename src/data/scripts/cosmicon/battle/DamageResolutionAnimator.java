@@ -920,7 +920,7 @@ public class DamageResolutionAnimator {
         if (phase == Phase.IDLE) return;
 
         BattleRenderingUtils.setupScissor(panelX, panelY, panelWidth, panelHeight);
-        renderNumbersOnIcons(panelX, panelY, panelHeight, alphaMult);
+        renderNumbersOnIcons(panelX, panelY, panelWidth, panelHeight, alphaMult);
 
         if (phase != Phase.COMBO_PAUSE && phase != Phase.COMBO_ICON_RETREAT) {
             shatterEffect.render(panelX, panelY, panelWidth, panelHeight, alphaMult);
@@ -935,7 +935,14 @@ public class DamageResolutionAnimator {
         BattleRenderingUtils.disableScissor();
     }
 
-    private void renderNumbersOnIcons(float panelX, float panelY, float panelHeight, float alphaMult) {
+    private boolean isIconInPanel(FlyingIcon icon, float panelWidth, float panelHeight) {
+        if (icon == null) return false;
+        float x = icon.getX();
+        float y = icon.getY();
+        return x >= 0f && x <= panelWidth && y >= 0f && y <= panelHeight;
+    }
+
+    private void renderNumbersOnIcons(float panelX, float panelY, float panelWidth, float panelHeight, float alphaMult) {
         boolean shouldRenderNumbers = phase == Phase.ICON_PREPARATION ||
             phase == Phase.ICON_ROTATION ||
             phase == Phase.ICON_DRAWBACK ||
@@ -967,8 +974,9 @@ public class DamageResolutionAnimator {
 
             if (atkFlyingIcon != null && !atkHiddenBySplit) {
                 atkFlyingIcon.render(panelX, panelY, panelHeight, alphaMult);
-                atkFlyingIcon.setLabelOpacity(
-                    (duringComboClash || (duringComboWinnerFly && !comboIconOffScreen)) ? alphaMult : 0f);
+                boolean atkLabelVisible = (duringComboClash || (duringComboWinnerFly && !comboIconOffScreen))
+                    && isIconInPanel(atkFlyingIcon, panelWidth, panelHeight);
+                atkFlyingIcon.setLabelOpacity(atkLabelVisible ? alphaMult : 0f);
             }
             if (defFlyingIcon != null && !defHiddenBySplit) {
                 defFlyingIcon.render(panelX, panelY, panelHeight, alphaMult);
@@ -1008,9 +1016,10 @@ public class DamageResolutionAnimator {
 
         if (atkFlyingIcon != null && !atkHiddenBySplit && (!atkShattered || (restoring && splitDone))) {
             float restoreAlpha = atkShattered ? shatterRestoreAlpha : alphaMult;
-            boolean iconOffScreen = phase == Phase.WINNER_SLASH_PAUSE || phase == Phase.WINNER_SLASH_TRAIL;
+            boolean showLabel = phase != Phase.WINNER_SLASH_PAUSE && phase != Phase.WINNER_SLASH_TRAIL
+                && isIconInPanel(atkFlyingIcon, panelWidth, panelHeight);
             atkFlyingIcon.render(panelX, panelY, panelHeight, restoreAlpha);
-            atkFlyingIcon.setLabelOpacity(iconOffScreen ? 0f : restoreAlpha);
+            atkFlyingIcon.setLabelOpacity(showLabel ? restoreAlpha : 0f);
         }
         if (defFlyingIcon != null && !defHiddenBySplit && (!defShattered || (restoring && splitDone))) {
             float restoreAlpha = defShattered ? shatterRestoreAlpha : alphaMult;

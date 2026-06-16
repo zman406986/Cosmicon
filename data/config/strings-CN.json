@@ -65,6 +65,7 @@
         "no_selection": "选择骰子...",
         "prismatic_effect_none": "",
         "weather_none": "无天气",
+        "active_status_effects": "当前状态效果:",
         "weather_effects": "天气效果",
         "weather_none_desc": "暂无天气。第2回合起开始出现天气",
         "weather_category": "类别：{0}"

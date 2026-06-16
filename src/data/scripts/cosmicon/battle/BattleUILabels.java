@@ -70,9 +70,12 @@ public class BattleUILabels {
 
     private List<LabelAPI> playerStatusLabels;
     private List<LabelAPI> opponentStatusLabels;
-    static final int MAX_STATUS_EFFECTS = 8;
+    private LabelAPI playerStatusTitleLabel;
+    private LabelAPI opponentStatusTitleLabel;
+    static final int MAX_STATUS_EFFECTS = 7;
     static final float STATUS_LABEL_SPACING = 20f;
     static final float STATUS_LABEL_HEIGHT = 18f;
+    static final float STATUS_TITLE_HEIGHT = 22f;
 
     private record EffectInstanceKey(StatusEffectProcessor.StatusEffect effect, String source) {}
 
@@ -226,6 +229,10 @@ public class BattleUILabels {
             opponentStatusLabels.clear();
             opponentStatusLabels = null;
         }
+        removeAndNullLabel(playerStatusTitleLabel);
+        playerStatusTitleLabel = null;
+        removeAndNullLabel(opponentStatusTitleLabel);
+        opponentStatusTitleLabel = null;
 
         panel = null;
         battleState = null;
@@ -299,17 +306,33 @@ public class BattleUILabels {
         float opponentCardY = BattleRenderingUtils.OPPONENT_CARD_Y;
         float opponentBoxX = opponentCardX + BattleRenderingUtils.CARD_WIDTH + 20f;
 
+        float titleLabelW = BattleRenderingUtils.STATUS_BOX_WIDTH - 2f * BattleRenderingUtils.STATUS_BOX_PADDING;
+        float titleLabelH = 14f;
+        float titleLabelY = playerCardY + (STATUS_TITLE_HEIGHT - titleLabelH) / 2f;
+        float opponentTitleLabelY = opponentCardY + (STATUS_TITLE_HEIGHT - titleLabelH) / 2f;
+
+        playerStatusTitleLabel = UIComponentFactory.createLabelSmall(panel,
+            Strings.get("battle.active_status_effects"), Color.LIGHT_GRAY, Alignment.LMID,
+            titleLabelW, titleLabelH, playerBoxX + BattleRenderingUtils.STATUS_BOX_PADDING, titleLabelY);
+
+        opponentStatusTitleLabel = UIComponentFactory.createLabelSmall(panel,
+            Strings.get("battle.active_status_effects"), Color.LIGHT_GRAY, Alignment.LMID,
+            titleLabelW, titleLabelH, opponentBoxX + BattleRenderingUtils.STATUS_BOX_PADDING, opponentTitleLabelY);
+
+        float effectYBase = playerCardY + STATUS_TITLE_HEIGHT + BattleRenderingUtils.STATUS_BOX_PADDING;
+        float opponentEffectYBase = opponentCardY + STATUS_TITLE_HEIGHT + BattleRenderingUtils.STATUS_BOX_PADDING;
+
         for (int i = 0; i < MAX_STATUS_EFFECTS; i++) {
             float yOffset = i * STATUS_LABEL_SPACING;
             LabelAPI playerLabel = UIComponentFactory.createLabelSmall(panel, "",
                 Color.WHITE, Alignment.LMID, BattleRenderingUtils.STATUS_BOX_WIDTH - 2f * BattleRenderingUtils.STATUS_BOX_PADDING, STATUS_LABEL_HEIGHT,
-                playerBoxX + BattleRenderingUtils.STATUS_BOX_PADDING, playerCardY + BattleRenderingUtils.STATUS_BOX_PADDING + yOffset);
+                playerBoxX + BattleRenderingUtils.STATUS_BOX_PADDING, effectYBase + yOffset);
             playerLabel.setOpacity(0f);
             playerStatusLabels.add(playerLabel);
 
             LabelAPI opponentLabel = UIComponentFactory.createLabelSmall(panel, "",
                 Color.WHITE, Alignment.LMID, BattleRenderingUtils.STATUS_BOX_WIDTH - 2f * BattleRenderingUtils.STATUS_BOX_PADDING, STATUS_LABEL_HEIGHT,
-                opponentBoxX + BattleRenderingUtils.STATUS_BOX_PADDING, opponentCardY + BattleRenderingUtils.STATUS_BOX_PADDING + yOffset);
+                opponentBoxX + BattleRenderingUtils.STATUS_BOX_PADDING, opponentEffectYBase + yOffset);
             opponentLabel.setOpacity(0f);
             opponentStatusLabels.add(opponentLabel);
         }
@@ -602,7 +625,7 @@ public class BattleUILabels {
         float playerCardY = BattleRenderingUtils.PLAYER_CARD_Y;
         float playerBoxX = playerCardX - BattleRenderingUtils.STATUS_BOX_WIDTH - 20f;
         float x = playerBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
-        float y = playerCardY + BattleRenderingUtils.STATUS_BOX_PADDING + displayIndex * STATUS_LABEL_SPACING;
+        float y = playerCardY + STATUS_TITLE_HEIGHT + BattleRenderingUtils.STATUS_BOX_PADDING + displayIndex * STATUS_LABEL_SPACING;
         float w = BattleRenderingUtils.STATUS_BOX_WIDTH - 2f * BattleRenderingUtils.STATUS_BOX_PADDING;
         return new float[]{x, y, w, STATUS_LABEL_HEIGHT};
     }
@@ -612,7 +635,7 @@ public class BattleUILabels {
         float opponentCardY = BattleRenderingUtils.OPPONENT_CARD_Y;
         float opponentBoxX = opponentCardX + BattleRenderingUtils.CARD_WIDTH + 20f;
         float x = opponentBoxX + BattleRenderingUtils.STATUS_BOX_PADDING;
-        float y = opponentCardY + BattleRenderingUtils.STATUS_BOX_PADDING + displayIndex * STATUS_LABEL_SPACING;
+        float y = opponentCardY + STATUS_TITLE_HEIGHT + BattleRenderingUtils.STATUS_BOX_PADDING + displayIndex * STATUS_LABEL_SPACING;
         float w = BattleRenderingUtils.STATUS_BOX_WIDTH - 2f * BattleRenderingUtils.STATUS_BOX_PADDING;
         return new float[]{x, y, w, STATUS_LABEL_HEIGHT};
     }
