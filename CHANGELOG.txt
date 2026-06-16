@@ -1,24 +1,12 @@
 Version 0.3.0
-- New content: 6 basic characters (Chimera, Dromas, Automaton Beetle, Furbo Journalist, BananAdvisor, Senior Staff). Easy Mode: collect all 7, unlock Tutorial 2. Bonus Selection: +9HP, +1ATK, +1DEF, or credit bonus. Tutorial 1 vs Trashcan with revised rolls and 2 reroll steps.
-- Audio: SFX system (UI, impacts, dice roll, clash, win/lose, damage) synced to animation.
-- Damage animation: new slash trail effects on winning attacks, clash sequences, and impact SFX.
-- Battle UI: base+bonus breakdown, passive/weather preview, tier-scaled credit bonus, win countdown to next bonus, portrait scaling fix.
-- Tutorial: visual highlights on interactable dice and buttons. Tutorial 2 covers prismatic dice and weather.
-- Character setup: confirm/cancel in header, bonus selection in bottom bar.
-- New game+ saves auto-complete Tutorial 1.
-- Easy mode: weather and prismatic dice active in casino/tournament. No credit loss on defeat.
-- Credit rewards: always awarded alongside character/prismatic unlocks.
-- True prismatic dice: second unlock tier after owning the base version.
-- Update notification on game load for existing players.
-- Terminology: '2-star/3-star' renamed to 'basic/advanced'.
-- CN localization overhaul.
-- Extra Rerolls status effect (Automaton Beetle, BananAdvisor).
-- NPC dialogue detection overhauled.
-- Removed 4 prismatic dice (Mirror, Sanctions, Strategy, Toxic). Gatekeeper and TrashcanHunter renamed to Legend.
-- Optimized AI reroll performance.
-- Global bonus selection: stat/credit bonus persists across all characters.
+- New content: 7 basic characters that comes with Easy Mode as default starting point and equippable bonuses.
+- New Sound effects audio system synced to animation.
+- Improved Battle UI with new damage animation, base+bonus dice values breakdown, visual highlights on tutorial interactables.
+- Harmonize terminology, NPC display strings and CN localization overhaul.
+- Massively optimized AI reroll strategy and performance.
 - Tournament opponents alternate basic and advanced characters for fairer brackets.
-- Bug fixes: tournament rewards, AI passives, status effects, weather interactions, UI layout, tutorial flow, credit balance, crash on re-entering battle, rematch exploit, Trashcan Basic missing passive, NPC/reward mismatch, tutorial 2 progression, fallback auto-unlock.
+- Rebalanced credit rewards to give less by default (easy mode) and more on harder settings.
+- A ton of bug fixes.
 
 Version 0.2.0
 - Changed entry point from bars to comms (Custom NPCs generated for playing against).
