@@ -58,7 +58,7 @@ public class CharacterPassives {
         return switch (characterId) {
             case ACHERON -> isAttacking && dieValue == 4;
             case FIREFLY, CHIMERA -> isAttacking && freq[dieValue] >= 2;
-            case ROBIN, DROMAS -> isAttacking && dieValue % 2 == 0;
+            case ROBIN, DROMAS, TRASHCAN, TRASHCAN_BASIC -> isAttacking && dieValue % 2 == 0;
             case AVENTURINE -> isAttacking && dieValue % 2 != 0;
             case KAFKA, DAN_HENG -> isAttacking;
             case MARCH_7TH, SPARXIE -> freq[dieValue] >= 2;
@@ -67,7 +67,6 @@ public class CharacterPassives {
             case AUTOMATON_BEETLE, BANANADVISOR -> !isAttacking;
             case FURBO_JOURNALIST -> !isAttacking && dieValue % 2 != 0;
             case SENIOR_STAFF -> true;
-            case TRASHCAN, TRASHCAN_BASIC -> isAttacking && dieValue % 2 == 0;
             default -> false;
         };
     }
@@ -135,9 +134,9 @@ public class CharacterPassives {
     private static void evaluateTrashcan(PassiveResult result, List<Integer> values, boolean isAttacking) {
         if (!isAttacking || values == null || values.isEmpty()) return;
         if (allEven(values)) {
-            result.addGrantedEffect(StatusEffect.STRENGTH, 4);
+            result.setPendingStrength(4);
         } else {
-            result.addGrantedEffect(StatusEffect.STRENGTH, 2);
+            result.setPendingStrength(2);
         }
     }
 

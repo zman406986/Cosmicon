@@ -14,6 +14,7 @@
         "master_dicer_welcome": "The Cosmicon players eye you warily. Word of your mastery has spread. 'Master Dicer Level {0},' someone whispers.",
         "master_dicer_welcome_legend": "The Cosmicon players eye you with awe. Word of your legend has spread. 'The Legend,' someone whispers.",
         "session_won": "You've won this round! Find another opponent to play again.",
+        "session_lost": "You lost this round! Rematch by pressing Start Game, or check Character Setup to equip bonuses and pick a character with a better matchup.",
         "replay_tutorial_1": "Replay Tutorial Game 1",
         "replay_tutorial_2": "Replay Tutorial Game 2",
         "replay_unrecorded": "(Replay tutorial - stats not recorded)",
@@ -44,7 +45,7 @@
         "casino_title": "=== Interstellar Casino Collab ===",
         "casino_1": "If the Interstellar Casino mod is also loaded, access the Cosmicon Dice Lounge from the Casino main menu.",
         "casino_2": "Features: Challenge the Legend (5k stargems) and Join a Tournament (15k stargems, requires defeating the Legend).",
-        "casino_3": "Collab features unlock after completing the Cosmicon tutorial at bars.",
+        "casino_3": "Collab features unlock after collecting all 7 basic characters from bar encounters.",
         "back": "Back"
     },
     "battle": {
@@ -579,7 +580,7 @@
     "tutorial": {
         "no_prismatic_allowed": "Tutorial mode: Prismatic dice are disabled for this game.",
         "games_remaining": "Tutorial mode - {0} games remaining",
-        "g1_reward": "You unlocked [Chimera] (basic character)! You are now in Easy Mode. Win random encounters to collect all 7 basic characters.",
+        "g1_reward": "You unlocked [Chimera] and [Trashcan] (basic characters)! You are now in Easy Mode. Win one more random encounter to unlock a stat bonus!",
         "g2_reward": "You unlocked [Acheron] and the [Repeater] prismatic dice! The full game is now available. Seek out random encounters to unlock more characters and dice!",
         "g2_unlock_option": "Unlock character [Acheron] and prismatic dice [Repeater]",
 
@@ -765,6 +766,7 @@
         "master_dicer_greeting": "The lounge attendants nod respectfully. 'Welcome back, Master Dicer Level {0}.'",
         "master_dicer_greeting_legend": "The lounge attendants bow deeply. 'Welcome back, Legend.'",
         "tutorial_required": "The bouncer stops you. 'Sorry, you need to learn the basics at the bar first. Come back after you've completed your Cosmicon training.'",
+        "easy_mode_required": "The bouncer stops you. 'Sorry, you need more experience first. Collect all 7 basic characters at bars before entering the lounge.'",
         "legend": "Challenge the Legend (5,000 Stargems)",
         "legend_insufficient": "You don't have enough Stargems for the entry fee. You need 5,000 Stargems.",
         "legend_tournament_active": "Cannot challenge the Legend while a tournament is in progress.",

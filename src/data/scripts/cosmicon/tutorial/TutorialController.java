@@ -160,8 +160,8 @@ public class TutorialController {
         }
     }
 
-    public boolean isDiceClickable() {
-        if (complete) return true;
+    public boolean isDiceClickBlocked() {
+        if (complete) return false;
 
         return switch (currentStep) {
             case G1_T1_DEFENSE_SELECT,
@@ -177,8 +177,8 @@ public class TutorialController {
                  G2_T3_ATTACK_REROLL2,
                  G2_T3_ATTACK_SELECT,
                  G2_T3_DEFENSE_SELECT,
-                 G2_T4_ATTACK_SELECT -> true;
-            default -> false;
+                 G2_T4_ATTACK_SELECT -> false;
+            default -> true;
         };
     }
 
@@ -360,11 +360,11 @@ public class TutorialController {
         };
     }
 
-    public boolean isContinueAllowed() {
+    public boolean isContinueBlocked() {
         // Always allow continue during WAITING_NEXT_TURN/ENDED phases.
         // The phase check in BattleUIButtons already gates the button appropriately.
         // RESOLVE steps need Continue to advance the tutorial.
-        return true;
+        return false;
     }
 
     public boolean isIntroStep() {
@@ -380,7 +380,7 @@ public class TutorialController {
     public List<Integer> getIndicatedDiceIndices() {
         List<Integer> indices = new ArrayList<>();
         if (complete) return indices;
-        if (!isDiceClickable()) return indices;
+        if (isDiceClickBlocked()) return indices;
 
         List<Boolean> selected = battleState.getPlayerDiceSelected();
         for (int i = 0; i < selected.size(); i++) {

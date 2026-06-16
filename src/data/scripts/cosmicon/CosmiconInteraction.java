@@ -145,6 +145,10 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
             options.addOption(Strings.get("menu.start_game"), "start_game");
         }
 
+        if (CosmiconEventState.isSessionLost() && !isTutorial) {
+            textPanel.addPara(Strings.get("menu.session_lost"));
+        }
+
         options.addOption(Strings.get("menu.character_setup"), "character_setup");
         if (CosmiconStats.isTutorial1Completed() && !CosmiconStats.isInTutorialMode()) {
             options.addOption(Strings.get("menu.replay_tutorial_1"), "replay_tutorial_1");
@@ -292,7 +296,6 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
     private void startBattleWithSelection() {
         Boolean forcedPlayerIsAttacker = null;
         if (TutorialController.shouldActivateTutorial()) {
-            TutorialController.TutorialGame tutorialGame = TutorialController.determineTutorialGame();
             forcedPlayerIsAttacker = false;
         }
 
@@ -431,6 +434,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
         if (!CosmiconEventState.isTutorialMode()) {
             CosmiconStats.incrementGamesPlayed();
+            CosmiconEventState.setSessionLost(true);
         }
 
         showDefeatMenu();
@@ -1255,6 +1259,7 @@ public class CosmiconInteraction implements InteractionDialogPlugin {
 
     private void markSessionWon() {
         CosmiconEventState.setSessionWon(true);
+        CosmiconEventState.setSessionLost(false);
     }
 
     private void finishReward() {

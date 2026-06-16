@@ -19,7 +19,7 @@ Weather affects both players and changes at start of turn 2/4/6/8. Effects are p
 | Cyclonic Swarm      | 飓风      | Attack    | 2    | Both sides gain Combo when attacking                                        | 双方攻击时均获得连击                        |
 | Blizzard            | 暴雪      | Safeguard | 4    | DEF ≤8: gain Forcefield this turn                                           | 防御方选定骰子时，若防御值≤8点，则其在本回合获得力场       |
 | Frog Rain           | 青蛙雨     | Help      | 2    | Neither side rolls minimum dice value                                       | 双方所有骰子均不会掷出最小值                    |
-| Fish Rain           | 雨       | Help      | 2    | Both sides gain +1 reroll                                                   | 双方在攻击/防御时，都会额外获得1次重投机会            |
+| Fish Rain           | 鱼雨     | Help      | 2    | Both sides gain +1 reroll                                                   | 双方在攻击/防御时，都会额外获得1次重投机会            |
 | Solar Eclipse       | 日食      | Attack    | 2    | Different dice values: Attack +4                                            | 双方攻击时，若选择的骰子中包含不同点数，则攻击值 +4       |
 | Storm               | 暴雨      | Attack    | 4    | Both sides ATK/DEF Level +1                                                 | 双方额外攻击等级+1，防御等级+1                 |
 | Drizzle             | 小雨      | Help      | ?    | Dice contain 6: remove Poison from self                                     | 选定骰子时，若包含6，则消除身上的中毒状态             |
@@ -37,7 +37,7 @@ Weather affects both players and changes at start of turn 2/4/6/8. Effects are p
 | Drought             | 干旱      | Reversal  | 6    | Attacker gains +3 ATK per level of defender's DEF Level                     | 攻击方根据对方防御等级，每级获得+3攻击值             |
 | Scorching Sun       | 烈日      | Safeguard | 4    | Siphon 50% HP of damage dealt                                               | 双方攻击时，虹吸造成伤害50%的生命值               |
 | The Decisive Moment | 决胜时刻    | Attack    | ?    | Both sides: 5 Strength                                                      | 双方获得5层力量                          |
-| Acid Rain           | 雨       | Safeguard | 4    | Start of turn: player with more HP gets 1 Poison                            | 每回合开始时：场上生命值更多的一方，会被附加1层中毒        |
+| Acid Rain           | 酸雨     | Safeguard | 4    | Start of turn: player with more HP gets 1 Poison                            | 每回合开始时：场上生命值更多的一方，会被附加1层中毒        |
 | High Temperature    | 高温      | Attack    | 4    | Start of turn: player with less HP gets 2 Strength (until weather ends)     | 回合开始时：场上生命值更少的一方，获得2层力量，持续到本次天气结束 |
 | Fine Snow           | 细雪      | Safeguard | 2    | No reroll during attack: gain 3 Toughness (next turn only)                  | 攻击回合若未重投过，则获得3层仅下回合可用的韧性          |
 | Sunshower           | 晴天雨     | Attack    | 6    | Defender's dice can't roll max value                                        | 防御方骰子无法掷出最大值                      |

@@ -51,6 +51,33 @@ If the **Interastral Peace Casino** mod is loaded, a "Cosmicon Dice Lounge" beco
         Join a Tournament (15,000 stargems)
 ```
 
+```
+[新存档]
+    |
+    v
+[教程1] -- 对战垃圾桶（使用奇美拉）
+    |   教学：投骰、选骰、重投、角色被动
+    |   奖励：解锁奇美拉基础角色
+    v
+[简易模式] -- 从酒吧偶遇中收集7个基础角色
+    |   无天气、无曜彩骰
+    |   收集3/5/7个角色解锁属性加成
+    |   角色：奇美拉、巨兽、机甲甲虫、垃圾桶、
+    |   |      弗波记者、香蕉顾问、资深员工
+    v
+[教程2] -- 对战知更鸟（使用黄泉）
+    |   教学：曜彩骰、天气系统、进阶策略
+    |   奖励：解锁黄泉+复读机曜彩骰
+    v
+[完整游戏] -- 酒吧高级NPC对手
+    |   天气和曜彩骰激活
+    |   完整角色选择和属性加成
+    v
+[赌场联动] -- 若加载星际和平赌场模组
+        挑战老赌神（5000星石）
+        参加挑战赛（15000星石）
+```
+
 ### Battle Basics / 对战基础
 
 Each player picks a **character card** that determines their dice pool, HP, Attack Level, Defense Level, and passive ability. Players alternate between attacking and defending each turn:
@@ -92,12 +119,12 @@ Starting from turn 2, weather effects activate at turns 2/4/6/8, affecting both 
 
 从第2回合起，天气效果在第2/4/6/8回合激活，影响双方。共25种天气，分为4大类：
 
-| Category | Chinese | Description |
-|----------|---------|-------------|
-| Safeguard | 守护类 | Benefits defenders (e.g. Sleet, Blizzard) |
-| Attack | 攻击类 | Benefits attackers (e.g. Solar Eclipse, Dust) |
-| Help | 增益类 | Neutral benefits (e.g. Fish Rain, Sea of Clouds) |
-| Reversal | 逆转类 | Punishes or reverses normal flow (e.g. Acid Rain, Temporal Storm) |
+| Category | Chinese | Description | 说明 |
+|----------|---------|-------------|------|
+| Safeguard | 坚守 | Benefits defenders (e.g. Sleet, Blizzard) | 有利防御方（如雨夹雪、暴雪） |
+| Attack | 进攻 | Benefits attackers (e.g. Solar Eclipse, Dust) | 有利攻击方（如日食、沙尘） |
+| Help | 助力 | Neutral benefits (e.g. Fish Rain, Sea of Clouds) | 中性增益（如鱼雨、云海） |
+| Reversal | 逆转 | Punishes or reverses normal flow (e.g. Acid Rain, Temporal Storm) | 惩罚或逆转常规流程（如酸雨、时空暴） |
 
 In free encounters, weather is random; story battles use predetermined weather sequences.
 
@@ -105,26 +132,26 @@ In free encounters, weather is random; story battles use predetermined weather s
 
 ### Status Effects / 状态效果
 
-| Effect | Chinese | Description |
-|--------|---------|-------------|
-| Strength | 力量 | ATK bonus = stack count |
-| Toughness | 韧性 | DEF bonus = stack count |
-| Poison | 毒 | End of turn: DMG = stack count, then -1 stack |
-| Combo | 连击 | Extra attack based on current ATK value |
-| Counter | 反击 | If DEF > ATK, deal difference DMG to attacker |
-| Forcefield | 力场 | Negates conventional attack damage |
-| Perforation | 贯穿 | Ignores DEF and Forcefield |
-| Thorns | 反伤 | Before resolution: DMG = stack count |
-| Unyielding | 不屈 | Always retain 1 HP while active |
-| Hack | 骇入 | Turn opponent's highest die into 2 |
-| Arise | 兴起 | Transform lowest die to that die's max value |
-| Siphon | 吸血 | Recover HP = percentage of DMG dealt |
-| Overload | 超载 | +ATK per stack but self-damage on defense |
-| Venom | 剧毒 | Poison damage becomes 2x |
-| Instant Damage | 即时伤害 | Bypasses damage calculation |
-| Awakening | 觉醒 | Double all dice values after selection |
-| Destined | 命运 | Dice with this effect must be selected |
-| Last Stand | 穷途 | Reduce HP to 1, gain bonus = HP reduction |
+| Effect | Chinese | Description | 说明 |
+|--------|---------|-------------|------|
+| Strength | 力量 | ATK bonus = stack count | 攻击值加成等于层数 |
+| Toughness | 韧性 | DEF bonus = stack count | 防御值加成等于层数 |
+| Poison | 中毒 | End of turn: DMG = stack count, then -1 stack | 回合结束时受到等于层数的伤害，然后减少1层 |
+| Combo | 连击 | Extra attack based on current ATK value | 根据当前攻击值进行额外攻击 |
+| Counter | 反击 | If DEF > ATK, deal difference DMG to attacker | 若防御值>攻击值，对攻击方造成差值伤害 |
+| Forcefield | 力场 | Negates conventional attack damage | 抵消常规攻击伤害 |
+| Perforation | 洞穿 | Ignores DEF and Forcefield | 无视防御值和力场 |
+| Thorns | 荆棘 | Before resolution: DMG = stack count | 伤害结算前：造成等于层数的伤害 |
+| Unyielding | 不屈 | Always retain 1 HP while active | 激活期间生命值不会低于1 |
+| Hack | 骇入 | Turn opponent's highest die into 2 | 将对手最高的骰子变为2 |
+| Arise | 跃升 | Transform lowest die to that die's max value | 将最低的骰子变为该骰子的最大值 |
+| Siphon | 虹吸 | Recover HP = percentage of DMG dealt | 回复等于造成伤害百分比的HP |
+| Overload | 超载 | +ATK per stack but self-damage on defense | 每层增加攻击值，但防御时自伤 |
+| Venom | 猛毒 | Poison damage becomes 2x | 毒伤害翻倍 |
+| Instant Damage | 瞬伤 | Bypasses damage calculation | 跳过伤害计算直接造成伤害 |
+| Awakening | 觉醒 | Double all dice values after selection | 选定骰子后所有骰子点数翻倍 |
+| Destined | 命定 | Dice with this effect must be selected | 带此效果的骰子必须被选中 |
+| Last Stand | 背水 | Reduce HP to 1, gain bonus = HP reduction | 生命值降为1，获得等于减少量的加成 |
 
 ### Bonus System / 加成系统
 
@@ -133,62 +160,67 @@ Collecting basic characters in Easy Mode unlocks permanent stat bonuses:
 - **+1 ATK Level** (max 5, unlocked after collecting 5 basic characters)
 - **+1 DEF Level** (max 5, unlocked after collecting 7 basic characters)
 
+在简易模式中收集基础角色可解锁永久属性加成：
+- **+9 HP** 选项（收集3个基础角色后解锁）
+- **+1 攻击等级**（上限5，收集5个基础角色后解锁）
+- **+1 防御等级**（上限5，收集7个基础角色后解锁）
+
 ### Characters / 角色
 
 #### Basic Characters (7 — Easy Mode) / 基础角色（7个——简易模式）
 
-| ID | Name | HP | Dice Pool | ATK | DEF | Passive |
-|----|------|----|-----------|-----|-----|---------|
-| chimera | Chimera | 22 | 2d6, 2d4 | 3 | 2 | Matching numbers: +3 ATK (4s: +7) |
-| dromas | Dromas | 26 | 2d6, 2d4 | 3 | 2 | All even: 2 Poison stacks |
-| automaton_beetle | Automaton Beetle | 10 | 1d6, 3d4 | 3 | 3 | 3 consecutives: Forcefield + 8 Strength |
-| trashcan_basic | Trashcan | 25 | 2d6, 3d4 | 3 | 2 | All even: 4 Strength (else 2) |
-| furbo_journalist | Furbo Journalist | 28 | 1d6, 4d4 | 4 | 3 | All odd: 4 Instant Dmg (else 2) |
-| bananadvisor | BananAdvisor | 24 | 2d6, 3d4 | 4 | 3 | No DMG: Heal 5; HP<=5: DEF+1 |
-| senior_staff | Senior Staff | 22 | 1d8, 1d6, 3d4 | 3 | 2 | Distinct numbers: +1 ATK/DEF each |
+| ID | Name | HP | Dice Pool | ATK | DEF | Passive | 被动技能 |
+|----|------|----|-----------|-----|-----|---------|----------|
+| chimera | Chimera | 22 | 2d6, 2d4 | 3 | 2 | Matching numbers: +3 ATK (4s: +7) | 相同点数：攻击值+3（全为4时：+7） |
+| dromas | Dromas | 26 | 2d6, 2d4 | 3 | 2 | All even: 2 Poison stacks | 全偶数：2层毒 |
+| automaton_beetle | Automaton Beetle | 10 | 1d6, 3d4 | 3 | 3 | 3 consecutives: Forcefield + 8 Strength | 三连：力场+8层力量 |
+| trashcan_basic | Trashcan | 25 | 2d6, 3d4 | 3 | 2 | All even: 4 Strength (else 2) | 全偶数：4层力量（否则2层） |
+| furbo_journalist | Furbo Journalist | 28 | 1d6, 4d4 | 4 | 3 | All odd: 4 Instant Dmg (else 2) | 全奇数：4点即时伤害（否则2点） |
+| bananadvisor | BananAdvisor | 24 | 2d6, 3d4 | 4 | 3 | No DMG: Heal 5; HP<=5: DEF+1 | 未受伤：回复5HP；HP≤5：防御等级+1 |
+| senior_staff | Senior Staff | 22 | 1d8, 1d6, 3d4 | 3 | 2 | Distinct numbers: +1 ATK/DEF each | 不同点数：每个+1攻击/防御值 |
 
 #### Advanced Characters (14 — Full Game) / 进阶角色（14个——完整游戏）
 
-| ID | Name | HP | Dice Pool | Prismatic | ATK | DEF | Passive Summary |
-|----|------|----|-----------|-----------|-----|-----|---------|
-| acheron | Acheron | 33 | 1d8, 1d6, 3d4 | Repeater x2 | 2 | 3 | All 4s = Perforation, ATK+1 |
-| castorice | Castorice | 27 | 2d8, 1d6, 2d4 | Doctor's Advice x2 | 3 | 2 | DMG>=8: ATK/DEF+1; DMG<=5: 3 Instant Dmg |
-| firefly | Firefly | 28 | 3d6, 2d4 | Sorcerer x2 | 4 | 3 | 2 pairs: Combo; Full HP: +5 ATK |
-| robin | Robin | 30 | 2d6, 3d4 | None | 4 | 3 | All even: Level Up dice (up to d12) |
-| the_herta | The Herta | 42 | 2d8, 3d6 | Berserker x2 | 3 | 2 | +1 Prismatic use/turn; 4+ triggers: Arise |
-| kafka | Kafka | 30 | 2d6, 3d4 | Prime Number x2 | 4 | 3 | Different numbers: Poison stacks |
-| aventurine | Aventurine | 33 | 1d8, 3d6, 1d4 | Prime Number x2 | 4 | 2 | Odd numbers: Toughness; 7 stacks: 7 Instant Dmg |
-| march_7th | March 7th | 25 | 2d6, 3d4 | Magic Bullet x2 | 4 | 3 | Pairs: 3 Instant Damage each |
-| dan_heng | Dan Heng | 25 | 2d8, 3d6 | Sorcerer x2 | 3 | 2 | ATK>=18: Counter + DEF+3 next defense |
-| sparxie | Sparxie | 22 | 1d8, 2d6, 2d4 | Sorcerer x2 | 4 | 3 | Identical numbers: Hack (highest die -> 2) |
-| yao_guang | Yao Guang | 35 | 2d8, 3d6 | Destiny x2 | 3 | 2 | 4 rerolls; >2 rerolls: Thorns; ATK>=18: cleanse + Prismatic use |
-| cyrene | Cyrene | 30 | 1d8, 3d6, 1d4 | Gambler x2 | 3 | 2 | Cumulative ATK+DEF >24: ATK Lv5 + Arise |
-| phainon | Phainon | 20 | 2d8, 3d6 | Astral Shield x2 | 4 | 2 | Siphon 50%; All same: Unyielding (1/game) |
-| hyacine | Hyacine | 28 | 1d8, 4d6 | Oath x2 | 2 | 2 | Strength = 50% ATK; All 6s: 100% + Heal 6 |
+| ID | Name | HP | Dice Pool | Prismatic | ATK | DEF | Passive Summary | 被动技能 |
+|----|------|----|-----------|-----------|-----|-----|-----------------|----------|
+| acheron | Acheron | 33 | 1d8, 1d6, 3d4 | Repeater x2 | 2 | 3 | All 4s = Perforation, ATK+1 | 全为4：贯穿，攻击值+1 |
+| castorice | Castorice | 27 | 2d8, 1d6, 2d4 | Doctor's Advice x2 | 3 | 2 | DMG>=8: ATK/DEF+1; DMG<=5: 3 Instant Dmg | 伤害≥8：攻击/防御值+1；伤害≤5：3点即时伤害 |
+| firefly | Firefly | 28 | 3d6, 2d4 | Sorcerer x2 | 4 | 3 | 2 pairs: Combo; Full HP: +5 ATK | 两对：连击；满血：攻击值+5 |
+| robin | Robin | 30 | 2d6, 3d4 | None | 4 | 3 | All even: Level Up dice (up to d12) | 全偶数：骰子升级（最高d12） |
+| the_herta | The Herta | 42 | 2d8, 3d6 | Berserker x2 | 3 | 2 | +1 Prismatic use/turn; 4+ triggers: Arise | 每回合曜彩骰使用次数+1；4个以上触发：兴起 |
+| kafka | Kafka | 30 | 2d6, 3d4 | Prime Number x2 | 4 | 3 | Different numbers: Poison stacks | 不同点数：毒层数 |
+| aventurine | Aventurine | 33 | 1d8, 3d6, 1d4 | Prime Number x2 | 4 | 2 | Odd numbers: Toughness; 7 stacks: 7 Instant Dmg | 奇数：韧性层数；7层：7点即时伤害 |
+| march_7th | March 7th | 25 | 2d6, 3d4 | Magic Bullet x2 | 4 | 3 | Pairs: 3 Instant Damage each | 对子：每对3点即时伤害 |
+| dan_heng | Dan Heng | 25 | 2d8, 3d6 | Sorcerer x2 | 3 | 2 | ATK>=18: Counter + DEF+3 next defense | 攻击值≥18：反击+下次防御值+3 |
+| sparxie | Sparxie | 22 | 1d8, 2d6, 2d4 | Sorcerer x2 | 4 | 3 | Identical numbers: Hack (highest die -> 2) | 相同点数：骇入（最高骰子变为2） |
+| yao_guang | Yao Guang | 35 | 2d8, 3d6 | Destiny x2 | 3 | 2 | 4 rerolls; >2 rerolls: Thorns; ATK>=18: cleanse + Prismatic use | 4次重投；>2次：反伤；攻击值≥18：净化+曜彩骰使用 |
+| cyrene | Cyrene | 30 | 1d8, 3d6, 1d4 | Gambler x2 | 3 | 2 | Cumulative ATK+DEF >24: ATK Lv5 + Arise | 累计攻击+防御值>24：攻击等级5+兴起 |
+| phainon | Phainon | 20 | 2d8, 3d6 | Astral Shield x2 | 4 | 2 | Siphon 50%; All same: Unyielding (1/game) | 吸血50%；全相同：不屈（每局1次） |
+| hyacine | Hyacine | 28 | 1d8, 4d6 | Oath x2 | 2 | 2 | Strength = 50% ATK; All 6s: 100% + Heal 6 | 力量=50%攻击值；全为6：100%吸血+回复6HP |
 
 ### Prismatic Dice / 曜彩骰
 
-| ID | Name | Condition | Effect |
-|----|------|-----------|--------|
-| evolution | Evolution | Always | 2 pts, Double ATK/DEF |
-| absolute_six | Absolute Six | Always | Always 6 |
-| destiny | Destiny | Always | Points + Destined (must select) |
-| revenge | Revenge | After 25+ total DMG taken | High-value faces |
-| doctors_advice | Doctor's Advice | Always | Points + Heal equal to face value |
-| last_words | Last Words | HP <= 8 | Points + Double ATK/DEF |
-| repeater | Repeater | After selecting face 4 twice | 4 pts + Combo |
-| cactus | Cactus | Defense only | Points + Counter |
-| miracle | Miracle | After selecting 1 nine times | All 99s |
-| loan | Loan | Always | Points + Overload stacks |
-| astral_shield | Astral Shield | Defense only | 1 pt + Forcefield |
-| oath | Oath | Defense only | Points + Unyielding |
-| prime_number | Prime Number | Always | Always prime values (3,5,7) |
-| big_red_button | Big Red Button | Turn 5+, attacking | Points + Last Stand |
-| sorcerer | Sorcerer | Always | Points + Hack |
-| heartbeat | Heartbeat | Always | 9 pts +1 Prismatic use |
-| berserker | Berserker | Always | Points + Thorns stacks |
-| gambler | Gambler | First 4 turns | Balanced values |
-| magic_bullet | Magic Bullet | Always | Points + 3 Instant Damage |
+| ID | Name | Condition | Effect | 触发条件 | 效果 |
+|----|------|-----------|--------|----------|------|
+| evolution | Evolution | Always | 2 pts, Double ATK/DEF | 始终可用 | 2点，攻击/防御值翻倍 |
+| absolute_six | Absolute Six | Always | Always 6 | 始终可用 | 始终为6 |
+| destiny | Destiny | Always | Points + Destined (must select) | 始终可用 | 点数+命运（必须选中） |
+| revenge | Revenge | After 25+ total DMG taken | High-value faces | 累计承受25+伤害后 | 高点数骰面 |
+| doctors_advice | Doctor's Advice | Always | Points + Heal equal to face value | 始终可用 | 点数+回复等于骰面值的HP |
+| last_words | Last Words | HP <= 8 | Points + Double ATK/DEF | HP≤8时 | 点数+攻击/防御值翻倍 |
+| repeater | Repeater | After selecting face 4 twice | 4 pts + Combo | 选中骰面4两次后 | 4点+连击 |
+| cactus | Cactus | Defense only | Points + Counter | 仅防御阶段 | 点数+反击 |
+| miracle | Miracle | After selecting 1 nine times | All 99s | 选中骰面1九次后 | 全为99 |
+| loan | Loan | Always | Points + Overload stacks | 始终可用 | 点数+超载层数 |
+| astral_shield | Astral Shield | Defense only | 1 pt + Forcefield | 仅防御阶段 | 1点+力场 |
+| oath | Oath | Defense only | Points + Unyielding | 仅防御阶段 | 点数+不屈 |
+| prime_number | Prime Number | Always | Always prime values (3,5,7) | 始终可用 | 始终为质数（3,5,7） |
+| big_red_button | Big Red Button | Turn 5+, attacking | Points + Last Stand | 第5回合起，攻击阶段 | 点数+穷途 |
+| sorcerer | Sorcerer | Always | Points + Hack | 始终可用 | 点数+骇入 |
+| heartbeat | Heartbeat | Always | 9 pts +1 Prismatic use | 始终可用 | 9点+曜彩骰使用次数+1 |
+| berserker | Berserker | Always | Points + Thorns stacks | 始终可用 | 点数+反伤层数 |
+| gambler | Gambler | First 4 turns | Balanced values | 前4回合 | 均衡数值 |
+| magic_bullet | Magic Bullet | Always | Points + 3 Instant Damage | 始终可用 | 点数+3点即时伤害 |
 
 ---
 

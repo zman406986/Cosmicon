@@ -14,6 +14,7 @@ public class CosmiconEventState {
     private static final String KEY_IS_TUTORIAL = "$cos_temp_is_tutorial";
     private static final String KEY_REPLAY_TUTORIAL = "$cos_replay_tutorial_game";
     private static final String KEY_SESSION_WON = "$cos_temp_session_won";
+    private static final String KEY_SESSION_LOST = "$cos_temp_session_lost";
     private static final String KEY_OPPONENT_USES_TRUE = "$cos_temp_opponent_uses_true";
 
     private static final String KEY_CASINO_BATTLE_MODE = "$cos_casino_battle_mode";
@@ -38,7 +39,7 @@ public class CosmiconEventState {
     private static final List<String> ALL_KEYS = List.of(
         KEY_OPPONENT_CHAR, KEY_OPPONENT_PRISMATIC,
         KEY_IS_BAR_EVENT, KEY_IS_STANDALONE_ENTRY, KEY_IS_TUTORIAL, KEY_REPLAY_TUTORIAL,
-        KEY_OPPONENT_USES_TRUE, KEY_SESSION_WON,
+        KEY_OPPONENT_USES_TRUE, KEY_SESSION_WON, KEY_SESSION_LOST,
         KEY_CASINO_BATTLE_MODE, KEY_CASINO_BATTLE_IS_BOSS,
         KEY_CASINO_BATTLE_OPPONENT, KEY_CASINO_BATTLE_BONUS_HP,
         KEY_CASINO_BATTLE_USE_TRUE, KEY_CASINO_BATTLE_RESULT_DAMAGE,
@@ -113,6 +114,14 @@ public class CosmiconEventState {
 
     public static boolean isSessionWon() {
         return getMemory().getBoolean(KEY_SESSION_WON);
+    }
+
+    public static void setSessionLost(boolean lost) {
+        getMemory().set(KEY_SESSION_LOST, lost);
+    }
+
+    public static boolean isSessionLost() {
+        return getMemory().getBoolean(KEY_SESSION_LOST);
     }
 
     public static void setIsTutorialMode(boolean isTutorial) {

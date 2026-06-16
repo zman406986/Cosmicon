@@ -23,6 +23,8 @@
 			"cos_furbo_journalist":{"name":"Master of Flawless Disguises"},
 			"cos_bananadvisor":{"name":"Banacademic Broadcaster"},
 			"cos_senior_staff":{"name":"Cost Reduction Specialist"},
+			"cos_trashcan":{"name":"Amber-Era Treasure"},
+			"cos_trashcan_basic":{"name":"Amber-Era Treasure"},
 		},
 	},
 },

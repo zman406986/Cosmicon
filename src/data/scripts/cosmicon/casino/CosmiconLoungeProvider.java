@@ -58,6 +58,11 @@ public class CosmiconLoungeProvider implements LoungeProvider {
 
         dialog.getTextPanel().addPara(getString("welcome"), Color.CYAN);
 
+        if (!CosmiconStats.isEasyModeComplete()) {
+            dialog.getTextPanel().addPara(getString("easy_mode_required"), Color.ORANGE);
+            return;
+        }
+
         int hunterLevel = CasinoIntegrationManager.getLegendLevel();
         if (hunterLevel > 0) {
             if (CosmiconStats.isLegendTitleInherited()) {
@@ -76,6 +81,12 @@ public class CosmiconLoungeProvider implements LoungeProvider {
     public List<MenuOption> getMenuOptions(InteractionDialogAPI dialog) {
         List<MenuOption> options = new ArrayList<>();
         boolean tutorialDone = CasinoIntegrationManager.isTutorialComplete();
+        boolean easyComplete = CosmiconStats.isEasyModeComplete();
+
+        if (!easyComplete) {
+            options.add(new MenuOption("lounge_back", getString("back"), true, null));
+            return options;
+        }
 
         boolean canAffordLegend = CasinoAPI.canAfford(CosmiconConfig.LEGEND_COST);
         boolean tournamentActive = CasinoIntegrationManager.isTournamentActive();
@@ -126,7 +137,9 @@ public class CosmiconLoungeProvider implements LoungeProvider {
     }
 
     private void handleLegend(InteractionDialogAPI dialog, Runnable onReturnToLounge) {
-        if (!CasinoAPI.canAfford(CosmiconConfig.LEGEND_COST) || !CasinoIntegrationManager.isTutorialComplete()) {
+        if (!CasinoAPI.canAfford(CosmiconConfig.LEGEND_COST)
+                || !CasinoIntegrationManager.isTutorialComplete()
+                || !CosmiconStats.isEasyModeComplete()) {
             dialog.getOptionPanel().clearOptions();
             dialog.getTextPanel().addPara(getString("legend_insufficient"), Color.RED);
             dialog.getOptionPanel().addOption(getString("back"), "lounge_back");
@@ -138,7 +151,9 @@ public class CosmiconLoungeProvider implements LoungeProvider {
     }
 
     private void handleTournament(InteractionDialogAPI dialog, Runnable onReturnToLounge) {
-        if (!CasinoAPI.canAfford(CosmiconConfig.TOURNAMENT_COST) || !CasinoIntegrationManager.isTutorialComplete()) {
+        if (!CasinoAPI.canAfford(CosmiconConfig.TOURNAMENT_COST)
+                || !CasinoIntegrationManager.isTutorialComplete()
+                || !CosmiconStats.isEasyModeComplete()) {
             dialog.getOptionPanel().clearOptions();
             dialog.getTextPanel().addPara(getString("tournament_insufficient"), Color.RED);
             dialog.getOptionPanel().addOption(getString("back"), "lounge_back");

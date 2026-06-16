@@ -241,7 +241,7 @@ public class BattleInputHandler {
                     float[] hb = diceHitboxes.get(i);
                     boolean inside = mousePos.isInsideRect(hb[0], hb[1], hb[2], hb[3]);
                     if (inside) {
-                        if (tutorialController != null && !tutorialController.isDiceClickable()) {
+                        if (tutorialController != null && tutorialController.isDiceClickBlocked()) {
                             lastMouseButtonState = currentButton;
                             return;
                         }

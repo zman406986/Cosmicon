@@ -383,7 +383,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
                 }
                 case ACTION_CONTINUE -> {
                     if (battleController != null) {
-                        if (tutorialController != null && !tutorialController.isContinueAllowed()) {
+                        if (tutorialController != null && tutorialController.isContinueBlocked()) {
                             break;
                         }
                         if (tutorialController != null) {
@@ -436,7 +436,7 @@ public class BattleUIButtons implements ActionListenerDelegate {
             canConfirm = canConfirm && tutorialController.isConfirmAllowed();
         }
         boolean canContinue = phase == Phase.WAITING_NEXT_TURN || phase == Phase.ENDED;
-        if (tutorialController != null && !tutorialController.isContinueAllowed()) {
+        if (tutorialController != null && tutorialController.isContinueBlocked()) {
             canContinue = false;
         }
         confirmButton.setEnabled(canConfirm || canContinue);

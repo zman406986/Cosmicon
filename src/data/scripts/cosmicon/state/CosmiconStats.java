@@ -103,10 +103,10 @@ public class CosmiconStats {
         getMemory().set(KEY_MIGRATED_FROM_PREREWORK, false);
     }
 
-    public static boolean isPrismaticFeatureUnlocked() {
+    public static boolean needsPrismaticFeatureUnlock() {
         MemoryAPI mem = getMemory();
-        if (!mem.contains(KEY_PRISMATIC_FEATURE_UNLOCKED)) return true;
-        return mem.getBoolean(KEY_PRISMATIC_FEATURE_UNLOCKED);
+        if (!mem.contains(KEY_PRISMATIC_FEATURE_UNLOCKED)) return false;
+        return !mem.getBoolean(KEY_PRISMATIC_FEATURE_UNLOCKED);
     }
 
     static void setPrismaticFeatureUnlocked() {
@@ -178,6 +178,7 @@ public class CosmiconStats {
     public static void completeTutorial1() {
         getMemory().set(KEY_TUTORIAL_1_COMPLETED, true);
         unlockCharacter(CharacterIds.TUTORIAL_1_DEFAULT_CHARACTER);
+        unlockCharacter(CharacterIds.TRASHCAN_BASIC);
         CosmiconPlayerState.saveCharacter(CharacterIds.TUTORIAL_1_DEFAULT_CHARACTER);
     }
 
@@ -185,7 +186,7 @@ public class CosmiconStats {
         getMemory().set(KEY_TUTORIAL_2_COMPLETED, true);
         unlockCharacter(CharacterIds.ACHERON);
         unlockPrismaticDice(REPEATER_ID);
-        if (!isPrismaticFeatureUnlocked()) {
+        if (needsPrismaticFeatureUnlock()) {
             setPrismaticFeatureUnlocked();
         }
         CosmiconPlayerState.saveCharacter(CharacterIds.ACHERON);
@@ -205,7 +206,7 @@ public class CosmiconStats {
         if (!isPrismaticDiceUnlocked(REPEATER_ID)) {
             unlockPrismaticDice(REPEATER_ID);
         }
-        if (!isPrismaticFeatureUnlocked()) {
+        if (needsPrismaticFeatureUnlock()) {
             setPrismaticFeatureUnlocked();
         }
         showEasyModeCompleteMessage();
@@ -379,7 +380,7 @@ public class CosmiconStats {
             if (!isPrismaticDiceUnlocked(REPEATER_ID)) {
                 unlockPrismaticDice(REPEATER_ID);
             }
-            if (!isPrismaticFeatureUnlocked()) {
+            if (needsPrismaticFeatureUnlock()) {
                 setPrismaticFeatureUnlocked();
             }
         }
