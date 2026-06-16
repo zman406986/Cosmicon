@@ -586,8 +586,8 @@
         "g2_unlock_option": "Unlock character [Acheron] and prismatic dice [Repeater]",
 
         "g1_t1_intro": "The opponent attacks first. It will select dice equal to its [Attack Level].",
-        "g1_t1_defense_roll": "The bottom-left number on the character card is the [Attack Level], and the bottom-right is the [Defense Level]. Once the opponent is done rolling, it's your turn to defend! Click anywhere to roll.",
-        "g1_t1_defense_select": "Your character's [Defense Level] is 2. Select the 2 highest dice to block damage.",
+        "g1_t1_defense_roll": "The bottom-left number on a character card is the [Attack Level], and the bottom-right is the [Defense Level]. Once the opponent is done rolling, Click anywhere to roll.",
+        "g1_t1_defense_select": "Your character's [Defense Level] is 2. SO you can and must select 2 dice when defending. Pick the 2 highest valued ones.",
         "g1_t1_defense_confirm": "Click [Confirm Defense] to proceed. If [Attack Value] minus [Defense Value] exceeds zero, the difference is the damage the defender takes.",
         "g1_t1_defense_wait": "Simply put: pick the right number of dice based on ATK/DEF Level, add the totals, and compare!",
         "g1_t1_defense_resolve": "Turn resolved. Click [Continue] to switch to attack.",
@@ -798,9 +798,9 @@
         "def_capped": "DEF Level already at maximum (5)",
         "credit_bonus_active": "Credit bonus: +50% credits!",
         "credit_bonus_tier": "Credit bonus: +{0}% credits!",
-        "credit_red": "+100% Using basic character with no bonus equipped",
-        "credit_orange": "+50% Using basic character or no bonus equipped",
-        "credit_green": "+0% Using advanced character with bonus equipped",
+        "credit_red": "+100% credits gain — basic character AND no bonus equipped",
+        "credit_orange": "+50% credits gain — basic character OR no bonus equipped",
+        "credit_green": "+0% credits gain — advanced character with bonus equipped",
         "unlocked_hp": "Bonus Unlocked: +9 HP option now available in Character Setup!",
         "unlocked_atk": "Bonus Unlocked: +1 ATK Level option now available!",
         "unlocked_def": "Bonus Unlocked: +1 DEF Level option now available!"
