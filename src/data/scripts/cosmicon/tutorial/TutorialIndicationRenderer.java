@@ -39,6 +39,7 @@ public class TutorialIndicationRenderer {
 
     public void render(float alphaMult) {
         if (controller == null || controller.isComplete()) return;
+        if (diceRollManager.hasAnimators() && !diceRollManager.isComplete()) return;
 
         float pulse = 0.6f + 0.4f * (float) Math.sin(pulseTimer);
 

@@ -36,6 +36,10 @@ public final class CharacterIds {
         FURBO_JOURNALIST, BANANADVISOR, SENIOR_STAFF
     );
 
+    public static final List<String> EASY_MODE_ORDERED_OPPONENTS = List.of(
+        DROMAS, AUTOMATON_BEETLE
+    );
+
     public static final String TUTORIAL_1_DEFAULT_CHARACTER = CHIMERA;
 
     public static List<String> getAllIds() {

@@ -81,6 +81,8 @@ public class DiceRoller {
             int value;
             if (shouldApplyEasyModeDiceBonus(forPlayer)) {
                 value = rollEasyBonus(minRoll, maxRoll);
+            } else if (shouldApplyEasyModeDiceDebuff(forPlayer)) {
+                value = rollEasyDebuff(minRoll, maxRoll);
             } else {
                 value = CosmiconRandom.nextInt(maxRoll - minRoll + 1) + minRoll;
             }
@@ -108,6 +110,19 @@ public class DiceRoller {
         int roll1 = CosmiconRandom.nextInt(range) + minRoll;
         int roll2 = CosmiconRandom.nextInt(range) + minRoll;
         return Math.max(roll1, roll2);
+    }
+    
+    private static boolean shouldApplyEasyModeDiceDebuff(boolean forPlayer) {
+        return !forPlayer
+            && CosmiconStats.isEasyModeActive()
+            && !CosmiconStats.isEasyModeComplete();
+    }
+    
+    private static int rollEasyDebuff(int minRoll, int maxRoll) {
+        int range = maxRoll - minRoll + 1;
+        int roll1 = CosmiconRandom.nextInt(range) + minRoll;
+        int roll2 = CosmiconRandom.nextInt(range) + minRoll;
+        return Math.min(roll1, roll2);
     }
     
     private void logDiceRoll(String character, List<DiceType> types, List<Integer> values, boolean isAttacker) {
@@ -175,6 +190,8 @@ public class DiceRoller {
                     int value;
                     if (shouldApplyEasyModeDiceBonus(forPlayer)) {
                         value = rollEasyBonus(minRoll, maxRoll);
+                    } else if (shouldApplyEasyModeDiceDebuff(forPlayer)) {
+                        value = rollEasyDebuff(minRoll, maxRoll);
                     } else {
                         value = CosmiconRandom.nextInt(maxRoll - minRoll + 1) + minRoll;
                     }

@@ -343,6 +343,10 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             }
             inputHandler.consumeClick();
         }
+
+        if (battleController != null && battleController.getTutorialController() != null) {
+            inputHandler.consumeClick();
+        }
     }
 
     public void startDamageResolutionAnimation(BattleState state, DamageResolver.DamageResult result) {

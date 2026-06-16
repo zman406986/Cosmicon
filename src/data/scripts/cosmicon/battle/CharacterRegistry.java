@@ -254,6 +254,15 @@ public class CharacterRegistry {
         if (candidates.isEmpty()) {
             return getRandomBasicOpponent();
         }
+
+        for (String orderedId : CharacterIds.EASY_MODE_ORDERED_OPPONENTS) {
+            for (CharacterCard candidate : candidates) {
+                if (candidate.getId().equals(orderedId)) {
+                    return candidate.copy();
+                }
+            }
+        }
+
         return candidates.get(ThreadLocalRandom.current().nextInt(candidates.size())).copy();
     }
 
