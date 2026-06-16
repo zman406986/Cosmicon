@@ -236,7 +236,7 @@ public class CosmiconUnlock implements BaseCommand {
 
         Global.getSector().getPlayerMemoryWithoutUpdate().set(KEY_PRISMATIC_FEATURE, true);
 
-        if (CosmiconStats.isInTutorialMode()) {
+        if (!CosmiconStats.isTutorial2Completed()) {
             CosmiconStats.forceCompleteTutorial();
         }
 

@@ -32,7 +32,7 @@ public class CosmiconStats {
     private static final String KEY_EASY_MODE_REENABLED = "$cos_easy_mode_reenabled";
     private static final String KEY_EASY_MODE_COMPLETE_MSG_SHOWN = "$cos_easy_mode_complete_msg_shown";
 
-    private static final int CURRENT_DATA_VERSION = 2;
+    private static final int CURRENT_DATA_VERSION = 3;
     private static final String REPEATER_ID = "repeater";
 
     private static MemoryAPI getMemory() {
@@ -395,6 +395,9 @@ public class CosmiconStats {
         if (fromVersion < 2) {
             migrateV1toV2(mem);
         }
+        if (fromVersion < 3) {
+            migrateV2toV3(mem);
+        }
     }
 
     private static void migrateV0toV1(MemoryAPI mem) {
@@ -435,6 +438,14 @@ public class CosmiconStats {
         if (hunterLevel >= 999 && mem.getBoolean(KEY_LEGEND_999_UNLOCKED)) {
             mem.set(KEY_LEGEND_TITLE_INHERITED, true);
             CosmiconLogger.info("Migration V1→V2: Detected legacy Legend clear. Inherited Legend title.");
+        }
+    }
+
+    private static void migrateV2toV3(MemoryAPI mem) {
+        String oldKey = "$cos_gatekeeper_999_unlocked";
+        if (mem.contains(oldKey) && mem.getBoolean(oldKey) && !mem.getBoolean(KEY_LEGEND_999_UNLOCKED)) {
+            mem.set(KEY_LEGEND_999_UNLOCKED, true);
+            CosmiconLogger.info("Migration V2→V3: Migrated $cos_gatekeeper_999_unlocked → $cos_legend_999_unlocked");
         }
     }
 }

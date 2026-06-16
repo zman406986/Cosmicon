@@ -537,11 +537,18 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
             float entryY = listStartY + titleOffset + i * DICE_ENTRY_HEIGHT - diceScrollOffset;
 
             labels.nameLabel().getPosition().inTL(labelX, entryY + 2f);
-            labels.nameLabel().setOpacity(labelOpacity(entryY + 2f, 24f, listStartY, listHeight));
             labels.facesLabel().getPosition().inTL(labelX, entryY + 28f);
-            labels.facesLabel().setOpacity(labelOpacity(entryY + 28f, 16f, listStartY, listHeight));
             labels.descLabel().getPosition().inTL(descX, entryY + 2f);
-            labels.descLabel().setOpacity(labelOpacity(entryY + 2f, 48f, listStartY, listHeight));
+
+            if (!canEquip) {
+                labels.nameLabel().setOpacity(0f);
+                labels.facesLabel().setOpacity(0f);
+                labels.descLabel().setOpacity(0f);
+            } else {
+                labels.nameLabel().setOpacity(labelOpacity(entryY + 2f, 24f, listStartY, listHeight));
+                labels.facesLabel().setOpacity(labelOpacity(entryY + 28f, 16f, listStartY, listHeight));
+                labels.descLabel().setOpacity(labelOpacity(entryY + 2f, 48f, listStartY, listHeight));
+            }
         }
     }
 
@@ -1177,6 +1184,11 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     private void handleCardSelection(int index) {
         if (index < 0 || index >= characters.size()) return;
         selectedIndex = index;
+        canEquip = !characters.get(selectedIndex).getPrismaticDiceIds().isEmpty();
+        if (noPrismaticLabel != null) {
+            noPrismaticLabel.setOpacity(canEquip ? 0f : 1f);
+        }
+        updateDiceListLabels();
         updateBonusDescription();
         updateBonusButtonHighlights();
     }
@@ -1299,6 +1311,11 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
         for (int i = 0; i < characters.size(); i++) {
             if (characters.get(i).getId().equals(charId)) {
                 selectedIndex = i;
+                canEquip = !characters.get(selectedIndex).getPrismaticDiceIds().isEmpty();
+                if (noPrismaticLabel != null) {
+                    noPrismaticLabel.setOpacity(canEquip ? 0f : 1f);
+                }
+                updateDiceListLabels();
                 selectedBonus = CosmiconPlayerState.loadGlobalBonusSelection();
                 updateBonusDescription();
                 updateBonusButtonHighlights();
@@ -1326,6 +1343,11 @@ public class CharacterSetupPanelUI extends BaseCustomUIPanelPlugin implements Ac
     public void setDefaultSelection() {
         if (!characters.isEmpty()) {
             selectedIndex = 0;
+            canEquip = !characters.get(selectedIndex).getPrismaticDiceIds().isEmpty();
+            if (noPrismaticLabel != null) {
+                noPrismaticLabel.setOpacity(canEquip ? 0f : 1f);
+            }
+            updateDiceListLabels();
             CharacterCard firstCard = characters.get(0);
             selectedBonus = CosmiconPlayerState.loadGlobalBonusSelection();
             updateBonusDescription();
