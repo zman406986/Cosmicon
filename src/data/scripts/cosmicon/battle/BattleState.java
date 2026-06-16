@@ -55,6 +55,8 @@ public class BattleState {
     private int opponentPendingConditionalHeal;
     private boolean playerBananadvisorDefBoostTriggered;
     private boolean opponentBananadvisorDefBoostTriggered;
+    private boolean playerPrismaticUsedThisTurn;
+    private boolean opponentPrismaticUsedThisTurn;
     private int playerDamageTakenThisTurn;
     private int opponentDamageTakenThisTurn;
     private int playerPendingInstantDamageOnHit;
@@ -187,6 +189,8 @@ public class BattleState {
         opponentPendingStrengthSource = null;
         phainonUnyieldingConsumed = false;
         opponentPhainonUnyieldingConsumed = false;
+        playerPrismaticUsedThisTurn = false;
+        opponentPrismaticUsedThisTurn = false;
         playerPendingConditionalHeal = 0;
         opponentPendingConditionalHeal = 0;
         playerBananadvisorDefBoostTriggered = false;
@@ -318,6 +322,15 @@ public class BattleState {
     public void addPrismaticDiceToPool(PrismaticDiceInstance dice, boolean forPlayer) {
         prismaticState.addPrismaticDiceToPool(dice, forPlayer, diceState);
         prismaticManager.consumePrismaticUse(dice.type, forPlayer);
+        if (forPlayer) {
+            playerPrismaticUsedThisTurn = true;
+        } else {
+            opponentPrismaticUsedThisTurn = true;
+        }
+    }
+
+    public boolean hasUsedPrismaticThisTurn(boolean forPlayer) {
+        return forPlayer ? playerPrismaticUsedThisTurn : opponentPrismaticUsedThisTurn;
     }
 
     public PrismaticDiceInstance getPrismaticDiceAt(int index, boolean forPlayer) {
@@ -552,6 +565,8 @@ public boolean canConfirmPrismaticSelection(boolean isPlayer) {
     }
     
     public void clearPrismaticState() {
+        playerPrismaticUsedThisTurn = false;
+        opponentPrismaticUsedThisTurn = false;
         if (eventBus.isValueChangeAnimationInProgress()) {
             CosmiconLogger.warn("[PRISM_DIAG] Cannot clear prismatic state (turn %d): valueChangeAnimationInProgress, playerPrismaticDiceByIndex=%s",
                 turnState.getTurnNumber(), prismaticState.getPrismaticDiceMap(true).keySet());

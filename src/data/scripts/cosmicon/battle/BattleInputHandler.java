@@ -119,7 +119,7 @@ public class BattleInputHandler {
                 if (!buttons.isPrismaticPopupActive()) {
                     int uses = battleState.getPlayerPrismaticUses();
 
-                    if (playerShouldSelect && uses > 0) {
+                    if (playerShouldSelect && uses > 0 && !battleState.hasUsedPrismaticThisTurn(true)) {
                         boolean prismaticAllowed = tutorialController == null || tutorialController.isPrismaticAllowed();
                         if (prismaticAllowed) {
                             boolean insidePrismatic = mousePos.isInsideRect(

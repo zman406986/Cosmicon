@@ -437,6 +437,8 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
         }
 
         if (newPhase == Phase.DICE_DISPLAY_ATTACK || newPhase == Phase.DICE_DISPLAY_DEFENSE) {
+            diceAnimating = false;
+            rollAnimationDelay = 0f;
             diceDisplayTimer = 0f;
             boolean isPlayerDice = (newPhase == Phase.DICE_DISPLAY_ATTACK) == battleState.isPlayerAttacker();
             CosmiconLogger.debug("[PHASE] %s: isPlayerDice=%s playerAttacker=%s",
@@ -938,7 +940,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
                         tutorialController.processPendingReroll();
                     }
                 }
-            } else if (rollAnimationDelay <= 0f) {
+            } else if (rollAnimationDelay <= 0f && battleState.getCurrentPhase() == Phase.ROLLING) {
                 boolean isDefenderRolling = battleState.isDefenderRolling();
                 boolean showPlayerDice = isDefenderRolling != battleState.isPlayerAttacker();
                 boolean anyDiceStarted = false;
@@ -1136,7 +1138,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             battleState.getCurrentPhase() == Phase.SELECTING_ATTACK) ||
             (battleState.isDefender(true) &&
             battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE);
-        boolean prismaticEnabled = uses > 0 && playerShouldSelect && !buttons.isPrismaticPopupActive();
+        boolean prismaticEnabled = uses > 0 && playerShouldSelect && !buttons.isPrismaticPopupActive() && !battleState.hasUsedPrismaticThisTurn(true);
 
         labels.updatePrismaticClickHint(prismaticEnabled);
     }
@@ -1727,7 +1729,7 @@ public class BattlePanelUI extends BaseCustomUIPanelPlugin implements BattleEven
             battleState.getCurrentPhase() == Phase.SELECTING_ATTACK) ||
             (battleState.isDefender(true) &&
             battleState.getCurrentPhase() == Phase.SELECTING_DEFENSE);
-        boolean prismaticEnabled = uses > 0 && playerShouldSelect && !buttons.isPrismaticPopupActive();
+        boolean prismaticEnabled = uses > 0 && playerShouldSelect && !buttons.isPrismaticPopupActive() && !battleState.hasUsedPrismaticThisTurn(true);
 
         float btnAlpha = alphaMult;
         if (!prismaticEnabled) {
